@@ -1,0 +1,64 @@
+﻿@page "/clients/id/{clientId:int}"
+@using Mantis.Domain.Clients.Models
+@using Mantis.Data
+@inject DataSource Data
+@inject NavigationManager Navigation
+@code {
+    [Parameter]
+    public int clientId { get; set; }
+
+    private Client client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = await Data.GetClientByIdAsync(clientId);
+        if (client == null)
+        {
+            Navigation.NavigateTo("/clients/businesses");
+        }
+    }
+}
+
+@if (client == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div>
+        <h1>@client.Name</h1>
+        <div class="row">
+            <div class="col-4">
+                <p><strong>Client ID:</strong> @client.ClientId</p>
+                <p><strong>Lookup:</strong> @client.LookupCode</p>
+                <p><strong>Name:</strong> @client.Name</p>
+                <p><strong>Phone Number:</strong> @client.PhoneNumber</p>
+                <p><strong>Email:</strong> @client.Email</p>
+                <p><strong>Website:</strong> @client.Website</p>
+                <p><strong>Comments:</strong> @client.Comments</p>
+            </div>
+            <div class="col-4">
+                <h4>Address</h4>
+                <p><strong>Line 1:</strong> @client.Address.AddressLine1</p>
+                <p><strong>City:</strong> @client.Address.City</p>
+                <p><strong>State:</strong> @client.Address.State</p>
+                <p><strong>Postal Code:</strong> @client.Address.PostalCode</p>
+            </div>
+            <div class="col-4">
+                <h4>Primary Contact</h4>
+                <p><strong>First Name:</strong> @client.PrimaryContact.FirstName</p>
+                <p><strong>Last Name:</strong> @client.PrimaryContact.LastName</p>
+                <p><strong>Email:</strong> @client.PrimaryContact.Email</p>
+            </div>
+        </div>
+        <h2>Policies</h2>
+
+
+
+
+        <p><strong>Created Date:</strong> @client.CreatedDate</p>
+        <p><strong>Updated Date:</strong> @client.UpdatedDate</p>
+        
+        
+    </div>
+}

@@ -1,4 +1,4 @@
-﻿@page "/clients/businesses"
+﻿@page "/clients/test"
 
 @using Mantis.Data
 @using Mantis.Domain.Clients.Models
@@ -53,6 +53,6 @@
 
     void OnRowClick(DataGridRowMouseEventArgs<Client> args)
     {
-        Navigation.NavigateTo($"/clients/id/{args.Data.ClientId}");
+        Navigation.NavigateTo($"/clients/details/{args.Data.ClientId}");
     }
 }

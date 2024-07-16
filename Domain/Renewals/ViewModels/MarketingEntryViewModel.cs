@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Folient.Domain.Renewals.ViewModels
+namespace Mantis.Domain.Renewals.ViewModels
 {
     public class MarketingEntryViewModel
     {

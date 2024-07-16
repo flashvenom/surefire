@@ -1,8 +1,8 @@
-﻿using Folient.Domain.Shared;
-using Folient.Domain.Clients.Models;
-using Folient.Domain.Carriers.Models;
+﻿using Mantis.Domain.Shared;
+using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Carriers.Models;
 
-namespace Folient.Domain.Contacts.Models
+namespace Mantis.Domain.Contacts.Models
 {
     public class Contact
     {

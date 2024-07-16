@@ -1,6 +1,6 @@
-using Folient.Domain.Shared;
+using Mantis.Domain.Shared;
 
-namespace Folient.Domain.Renewals.Models
+namespace Mantis.Domain.Renewals.Models
 {
     public class TaskMaster
     {

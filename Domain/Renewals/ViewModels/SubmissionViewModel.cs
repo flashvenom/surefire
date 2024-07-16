@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Folient.Domain.Renewals.ViewModels
+namespace Mantis.Domain.Renewals.ViewModels
 {
     public class SubmissionViewModel
     {

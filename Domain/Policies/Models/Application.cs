@@ -1,8 +1,8 @@
-using Folient.Domain.Clients.Models;
-using Folient.Domain.Shared;
+using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Shared;
 using System.Net;
 
-namespace Folient.Domain.Policies.Models
+namespace Mantis.Domain.Policies.Models
 {
     public class Application
     {

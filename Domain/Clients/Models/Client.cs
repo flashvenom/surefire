@@ -1,12 +1,12 @@
-using Folient.Data;
-using Folient.Domain.Policies.Models;
-using Folient.Domain.Contacts.Models;
-using Folient.Domain.Shared;
+using Mantis.Data;
+using Mantis.Domain.Policies.Models;
+using Mantis.Domain.Contacts.Models;
+using Mantis.Domain.Shared;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 
-namespace Folient.Domain.Clients.Models
+namespace Mantis.Domain.Clients.Models
 {
     public class Client
     {

@@ -1,11 +1,11 @@
-using Folient.Domain.Shared;
-using Folient.Domain.Clients.Models;
-using Folient.Domain.Policies.Models;
-using Folient.Domain.Renewals.Models;
+using Mantis.Domain.Shared;
+using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Policies.Models;
+using Mantis.Domain.Renewals.Models;
 
 using System.Net;
 
-namespace Folient.Domain.Shared
+namespace Mantis.Domain.Shared
 {
     public class Attachment
     {

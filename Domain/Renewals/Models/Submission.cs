@@ -1,7 +1,7 @@
-using Folient.Domain.Carriers.Models;
-using Folient.Domain.Shared;
+using Mantis.Domain.Carriers.Models;
+using Mantis.Domain.Shared;
 
-namespace Folient.Domain.Policies.Models
+namespace Mantis.Domain.Policies.Models
 {
     public class Submission
     {

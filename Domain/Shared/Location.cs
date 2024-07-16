@@ -1,6 +1,6 @@
-using Folient.Domain.Shared;
+using Mantis.Domain.Shared;
 
-namespace Folient.Domain.Clients.Models
+namespace Mantis.Domain.Clients.Models
 {
     public class Location
     {

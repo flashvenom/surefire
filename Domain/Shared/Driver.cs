@@ -1,8 +1,8 @@
-using Folient.Domain.Policies.Models;
-using Folient.Domain.Shared;
+using Mantis.Domain.Policies.Models;
+using Mantis.Domain.Shared;
 using System.Net;
 
-namespace Folient.Domain.Shared
+namespace Mantis.Domain.Shared
 {
     public class Driver
     {

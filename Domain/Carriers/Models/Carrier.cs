@@ -1,9 +1,9 @@
-using Folient.Data;
-using Folient.Domain.Contacts.Models;
-using Folient.Domain.Shared;
+using Mantis.Data;
+using Mantis.Domain.Contacts.Models;
+using Mantis.Domain.Shared;
 using System.Collections.Generic;
 
-namespace Folient.Domain.Carriers.Models
+namespace Mantis.Domain.Carriers.Models
 {
     public class Carrier
     {

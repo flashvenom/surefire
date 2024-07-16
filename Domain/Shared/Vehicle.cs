@@ -1,6 +1,6 @@
-using Folient.Domain.Policies.Models;
+using Mantis.Domain.Policies.Models;
 
-namespace Folient.Domain.Shared
+namespace Mantis.Domain.Shared
 {
     public class Vehicle
     {

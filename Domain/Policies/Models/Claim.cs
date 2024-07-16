@@ -1,7 +1,7 @@
-﻿using Folient.Domain.Shared;
+﻿using Mantis.Domain.Shared;
 using System.Collections.Generic;
 
-namespace Folient.Domain.Policies.Models
+namespace Mantis.Domain.Policies.Models
 {
     public class Claim
     {

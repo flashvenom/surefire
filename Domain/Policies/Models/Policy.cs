@@ -1,10 +1,10 @@
-﻿using Folient.Domain.Shared;
+﻿using Mantis.Domain.Shared;
 using System.Collections.Generic;
 using System;
-using Folient.Domain.Carriers.Models;
-using Folient.Domain.Renewals.Models;
+using Mantis.Domain.Carriers.Models;
+using Mantis.Domain.Renewals.Models;
 
-namespace Folient.Domain.Policies.Models
+namespace Mantis.Domain.Policies.Models
 {
     public class Policy
     {

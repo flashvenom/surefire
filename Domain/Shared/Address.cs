@@ -1,9 +1,9 @@
-using Folient.Domain.Shared;
-using Folient.Domain.Clients.Models;
+using Mantis.Domain.Shared;
+using Mantis.Domain.Clients.Models;
 using System.Net;
-using Folient.Domain.Carriers.Models;
+using Mantis.Domain.Carriers.Models;
 
-namespace Folient.Domain.Shared
+namespace Mantis.Domain.Shared
 {
     public class Address
     {

@@ -1,35 +1,111 @@
 ﻿<!-- File: Components/Pages/Clients.razor -->
 @page "/clients/businesses"
 
+@using Mantis.Data
 @using Mantis.Domain.Clients.Models
-@using Mantis.Domain.Clients.Services
+@using System.Linq.Dynamic.Core
+@using Mantis.Pages
 
-@inject ClientService ClientService
+@* @inject ApplicationDbContext DbContext *@
+@inherits DbContextPage<ApplicationDbContext>
 
-<RadzenDataGrid @ref="grid" TItem="Client" Data="@clients" Count="@count" AllowPaging="true" PageSize="10" AllowSorting="true" AllowFiltering="true" LoadData="@LoadData">
+
+
+<RadzenDataGrid Data="@clients" Count="@count" TItem="Client" LoadData="@LoadData">
     <Columns>
-        <RadzenDataGridColumn TItem="Client" Property="Id" Title="ID" Filterable="false" Sortable="false" />
-        <RadzenDataGridColumn TItem="Client" Property="Name" Title="Name" />
+        <RadzenDataGridColumn TItem="Client" Property="ClientId" Title="Client ID" />
+        <RadzenDataGridColumn TItem="Client" Property="Name" Title="Company Name" />
         <RadzenDataGridColumn TItem="Client" Property="Email" Title="Email" />
-        <RadzenDataGridColumn TItem="Client" Property="PhoneNumber" Title="Phone Number" />
-        <!-- Add more columns as needed -->
+
+
+@* 
+        <RadzenDataGridColumn Property="@nameof(Client.ClientId)" Filterable="false" Title="ID" Frozen="true" Width="80px" TextAlign="TextAlign.Center" />
+        <RadzenDataGridColumn Property="@nameof(Client.Name)" Title="Company" Frozen="true" Width="160px" />
+        <RadzenDataGridColumn Property="@nameof(Client.Email)" Title="Email" Frozen="true" Width="120px" />
+        <RadzenDataGridColumn Property="@nameof(Client.Address.AddressLine1)" Title="Address" Frozen="true" Width="100px" />
+        <RadzenDataGridColumn Property="@nameof(Client.Address.City)" Title="City" Frozen="true" /> *@
+
+
+
+        @* <RadzenDataGridColumn Property="Id" Title="ID" FilterValue="@idValue">
+            <FilterTemplate>
+                <RadzenNumeric @bind-Value=idValue ShowUpDown=false Style="width:100%" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "filter by ID" }})" />
+            </FilterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="Name" Title="Name" FilterValue="@nameValue">
+            <FilterTemplate>
+                <RadzenTextBox @bind-Value=nameValue Style="width:100%" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "filter by Name" }})" />
+            </FilterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="Email" Title="Email">
+            <FilterTemplate>
+                <RadzenTextBox @bind-Value=emailValue Style="width:100%" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "filter by Email" }})" />
+            </FilterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="PhoneNumber" Title="Phone Number" FilterValue="@phoneNumberValue">
+            <FilterTemplate>
+                <RadzenTextBox @bind-Value=phoneNumberValue Style="width:100%" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "filter by Phone Number" }})" />
+            </FilterTemplate>
+        </RadzenDataGridColumn> *@
     </Columns>
 </RadzenDataGrid>
 
 @code {
-    private RadzenDataGrid<Client> grid;
-    private IEnumerable<Client> clients;
-    private int count;
+    IEnumerable<Client> clients;
+    int count;
+
+    protected override void OnInitialized()
+    {
+        clients = DbContext.Clients.ToList();
+    }
+
+    protected void LoadData(LoadDataArgs args)
+    {
+        clients = DbContext.Clients.ToList();
+    }
+}
+
+@* 
+@code {
+    IEnumerable<Client> clients;
+    //IList<Client> selectedClients;
+    int count = 10;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData(new LoadDataArgs { Skip = 0, Top = 10 });
+        await base.OnInitializedAsync();
+
+        // clients = DbContext.Clients;
+        // selectedClients = new List<Client>() { clients.FirstOrDefault() };
     }
 
-    private async Task LoadData(LoadDataArgs args)
+    protected async Task LoadData(LoadDataArgs args)
     {
-        var result = await ClientService.GetClientsAsync(args.Skip ?? 0, args.Top ?? 10, args.OrderBy, args.Filters);
-        clients = result.Data;
-        count = result.Count;
+        // This demo is using https://dynamic-linq.net
+        var query = DbContext.Clients.AsQueryable();
+
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            // Filter via the Where method
+            query = query.Where(args.Filter);
+        }
+
+        if (!string.IsNullOrEmpty(args.OrderBy))
+        {
+            // Sort via the OrderBy method
+            query = query.OrderBy(args.OrderBy);
+        }
+
+        // Important!!! Make sure the Count property of RadzenDataGrid is set.
+        count = query.Count();
+
+        // Perform paging via Skip and Take.
+        clients = query.Skip(args.Skip.Value).Take(args.Top.Value).ToList();
+
+        //StateHasChanged();
+        StateHasChanged();
+        // Add StateHasChanged(); for DataGrid to update if your LoadData method is async.
     }
-}
+
+    
+} *@

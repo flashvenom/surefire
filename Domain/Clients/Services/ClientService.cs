@@ -1,8 +1,10 @@
 // File: Domain/Clients/Services/ClientService.cs
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Mantis.Domain.Clients.Models;
+using Radzen;
 using Mantis.Data;
 
 namespace Mantis.Domain.Clients.Services
@@ -16,11 +18,42 @@ namespace Mantis.Domain.Clients.Services
             _context = context;
         }
 
-        public async Task<List<Client>> GetClientsAsync()
+        public async Task<(IEnumerable<Client> Data, int Count)> GetClientsAsync(int skip, int take, string orderBy, IEnumerable<FilterDescriptor> filters)
         {
-            return await _context.Clients.ToListAsync();
-        }
+            var query = _context.Clients.AsQueryable();
 
-        // Add methods for filtering, sorting, and pagination if needed
+            // Apply filters
+            if (filters != null && filters.Any())
+            {
+                foreach (var filter in filters)
+                {
+                    if (filter.FilterOperator == FilterOperator.Equals)
+                    {
+                        query = query.Where($"{filter.Property} == @0", filter.FilterValue);
+                    }
+                    else if (filter.FilterOperator == FilterOperator.Contains)
+                    {
+                        query = query.Where($"{filter.Property}.Contains(@0)", filter.FilterValue);
+                    }
+                    // Add additional filter operator cases as needed
+                }
+            }
+
+            // Get the count before paging
+            var count = await query.CountAsync();
+
+            // Apply sorting
+            if (!string.IsNullOrEmpty(orderBy))
+            {
+                query = query.OrderBy(orderBy);
+            }
+
+            // Apply paging
+            query = query.Skip(skip).Take(take);
+
+            var data = await query.ToListAsync();
+
+            return (data, count);
+        }
     }
 }

@@ -1,13 +1,14 @@
 ﻿<!-- File: Components/Pages/Clients.razor -->
 @page "/clients/businesses"
+
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
 
 @inject ClientService ClientService
 
-<RadzenDataGrid @ref="grid" TItem="Client" Data="@clients" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowPaging="true" PageSize="25" AllowSorting="true" AllowFiltering="true">
+<RadzenDataGrid @ref="grid" TItem="Client" Data="@clients" Count="@count" AllowPaging="true" PageSize="10" AllowSorting="true" AllowFiltering="true" LoadData="@LoadData">
     <Columns>
-        <RadzenDataGridColumn TItem="Client" Property="Id" Title="ID" />
+        <RadzenDataGridColumn TItem="Client" Property="Id" Title="ID" Filterable="false" Sortable="false" />
         <RadzenDataGridColumn TItem="Client" Property="Name" Title="Name" />
         <RadzenDataGridColumn TItem="Client" Property="Email" Title="Email" />
         <RadzenDataGridColumn TItem="Client" Property="PhoneNumber" Title="Phone Number" />
@@ -18,9 +19,17 @@
 @code {
     private RadzenDataGrid<Client> grid;
     private IEnumerable<Client> clients;
+    private int count;
 
     protected override async Task OnInitializedAsync()
     {
-        clients = await ClientService.GetClientsAsync();
+        await LoadData(new LoadDataArgs { Skip = 0, Top = 10 });
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        var result = await ClientService.GetClientsAsync(args.Skip ?? 0, args.Top ?? 10, args.OrderBy, args.Filters);
+        clients = result.Data;
+        count = result.Count;
     }
 }

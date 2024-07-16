@@ -4,10 +4,11 @@ using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Shared;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Mantis.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

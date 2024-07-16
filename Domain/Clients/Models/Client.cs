@@ -27,8 +27,8 @@ namespace Mantis.Domain.Clients.Models
 
         public Address Address { get; set; }
         public Contact PrimaryContact { get; set; }
-        public ApplicationUser Producer { get; set; }
-        public ApplicationUser CSR { get; set; }
+        public ApplicationUser? Producer { get; set; }
+        public ApplicationUser? CSR { get; set; }
         public ApplicationUser CreatedBy { get; set; }
     }
 }

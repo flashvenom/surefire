@@ -1,0 +1,26 @@
+﻿<!-- File: Components/Pages/Clients.razor -->
+@page "/clients/businesses"
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Clients.Services
+
+@inject ClientService ClientService
+
+<RadzenDataGrid @ref="grid" TItem="Client" Data="@clients" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowPaging="true" PageSize="25" AllowSorting="true" AllowFiltering="true">
+    <Columns>
+        <RadzenDataGridColumn TItem="Client" Property="Id" Title="ID" />
+        <RadzenDataGridColumn TItem="Client" Property="Name" Title="Name" />
+        <RadzenDataGridColumn TItem="Client" Property="Email" Title="Email" />
+        <RadzenDataGridColumn TItem="Client" Property="PhoneNumber" Title="Phone Number" />
+        <!-- Add more columns as needed -->
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private RadzenDataGrid<Client> grid;
+    private IEnumerable<Client> clients;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clients = await ClientService.GetClientsAsync();
+    }
+}

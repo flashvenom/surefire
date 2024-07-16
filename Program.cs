@@ -1,6 +1,7 @@
 using Mantis.Components;
 using Mantis.Components.Account;
 using Mantis.Data;
+using Mantis.Domain.Clients.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+builder.Services.AddScoped<ClientService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,36 @@
+﻿@page "/carriers"
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Data
+@inject ApplicationDbContext _context
+@rendermode InteractiveServer
+
+<PageTitle>Carriers</PageTitle>
+
+<h3>Carriers</h3>
+
+<RadzenDataGrid TItem="Carrier" Data="@carriers" AllowFiltering="true" AllowSorting="true">
+    <Columns>
+        <RadzenDataGridColumn TItem="Carrier" Property="CarrierId" Title="ID" />
+        <RadzenDataGridColumn TItem="Carrier" Property="CarrierName" Title="Name" />
+        <RadzenDataGridColumn TItem="Carrier" Property="IssuingCarrier" Title="Issuing" />
+        <RadzenDataGridColumn TItem="Carrier" Property="Wholesaler" Title="MGA" />
+        <RadzenDataGridColumn TItem="Carrier" Property="Phone" Title="Phone" />
+        <RadzenDataGridColumn TItem="Carrier" Property="State" Title="State" />
+        <!-- Add more columns as necessary -->
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    IEnumerable<Carrier> carriers;
+    IList<Carrier> selectedCarriers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        carriers = _context.Carriers;
+
+        selectedCarriers = new List<Carrier>() { carriers.FirstOrDefault() };
+    }
+}

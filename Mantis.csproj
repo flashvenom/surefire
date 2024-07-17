@@ -27,4 +27,8 @@
     <PackageReference Include="Radzen.Blazor" Version="4.34.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Domain\Carriers\ViewModels\" />
+  </ItemGroup>
+
 </Project>

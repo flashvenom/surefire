@@ -1,6 +1,7 @@
 using Mantis.Components;
 using Mantis.Components.Account;
 using Mantis.Data;
+using Mantis.Domain.Carriers.Services;
 using Mantis.Domain.Clients.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +40,7 @@ builder.Services.AddScoped<DataSource>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 builder.Services.AddScoped<ClientService>();
+builder.Services.AddScoped<CarrierService>();
 
 //CrmApiService
 builder.Services.Configure<CrmApiOptions>(builder.Configuration.GetSection("CrmApi"));

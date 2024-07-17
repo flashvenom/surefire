@@ -109,6 +109,7 @@ namespace Mantis.Data
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Renewal>()
+
                 .HasOne(r => r.Carrier)
                 .WithMany()
                 .HasForeignKey("CarrierId")

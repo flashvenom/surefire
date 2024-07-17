@@ -1,13 +1,19 @@
 ﻿@page "/clients/id/{clientId:int}"
 @using Mantis.Domain.Clients.Models
 @using Mantis.Data
+@using Newtonsoft.Json
 @inject DataSource Data
 @inject NavigationManager Navigation
+@inject CrmApiService CrmApiService
+@rendermode InteractiveServer
 @code {
     [Parameter]
     public int clientId { get; set; }
 
     private Client client;
+    private string clientJson;
+    private string policiesJson;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -15,20 +21,33 @@
         if (client == null)
         {
             Navigation.NavigateTo("/clients/businesses");
+            return;
         }
+
+        var accessToken = await CrmApiService.GetAccessTokenAsync();
+        clientJson = await CrmApiService.GetClientDetailsAsync(client.LookupCode.ToString(), accessToken);
+
+        // Extract the clientId from the clientJson
+        var clientData = JsonConvert.DeserializeObject<dynamic>(clientJson);
+        string apiClientId = clientData._embedded.clients[0].id;
+
+        // Fetch policies using the extracted clientId
+        // var accessToken2 = await CrmApiService.GetAccessTokenAsync();
+        // policiesJson = await CrmApiService.GetClientPoliciesAsync(apiClientId, accessToken2);
+
+        isLoading = false;
     }
 }
 
-@if (client == null)
+@if (isLoading)
 {
     <p>Loading...</p>
 }
 else
 {
-    <div>
-        <h1>@client.Name</h1>
-        <div class="row">
-            <div class="col-4">
+    <h1>@client.Name</h1>
+    <div class="d-flex flex-row">
+        <div class="p-2">
                 <p><strong>Client ID:</strong> @client.ClientId</p>
                 <p><strong>Lookup:</strong> @client.LookupCode</p>
                 <p><strong>Name:</strong> @client.Name</p>
@@ -37,28 +56,24 @@ else
                 <p><strong>Website:</strong> @client.Website</p>
                 <p><strong>Comments:</strong> @client.Comments</p>
             </div>
-            <div class="col-4">
+        <div class="p-2">
                 <h4>Address</h4>
                 <p><strong>Line 1:</strong> @client.Address.AddressLine1</p>
                 <p><strong>City:</strong> @client.Address.City</p>
                 <p><strong>State:</strong> @client.Address.State</p>
                 <p><strong>Postal Code:</strong> @client.Address.PostalCode</p>
             </div>
-            <div class="col-4">
+        <div class="p-2">
                 <h4>Primary Contact</h4>
                 <p><strong>First Name:</strong> @client.PrimaryContact.FirstName</p>
                 <p><strong>Last Name:</strong> @client.PrimaryContact.LastName</p>
                 <p><strong>Email:</strong> @client.PrimaryContact.Email</p>
             </div>
         </div>
-        <h2>Policies</h2>
+    <pre>@clientJson</pre>
+    <h2>Policies</h2>
+    <pre>@policiesJson</pre>
 
-
-
-
-        <p><strong>Created Date:</strong> @client.CreatedDate</p>
-        <p><strong>Updated Date:</strong> @client.UpdatedDate</p>
-        
-        
-    </div>
+    <p><strong>Created Date:</strong> @client.CreatedDate</p>
+    <p><strong>Updated Date:</strong> @client.UpdatedDate</p>
 }

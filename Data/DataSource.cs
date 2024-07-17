@@ -30,4 +30,10 @@ namespace Mantis.Data
                 .FirstOrDefaultAsync(c => c.ClientId == clientId);
         }
     }
+
+    public class CrmApiOptions
+    {
+        public string ClientId { get; set; }
+        public string ClientSecret { get; set; }
+    }
 }

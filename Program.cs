@@ -40,6 +40,20 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 builder.Services.AddScoped<ClientService>();
 
+//CrmApiService
+builder.Services.Configure<CrmApiOptions>(builder.Configuration.GetSection("CrmApi"));
+builder.Services.AddHttpClient<CrmApiService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.***REMOVED***/");
+}).ConfigureHttpClient((sp, client) =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var clientId = config["ClientId"];
+    var clientSecret = config["ClientSecret"];
+    // Initialize the CrmApiService with the credentials
+    client.DefaultRequestHeaders.Add("ClientId", clientId);
+    client.DefaultRequestHeaders.Add("ClientSecret", clientSecret);
+});
 
 var app = builder.Build();
 

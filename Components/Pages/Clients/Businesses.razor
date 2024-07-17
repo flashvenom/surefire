@@ -12,7 +12,7 @@
     <input type="search" autofocus @bind="nameFilter" @bind:event="oninput" class="form-control searchtweak" placeholder="Search" aria-label="Search" aria-describedby="basic-addon1">
 </div>
 
-<RadzenDataGrid TItem="Client" Data="@FilteredItems" AllowPaging="true" PageSize="15" AllowSorting="true" RowClick="@OnRowClick">
+<RadzenDataGrid TItem="Client" Data="@FilteredItems" AllowPaging="true" PageSize="15" AllowSorting="true" AllowColumnResize="true" RowClick="@OnRowClick">
     <Columns>
         <RadzenDataGridColumn TItem="Client" Property="Name" Title="Name" Width="300" />
         <RadzenDataGridColumn TItem="Client" Property="PhoneNumber" Title="Phone Number" />
@@ -41,7 +41,14 @@
 
             return items?.Where(x =>
                 x.Name.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase) ||
-                (x.PhoneNumber != null && x.PhoneNumber.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase))
+                (x.PhoneNumber != null && x.PhoneNumber.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)) ||
+                (x.Address.AddressLine1 != null && x.Address.AddressLine1.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)) ||
+                (x.Address.City != null && x.Address.City.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)) ||
+                (x.Address.State != null && x.Address.State.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)) ||
+                (x.Address.PostalCode != null && x.Address.PostalCode.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)) ||
+                (x.PrimaryContact.FirstName != null && x.PrimaryContact.FirstName.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)) ||
+                (x.PrimaryContact.LastName != null && x.PrimaryContact.LastName.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase)) ||
+                (x.PrimaryContact.Email != null && x.PrimaryContact.Email.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase))
             );
         }
     }

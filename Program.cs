@@ -6,6 +6,7 @@ using Mantis.Domain.Clients.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,9 @@ builder.Services.AddHttpClient<CrmApiService>(client =>
     client.DefaultRequestHeaders.Add("ClientId", clientId);
     client.DefaultRequestHeaders.Add("ClientSecret", clientSecret);
 });
+
+builder.Services.AddScoped<DialogService>();
+builder.Services.AddScoped<NotificationService>();
 
 var app = builder.Build();
 

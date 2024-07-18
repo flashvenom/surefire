@@ -1,0 +1,55 @@
+﻿@page "/carrier-dialog"
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Data
+@inject DialogService DialogService
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ApplicationDbContext _context
+
+<EditForm Model="carrier">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <RadzenTemplateForm @bind-Data="@carrier" Context="templateContext">
+        <RadzenFieldset Text="Carrier Details">
+            <RadzenLabel Text="Name" />
+            <RadzenTextBox @bind-Value="carrier.CarrierName" Style="width: 100%" />
+            <RadzenLabel Text="Issuing Carrier" />
+            <RadzenCheckBox @bind-Value="carrier.IssuingCarrier" Style="width: 100%" />
+            <RadzenLabel Text="Wholesaler" />
+            <RadzenCheckBox @bind-Value="carrier.Wholesaler" Style="width: 100%" />
+            <RadzenLabel Text="Phone" />
+            <RadzenTextBox @bind-Value="carrier.Phone" Style="width: 100%" />
+            <RadzenLabel Text="State" />
+            <RadzenTextBox @bind-Value="carrier.State" Style="width: 100%" />
+            <RadzenLabel Text="LookupCode" />
+            <RadzenTextBox @bind-Value="carrier.LookupCode" Style="width: 100%" />
+        </RadzenFieldset>
+        <RadzenButton Text="Save" Type="submit" Click="@(args => SubmitForm())" Style="margin-top: 10px" />
+        <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(null))" Style="margin-top: 10px; margin-left: 10px" />
+    </RadzenTemplateForm>
+</EditForm>
+
+@code {
+    [Parameter] public Carrier carrier { get; set; }
+
+    private void SubmitForm()
+    {
+        //int myid = carrier.CarrierId;
+        Carrier newCarrier = carrier;
+        //Get carrier from Id? FMMLLLL... WTF
+        var userId = UserManager.GetUserId(HttpContextAccessor.HttpContext.User);
+        var user = UserManager.FindByIdAsync(userId);
+        newCarrier.CreatedBy = user;
+
+        //Probably need a CarrierData serice IDFK
+
+        //newCarrier = _context.Carriers.Add(newCarrier);
+        //_context.SaveChangesAsync();
+           
+        
+
+        DialogService.Close(carrier);
+    }
+
+}

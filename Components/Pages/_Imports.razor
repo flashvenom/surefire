@@ -1,15 +1,17 @@
 ﻿@using System.Net.Http
 @using System.Net.Http.Json
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
-@using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
-@using Microsoft.JSInterop
 @using Mantis
-@using Mantis.Components
-@using Radzen
-@using Radzen.Blazor
-@using Microsoft.AspNetCore.Authorization
+@using Mantis.Data
+@using Mantis.Domain.Carriers.Models
+@using Microsoft.EntityFrameworkCore
+
 @attribute [Authorize]
+@rendermode InteractiveServer
+
+@* @using static Microsoft.AspNetCore.Components.Web.RenderMode *@

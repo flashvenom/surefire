@@ -1,15 +1,19 @@
-﻿@page "/carriers"
-@using Mantis.Domain.Carriers.Services
+﻿//Carriers.razor
+@page "/carriers"
 @using Mantis.Domain.Carriers.Models
 @using Mantis.Data
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity;
+
 @inject ApplicationDbContext _context
-@rendermode InteractiveServer
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 
 <PageTitle>Carriers</PageTitle>
 
 <h3>Carriers</h3>
-
-<RadzenDataGrid TItem="Carrier" Data="@carriers" AllowFiltering="true" AllowSorting="true">
+<RadzenButton Icon="add_circle_outline" Click="@AddCarrier" style="margin-top: 10px">Add Carrier</RadzenButton>
+<RadzenDataGrid TItem="Carrier" Data="@carriers" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" RowSelect="@MyFunction">
     <Columns>
         <RadzenDataGridColumn TItem="Carrier" Property="CarrierId" Title="ID" />
         <RadzenDataGridColumn TItem="Carrier" Property="CarrierName" Title="Name" />
@@ -17,20 +21,77 @@
         <RadzenDataGridColumn TItem="Carrier" Property="Wholesaler" Title="MGA" />
         <RadzenDataGridColumn TItem="Carrier" Property="Phone" Title="Phone" />
         <RadzenDataGridColumn TItem="Carrier" Property="State" Title="State" />
-        <!-- Add more columns as necessary -->
+        <RadzenDataGridColumn TItem="Carrier" Context="carrier">
+            <Template Context="carrier">
+                <RadzenButton Icon="edit" Click="@(args => EditCarrier(carrier))" style="margin-right: 10px">Edit</RadzenButton>
+                <RadzenButton Icon="delete" Click="@(args => DeleteCarrier(carrier))">Delete</RadzenButton>
+            </Template>
+        </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 
+
+
+<RadzenDialog />
+<RadzenNotification />
+
 @code {
-    IEnumerable<Carrier> carriers;
-    IList<Carrier> selectedCarriers;
+    private IEnumerable<Carrier> carriers;
+    private Carrier selectedCarrier;
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        await LoadCarriers();
+    }
 
-        carriers = _context.Carriers;
+    private async Task LoadCarriers()
+    {
+        carriers = await _context.Carriers.ToListAsync();
+    }
 
-        selectedCarriers = new List<Carrier>() { carriers.FirstOrDefault() };
+    public void MyFunction()
+    {
+        var thisthat = 1;
+        return;
+    }
+
+    private async Task AddCarrier()
+    {
+        selectedCarrier = new Carrier();
+        var result = await DialogService.OpenAsync<CarrierDialog>("Add Carrier", new Dictionary<string, object> { { "carrier", selectedCarrier } });
+        if (result != null)
+        {
+            var userId = UserManager.GetUserId(HttpContextAccessor.HttpContext.User);
+            var user = await UserManager.FindByIdAsync(userId);
+            selectedCarrier.CreatedBy = user;
+            var carrier = _context.Carriers.Add(selectedCarrier);
+            await _context.SaveChangesAsync();
+            await LoadCarriers();
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier added successfully");
+        }
+    }
+
+    private async Task EditCarrier(Carrier carrier)
+    {
+        selectedCarrier = carrier;
+        var result = await DialogService.OpenAsync<CarrierDialog>("Edit Carrier", new Dictionary<string, object> { { "carrier", selectedCarrier } });
+        if (result != null)
+        {
+            _context.Carriers.Update(selectedCarrier);
+            await _context.SaveChangesAsync();
+            await LoadCarriers();
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier updated successfully");
+        }
+    }
+
+    private async Task DeleteCarrier(Carrier carrier)
+    {
+        if (await DialogService.Confirm("Are you sure you want to delete this carrier?", "Delete Carrier") == true)
+        {
+            _context.Carriers.Remove(carrier);
+            await _context.SaveChangesAsync();
+            await LoadCarriers();
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier deleted successfully");
+        }
     }
 }

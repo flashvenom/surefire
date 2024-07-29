@@ -1,6 +1,7 @@
 ﻿@page "/carrier-dialog"
 @using Mantis.Domain.Carriers.Models
 @using Mantis.Data
+@using Microsoft.AspNetCore.Identity;
 @inject DialogService DialogService
 @inject UserManager<ApplicationUser> UserManager
 @inject IHttpContextAccessor HttpContextAccessor
@@ -25,7 +26,7 @@
             <RadzenLabel Text="LookupCode" />
             <RadzenTextBox @bind-Value="carrier.LookupCode" Style="width: 100%" />
         </RadzenFieldset>
-        <RadzenButton Text="Save" Type="submit" Click="@(args => SubmitForm())" Style="margin-top: 10px" />
+        <RadzenButton Text="Save" Type="submit" Click="@(args => SubmitForm())" Style="margin-top: 10px" /> v 
         <RadzenButton Text="Cancel" Click="@(args => DialogService.Close(null))" Style="margin-top: 10px; margin-left: 10px" />
     </RadzenTemplateForm>
 </EditForm>
@@ -40,7 +41,7 @@
         //Get carrier from Id? FMMLLLL... WTF
         var userId = UserManager.GetUserId(HttpContextAccessor.HttpContext.User);
         var user = UserManager.FindByIdAsync(userId);
-        newCarrier.CreatedBy = user;
+        //newCarrier.CreatedBy = user;
 
         //Probably need a CarrierData serice IDFK
 

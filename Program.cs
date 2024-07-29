@@ -3,6 +3,7 @@ using Mantis.Components.Account;
 using Mantis.Data;
 using Mantis.Domain.Carriers.Services;
 using Mantis.Domain.Clients.Services;
+using Mantis.Domain.User.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,7 @@ builder.Services.AddAuthentication(options =>
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
     .AddIdentityCookies();
-
+builder.Services.AddAuthorization();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -42,6 +43,8 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<CarrierService>();
+builder.Services.AddScoped<UserService>(); // Add scoped for Mantis UserService
+builder.Services.AddHttpContextAccessor();
 
 //CrmApiService
 builder.Services.Configure<CrmApiOptions>(builder.Configuration.GetSection("CrmApi"));

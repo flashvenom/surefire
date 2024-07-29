@@ -1,10 +1,12 @@
 ﻿//Carriers.razor
 @page "/carriers"
+
 @using Mantis.Domain.Carriers.Models
 @using Mantis.Data
+@using Mantis.Domain.User.Services
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Identity;
 
+@inject Mantis.Domain.User.Services.UserService UserService
 @inject ApplicationDbContext _context
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -38,10 +40,14 @@
 @code {
     private IEnumerable<Carrier> carriers;
     private Carrier selectedCarrier;
+    private ApplicationUser user;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCarriers();
+        ApplicationUser user = UserService.GetLoggedInUser();
+        //Don't really event need this since we are going to need the user in the Carrier Add Service method, not here in the component
+        user = UserService.GetLoggedInUser();
     }
 
     private async Task LoadCarriers()
@@ -61,13 +67,13 @@
         var result = await DialogService.OpenAsync<CarrierDialog>("Add Carrier", new Dictionary<string, object> { { "carrier", selectedCarrier } });
         if (result != null)
         {
-            var userId = UserManager.GetUserId(HttpContextAccessor.HttpContext.User);
-            var user = await UserManager.FindByIdAsync(userId);
-            selectedCarrier.CreatedBy = user;
-            var carrier = _context.Carriers.Add(selectedCarrier);
-            await _context.SaveChangesAsync();
-            await LoadCarriers();
-            NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier added successfully");
+            //CREATE METHOD IN CARRIER SERVICE TO ADD CARRIER DUHHHH - should be able to get the user from the service
+
+            // selectedCarrier.CreatedBy = user;
+            // var carrier = _context.Carriers.Add(selectedCarrier);
+            // await _context.SaveChangesAsync();
+            // await LoadCarriers();
+            // NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier added successfully");
         }
     }
 

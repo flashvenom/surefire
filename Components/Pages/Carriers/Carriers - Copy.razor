@@ -1,0 +1,136 @@
+﻿@* @page "/carriers"
+
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext _context
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject CarrierService CarrierService // Injecting CarrierService
+
+<PageTitle>Carriers</PageTitle>
+<h1>Carriers</h1>
+<RadzenDataGrid TItem="Carrier" Data="@carriers" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" RowSelect="@MyFunction" AllowColumnPicking="true" PickedColumnsChanged="@PickedColumnsChanged">
+    <HeaderTemplate>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"> 
+        <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Secondary" Click="@AddCarrier" Text="Add New" />
+        <div class="m-searchform">
+                <input type="search" autofocus class="form-control searchtweak" placeholder="Search" aria-label="Search" aria-describedby="basic-addon1" @bind="nameFilter" @bind:event="oninput">
+        </div>
+        </RadzenStack>
+    </HeaderTemplate>
+    <Columns>
+        <RadzenDataGridColumn TItem="Carrier" Property="CarrierId" Title="ID" Visible="false" />
+        <RadzenDataGridColumn TItem="Carrier" Property="LookupCode" Title="LookupCode" Visible="false" />
+        <RadzenDataGridColumn TItem="Carrier" Property="CarrierName" Title="Name" CssClass="test" Width="300px" />
+        <RadzenDataGridColumn TItem="Carrier" Property="Website" Title="Website" />
+        <RadzenDataGridColumn TItem="Carrier" Property="Phone" Title="Phone" />
+        <RadzenDataGridColumn TItem="Carrier" Property="StreetAddress" Title="StreetAddress" />
+        <RadzenDataGridColumn TItem="Carrier" Property="City" Title="City" />
+        <RadzenDataGridColumn TItem="Carrier" Property="State" Title="State" />
+        <RadzenDataGridColumn TItem="Carrier" Property="Zip" Title="Zip" />
+        <RadzenDataGridColumn TItem="Carrier" Property="IssuingCarrier" Title="Issuing" Visible="false" />
+        <RadzenDataGridColumn TItem="Carrier" Property="Wholesaler" Title="MGA" />
+        <RadzenDataGridColumn TItem="Carrier" Context="carrier">
+            <Template Context="carrier">
+                <RadzenButton Icon="edit" Click="@(args => EditCarrier(carrier))" style="margin-right: 10px" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.ExtraSmall" Text="Edit"></RadzenButton>
+                <RadzenButton Icon="delete" Click="@(args => DeleteCarrier(carrier))" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.ExtraSmall" Text="Delete"></RadzenButton>
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+
+
+<RadzenDialog />
+<RadzenNotification />
+
+<style>
+    .test {
+        font-weight: bold;
+    }
+    .m-searchform {
+        
+    }
+</style>
+@code {
+    private IEnumerable<Carrier> carriers;
+    private Carrier selectedCarrier;
+    private ApplicationUser user;
+    string nameFilter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCarriers();
+        //ApplicationUser user = UserService.GetLoggedInUser();
+        //Don't really event need this since we are going to need the user in the Carrier Add Service method, not here in the component
+        //user = UserService.GetLoggedInUser();
+    }
+
+    private async Task LoadCarriers()
+    {
+        carriers = await _context.Carriers.ToListAsync();
+    }
+
+    private async Task LoadCarriersWithFilter(LoadDataArgs args)
+    {
+        //carriers = await _context.Carriers.Where(x => x.CarrierName.Contains(nameFilter, StringComparison.CurrentCultureIgnoreCase));
+    }
+
+    public void MyFunction()
+    {
+        var thisthat = 1;
+        return;
+    }
+
+    public void PickedColumnsChanged(DataGridPickedColumnsChangedEventArgs<Carrier> args)
+    {
+
+        Console.WriteLine($"Picked columns: {string.Join(", ", args.Columns.Select(c => c.Title))}");
+    }
+    public void OnSearch(string Value)
+    {
+        var args = new LoadDataArgs
+            {
+                Filter = @$"(Username == null ? """" : Username).Contains(""{Value}"") OR (Email == null ? """" : Email).Contains(""{Value}"")"
+            };
+
+        LoadCarriersWithFilter(args);
+    }
+    private async Task AddCarrier()
+    {
+        selectedCarrier = new Carrier();
+        var result = await DialogService.OpenAsync<CarrierDialog>("Add Carrier", new Dictionary<string, object> { { "carrier", selectedCarrier } });
+        if (result != null)
+        {
+            await CarrierService.NewCarrierQuick(selectedCarrier);
+            await LoadCarriers();
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier added successfully");
+        }
+    }
+
+    private async Task EditCarrier(Carrier carrier)
+    {
+        selectedCarrier = carrier;
+        var result = await DialogService.OpenAsync<CarrierDialog>("Edit Carrier", new Dictionary<string, object> { { "carrier", selectedCarrier } });
+        if (result != null)
+        {
+            _context.Carriers.Update(selectedCarrier);
+            await _context.SaveChangesAsync();
+            await LoadCarriers();
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier updated successfully");
+        }
+    }
+
+    private async Task DeleteCarrier(Carrier carrier)
+    {
+        if (await DialogService.Confirm("Are you sure you want to delete this carrier?", "Delete Carrier") == true)
+        {
+            _context.Carriers.Remove(carrier);
+            await _context.SaveChangesAsync();
+            await LoadCarriers();
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Carrier deleted successfully");
+        }
+    }
+} *@

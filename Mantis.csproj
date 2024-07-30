@@ -25,10 +25,18 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Radzen.Blazor" Version="4.34.1" />
+    <PackageReference Include="Syncfusion.Blazor.Grid" Version="26.2.7" />
+    <PackageReference Include="Syncfusion.Blazor.Themes" Version="26.2.7" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Domain\Carriers\ViewModels\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Components\Pages\Carriers\Carriers - Copy.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
   </ItemGroup>
 
 </Project>

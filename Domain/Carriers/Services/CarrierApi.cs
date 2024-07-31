@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.AspNetCore.Identity;
 using Mantis.Data;
 using Mantis.Domain.Carriers.Models;
-using static Mantis.Components.Pages.Carriers.Carriers;
 
 
 namespace Mantis.Domain.Carriers.Services
@@ -67,6 +66,26 @@ namespace Mantis.Domain.Carriers.Services
 
             
             return new { result = DataSource, count = TotalRecordsCount };
+        }
+
+        [HttpPost("Insert")]
+        public void Insert([FromBody] CRUDModel<Carrier> Value)
+        {
+            _context.Carriers.Add(Value.Value);
+            _context.SaveChangesAsync();
+        }
+
+        [HttpPost("Update")]
+        public void Update([FromBody] CRUDModel<Carrier> Value)
+        {
+            var existingOrder = _context.Carriers.Find(Value.Value.CarrierId);
+            if (existingOrder != null)
+            {
+                // Update the existing order with the new values
+                _context.Entry(existingOrder).CurrentValues.SetValues(Value.Value);
+                // Save changes to the database
+                _context.SaveChanges();
+            }
         }
     }
 }

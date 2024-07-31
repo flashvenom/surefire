@@ -1,0 +1,17 @@
+.sfdg-title {
+    font-weight: bold;
+}
+
+.e-grid .e-headercell .e-headertext {
+    font-weight: bold !important;
+}
+
+.e-grid .e-toolbar {
+    background-color: #000000;
+}
+
+
+
+.e-toolbar-item .e-tbar-btn {
+    background: #ff0000;
+}

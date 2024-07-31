@@ -7,18 +7,57 @@
 @using Syncfusion.Blazor
 @rendermode InteractiveServer
 
-<SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search" })">
-    <SfDataManager Url="https://localhost:7074/api/Carrier" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
-    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+<link href="mantis.css" rel="stylesheet" />
+
+<SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
+    <GridEvents OnActionBegin="OnBeginHandler" TValue="Carrier"></GridEvents>
+    <SfDataManager Url="https://localhost:7074/api/Carrier" InsertUrl="https://localhost:7074/api/Carrier/Insert" UpdateUrl="https://localhost:7074/api/Grid/Update" RemoveUrl="https://localhost:7074/api/Grid/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
     <GridPageSettings PageSize="12"></GridPageSettings>
     <GridColumns>
-        <GridColumn Field=@nameof(Carrier.CarrierId) HeaderText="Id" IsIdentity="true" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true"></GridColumn>
-        <GridColumn Field=@nameof(Carrier.CarrierName) HeaderText="Carrier Name"></GridColumn>
-        <GridColumn Field=@nameof(Carrier.Phone) HeaderText="Customer Name"></GridColumn>
+        
+        <GridColumn Field=@nameof(Carrier.CarrierId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true"></GridColumn>
+        <GridColumn Field=@nameof(Carrier.CarrierName) HeaderText="Carrier Name" Width="400"></GridColumn>
+        <GridColumn Field=@nameof(Carrier.Phone) HeaderText="Phone"></GridColumn>
+        <GridColumn Field=@nameof(Carrier.Website) HeaderText="Website"></GridColumn>
+        <GridColumn Field=@nameof(Carrier.QuotingWebsite) HeaderText="Quoting"></GridColumn>
+        <GridColumn HeaderText="Full Address" Width="300">
+            <Template>
+                @{
+                    var order = (Carrier)context;
+                    var fullAddress = string.Join(", ", new[] { order.StreetAddress, order.City, order.State, order.Zip }.Where(part => !string.IsNullOrWhiteSpace(part)));
+                }
+                @if (!string.IsNullOrWhiteSpace(fullAddress))
+                {
+                    <div>@fullAddress</div>
+                }
+            </Template>
+        </GridColumn>
+        <GridColumn Field=@nameof(Carrier.IssuingCarrier) HeaderText="Issuer" Visible="false"></GridColumn>
+        <GridColumn Field=@nameof(Carrier.Wholesaler) HeaderText="MGA"></GridColumn>
+        <GridColumn Field=@nameof(Carrier.LookupCode) HeaderText="Code" Width="80" Visible="false"></GridColumn>
+        <GridColumn Field=@nameof(Carrier.CreatedBy) HeaderText="CreatedBy"></GridColumn>
     </GridColumns>
 </SfGrid>
 
 @code {
     SfGrid<Carrier> Grid { get; set; }
+    SfDataManager DataManager { get; set; }
     public List<Carrier> CarrierData { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        string testthis = "test";
+    }
+
+    private void OnBeginHandler(ActionEventArgs<Carrier> Args) 
+    { 
+        if(Args.RequestType == Syncfusion.Blazor.Grids.Action.Save) 
+        { 
+            if(Args.Action == "Add") 
+            { 
+                var t = Args.Data; //gets here - do I need to call the CRUD methods myself?
+            } 
+        } 
+    } 
 }

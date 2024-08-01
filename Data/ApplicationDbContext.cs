@@ -27,6 +27,7 @@ namespace Mantis.Data
         public DbSet<Driver> Drivers { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
+        public DbSet<Address> Address { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

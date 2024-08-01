@@ -1,12 +1,17 @@
-﻿@inherits LayoutComponentBase
-@using Syncfusion.Blazor
+﻿@using Syncfusion.Blazor
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Buttons
+@using Mantis.Domain.Shared.Services
+@using Mantis.Components.Layout
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@inherits LayoutComponentBase
+@inject BreadcrumbService BreadcrumbService
 
 <div class="top-bar">
     <div class="left-icons">
         <a href="/">
-            <img src="/img/surefirelogo.png" alt="App Logo" class="app-logo" />
+            <img src="/img/surefirelogo-full.png" alt="App Logo" class="app-logo" />
         </a>
     </div>
 
@@ -16,8 +21,6 @@
 
     <div class="right-icons" style="color:#fff;">
         <SfButton CssClass="e-flat e-icon-btn" IconCss="e-icons e-plus-icon"></SfButton>
-           
-        
         <SfButton CssClass="e-flat e-icon-btn">
             <span class="e-icons e-user"></span>
         </SfButton>
@@ -30,7 +33,17 @@
     </div>
 
     <main>
-        <article class="xxcontent xxpx-4">
+        <div class="breadcrum">
+            <SfBreadcrumb>
+                <BreadcrumbItems>
+                    @foreach (var item in BreadcrumbService.Items)
+                    {
+                        <BreadcrumbItem Text="@item.Text" Url="@item.Url" />
+                    }
+                </BreadcrumbItems>
+            </SfBreadcrumb>
+        </div>
+        <article class="myarticleclass">
             @Body
         </article>
     </main>
@@ -48,7 +61,6 @@
         flex-direction: column;
         height: 100vh;
     }
-
     .top-bar {
         width: 100%;
         height: 50px;
@@ -58,6 +70,7 @@
         justify-content: space-between;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         padding: 0 10px;
+        sticky: top;
     }
 
     .left-icons {

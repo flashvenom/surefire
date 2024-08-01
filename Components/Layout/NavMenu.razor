@@ -1,171 +1,62 @@
 ﻿@implements IDisposable
-
+@using Microsoft.FluentUI.AspNetCore.Components
 @inject NavigationManager NavigationManager
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" style="display:none" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="() => CloseSubmenus()">
-                <RadzenIcon Icon="home" Size="50px" class="b-navicon" /> <strong>Homepage</strong>
-            </NavLink>
-        </div>
+<NavLink class="btn nav-link" href="/" Match="NavLinkMatch.Prefix" title="Home">
+    <div class="nb-blueline nb-active"></div>
+    <FluentIcon Value="@(new Icons.Filled.Size24.Home())" Class="@GetNavItemClass("Home")" />
+</NavLink>
+<br />
 
-        <hr />
+<NavLink class="btn nav-link" href="Clients/List" Match="NavLinkMatch.Prefix" title="Clients">
+    <div class="nb-blueline"></div>
+    <FluentIcon Value="@(new Icons.Regular.Size24.Briefcase())" Class="@GetNavItemClass("Clients")" />
+</NavLink>
+<br />
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Clients/Home" @onclick="@(() => ToggleSubmenu("clients"))">
-                <RadzenIcon Icon="business_center" Size="50px" class="b-navicon" /> Clients
-            </NavLink>
-            <div class="submenu @(IsSubmenuVisible("Clients") ? "expanded" : "collapsed")">
-                <NavLink class="nav-link nav-sub" href="clients/businesses">Businesses</NavLink>
-                <NavLink class="nav-link nav-sub" href="Media/Organize">Contacts</NavLink>
-                <NavLink class="nav-link nav-sub" href="Media/Organize">Policies</NavLink>
-                <NavLink class="nav-link nav-sub" href="Media/Organize">Addresses</NavLink>
-                <NavLink class="nav-link nav-sub" href="Media/Organize">Claims</NavLink>
-            </div>
-        </div>
-@* 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Editor/Home">
-                <RadzenIcon Icon="policy" Size="50px" class="b-navicon" /> Policies
-            </NavLink>
-            <div class="submenu @(IsSubmenuVisible("Editor") ? "expanded" : "collapsed")">
-                <NavLink class="nav-link nav-sub" href="Editor/Studio">Studio</NavLink>
-                <NavLink class="nav-link nav-sub" href="Editor/Songs">Songs</NavLink>
-                <NavLink class="nav-link nav-sub" href="Editor/ProServices">ProServices</NavLink>
-                <NavLink class="nav-link nav-sub" href="Editor/Debug">Debug</NavLink>
-            </div>
-        </div> *@
+<NavLink class="btn nav-link" href="People" Match="NavLinkMatch.Prefix" title="People">
+    <div class="nb-blueline"></div>
+    <FluentIcon Value="@(new Icons.Regular.Size24.People())" Class="@GetNavItemClass("Clients")" />
+</NavLink>
+<br />
 
+<NavLink class="btn nav-link" href="Policies" Match="NavLinkMatch.Prefix" title="Policies">
+    <div class="nb-blueline"></div>
+    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentMultiple())" Class="@GetNavItemClass("Clients")" />
+</NavLink>
+<br />
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="planner">
-                <RadzenIcon Icon="auto_mode" Size="50px" class="b-navicon" /> Renewals
-            </NavLink>
-        </div>
+<NavLink class="btn nav-link" href="Carriers" Match="NavLinkMatch.Prefix" title="Carriers">
+    <div class="nb-blueline"></div>
+    <FluentIcon Value="@(new Icons.Regular.Size24.BuildingRetailShield())" Class="@GetNavItemClass("Clients")" />
+</NavLink>
+<br />
 
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="planner">
-                <RadzenIcon Icon="event_note" Size="50px" class="b-navicon" /> Tasks
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="resources">
-                <RadzenIcon Icon="campaign" Size="50px" class="b-navicon" /> Marketing
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="resources">
-                <RadzenIcon Icon="rocket" Size="50px" class="b-navicon" /> Service
-            </NavLink>
-        </div>
-
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="carriers">
-                <RadzenIcon Icon="domain" Size="50px" class="b-navicon" /> Carriers
-            </NavLink>
-        </div>
-
-        <hr />
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="help">
-                <RadzenIcon Icon="help" Size="50px" class="b-navicon" /> Help
-            </NavLink>
-        </div>
-
-
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-    </nav>
-</div>
+<NavLink class="btn nav-link" href="Locations" Match="NavLinkMatch.Prefix" title="Locations">
+    <div class="nb-blueline"></div>
+    <FluentIcon Value="@(new Icons.Regular.Size24.Location())" Class="@GetNavItemClass("Clients")" />
+</NavLink>
 
 @code {
     private string? currentUrl;
-    private string expandedMenu = string.Empty;
 
     protected override void OnInitialized()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
-        SetInitialExpandedMenu();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        SetInitialExpandedMenu();
         StateHasChanged();
     }
 
-    private void SetInitialExpandedMenu()
+    private string GetNavItemClass(string href)
     {
-        if (IsCurrentUrl("Clients") || IsCurrentUrl("Clients/Home") || IsCurrentUrl("Media/Enhance") || IsCurrentUrl("Media/Organize") || IsCurrentUrl("Media/Upload"))
-        {
-            expandedMenu = "Clients";
-        }
-        else if (IsCurrentUrl("Editor") || IsCurrentUrl("Editor/Home") || IsCurrentUrl("Editor/Debug") || IsCurrentUrl("Editor/ProServices") || IsCurrentUrl("Editor/Songs") || IsCurrentUrl("Editor/Studio"))
-        {
-            expandedMenu = "Editor";
-        }
-        else
-        {
-            expandedMenu = string.Empty;
-        }
-    }
-
-    private void ToggleSubmenu(string menu)
-    {
-        expandedMenu = expandedMenu == menu ? string.Empty : menu;
-    }
-
-    private void CloseSubmenus()
-    {
-        expandedMenu = string.Empty;
-    }
-
-    private bool IsSubmenuVisible(string menu)
-    {
-        return expandedMenu == menu;
-    }
-
-    private bool IsCurrentUrl(string url)
-    {
-        return currentUrl != null && currentUrl.StartsWith(url, StringComparison.OrdinalIgnoreCase);
+        return currentUrl != null && currentUrl.StartsWith(href, StringComparison.OrdinalIgnoreCase) ? "selected-nav-item" : "";
     }
 
     public void Dispose()
@@ -173,3 +64,33 @@
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
+
+<style>
+    .custom-icon-color {
+        color: #0078D4; /* Your desired default color */
+    }
+    .e-icons.e-medium {
+        font-size: 20px !important;
+    }
+    .nav-link {
+        position: relative;
+        color:#000;
+        padding: 0px;
+    }
+
+        .nav-link .selected-nav-item {
+            color: #000;
+        }
+
+        .nav-link:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: 100%;
+            margin-left: 8px;
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+</style>

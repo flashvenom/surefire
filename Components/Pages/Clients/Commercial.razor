@@ -1,0 +1,119 @@
+﻿@page "/Clients/Commercial"
+
+@using Newtonsoft.Json
+@using Mantis.Domain.Clients.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Lists
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<Toolbar />
+
+<div class="page-content">
+        <div class="sf-quicklist">
+            <SfTextBox Placeholder="Type to search clients..." @bind-Value="searchTerm" @oninput="OnInputChanged" CssClass="search-input small-input" ShowClearButton="true" />
+
+        <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
+            <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
+            <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
+        </SfListView>
+        </div>
+
+        <div class="sf-detail">
+            <span class="text-secondary">Select a client to view details</span>
+            <div class="sf-detail">
+                @if (selectedClient != null)
+                {
+                    <h3>@selectedClient.Name</h3>
+                    <p>ID: @selectedClient.ClientId</p>
+                    <p>Email: @selectedClient.Email</p>
+                    <!-- Add more client details here -->
+                }
+            </div>
+        </div>
+        
+        <div style="clear:both;"></div>
+</div>
+
+<style>
+    .page-content {
+        display:flex;
+        flex-direction:row;
+    }
+    .client-list .e-list-item {
+        border-bottom: 1px solid #ccc;
+    }
+    .e-list-view {
+        border: 0px;
+    }
+
+    .e-list-view-container {
+        border: 0px !important;
+    }
+    .sf-quicklist {
+        
+    }
+
+    
+    .search-input.small-input {
+        font-size: 0.875em; /* Adjust font size */
+        padding: 0.5em; /* Adjust padding */
+        border:0px;
+    }
+</style>
+
+@code {
+    private string searchTerm = string.Empty;
+    private List<Client> clients = new();
+    private List<Client> filteredClients = new();
+    private System.Timers.Timer debounceTimer;
+    private Client selectedClient;
+
+    protected override async Task OnInitializedAsync()
+    {
+        debounceTimer = new System.Timers.Timer(100); // 300ms debounce interval
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += (sender, args) => FilterClients();
+
+        clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
+        filteredClients = new List<Client>(clients);
+    }
+
+    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        searchTerm = e.Value.ToString();
+        debounceTimer.Stop();
+        debounceTimer.Start();
+    }
+
+    private void ClickHandler(ClickEventArgs<Client> args)
+    {
+        string thisthat2 = "";
+        //selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{args.Index}");
+        //InvokeAsync(StateHasChanged);
+    }
+
+    private void FilterClients()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            filteredClients = new List<Client>(clients);
+        }
+        else
+        {
+            filteredClients = clients
+                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
+}

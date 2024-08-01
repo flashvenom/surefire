@@ -2,6 +2,19 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="page-content">
+    <h1>Welcome to SureFire!</h1>
 
-Welcome to your new app.
+    <p>We're glad you're here. SureFire is a fast, open source and intuitive insurance agency management system built with the modern technology.</p>
+</div>
+
+
+@code {
+    protected override void OnInitialized()
+    {
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home" }
+        });
+    }
+}

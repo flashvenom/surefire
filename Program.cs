@@ -3,6 +3,7 @@ using Mantis.Components.Account;
 using Mantis.Data;
 using Mantis.Domain.Carriers.Services;
 using Mantis.Domain.Clients.Services;
+using Mantis.Domain.Shared.Services;
 using Mantis.Domain.User.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -46,6 +47,7 @@ builder.Services.AddScoped<CarrierService>();
 builder.Services.AddScoped<UserService>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton<BreadcrumbService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();

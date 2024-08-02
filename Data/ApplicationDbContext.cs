@@ -146,4 +146,8 @@ namespace Mantis.Data
                 .HasForeignKey("AddressId");
         }
     }
+    //public class CarrierFlexContext : DbContext
+    //{
+    //    public virtual DbSet<Carrier> Carriers { get; set; }
+    //}
 }

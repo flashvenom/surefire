@@ -71,6 +71,7 @@ namespace Mantis.Domain.Carriers.Services
         [HttpPost("Insert")]
         public void Insert([FromBody] CRUDModel<Carrier> Value)
         {
+            //BRTEAKPOINT DOES NOT HIT HERE
             _context.Carriers.Add(Value.Value);
             _context.SaveChangesAsync();
         }
@@ -78,14 +79,21 @@ namespace Mantis.Domain.Carriers.Services
         [HttpPost("Update")]
         public void Update([FromBody] CRUDModel<Carrier> Value)
         {
+            //BRTEAKPOINT DOES NOT HIT HERE
             var existingOrder = _context.Carriers.Find(Value.Value.CarrierId);
             if (existingOrder != null)
             {
-                // Update the existing order with the new values
                 _context.Entry(existingOrder).CurrentValues.SetValues(Value.Value);
-                // Save changes to the database
                 _context.SaveChanges();
             }
+        }
+
+        [HttpPost("Delete")]
+        public void Delete([FromBody] CRUDModel<Carrier> Value)
+        {
+            //BRTEAKPOINT DOES NOT HIT HERE
+            var existingOrder = _context.Carriers.Find(Value.Value.CarrierId);
+            //Delete Code
         }
     }
 }

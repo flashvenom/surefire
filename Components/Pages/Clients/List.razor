@@ -26,23 +26,32 @@
             <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
         </SfListView>
     </div>
-
-    <div class="sf-detail">
-        @if (selectedClient != null)
-        {
+    
+    @if (selectedClient != null)
+    {
+    <div class="sf-selected">
+        <div class="sf-header">
             <div class="client-header">
-                @selectedClient.Name
+                @selectedClient.Name <br />
+                <span class="client-address">
+                    @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+                </span>
             </div>
-            <div class="client-details-1">
-                @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City
-                , @selectedClient.Address.State @selectedClient.Address.PostalCode
+                
+            <div class="client-header-2">
+                    
             </div>
-            
 
+            <div class="client-header-3">
+                <span class="client-phone">@selectedClient.PhoneNumber</span><br />
+                    <span class="client-email">@selectedClient.Email</span>
+            </div>
+        </div>
 
-            <div class="client-details">
-                <div class="column">
+        <div class="sf-col-container">
+            <div class="sf-col sf-col-1">
                     <h3>Current Policies</h3>
+                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                     <div class="policy-container">
                         @foreach (var policy in currentPolicies)
                         {
@@ -53,7 +62,6 @@
                                 </div>
                                 <div class="policy-details">
                                     <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
-
                                 </div>
                                 <div class="policy-details">
                                     <div>@policy.PolicyNumber</div>
@@ -61,74 +69,76 @@
                                 </div>
                             </div>
                         }
-                        <h6>Past Policies</h6>
+                        <h4>Past Policies</h4>
+                        <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                         @foreach (var policy in pastPolicies)
                         {
                             <div class="past-policy">
-                                <div class="past-policy-header">
-                                    <div>@policy.eTypeCode (@policy.PolicyNumber)</div>
-                                    <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
-                                </div>
-                                <div class="past-policy-details">
-                                    <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
-                                </div>
+                                <div class="sf-pp">@policy.eType</div>
+                                <div>@policy.PolicyNumber</div>
+                                <div>@policy.Carrier?.LookupCode</div>
+                                <div>@policy.Wholesaler?.LookupCode</div>
+                                <div class="sf-da">@policy.EffectiveDate.ToShortDateString()</div>
+                                <div class="sf-da">@policy.ExpirationDate.ToShortDateString()</div>
                             </div>
                         }
-                    </div>
-
-                    <ul>
-                        <hr>
-                        @foreach (var policy in clientPolicies)
+                        @if (clientPolicies != null)
                         {
-                            <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
+                        <ul>
+                            @foreach (var policy in clientPolicies)
+                            {
+                                <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
+                            }
+                        </ul>
                         }
-                    </ul>
-                </div>
-                <div class="column">
-                    <h3>Client Details</h3>
-                    <p><strong>ID:</strong> @selectedClient.ClientId @selectedClient.LookupCode</p>
-                    <p><strong>Address:</strong> @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode  </p>
-                    <p><strong>Phone:</strong> @selectedClient.PhoneNumber</p>
-                    <p><strong>Email:</strong> @selectedClient.Email</p>
-                    <p><strong>Website:</strong> @selectedClient.Website</p>
+                    </div>
+            </div>@* sf-col-1 *@
+            <div class="sf-col sf-col-2">
+                <h3>Primary Contact</h3>
+                    <strong>@selectedClient.PrimaryContact.FirstName @selectedClient.PrimaryContact.LastName</strong> <br />
+                    @selectedClient.PrimaryContact.Phone<br />
+                    <i>@selectedClient.PrimaryContact.Email</i><br />
+                    
+
+                    <h4 class="sf-toppad">Additional Contacts</h4>
+                    @foreach (var contact in selectedClient.Contacts)
+                    {
+                        <li>@contact.FirstName @contact.LastName - @contact.Phone - @contact.Email</li>
+                    }
+
+
+                    <h4 class="sf-toppad">Additional Info</h4>
+                    @selectedClient.Website
+                
+                
+            </div>@* sf-col-2 *@
+            <div class="sf-col sf-col-3">
+                <h3>Technical Stuff</h3>
+                    <p><strong>ID:</strong> @selectedClient.ClientId </p>
+                    <p><strong>LookupCode:</strong> @selectedClient.LookupCode</p>
                     <p><strong>eClientId:</strong> @selectedClient.eClientId</p>
                     <p>
-                        <strong>EpicClientId:</strong>
+                        <strong>eClientId-New:</strong>
                         @if (isLoadingCrmId)
                         {
                             <span class="loading-spinner"></span> <!-- Add CSS for spinner -->
                         }
                         else if (string.IsNullOrEmpty(crmClientId))
                         {
-                            <span>X</span>
+                            <span>Loading...</span>
                         }
                         else
                         {
                             <span>@crmClientId</span>
                         }
                     </p>
-                    @isLoadingCrmId.ToString() <br />
-                    @isLoadingWhat
-                </div>
-                <div class="column">
-                    <h3>Contacts</h3>
-                    <ul>
-                        <h4>Primary</h4>
-                        @selectedClient.PrimaryContact.FirstName @selectedClient.PrimaryContact.LastName - @selectedClient.PrimaryContact.Phone - @selectedClient.PrimaryContact.Email
-                        <br>
-                        <h4>Associated</h4>
-                        @foreach (var contact in selectedClient.Contacts)
-                        {
-                            <li>@contact.FirstName @contact.LastName - @contact.Phone - @contact.Email</li>
-                        }
-                    </ul>
-                </div>
-                
-            </div>
-        }
+                    <p><strong>Loading:</strong> @isLoadingCrmId.ToString()</p>
+                    <p><strong>Server Status:</strong> @isLoadingWhat</p>
 
+            </div>@* sf-col-3 *@
+        </div>
     </div>
-
+    }
     <div style="clear:both;"></div>
 </div>
 
@@ -201,6 +211,10 @@
     {
         try
         {
+            currentPolicies.Clear();
+            pastPolicies.Clear();
+            clientPolicies.Clear();
+            InvokeAsync(StateHasChanged);
             isLoadingWhat += ".";
             var clientId = filteredClients[args.Index].ClientId;
             selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
@@ -263,48 +277,12 @@
         finally
         {
             isLoadingCrmId = false;
+            SortAndSeparatePolicies();
+            isLoadingWhat = "Done!";
             InvokeAsync(StateHasChanged);
         }
     }
-    // private async Task LoadClientPolicies(string clientId, string accessToken)
-    // {
-    //     try
-    //     {
-    //         var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
-    //         isLoadingWhat += ".";
-    //         InvokeAsync(StateHasChanged);
-    //         var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
-
-    //         if (policyData != null && policyData["_embedded"] != null)
-    //         {
-    //             var embeddedData = policyData["_embedded"] as JObject;
-    //             if (embeddedData != null && embeddedData["policies"] != null)
-    //             {
-    //                 var policiesList = embeddedData["policies"].ToObject<List<JObject>>();
-    //                 clientPolicies = policiesList.Select(p => new Policy
-    //                     {
-    //                         PolicyNumber = p["policyNumber"]?.ToString(),
-    //                         ePolicyId = p["id"]?.ToString(),
-    //                         eType = p["policyType"]?["description"]?.ToString(),
-    //                         eTypeCode = p["policyType"]?["code"]?.ToString(),
-    //                         Notes = p["description"]?.ToString(),
-    //                         EffectiveDate = p["effectiveOn"] != null ? DateTime.Parse(p["effectiveOn"].ToString()) : DateTime.MinValue,
-    //                         ExpirationDate = p["expirationOn"] != null ? DateTime.Parse(p["expirationOn"].ToString()) : DateTime.MinValue,
-    //                         Premium = p["estimatedPremium"] != null ? decimal.Parse($"{p["estimatedPremium"]["units"]}.{p["estimatedPremium"]["partialUnits"]}") : 0m
-    //                     }).ToList();
-    //             }
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.Error.WriteLine($"Error loading client policies: {ex.Message}");
-    //     }
-    //     finally
-    //     {
-    //         InvokeAsync(StateHasChanged);
-    //         isLoadingWhat += ".";
-    //     }
-    // }
+    
     private async Task LoadClientPolicies(string clientId, string accessToken)
     {
         try

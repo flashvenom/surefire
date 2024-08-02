@@ -5,13 +5,13 @@ using Mantis.Domain.Carriers.Services;
 using Mantis.Domain.Clients.Services;
 using Mantis.Domain.Shared.Services;
 using Mantis.Domain.User.Services;
+using Mantis.Shared.DataAccess;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Syncfusion.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -33,7 +33,14 @@ builder.Services.AddAuthentication(options =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+
+builder.Services.AddDbContext<OrderContext>(options =>
+        options.UseSqlServer(connectionString));
+builder.Services.AddScoped<OrderService>();
+
+
+//builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()

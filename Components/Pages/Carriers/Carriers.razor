@@ -16,11 +16,14 @@
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" TValue="Carrier"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Carrier" InsertUrl="https://localhost:7074/api/Carrier/Insert" UpdateUrl="https://localhost:7074/api/Grid/Update" RemoveUrl="https://localhost:7074/api/Grid/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager  Url="https://localhost:7074/api/Carrier" 
+                        InsertUrl="https://localhost:7074/api/Carrier/Insert" 
+                        UpdateUrl="https://localhost:7074/api/Carrier/Update" 
+                        RemoveUrl="https://localhost:7074/api/Carrier/Delete" 
+                        Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
-        
             <GridColumn Field=@nameof(Carrier.CarrierId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true"></GridColumn>
             <GridColumn Field=@nameof(Carrier.CarrierName) HeaderText="Carrier Name" Width="400"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Phone) HeaderText="Phone"></GridColumn>
@@ -45,23 +48,28 @@
         </GridColumns>
     </SfGrid>
 </div>
+@statusMy
+
 @code {
     SfGrid<Carrier> Grid { get; set; }
     SfDataManager DataManager { get; set; }
+    string statusMy = "Loading";
     public List<Carrier> CarrierData { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        string testthis = "test";
+        statusMy = "Loading...";
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Carriers" }
         });
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnBeginHandler(ActionEventArgs<Carrier> Args) 
     { 
+        statusMy = "Clicked";
         if(Args.RequestType == Syncfusion.Blazor.Grids.Action.Save) 
         { 
             if(Args.Action == "Add") 
@@ -69,5 +77,7 @@
                 var t = Args.Data; //gets here - do I need to call the CRUD methods myself?
             } 
         } 
+        statusMy = "Clicked...";
+        InvokeAsync(StateHasChanged);
     } 
 }

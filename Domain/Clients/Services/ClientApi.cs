@@ -43,7 +43,11 @@ namespace Mantis.Domain.Carriers.Services
                 .Include(c => c.Locations)
                 .Include(c => c.Contacts)
                 .Include(c => c.Policies)
+                    .ThenInclude(p => p.Carrier)
+                .Include(c => c.Policies)
+                    .ThenInclude(p => p.Wholesaler)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
+
             if (client == null)
             {
                 return NotFound();

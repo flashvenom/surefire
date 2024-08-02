@@ -1,6 +1,12 @@
 ﻿@page "/Clients/Personal"
 
+@using Mantis.Domain.Clients.Models
 @using Mantis.Components.Layout
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor
 @using Microsoft.FluentUI.AspNetCore.Components
 
 @inject NavigationManager NavigationManager
@@ -9,16 +15,43 @@
 <Toolbar />
 
 <div class="page-content">
-    <h1>Personal Lines</h1>
+    <SfGrid @ref="Grid" DataSource="@ClientData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
+        <GridEvents OnActionBegin="OnBeginHandler" TValue="Client"></GridEvents>
+        <SfDataManager Url="https://localhost:7074/api/Client" InsertUrl="https://localhost:7074/api/Client/Insert" UpdateUrl="https://localhost:7074/api/Client/Update" RemoveUrl="https://localhost:7074/api/Client/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+        <GridPageSettings PageSize="12"></GridPageSettings>
+        <GridColumns>
+            <GridColumn Field=@nameof(Client.ClientId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true"></GridColumn>
+            <GridColumn Field=@nameof(Client.Name) HeaderText="Carrier Name" Width="400"></GridColumn>
+            <GridColumn Field=@nameof(Client.PhoneNumber) HeaderText="Phone"></GridColumn>
+            <GridColumn Field=@nameof(Client.Email) HeaderText="Website"></GridColumn>
+            <GridColumn Field=@nameof(Client.Website) HeaderText="Quoting"></GridColumn>
+        </GridColumns>
+    </SfGrid>
 </div>
-
 @code {
-    protected override void OnInitialized()
+    SfGrid<Client> Grid { get; set; }
+    SfDataManager DataManager { get; set; }
+    public List<Client> ClientData { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
+        string testthis = "test";
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Clients" }
         });
+    }
+
+    private void OnBeginHandler(ActionEventArgs<Client> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            if (Args.Action == "Add")
+            {
+                var t = Args.Data; //gets here - do I need to call the CRUD methods myself?
+            }
+        }
     }
 }

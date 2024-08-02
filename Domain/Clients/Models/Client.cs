@@ -11,6 +11,7 @@ namespace Mantis.Domain.Clients.Models
     public class Client
     {
         public int ClientId { get; set; }
+        public string? eClientId { get; set; }
         public string LookupCode { get; set; }
         public string Name { get; set; }
         public string? PhoneNumber { get; set; }

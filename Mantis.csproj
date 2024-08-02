@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Components\Layout\NavMenu - Copy.razor" />
     <Content Remove="Components\Pages\Carriers\CarrierDialog.razor" />
     <Content Remove="Components\Pages\Carriers\Carriers - Copy.razor" />
     <Content Remove="Components\Pages\Clients\Test.razor" />
@@ -16,13 +17,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Components\Layout\NavMenu - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses.razor.css" />
     <None Remove="Components\Pages\Clients\Commercial.razor.css" />
+    <None Remove="Components\Pages\Clients\List.razor.css" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Components\Pages\Clients\Commercial.razor.css" />
+    <Content Include="Components\Pages\Clients\List.razor.css" />
   </ItemGroup>
 
   <ItemGroup>

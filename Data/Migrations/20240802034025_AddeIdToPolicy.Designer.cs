@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240802034025_AddeIdToPolicy")]
+    partial class AddeIdToPolicy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -365,13 +368,13 @@ namespace Mantis.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PolicyId"));
 
-                    b.Property<int?>("ApplicationId")
+                    b.Property<int>("ApplicationId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CarrierId")
+                    b.Property<int>("CarrierId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ClientId")
+                    b.Property<int?>("ClientId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("EffectiveDate")
@@ -390,19 +393,16 @@ namespace Mantis.Migrations
                     b.Property<decimal>("Premium")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("ProductId")
+                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("WholesalerId")
+                    b.Property<int>("WholesalerId")
                         .HasColumnType("int");
 
                     b.Property<string>("ePolicyId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ePolicyLineId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("eType")
@@ -967,34 +967,35 @@ namespace Mantis.Migrations
                 {
                     b.HasOne("Mantis.Domain.Policies.Models.Application", "Application")
                         .WithMany()
-                        .HasForeignKey("ApplicationId");
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Mantis.Domain.Carriers.Models.Carrier", "Carrier")
                         .WithMany()
                         .HasForeignKey("CarrierId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
-                        .WithMany("Policies")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", null)
+                        .WithMany("Policies")
+                        .HasForeignKey("ClientId");
 
                     b.HasOne("Mantis.Domain.Shared.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Mantis.Domain.Carriers.Models.Carrier", "Wholesaler")
                         .WithMany()
                         .HasForeignKey("WholesalerId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Application");
 
                     b.Navigation("Carrier");
-
-                    b.Navigation("Client");
 
                     b.Navigation("Product");
 

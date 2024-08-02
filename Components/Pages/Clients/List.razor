@@ -1,57 +1,382 @@
 ﻿@page "/Clients/List"
 
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
 @using Mantis.Domain.Clients.Models
-@using Mantis.Components.Layout
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor
+@using Mantis.Domain.Clients.Services
+@using Mantis.Domain.Policies.Models
 @using Microsoft.FluentUI.AspNetCore.Components
-
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Lists
+@using Mantis.Data
+@inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject CrmApiService CrmApiService
+@inject ClientService ClientService
 @rendermode InteractiveServer
 
 <Toolbar />
 
 <div class="page-content">
-    <SfGrid @ref="Grid" DataSource="@ClientData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
-        <GridEvents OnActionBegin="OnBeginHandler" TValue="Client"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Client" InsertUrl="https://localhost:7074/api/Client/Insert" UpdateUrl="https://localhost:7074/api/Client/Update" RemoveUrl="https://localhost:7074/api/Client/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
-        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
-        <GridPageSettings PageSize="12"></GridPageSettings>
-        <GridColumns>
-            <GridColumn Field=@nameof(Client.ClientId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true"></GridColumn>
-            <GridColumn Field=@nameof(Client.Name) HeaderText="Carrier Name" Width="400"></GridColumn>
-            <GridColumn Field=@nameof(Client.PhoneNumber) HeaderText="Phone"></GridColumn>
-            <GridColumn Field=@nameof(Client.Email) HeaderText="Website"></GridColumn>
-            <GridColumn Field=@nameof(Client.Website) HeaderText="Quoting"></GridColumn>
-        </GridColumns>
-    </SfGrid>
+    <div class="sf-quicklist">
+        <SfTextBox Placeholder="Type to search clients..." @ref=@SearchBox @bind-Value="searchTerm" @oninput="OnInputChanged" CssClass="search-input small-input" ShowClearButton="true" />
+        <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
+            <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
+            <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
+        </SfListView>
+    </div>
+
+    <div class="sf-detail">
+        @if (selectedClient != null)
+        {
+            <div class="client-header">
+                @selectedClient.Name
+            </div>
+            <div class="client-details-1">
+                @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City
+                , @selectedClient.Address.State @selectedClient.Address.PostalCode
+            </div>
+            
+
+
+            <div class="client-details">
+                <div class="column">
+                    <h3>Current Policies</h3>
+                    <div class="policy-container">
+                        @foreach (var policy in currentPolicies)
+                        {
+                            <div class="policy">
+                                <div class="policy-header">
+                                    <div>@policy.eType</div>
+                                    <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
+                                </div>
+                                <div class="policy-details">
+                                    <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
+
+                                </div>
+                                <div class="policy-details">
+                                    <div>@policy.PolicyNumber</div>
+                                    <div>@policy.Premium.ToString("C")</div>
+                                </div>
+                            </div>
+                        }
+                        <h6>Past Policies</h6>
+                        @foreach (var policy in pastPolicies)
+                        {
+                            <div class="past-policy">
+                                <div class="past-policy-header">
+                                    <div>@policy.eTypeCode (@policy.PolicyNumber)</div>
+                                    <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
+                                </div>
+                                <div class="past-policy-details">
+                                    <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <ul>
+                        <hr>
+                        @foreach (var policy in clientPolicies)
+                        {
+                            <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
+                        }
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Client Details</h3>
+                    <p><strong>ID:</strong> @selectedClient.ClientId @selectedClient.LookupCode</p>
+                    <p><strong>Address:</strong> @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode  </p>
+                    <p><strong>Phone:</strong> @selectedClient.PhoneNumber</p>
+                    <p><strong>Email:</strong> @selectedClient.Email</p>
+                    <p><strong>Website:</strong> @selectedClient.Website</p>
+                    <p><strong>eClientId:</strong> @selectedClient.eClientId</p>
+                    <p>
+                        <strong>EpicClientId:</strong>
+                        @if (isLoadingCrmId)
+                        {
+                            <span class="loading-spinner"></span> <!-- Add CSS for spinner -->
+                        }
+                        else if (string.IsNullOrEmpty(crmClientId))
+                        {
+                            <span>X</span>
+                        }
+                        else
+                        {
+                            <span>@crmClientId</span>
+                        }
+                    </p>
+                    @isLoadingCrmId.ToString() <br />
+                    @isLoadingWhat
+                </div>
+                <div class="column">
+                    <h3>Contacts</h3>
+                    <ul>
+                        <h4>Primary</h4>
+                        @selectedClient.PrimaryContact.FirstName @selectedClient.PrimaryContact.LastName - @selectedClient.PrimaryContact.Phone - @selectedClient.PrimaryContact.Email
+                        <br>
+                        <h4>Associated</h4>
+                        @foreach (var contact in selectedClient.Contacts)
+                        {
+                            <li>@contact.FirstName @contact.LastName - @contact.Phone - @contact.Email</li>
+                        }
+                    </ul>
+                </div>
+                
+            </div>
+        }
+
+    </div>
+
+    <div style="clear:both;"></div>
 </div>
+
+<style>
+    .page-content {
+        display: flex;
+        flex-direction: row;
+    }
+    :root .e-input:not(:valid), .e-input:valid, .e-float-input.e-control-wrapper input:not(:valid), .e-float-input.e-control-wrapper input:valid, .e-float-input input:not(:valid), .e-float-input input:valid, .e-input-group input:not(:valid), .e-input-group input:valid, .e-input-group.e-control-wrapper input:not(:valid), .e-input-group.e-control-wrapper input:valid, .e-float-input.e-control-wrapper textarea:not(:valid), .e-float-input.e-control-wrapper textarea:valid, .e-float-input textarea:not(:valid), .e-float-input textarea:valid, .e-input-group.e-control-wrapper textarea:not(:valid), .e-input-group.e-control-wrapper textarea:valid, .e-input-group textarea:not(:valid), .e-input-group textarea:valid {
+        font-size: 14px !important;
+        height: 5px !important;
+        background-color: none !important;
+    }
+
+    :root .sf-quicklist .e-listview {
+        padding: 0px !important;
+        margin: 0px !important;
+    }
+        :root .e-listview .e-list-item {
+            padding: 0px !important;
+            margin: 0px !important;
+            height: 25px !important;
+        }
+    .search-input.small-input {
+        font-size: 0.875em; /* Adjust font size */
+        padding: 0.5em; /* Adjust padding */
+        border: 0px;
+    }
+</style>
+
 @code {
-    SfGrid<Client> Grid { get; set; }
-    SfDataManager DataManager { get; set; }
-    public List<Client> ClientData { get; set; }
+    private string searchTerm = string.Empty;
+    private List<Client> clients = new();
+    private List<Client> filteredClients = new();
+    private System.Timers.Timer debounceTimer;
+    private Client selectedClient;
+    private string crmClientId = string.Empty;
+    private List<Policy> clientPolicies = new();
+    private List<Policy> currentPolicies = new();
+    private List<Policy> pastPolicies = new();
+    private bool isLoadingCrmId = false;
+    private string isLoadingWhat = "Initializing";
+    SfTextBox SearchBox { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        string testthis = "test";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        debounceTimer = new System.Timers.Timer(100);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += (sender, args) => FilterClients();
+
+        clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
+        filteredClients = new List<Client>(clients);
+    }
+    private async void AddDateIcon()
+    {
+        if (SearchBox != null)
         {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Clients" }
-        });
+            //Add icon to the TextBox
+            await SearchBox.AddIconAsync("append", "e-icons e-date-icon");
+        }
+    }
+    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        searchTerm = e.Value.ToString();
+        debounceTimer.Stop();
+        debounceTimer.Start();
     }
 
-    private void OnBeginHandler(ActionEventArgs<Client> Args)
-    { 
-        if(Args.RequestType == Syncfusion.Blazor.Grids.Action.Save) 
-        { 
-            if(Args.Action == "Add") 
-            { 
-                var t = Args.Data; //gets here - do I need to call the CRUD methods myself?
-            } 
-        } 
-    } 
+    private async void ClickHandler(ClickEventArgs<Client> args)
+    {
+        try
+        {
+            isLoadingWhat += ".";
+            var clientId = filteredClients[args.Index].ClientId;
+            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+            if (selectedClient.eClientId == null)
+            {
+                isLoadingCrmId = true;
+                isLoadingWhat += ".:";
+                InvokeAsync(StateHasChanged);
+                await LoadCrmClientIdAndPolicies(selectedClient.LookupCode);
+            }
+            // Separate and sort policies
+            SortAndSeparatePolicies();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ClientId is null or error fetching client data: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingWhat += ".";
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task LoadCrmClientIdAndPolicies(string lookupCode)
+    {
+        
+        crmClientId = string.Empty;
+        clientPolicies.Clear();
+        try
+        {
+            isLoadingWhat += ".";
+            var accessToken = await CrmApiService.GetAccessTokenAsync();
+            var jsonResponse = await CrmApiService.GetClientDetailsAsync(lookupCode, accessToken);
+            var clientData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
+            isLoadingWhat += ".";
+            InvokeAsync(StateHasChanged);
+            if (clientData != null && clientData.ContainsKey("_embedded"))
+            {
+                var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(clientData["_embedded"].ToString());
+                if (embeddedData != null && embeddedData.ContainsKey("clients"))
+                {
+                    var clientsList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(embeddedData["clients"].ToString());
+                    if (clientsList != null && clientsList.Count > 0)
+                    {
+                        crmClientId = clientsList[0]["id"].ToString();
+                        await LoadClientPolicies(crmClientId, accessToken);
+                        isLoadingWhat += ".";
+                        InvokeAsync(StateHasChanged);
+                    }
+                }
+            }
+
+            //Update the database
+            await ClientService.UpdateClientIdAndPolicies(selectedClient.ClientId, crmClientId, clientPolicies, accessToken);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading CRM client ID and policies: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingCrmId = false;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    // private async Task LoadClientPolicies(string clientId, string accessToken)
+    // {
+    //     try
+    //     {
+    //         var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
+    //         isLoadingWhat += ".";
+    //         InvokeAsync(StateHasChanged);
+    //         var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
+
+    //         if (policyData != null && policyData["_embedded"] != null)
+    //         {
+    //             var embeddedData = policyData["_embedded"] as JObject;
+    //             if (embeddedData != null && embeddedData["policies"] != null)
+    //             {
+    //                 var policiesList = embeddedData["policies"].ToObject<List<JObject>>();
+    //                 clientPolicies = policiesList.Select(p => new Policy
+    //                     {
+    //                         PolicyNumber = p["policyNumber"]?.ToString(),
+    //                         ePolicyId = p["id"]?.ToString(),
+    //                         eType = p["policyType"]?["description"]?.ToString(),
+    //                         eTypeCode = p["policyType"]?["code"]?.ToString(),
+    //                         Notes = p["description"]?.ToString(),
+    //                         EffectiveDate = p["effectiveOn"] != null ? DateTime.Parse(p["effectiveOn"].ToString()) : DateTime.MinValue,
+    //                         ExpirationDate = p["expirationOn"] != null ? DateTime.Parse(p["expirationOn"].ToString()) : DateTime.MinValue,
+    //                         Premium = p["estimatedPremium"] != null ? decimal.Parse($"{p["estimatedPremium"]["units"]}.{p["estimatedPremium"]["partialUnits"]}") : 0m
+    //                     }).ToList();
+    //             }
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.Error.WriteLine($"Error loading client policies: {ex.Message}");
+    //     }
+    //     finally
+    //     {
+    //         InvokeAsync(StateHasChanged);
+    //         isLoadingWhat += ".";
+    //     }
+    // }
+    private async Task LoadClientPolicies(string clientId, string accessToken)
+    {
+        try
+        {
+            var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
+            isLoadingWhat += ".";
+            InvokeAsync(StateHasChanged);
+            var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
+
+            if (policyData != null && policyData["_embedded"] != null)
+            {
+                var embeddedData = policyData["_embedded"] as JObject;
+                if (embeddedData != null && embeddedData["policies"] != null)
+                {
+                    var policiesList = embeddedData["policies"].ToObject<List<JObject>>();
+                    clientPolicies = policiesList.Select(p => new Policy
+                        {
+                            PolicyNumber = p["policyNumber"]?.ToString(),
+                            ePolicyId = p["id"]?.ToString(),
+                            eType = p["policyType"]?["description"]?.ToString(),
+                            eTypeCode = p["policyType"]?["code"]?.ToString(),
+                            Notes = p["description"]?.ToString(),
+                            EffectiveDate = p["effectiveOn"] != null ? DateTime.Parse(p["effectiveOn"].ToString()) : DateTime.MinValue,
+                            ExpirationDate = p["expirationOn"] != null ? DateTime.Parse(p["expirationOn"].ToString()) : DateTime.MinValue,
+                            Premium = p["estimatedPremium"] != null ? decimal.Parse($"{p["estimatedPremium"]["units"]}.{p["estimatedPremium"]["partialUnits"]}") : 0m
+                        }).ToList();
+                }
+            }
+            SortAndSeparatePolicies();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading client policies: {ex.Message}");
+        }
+        finally
+        {
+            InvokeAsync(StateHasChanged);
+            isLoadingWhat += ".";
+        }
+    }
+    private void SortAndSeparatePolicies()
+    {
+        var today = DateTime.Today;
+
+        currentPolicies = selectedClient.Policies
+            .Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today)
+            .OrderByDescending(p => p.EffectiveDate)
+            .ToList();
+
+        pastPolicies = selectedClient.Policies
+            .Where(p => p.ExpirationDate < today)
+            .OrderByDescending(p => p.EffectiveDate)
+            .ToList();
+    }
+    private void FilterClients()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            filteredClients = new List<Client>(clients);
+        }
+        else
+        {
+            filteredClients = clients
+                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
 }

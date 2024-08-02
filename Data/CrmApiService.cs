@@ -57,4 +57,15 @@ public class CrmApiService
 
         return await response.Content.ReadAsStringAsync();
     }
+
+    public async Task<string> GetPolicyLinesAsync(string ePolicyId, string accessToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/policy/v1/policies/{ePolicyId}/lines");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsStringAsync();
+    }
 }

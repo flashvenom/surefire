@@ -1,6 +1,7 @@
 ﻿@page "/Clients/Commercial"
 
 @using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Policies.Models
 @using Microsoft.FluentUI.AspNetCore.Components
@@ -30,6 +31,7 @@
             {
                 <div class="client-header">
                     <h1>@selectedClient.Name</h1>
+                    @isLoadingWhat
                 </div>
                 <div class="client-details">
                     <div class="column">
@@ -54,7 +56,7 @@
                                 <span>@crmClientId</span>
                             }
                         </p>
-                        <!-- Add more client details here -->
+                        @isLoadingCrmId.ToString() 
                     </div>
                     <div class="column">
                         <h3>Contacts</h3>
@@ -75,6 +77,11 @@
                             @foreach (var policy in selectedClient.Policies)
                             {
                                 <li>@policy.PolicyNumber - @policy.Product.LineName - @policy.Carrier.CarrierName</li>
+                            }
+                            <hr>
+                            @foreach (var policy in clientPolicies)
+                            {
+                                <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
                             }
                         </ul>
                     </div>
@@ -121,13 +128,14 @@
     private List<Client> filteredClients = new();
     private System.Timers.Timer debounceTimer;
     private Client selectedClient;
-    private bool isLoadingCrmId = false;
     private string crmClientId = string.Empty;
     private List<Policy> clientPolicies = new();
+    private bool isLoadingCrmId = false;
+    private string isLoadingWhat = "Initializing";
 
     protected override async Task OnInitializedAsync()
     {
-        debounceTimer = new System.Timers.Timer(100); // 300ms debounce interval
+        debounceTimer = new System.Timers.Timer(100);
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += (sender, args) => FilterClients();
 
@@ -146,35 +154,19 @@
     {
         try
         {
-            // Ensure index is within valid range
-            if (args.Index >= 0 && args.Index < filteredClients.Count)
-            {
-                var clientId = filteredClients[args.Index].ClientId;
-                if (clientId != null)
-                {
-                    selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
-                    InvokeAsync(StateHasChanged);
-                    await LoadCrmClientIdAndPolicies(selectedClient.LookupCode);
-                }
-                else
-                {
-                    throw new Exception("ClientId is null");
-                }
-            }
-            else
-            {
-                throw new Exception("Index is out of range");
-            }
+            isLoadingWhat += ".";
+            var clientId = filteredClients[args.Index].ClientId;
+            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+            InvokeAsync(StateHasChanged);
+            await LoadCrmClientIdAndPolicies(selectedClient.LookupCode);
         }
         catch (Exception ex)
         {
-            // Handle the error, for example, log it or display a message to the user
-            Console.Error.WriteLine($"Error fetching client data: {ex.Message}");
-            // Optionally, you can display a user-friendly message on the UI
-            // e.g., show a notification or set an error message variable and bind it to the UI
+            Console.Error.WriteLine($"ClientId is null or error fetching client data: {ex.Message}");
         }
         finally
         {
+            isLoadingWhat += ".";
             InvokeAsync(StateHasChanged);
         }
     }
@@ -185,6 +177,7 @@
         clientPolicies.Clear();
         try
         {
+            isLoadingWhat += ".";
             var accessToken = await CrmApiService.GetAccessTokenAsync();
             var jsonResponse = await CrmApiService.GetClientDetailsAsync(lookupCode, accessToken);
             var clientData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
@@ -199,6 +192,8 @@
                     {
                         crmClientId = clientsList[0]["id"].ToString();
                         await LoadClientPolicies(crmClientId, accessToken);
+                        isLoadingWhat += ".";
+                        InvokeAsync(StateHasChanged);
                     }
                 }
             }
@@ -218,14 +213,27 @@
         try
         {
             var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
-            var policyData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
+            isLoadingWhat += ".";
+            InvokeAsync(StateHasChanged);
+            var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
 
-            if (policyData != null && policyData.ContainsKey("_embedded"))
+            if (policyData != null && policyData["_embedded"] != null)
             {
-                var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(policyData["_embedded"].ToString());
-                if (embeddedData != null && embeddedData.ContainsKey("policies"))
+                var embeddedData = policyData["_embedded"] as JObject;
+                if (embeddedData != null && embeddedData["policies"] != null)
                 {
-                    clientPolicies = JsonConvert.DeserializeObject<List<Policy>>(embeddedData["policies"].ToString());
+                    var policiesList = embeddedData["policies"].ToObject<List<JObject>>();
+                    clientPolicies = policiesList.Select(p => new Policy
+                        {
+                            PolicyNumber = p["policyNumber"]?.ToString(),
+                            ePolicyId = p["id"]?.ToString(),
+                            eType = p["policyType"]?["description"]?.ToString(),
+                            eTypeCode = p["policyType"]?["code"]?.ToString(),
+                            Notes = p["description"]?.ToString(),
+                            EffectiveDate = p["effectiveOn"] != null ? DateTime.Parse(p["effectiveOn"].ToString()) : DateTime.MinValue,
+                            ExpirationDate = p["expirationOn"] != null ? DateTime.Parse(p["expirationOn"].ToString()) : DateTime.MinValue,
+                            Premium = p["estimatedPremium"] != null ? decimal.Parse($"{p["estimatedPremium"]["units"]}.{p["estimatedPremium"]["partialUnits"]}") : 0m
+                        }).ToList();
                 }
             }
         }
@@ -236,6 +244,7 @@
         finally
         {
             InvokeAsync(StateHasChanged);
+            isLoadingWhat += ".";
         }
     }
     private void FilterClients()

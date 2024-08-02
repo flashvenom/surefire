@@ -18,6 +18,11 @@
   <ItemGroup>
     <None Remove="Components\Pages\Clients\Businesses - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses.razor.css" />
+    <None Remove="Components\Pages\Clients\Commercial.razor.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Components\Pages\Clients\Commercial.razor.css" />
   </ItemGroup>
 
   <ItemGroup>

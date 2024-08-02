@@ -40,6 +40,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedErrors:Enabled");
 
 builder.Services.AddScoped<DataSource>();
 builder.Services.AddScoped<ClientService>();
@@ -69,6 +70,14 @@ builder.Services.AddHttpClient<CrmApiService>(client =>
 
 var app = builder.Build();
 
+if (detailedErrorsEnabled)
+{
+    app.UseDeveloperExceptionPage(); // Detailed error page
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error"); // Custom error page
+}
 Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzQwNzc3NUAzMjM2MmUzMDJlMzBuMkJzRGlPajJxTEIraGFiNDZ1NThtOG9CTkxocmFvWXozNVR3TUZLUjN3PQ==");
 
 // Configure the HTTP request pipeline.

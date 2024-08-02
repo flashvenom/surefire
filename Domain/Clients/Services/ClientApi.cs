@@ -34,6 +34,23 @@ namespace Mantis.Domain.Carriers.Services
             return _context.Clients.ToList();
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Client>> GetClientById(int id)
+        {
+            var client = await _context.Clients
+                .Include(c => c.Address)
+                .Include(c => c.PrimaryContact)
+                .Include(c => c.Locations)
+                .Include(c => c.Contacts)
+                .Include(c => c.Policies)
+                .FirstOrDefaultAsync(c => c.ClientId == id);
+            if (client == null)
+            {
+                return NotFound();
+            }
+            return client;
+        }
+
         [HttpPost]
         public object Post([FromBody] DataManagerRequest DataManagerRequest)
         {

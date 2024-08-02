@@ -8,8 +8,20 @@ namespace Mantis.Domain.Policies.Models
 {
     public class Policy
     {
+        //id to eTypeId
+        //policyType.description to eType
+        //policyType.code to eTypeCode
+        //description to notes
+        //effectiveOnto EffectiveDate
+        //expirationOn to ExpirationDate
+        //estimatedPremium.units concat estimatedPremium.partialUnits to Premium
         public int PolicyId { get; set; }
         public string PolicyNumber { get; set; }
+        public string? ePolicyId { get; set; }
+        public string? eType { get; set; }
+        public string? eTypeCode { get; set; }
+        public string? Status { get; set; }
+        public string? Notes { get; set; }
         public DateTime EffectiveDate { get; set; }
         public DateTime ExpirationDate { get; set; }
         public decimal Premium { get; set; }

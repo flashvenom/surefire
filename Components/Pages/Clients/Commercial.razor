@@ -2,12 +2,15 @@
 
 @using Newtonsoft.Json
 @using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Policies.Models
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Lists
+@using Mantis.Data
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject CrmApiService CrmApiService
 @rendermode InteractiveServer
 
 <Toolbar />
@@ -16,23 +19,72 @@
         <div class="sf-quicklist">
             <SfTextBox Placeholder="Type to search clients..." @bind-Value="searchTerm" @oninput="OnInputChanged" CssClass="search-input small-input" ShowClearButton="true" />
 
-        <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
-            <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
-            <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
-        </SfListView>
+            <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
+                <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
+                <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
+            </SfListView>
         </div>
 
         <div class="sf-detail">
-            <span class="text-secondary">Select a client to view details</span>
-            <div class="sf-detail">
-                @if (selectedClient != null)
-                {
-                    <h3>@selectedClient.Name</h3>
-                    <p>ID: @selectedClient.ClientId</p>
-                    <p>Email: @selectedClient.Email</p>
-                    <!-- Add more client details here -->
-                }
+            @if (selectedClient != null)
+            {
+                <div class="client-header">
+                    <h1>@selectedClient.Name</h1>
+                </div>
+                <div class="client-details">
+                    <div class="column">
+                        <h3>Client Details</h3>
+                        <p><strong>ID:</strong> @selectedClient.ClientId @selectedClient.LookupCode</p>
+                        <p><strong>Address:</strong> @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode  </p>
+                        <p><strong>Phone:</strong> @selectedClient.PhoneNumber</p>
+                        <p><strong>Email:</strong> @selectedClient.Email</p>
+                        <p><strong>Website:</strong> @selectedClient.Website</p>
+                        <p>
+                            <strong>EpicClientId:</strong>
+                            @if (isLoadingCrmId)
+                            {
+                                <span class="loading-spinner"></span> <!-- Add CSS for spinner -->
+                            }
+                            else if (string.IsNullOrEmpty(crmClientId))
+                            {
+                                <span>X</span>
+                            }
+                            else
+                            {
+                                <span>@crmClientId</span>
+                            }
+                        </p>
+                        <!-- Add more client details here -->
+                    </div>
+                    <div class="column">
+                        <h3>Contacts</h3>
+                        <ul>
+                            <h4>Primary</h4>
+                            @selectedClient.PrimaryContact.FirstName @selectedClient.PrimaryContact.LastName - @selectedClient.PrimaryContact.Phone - @selectedClient.PrimaryContact.Email
+                            <br>
+                            <h4>Associated</h4>
+                            @foreach (var contact in selectedClient.Contacts)
+                            {
+                                <li>@contact.FirstName @contact.LastName - @contact.Phone - @contact.Email</li>
+                            }
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3>Policies</h3>
+                        <ul>
+                            @foreach (var policy in selectedClient.Policies)
+                            {
+                                <li>@policy.PolicyNumber - @policy.Product.LineName - @policy.Carrier.CarrierName</li>
+                            }
+                        </ul>
+                    </div>
             </div>
+        }
+        else
+        {
+            <span class="text-secondary">Select a client to view details</span>
+        }
+
         </div>
         
         <div style="clear:both;"></div>
@@ -56,8 +108,6 @@
     .sf-quicklist {
         
     }
-
-    
     .search-input.small-input {
         font-size: 0.875em; /* Adjust font size */
         padding: 0.5em; /* Adjust padding */
@@ -71,6 +121,9 @@
     private List<Client> filteredClients = new();
     private System.Timers.Timer debounceTimer;
     private Client selectedClient;
+    private bool isLoadingCrmId = false;
+    private string crmClientId = string.Empty;
+    private List<Policy> clientPolicies = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,13 +142,102 @@
         debounceTimer.Start();
     }
 
-    private void ClickHandler(ClickEventArgs<Client> args)
+    private async void ClickHandler(ClickEventArgs<Client> args)
     {
-        string thisthat2 = "";
-        //selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{args.Index}");
-        //InvokeAsync(StateHasChanged);
+        try
+        {
+            // Ensure index is within valid range
+            if (args.Index >= 0 && args.Index < filteredClients.Count)
+            {
+                var clientId = filteredClients[args.Index].ClientId;
+                if (clientId != null)
+                {
+                    selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+                    InvokeAsync(StateHasChanged);
+                    await LoadCrmClientIdAndPolicies(selectedClient.LookupCode);
+                }
+                else
+                {
+                    throw new Exception("ClientId is null");
+                }
+            }
+            else
+            {
+                throw new Exception("Index is out of range");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle the error, for example, log it or display a message to the user
+            Console.Error.WriteLine($"Error fetching client data: {ex.Message}");
+            // Optionally, you can display a user-friendly message on the UI
+            // e.g., show a notification or set an error message variable and bind it to the UI
+        }
+        finally
+        {
+            InvokeAsync(StateHasChanged);
+        }
     }
+    private async Task LoadCrmClientIdAndPolicies(string lookupCode)
+    {
+        isLoadingCrmId = true;
+        crmClientId = string.Empty;
+        clientPolicies.Clear();
+        try
+        {
+            var accessToken = await CrmApiService.GetAccessTokenAsync();
+            var jsonResponse = await CrmApiService.GetClientDetailsAsync(lookupCode, accessToken);
+            var clientData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
 
+            if (clientData != null && clientData.ContainsKey("_embedded"))
+            {
+                var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(clientData["_embedded"].ToString());
+                if (embeddedData != null && embeddedData.ContainsKey("clients"))
+                {
+                    var clientsList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(embeddedData["clients"].ToString());
+                    if (clientsList != null && clientsList.Count > 0)
+                    {
+                        crmClientId = clientsList[0]["id"].ToString();
+                        await LoadClientPolicies(crmClientId, accessToken);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading CRM client ID and policies: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingCrmId = false;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task LoadClientPolicies(string clientId, string accessToken)
+    {
+        try
+        {
+            var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
+            var policyData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
+
+            if (policyData != null && policyData.ContainsKey("_embedded"))
+            {
+                var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(policyData["_embedded"].ToString());
+                if (embeddedData != null && embeddedData.ContainsKey("policies"))
+                {
+                    clientPolicies = JsonConvert.DeserializeObject<List<Policy>>(embeddedData["policies"].ToString());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading client policies: {ex.Message}");
+        }
+        finally
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
     private void FilterClients()
     {
         if (string.IsNullOrEmpty(searchTerm))

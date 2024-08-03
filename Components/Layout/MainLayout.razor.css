@@ -1,3 +1,32 @@
+sf-search-bar {
+    
+}
+.sf-search-input {
+    font-family: 'Segoe UI Variable Text';
+    font-size: 15px;
+    padding: 4px 8px;
+    padding-left: 30px;
+    border-radius: 3px;
+    border: 1px solid #745ea1;
+    width: 300px;
+    background-color: #ffffffde;
+}
+.sf-search-input:active {
+    border-color: #745ea1;
+}
+:root .sf-search-input:focus-visible {
+    outline: 0;
+    background-color: #fff;
+}
+    .sf-search-icon {
+    position: relative;
+    left: -300px;
+    top: 4px;
+    /*transform: translateY(-50%);*/
+    pointer-events: none; /* Makes the icon non-interactive */
+    font-size: 20px;
+    color: #745ea1;
+}
 .page {
     flex-direction: row;
 }

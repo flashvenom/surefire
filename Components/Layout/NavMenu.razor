@@ -4,43 +4,89 @@
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" style="display:none" />
 
-<NavLink class="btn nav-link" href="/" Match="NavLinkMatch.Prefix" title="Home">
-    <div class="nb-blueline nb-active"></div>
-    <FluentIcon Value="@(new Icons.Filled.Size24.Home())" Class="@GetNavItemClass("Home")" />
-</NavLink>
+<div class="sfnav @(GetNavItemClass("Home"))">
+    <div class="nb-blueline@(GetNavItemClass("Home"))"></div>
+    <NavLink class="nav-link" href="/" Match="NavLinkMatch.Prefix" title="Home">
+        <FluentIcon Value="@(new Icons.Filled.Size24.Home())" Class="@GetIconClass("Home")" />
+    </NavLink>
+</div>
 <br />
 
-<NavLink class="btn nav-link" href="Clients/List" Match="NavLinkMatch.Prefix" title="Clients">
-    <div class="nb-blueline"></div>
-    <FluentIcon Value="@(new Icons.Regular.Size24.Briefcase())" Class="@GetNavItemClass("Clients")" />
-</NavLink>
+<div class="sfnav @(GetNavItemClass("Clients"))">
+    <div class="nb-blueline@(GetNavItemClass("Clients"))"></div>
+    <NavLink class="nav-link" href="Clients/List" Match="NavLinkMatch.Prefix" title="Clients">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Briefcase())" Class="@GetIconClass("Clients")" />
+    </NavLink>
+</div>
 <br />
 
-<NavLink class="btn nav-link" href="People" Match="NavLinkMatch.Prefix" title="People">
-    <div class="nb-blueline"></div>
-    <FluentIcon Value="@(new Icons.Regular.Size24.People())" Class="@GetNavItemClass("People")" />
-</NavLink>
+<div class="sfnav @(GetNavItemClass("People"))">
+    <div class="nb-blueline@(GetNavItemClass("People"))"></div>
+    <NavLink class="nav-link" href="People" Match="NavLinkMatch.Prefix" title="People">
+        <FluentIcon Value="@(new Icons.Regular.Size24.People())" Class="@GetIconClass("People")" />
+    </NavLink>
+</div>
 <br />
 
-<NavLink class="btn nav-link" href="Policies" Match="NavLinkMatch.Prefix" title="Policies">
-    <div class="nb-blueline"></div>
-    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentMultiple())" Class="@GetNavItemClass("Policies")" />
-</NavLink>
+<div class="sfnav @(GetNavItemClass("Policies"))">
+    <div class="nb-blueline@(GetNavItemClass("Policies"))"></div>
+    <NavLink class="nav-link" href="Policies" Match="NavLinkMatch.Prefix" title="Policies">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentMultiple())" Class="@GetIconClass("Policies")" />
+    </NavLink>
+</div>
 <br />
 
-<NavLink class="btn nav-link" href="Carriers" Match="NavLinkMatch.Prefix" title="Carriers">
-    <div class="nb-blueline"></div>
-    <FluentIcon Value="@(new Icons.Regular.Size24.BuildingRetailShield())" Class="@GetNavItemClass("Carriers")" />
-</NavLink>
+<div class="sfnav @(GetNavItemClass("Carriers"))">
+    <div class="nb-blueline@(GetNavItemClass("Carriers"))"></div>
+    <NavLink class="nav-link" href="Carriers" Match="NavLinkMatch.Prefix" title="Carriers">
+        <FluentIcon Value="@(new Icons.Regular.Size24.BuildingRetailShield())" Class="@GetIconClass("Carriers")" />
+    </NavLink>
+</div>
 <br />
 
-<NavLink class="btn nav-link" href="Locations" Match="NavLinkMatch.Prefix" title="Locations">
-    <div class="nb-blueline"></div>
-    <FluentIcon Value="@(new Icons.Regular.Size24.Location())" Class="@GetNavItemClass("Locations")" />
-</NavLink>
+<div class="sfnav @(GetNavItemClass("Locations"))">
+    <div class="nb-blueline@(GetNavItemClass("Locations"))"></div>
+    <NavLink class="nav-link" href="Locations" Match="NavLinkMatch.Prefix" title="Locations">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Location())" Class="@GetIconClass("Locations")" />
+    </NavLink>
+</div>
+<br />
 
+
+
+<style>
+:root .nb-bluelinenb-active {
+    width: 2px;
+    height: 37px;
+    float: left;
+    position: relative;
+    top: -6px;
+    left: 4px;
+    background-color: #036ac4 !important;
+}
+
+:root .nb-bluelinenb-inactive {
+    width: 2px;
+    height: 37px;
+    float: left;
+    position: relative;
+    top: -6px;
+    left: 4px;
+    background-color: #5e5e5e00 !important;
+}
+:root .inactive-icon {
+        fill: #808080 !important;
+}
+
+:root .nav-link {
+    padding: 0px !important;
+    margin-left: 11px;
+    margin-bottom:2px;
+}
+</style>
 @code {
     private string? currentUrl;
+    private string myicon = "Home";
 
     protected override void OnInitialized()
     {
@@ -56,8 +102,56 @@
 
     private string GetNavItemClass(string href)
     {
-        return currentUrl != null && currentUrl.StartsWith(href, StringComparison.OrdinalIgnoreCase) ? "selected-nav-item" : "";
+        if (string.IsNullOrEmpty(currentUrl) && href == "/")
+        {
+            return "";
+        }
+        else
+        {
+            if (currentUrl != null)
+            {
+                if (currentUrl.Contains(href, StringComparison.OrdinalIgnoreCase) || (currentUrl == "" && href == "Home"))
+                {
+                    return "nb-active";
+                }
+                else
+                {
+                    return "nb-inactive";
+                }
+            }
+            else
+            {
+                return "nb-inactive";
+            }
+        }
     }
+
+    private string GetIconClass(string href)
+    {
+        if (string.IsNullOrEmpty(currentUrl) && href == "")
+        {
+            return "";
+        }
+        else
+        {
+            if (currentUrl != null)
+            {
+                if (currentUrl.Contains(href, StringComparison.OrdinalIgnoreCase) || (currentUrl == "" && href == "Home"))
+                {
+                    return "active-icon";
+                }
+                else
+                {
+                    return "inactive-icon";
+                }
+            }
+            else
+            {
+                return "inactive-icon";
+            }
+        }
+    }
+
 
     public void Dispose()
     {
@@ -65,6 +159,7 @@
     }
 }
 
+@* 
 <style>
     .custom-icon-color {
         color: #0078D4; /* Your desired default color */
@@ -94,3 +189,4 @@
             white-space: nowrap;
         }
 </style>
+ *@

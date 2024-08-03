@@ -14,13 +14,14 @@
 @inject NavigationManager NavigationManager
 @inject CrmApiService CrmApiService
 @inject ClientService ClientService
+@inject IJSRuntime jsRuntime
 @rendermode InteractiveServer
 
 <Toolbar />
 
 <div class="page-content">
     <div class="sf-quicklist">
-        <SfTextBox Placeholder="Type to search clients..." @ref=@SearchBox @bind-Value="searchTerm" @oninput="OnInputChanged" CssClass="search-input small-input" ShowClearButton="true" />
+        <SfTextBox @ref=@SearchBox Placeholder="Type to search clients..." @bind-Value="searchTerm" @oninput="OnInputChanged" CssClass="search-input small-input" ShowClearButton="true" />
         <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
             <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
             <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
@@ -182,7 +183,7 @@
     private bool isLoadingCrmId = false;
     private string isLoadingWhat = "Initializing";
     SfTextBox SearchBox { get; set; }
-
+    
     protected override async Task OnInitializedAsync()
     {
         debounceTimer = new System.Timers.Timer(100);
@@ -192,6 +193,7 @@
         clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
         filteredClients = new List<Client>(clients);
     }
+
     private async void AddDateIcon()
     {
         if (SearchBox != null)

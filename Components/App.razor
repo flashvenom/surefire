@@ -21,6 +21,24 @@
 <body>
     <Routes />
     <script src="_framework/blazor.web.js"></script>
+    <script src="/app.js"></script>
+    <script>
+        window.initializeSearchListViewFocus = function (textBoxElement, listViewElement) {
+            textBoxElement.addEventListener('keydown', function (event) {
+                if (event.key === 'ArrowDown') {
+                    listViewElement.focus();
+                    event.preventDefault();
+                }
+            });
+
+            listViewElement.addEventListener('keydown', function (event) {
+                if (event.key === 'ArrowUp' && listViewElement.querySelector('.e-active') === null) {
+                    textBoxElement.focus();
+                    event.preventDefault();
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

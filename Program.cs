@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Syncfusion.Blazor;
+using Syncfusion.Blazor.Internal;
 
 var builder = WebApplication.CreateBuilder(args);
 

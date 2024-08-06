@@ -25,6 +25,6 @@ namespace Mantis.Domain.Carriers.Models
 
         public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
         public Address? Address { get; set; }
-        public ApplicationUser CreatedBy { get; set; }
+        public ApplicationUser? CreatedBy { get; set; }
     }
 }

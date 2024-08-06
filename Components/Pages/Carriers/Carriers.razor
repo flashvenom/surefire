@@ -21,10 +21,10 @@
                         UpdateUrl="https://localhost:7074/api/Carrier/Update" 
                         RemoveUrl="https://localhost:7074/api/Carrier/Delete" 
                         Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
-        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
-            <GridColumn Field=@nameof(Carrier.CarrierId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.CarrierId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
             <GridColumn Field=@nameof(Carrier.CarrierName) HeaderText="Carrier Name" Width="400"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Phone) HeaderText="Phone"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Website) HeaderText="Website"></GridColumn>
@@ -44,7 +44,7 @@
             <GridColumn Field=@nameof(Carrier.IssuingCarrier) HeaderText="Issuer" Visible="false"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Wholesaler) HeaderText="MGA"></GridColumn>
             <GridColumn Field=@nameof(Carrier.LookupCode) HeaderText="Code" Width="80" Visible="false"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.CreatedBy) HeaderText="CreatedBy"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.CreatedBy) HeaderText="Cbifd" Width="80" Visible="false"></GridColumn>
         </GridColumns>
     </SfGrid>
 </div>

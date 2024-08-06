@@ -13,12 +13,6 @@ namespace Mantis.Server.Controllers
     [ApiController]
     public class DefaultController : ControllerBase
     {
-        //private readonly OrderService _orderService;
-
-        //public OrderController(OrderService orderService)
-        //{
-        //    _orderService = orderService;
-        //}
         OrderDataAccessLayer db = new OrderDataAccessLayer();
 
         [HttpGet]
@@ -65,30 +59,5 @@ namespace Mantis.Server.Controllers
         {
             db.DeleteOrder(id);
         }
-        //[HttpPost]
-        //public void Post([FromBody] Carrier Carrier)
-        //{
-
-        //    Random rand = new Random();
-
-        //    _orderService.AddOrder(Carrier);
-
-        //}
-        //[HttpPut]
-        //public object Put([FromBody] Carrier Carrier)
-        //{
-        //    string test = "eee";
-        //    return Carrier;
-        //    //_orderService.UpdateOrder(Carrier);
-        //    //return Carrier;
-        //}
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-
-        //    _orderService.DeleteOrder(id);
-        //    return id;
-
-        //}
     }
 }

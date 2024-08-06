@@ -77,12 +77,16 @@ namespace Mantis.Domain.Carriers.Services
         }
 
         [HttpPost("Update")]
-        public void Update([FromBody] CRUDModel<Carrier> Value)
+        public async void Update([FromBody] CRUDModel<Carrier> Value)
         {
             //BRTEAKPOINT DOES NOT HIT HERE
             var existingOrder = _context.Carriers.Find(Value.Value.CarrierId);
+            
+            //existingOrder.CreatedBy = currentUser;
             if (existingOrder != null)
             {
+                var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+                existingOrder.CreatedBy = currentUser;
                 _context.Entry(existingOrder).CurrentValues.SetValues(Value.Value);
                 _context.SaveChanges();
             }

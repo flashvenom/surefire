@@ -15,7 +15,7 @@
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
-        <GridEvents OnActionBegin="OnBeginHandler" TValue="Carrier"></GridEvents>
+        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="@ActionFailure" TValue="Carrier"></GridEvents>
         <SfDataManager  Url="https://localhost:7074/api/Carrier" 
                         InsertUrl="https://localhost:7074/api/Carrier/Insert" 
                         UpdateUrl="https://localhost:7074/api/Carrier/Update" 
@@ -65,6 +65,12 @@
             new BreadcrumbItem { Text = "Carriers" }
         });
         InvokeAsync(StateHasChanged);
+    }
+
+    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    {
+        string dhjdhjd = "423432";
+        StateHasChanged();
     }
 
     private void OnBeginHandler(ActionEventArgs<Carrier> Args) 

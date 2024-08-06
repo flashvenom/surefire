@@ -3,7 +3,6 @@
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
 @rendermode InteractiveServer
 
@@ -15,11 +14,13 @@
 
 <div class="page-content">
     <SfGrid TValue="Carrier" AllowPaging="true" Toolbar="@(new List<string>() { "Add", "Edit", "Update", "Search", "Cancel" })">
+        <GridEvents TValue="Carrier" OnActionFailure="@ActionFailure"></GridEvents>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true"></GridEditSettings>
         <SfDataManager Url="bpm/Default" Adaptor="Adaptors.WebApiAdaptor"></SfDataManager>
         <GridColumns>
             <GridColumn Field="CarrierId" HeaderText="Carrier ID" IsPrimaryKey="true" IsIdentity="true" TextAlign="@Syncfusion.Blazor.Grids.TextAlign.Right" Width="90"></GridColumn>
             <GridColumn Field="CarrierName" HeaderText="Carrier Name" Width="90"></GridColumn>
+            <GridColumn Field="CreatedBy" HeaderText="CreatedBy" IsIdentity="true" ></GridColumn>
         </GridColumns>
     </SfGrid>
 </div>
@@ -38,7 +39,11 @@
         });
         InvokeAsync(StateHasChanged);
     }
-
+    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    {
+        string dhjdhjd = "423432";
+        StateHasChanged();
+    }
     private void OnBeginHandler(ActionEventArgs<Carrier> Args) 
     { 
         statusMy = "Clicked";

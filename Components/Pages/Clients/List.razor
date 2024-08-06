@@ -52,7 +52,7 @@
         <div class="sf-col-container">
             <div class="sf-col sf-col-1">
                     <h3>Current Policies</h3>
-                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
+                    @* <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner> *@
                     <div class="policy-container">
                         @foreach (var policy in currentPolicies)
                         {
@@ -71,7 +71,7 @@
                             </div>
                         }
                         <h4>Past Policies</h4>
-                        <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
+                        @* <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner> *@
                         @foreach (var policy in pastPolicies)
                         {
                             <div class="past-policy">

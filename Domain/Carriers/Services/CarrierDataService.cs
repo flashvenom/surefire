@@ -5,24 +5,57 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Mantis.Shared.DataAccess
 {
-    public class OrderService
+    public class OrderDataAccessLayer
     {
-        private readonly OrderContext _context;
+        OrderContext db = new OrderContext();
 
-        public OrderService(OrderContext context)
+        public DbSet<Carrier> GetAllOrders()
         {
-            _context = context;
+            try
+            {
+                return db.Carriers;
+            }
+            catch
+            {
+                throw;
+            }
         }
-
-        public async Task<List<Carrier>> GetOrdersAsync()
+        public void AddOrder(Carrier carrier)
         {
-            return await _context.Carriers.ToListAsync();
+            try
+            {
+                db.Carriers.Add(carrier);
+                db.SaveChanges();
+            }
+            catch
+            {
+                throw;
+            }
         }
-        public async Task AddOrder(Carrier carrier)
+        public void UpdateOrder(Carrier carrier)
         {
-            _context.Carriers.Add(carrier);
-            await _context.SaveChangesAsync();
+            try
+            {
+                db.Entry(carrier).State = EntityState.Modified;
+                db.SaveChanges();
+            }
+            catch
+            {
+                throw;
+            }
         }
-        // Other CRUD operations
+        public void DeleteOrder(int id)
+        {
+            try
+            {
+                Carrier ord = db.Carriers.Find(id);
+                db.Carriers.Remove(ord);
+                db.SaveChanges();
+            }
+            catch
+            {
+                throw;
+            }
+        }
     }
 }

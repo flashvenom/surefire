@@ -36,9 +36,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 
-builder.Services.AddDbContext<OrderContext>(options =>
-        options.UseSqlServer(connectionString));
-builder.Services.AddScoped<OrderService>();
+//builder.Services.AddDbContext<OrderContext>(options =>
+//        options.UseSqlServer(connectionString));
+//builder.Services.AddScoped<OrderService>();
 
 
 //builder.Services.AddDatabaseDeveloperPageExceptionFilter();

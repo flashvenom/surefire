@@ -16,7 +16,7 @@
 <div class="page-content">
     <SfGrid TValue="Carrier" AllowPaging="true" Toolbar="@(new List<string>() { "Add", "Edit", "Update", "Search", "Cancel" })">
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true"></GridEditSettings>
-        <SfDataManager Url="bpm/Order" Adaptor="Adaptors.WebApiAdaptor"></SfDataManager>
+        <SfDataManager Url="bpm/Default" Adaptor="Adaptors.WebApiAdaptor"></SfDataManager>
         <GridColumns>
             <GridColumn Field="CarrierId" HeaderText="Carrier ID" IsPrimaryKey="true" IsIdentity="true" TextAlign="@Syncfusion.Blazor.Grids.TextAlign.Right" Width="90"></GridColumn>
             <GridColumn Field="CarrierName" HeaderText="Carrier Name" Width="90"></GridColumn>

@@ -9,8 +9,6 @@ namespace Mantis.Shared.DataAccess
 {
     public class OrderContext : DbContext
     {
-        public OrderContext(DbContextOptions<OrderContext> options) : base(options) { }
-
         public virtual DbSet<Carrier> Carriers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -71,7 +71,6 @@ namespace Mantis.Domain.Carriers.Services
         [HttpPost("Insert")]
         public void Insert([FromBody] CRUDModel<Carrier> Value)
         {
-            //BRTEAKPOINT DOES NOT HIT HERE
             _context.Carriers.Add(Value.Value);
             _context.SaveChangesAsync();
         }
@@ -79,7 +78,6 @@ namespace Mantis.Domain.Carriers.Services
         [HttpPost("Update")]
         public async void Update([FromBody] CRUDModel<Carrier> Value)
         {
-            //BRTEAKPOINT DOES NOT HIT HERE
             var existingOrder = _context.Carriers.Find(Value.Value.CarrierId);
             
             //existingOrder.CreatedBy = currentUser;

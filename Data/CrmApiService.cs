@@ -69,3 +69,9 @@ public class CrmApiService
         return await response.Content.ReadAsStringAsync();
     }
 }
+
+public class CrmApiOptions
+{
+    public string ClientId { get; set; }
+    public string ClientSecret { get; set; }
+}

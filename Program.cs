@@ -5,7 +5,6 @@ using Mantis.Domain.Carriers.Services;
 using Mantis.Domain.Clients.Services;
 using Mantis.Domain.Shared.Services;
 using Mantis.Domain.User.Services;
-using Mantis.Shared.DataAccess;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -35,14 +34,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-
-//builder.Services.AddDbContext<OrderContext>(options =>
-//        options.UseSqlServer(connectionString));
-//builder.Services.AddScoped<OrderService>();
-
-
-//builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
@@ -50,7 +41,6 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedErrors:Enabled");
 
-builder.Services.AddScoped<DataSource>();
 builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<CarrierService>();
 builder.Services.AddScoped<UserService>();

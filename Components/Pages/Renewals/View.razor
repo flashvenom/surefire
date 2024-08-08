@@ -20,7 +20,7 @@
     @if (renewal != null){
         <h1>Viewing renewal with ID @renewal.RenewalId</h1>
 
-        <SfGrid DataSource="@Tasks" RowSelected="@(OnRowSelected)" EnableHover="false" RowHeight="20">
+        <SfGrid @ref="Grid" DataSource="@Tasks" EnableHover="false" RowHeight="20">
             <GridSelectionSettings CheckboxOnly="true" Mode="SelectionMode.Row"></GridSelectionSettings>
 
             <GridColumns>
@@ -28,7 +28,7 @@
                     <Template>
                         @{
                             var task = (TaskItemViewModel)context;
-                            // <SfMenu Items="@GetMenuItems(task.TaskItemId)" CssClass="e-icons"></SfMenu>
+                            <SfMenu Items="@GetMenuItems(task.TaskItemId)" CssClass="e-icons"></SfMenu>
                         }
                     </Template>
                 </GridColumn>
@@ -79,7 +79,7 @@
 
     :root .e-grid .e-rowcell {
         line-height: 10px !important;
-        padding: 0px !important;
+        padding:3px 0px !important;
         margin: 0px !important;
     }
 </style>
@@ -89,6 +89,7 @@
 
     private Renewal renewal;
     private List<TaskItemViewModel> Tasks;
+    SfGrid<TaskItemViewModel> Grid { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,9 +120,30 @@
         {
             task.IsCompleted = (bool)isChecked;
             await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
-            StateHasChanged();
+            Grid.Refresh();
+            InvokeAsync(StateHasChanged);
         }
     }
+
+    private void UpdateRow(int taskItemId)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            // Trigger row re-render by updating the data source
+            var index = Tasks.IndexOf(task);
+            Tasks.RemoveAt(index);
+            Tasks.Insert(index, task);
+            ReloadTheRowsNow();
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void ReloadTheRowsNow()
+    {
+        Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
+    }
+
 
     private List<MenuItem> GetMenuItems(int taskItemId)
     {

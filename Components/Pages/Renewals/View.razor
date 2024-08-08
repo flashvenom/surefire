@@ -4,6 +4,7 @@
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.SplitButtons
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
@@ -21,14 +22,21 @@
         <h1>Viewing renewal with ID @renewal.RenewalId</h1>
 
         <SfGrid @ref="Grid" DataSource="@Tasks" EnableHover="false" RowHeight="20">
-            <GridSelectionSettings CheckboxOnly="true" Mode="SelectionMode.Row"></GridSelectionSettings>
+            <GridSelectionSettings CheckboxOnly="true" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row"></GridSelectionSettings>
 
             <GridColumns>
                 <GridColumn HeaderText="-" Width="100">
                     <Template>
                         @{
                             var task = (TaskItemViewModel)context;
-                            <SfMenu Items="@GetMenuItems(task.TaskItemId)" CssClass="e-icons"></SfMenu>
+                            <SfDropDownButton CssClass="e-primary" IconCss="e-icons e-plus-icon" Id="@(task.TaskItemId.ToString())">
+                            <DropDownMenuItems>
+                                <DropDownMenuItem Text="Dashboard" IconCss=@DASHBOARD></DropDownMenuItem>
+                                <DropDownMenuItem Text="Notifications" IconCss=@NOTIFICATION></DropDownMenuItem>
+                                <DropDownMenuItem Text="User Settings" IconCss=@SETTINGS></DropDownMenuItem>
+                                <DropDownMenuItem Text="Log Out" IconCss=@LOGOUT></DropDownMenuItem>
+                            </DropDownMenuItems>
+                        </SfDropDownButton>
                         }
                     </Template>
                 </GridColumn>
@@ -69,7 +77,11 @@
         <h1>Loading renewal...</h1>
     }
 </div>
-<style>
+<style>s
+    :root {
+        --color-sf-primary-bg-color-pressed: #000;
+    }
+
     :root .highlighted-row {
         background-color: #ffd800 !important;
     }
@@ -82,6 +94,10 @@
         padding:3px 0px !important;
         margin: 0px !important;
     }
+    :root .e-btn .e-primary:active {
+        background-color: #0078d4 !important;
+    }
+
 </style>
 @code {
     [Parameter]
@@ -90,6 +106,12 @@
     private Renewal renewal;
     private List<TaskItemViewModel> Tasks;
     SfGrid<TaskItemViewModel> Grid { get; set; }
+    private Dictionary<int, SfDropDownButton> dropDownButtons = new Dictionary<int, SfDropDownButton>();
+
+    const string DASHBOARD = "e-icons e-dashboard";
+    const string NOTIFICATION = "e-icons e-notifications";
+    const string SETTINGS = "e-icons e-settings";
+    const string LOGOUT = "e-icons e-logout";
 
     protected override async Task OnInitializedAsync()
     {
@@ -144,7 +166,20 @@
         Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
     }
 
-
+    private void OpenMenu(MouseEventArgs args, int taskItemId)
+    {
+        if (dropDownButtons.ContainsKey(taskItemId))
+        {
+            // dropDownButtons[taskItemId].Open();
+        }
+    }
+    private void GetDropDownRef(SfDropDownButton dropDownButton, int taskItemId)
+    {
+        if (!dropDownButtons.ContainsKey(taskItemId))
+        {
+            dropDownButtons[taskItemId] = dropDownButton;
+        }
+    }
     private List<MenuItem> GetMenuItems(int taskItemId)
     {
         return new List<MenuItem>

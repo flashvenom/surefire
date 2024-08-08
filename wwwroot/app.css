@@ -15,7 +15,9 @@ html, body {
         border:0px;
     }
 
-
+:root {
+    --color-sf-primary-bg-color-pressed: #000;
+}
 
 .top-bar {
     width: 100%;

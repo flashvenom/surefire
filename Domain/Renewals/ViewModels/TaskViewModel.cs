@@ -1,5 +1,25 @@
+using Mantis.Data;
+using Mantis.Domain.Renewals.Models;
+
 namespace Mantis.Domain.Renewals.ViewModels
 {
+    public class TrackTaskEditViewModel
+    {
+        public int Id { get; set; }
+        public string TaskName { get; set; }
+        public string Status { get; set; }
+        public bool Completed { get; set; }
+        public bool Hidden { get; set; }
+        public bool Highlighted { get; set; }
+        public string? Notes { get; set; }
+        public string? UserName { get; set; }
+        public DateTime? GoalDate { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public ApplicationUser? AssignedTo { get; set; }
+        public Renewal Renewal { get; set; }
+        public List<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+    }
+
     public class TasksHomeViewModel
     {
         public ICollection<RenewalViewModel> MarketingEntries { get; set; }

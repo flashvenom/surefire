@@ -1,0 +1,76 @@
+﻿@page "/Renewals/EditTrackTask/{taskId:int}"
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Microsoft.AspNetCore.Components
+@inject RenewalService RenewalService
+@inject NavigationManager Navigation
+
+@rendermode InteractiveServer
+
+<EditForm Model="@task" OnValidSubmit="HandleValidSubmit" FormName="editTrackTaskForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Task Name</label>
+        <InputText @bind-Value="task.TaskName" class="form-control" />
+    </div>
+    <div>
+        <label>Status</label>
+        <InputText @bind-Value="task.Status" class="form-control" />
+    </div>
+    <div>
+        <label>Completed</label>
+        <InputCheckbox @bind-Value="task.Completed" class="form-control" />
+    </div>
+    <div>
+        <label>Hidden</label>
+        <InputCheckbox @bind-Value="task.Hidden" class="form-control" />
+    </div>
+    <div>
+        <label>Highlighted</label>
+        <InputCheckbox @bind-Value="task.Highlighted" class="form-control" />
+    </div>
+    <div>
+        <label>Notes</label>
+        <InputTextArea @bind-Value="task.Notes" class="form-control" />
+    </div>
+    <div>
+        <label>Goal Date</label>
+        <InputDate @bind-Value="task.GoalDate" class="form-control" />
+    </div>
+    <div>
+        <label>Completed Date</label>
+        <InputDate @bind-Value="task.CompletedDate" class="form-control" />
+    </div>
+    <div>
+        <label>Assigned To</label>
+        <InputSelect @bind-Value="task.UserName" class="form-control">
+            <option value="">Select a user</option>
+            @foreach (var user in task.Users)
+            {
+                <option value="@user.UserName">@user.UserName</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int taskId { get; set; }
+
+    private TrackTaskEditViewModel task = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        task = await RenewalService.GetTrackTaskByIdAsync(taskId);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await RenewalService.UpdateTrackTaskAsync(task);
+        Navigation.NavigateTo("/Renewals/" + task.Renewal.RenewalId);
+    }
+}

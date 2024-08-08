@@ -113,6 +113,7 @@ namespace Mantis.Domain.Renewals.Services
                     Status = t.Status,
                     TaskGoalDate = t.GoalDate,
                     TaskCompletedDate = t.CompletedDate,
+                    AssignedSubUser = t.AssignedTo,
                     Notes = t.Notes
                 }).ToListAsync();
 
@@ -139,6 +140,63 @@ namespace Mantis.Domain.Renewals.Services
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<TrackTaskEditViewModel> GetTrackTaskByIdAsync(int taskId)
+        {
+            var task = await _context.TrackTasks
+                .Include(t => t.AssignedTo)
+                .Include(t => t.Renewal)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null) return null;
+
+            var users = await _context.Users.ToListAsync();
+
+            return new TrackTaskEditViewModel
+            {
+                Id = task.Id,
+                TaskName = task.TaskName,
+                Status = task.Status,
+                Completed = task.Completed,
+                Hidden = task.Hidden,
+                Highlighted = task.Highlighted,
+                Notes = task.Notes,
+                GoalDate = task.GoalDate,
+                CompletedDate = task.CompletedDate,
+                Renewal = task.Renewal,
+                UserName = task.AssignedTo?.UserName,
+                Users = users
+            };
+        }
+
+        public async Task UpdateTrackTaskAsync(TrackTaskEditViewModel model)
+        {
+            var task = await _context.TrackTasks.FindAsync(model.Id);
+            if (task != null)
+            {
+                task.TaskName = model.TaskName;
+                task.Status = model.Status;
+                task.Completed = model.Completed;
+                task.Hidden = model.Hidden;
+                task.Highlighted = model.Highlighted;
+                task.Notes = model.Notes;
+                task.GoalDate = model.GoalDate;
+                task.CompletedDate = model.CompletedDate;
+
+                if (!string.IsNullOrEmpty(model.UserName))
+                {
+                    var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == model.UserName);
+                    task.AssignedTo = user;
+                }
+                else
+                {
+                    task.AssignedTo = null;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
 
 
     }

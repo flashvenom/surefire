@@ -1,16 +1,11 @@
 ﻿@page "/Renewals/{RenewalId:int}"
-@using Syncfusion.Blazor
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor.SplitButtons
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
-@using Mantis.Domain.Clients.Models
-@using Mantis.Domain.Shared
 @using Microsoft.AspNetCore.Components
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.SplitButtons
+@using Mantis.Domain.Shared.Helpers;
 @inject RenewalService RenewalService
 
 @rendermode InteractiveServer
@@ -18,100 +13,91 @@
 <_toolbar />
 
 <div class="page-content">
-    @if (renewal != null){
-        <h1>Viewing renewal with ID @renewal.RenewalId</h1>
+    @if (renewal != null)
+    {
+        <h1>@renewal.Client.Name - @renewal.RenewalId</h1>
+       
+        <table class="table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th style="width:280px">Task</th>
+                    <th>Status</th>
+                    <th style="width:400px">Notes</th>
+                    <th>SubAssigned</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var task in Tasks)
+                {
+                    <tr class="@GetRowClass(task)">
+                        <td>
+                            <a id="myId-@(task.TaskItemId)" class="sf-threedot"><FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Accent" /></a>
+                            <FluentMenu Anchor="@("myId-" + task.TaskItemId)" Trigger="MouseButton.Left" Anchored="true" VerticalInset="true">
+                                <FluentMenuItem OnClick="@((e) => HighlightRow(task.TaskItemId))">
+                                    <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" Color="Color.FillInverse" Slot="start" /></span>
+                                    Highlight
+                                </FluentMenuItem>
+                                <FluentMenuItem OnClick="@((e) => EditRow(task.TaskItemId))">
+                                    <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" Color="Color.FillInverse" Slot="start" /></span>
+                                    Edit
+                                </FluentMenuItem>
 
-        <SfGrid @ref="Grid" DataSource="@Tasks" EnableHover="false" RowHeight="20">
-            <GridSelectionSettings CheckboxOnly="true" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row"></GridSelectionSettings>
-
-            <GridColumns>
-                <GridColumn HeaderText="-" Width="100">
-                    <Template>
-                        @{
-                            var task = (TaskItemViewModel)context;
-                        <SfDropDownButton CssClass="e-primary" IconCss="e-icons e-plus-icon" Id="@(task.TaskItemId.ToString())">
-                            <DropDownMenuItems>
-                                <DropDownMenuItem Text="Dashboard" IconCss=@DASHBOARD></DropDownMenuItem>
-                                <DropDownMenuItem Text="Notifications" IconCss=@NOTIFICATION></DropDownMenuItem>
-                                <DropDownMenuItem Text="User Settings" IconCss=@SETTINGS></DropDownMenuItem>
-                                <DropDownMenuItem Text="Log Out" IconCss=@LOGOUT></DropDownMenuItem>
-                            </DropDownMenuItems>
-                        </SfDropDownButton>
-                        }
-                    </Template>
-                </GridColumn>
-                <GridColumn HeaderText="" Width="50">
-                    <Template>
-                        @{
-                            var task = (TaskItemViewModel)context;
-                            <input type="checkbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
-                        }
-                    </Template>
-                </GridColumn>
-                <GridColumn Field="TaskItemName" HeaderText="Task Name"></GridColumn>
-                <GridColumn HeaderText="Status" Width="50">
-                    <Template>
-                        @{
-                            var task = (TaskItemViewModel)context;
-                            @task.Status
-                        }
-                    </Template>
-                </GridColumn>
-                
-                <GridColumn HeaderText="Notes">
-                    <Template>
-                        @{
-                            var task = (TaskItemViewModel)context;
-                            <input type="text" value="@task.Notes" class="form-control" />
-                        }
-                    </Template>
-                </GridColumn>
-                
-                
-            </GridColumns>
-            <GridEvents RowDataBound="@(OnRowDataBound)" TValue="TaskItemViewModel"></GridEvents>
-        </SfGrid>
+                            </FluentMenu>
+                            <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+                        </td>
+                        <td style="padding:0px 5px;">@task.TaskItemName</td>
+                        <td class="ds">@((MarkupString)DateHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
+                        <td>
+                            <input type="text" value="@task.Notes" class="e-input" />
+                        </td>
+                        <td>@(task.AssignedSubUser?.Email ?? "")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
     else
     {
         <h1>Loading renewal...</h1>
     }
 </div>
-<style>s
-    :root {
-        --color-sf-primary-bg-color-pressed: #000;
+
+<style>
+    .highlighted-row td:nth-child(2) {
+        background-color: #ffe762ff !important;
+        color: #000000be !important;
     }
 
-    :root .highlighted-row {
-        background-color: #ffd800 !important;
+    :root .e-input {
+        padding: 5px; /* Adjust the padding as needed */
+        height:20px !important;
+        font-size: 12px !important; /* Adjust the font size as needed */
     }
-    :root .completed-row {
+    .sf-threedot {
+        opacity:.3;
+    }
+
+    .sf-threedot:hover {
+        opacity: 1;
+    }
+
+    .completed-row > td:not(:first-child) {
         opacity: .5 !important;
     }
 
-    :root .e-grid .e-rowcell {
-        line-height: 10px !important;
-        padding:3px 0px !important;
-        margin: 0px !important;
+    .db {
+        font-size: 13px;
+        font-weight: bold;
     }
-    :root .e-btn .e-primary:active {
-        background-color: #0078d4 !important;
-    }
-
 </style>
+
 @code {
     [Parameter]
     public int RenewalId { get; set; }
 
     private Renewal renewal;
     private List<TaskItemViewModel> Tasks;
-    SfGrid<TaskItemViewModel> Grid { get; set; }
-    private Dictionary<int, SfDropDownButton> dropDownButtons = new Dictionary<int, SfDropDownButton>();
-
-    const string DASHBOARD = "e-icons e-dashboard";
-    const string NOTIFICATION = "e-icons e-notifications";
-    const string SETTINGS = "e-icons e-settings";
-    const string LOGOUT = "e-icons e-logout";
 
     protected override async Task OnInitializedAsync()
     {
@@ -125,13 +111,21 @@
         });
     }
 
-    private void OnNotesChanged(int taskItemId, string newNotes)
+    private async void EditRow(int taskid)
     {
-        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        Console.WriteLine("editing row " + taskid);
+        Navigation.NavigateTo($"/Renewals/EditTrackTask/{taskid}");
+    }
+
+    private async void HighlightRow(int taskid)
+    {
+        Console.WriteLine("Highlighting row " + taskid);
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskid);
         if (task != null)
         {
-            task.Notes = newNotes;
-            // Call your save method here, e.g., _taskService.SaveNotes(taskItemId, newNotes);
+            task.IsHighlighted = !task.IsHighlighted;
+            await RenewalService.UpdateTaskHighlight(taskid, task.IsHighlighted);
+            StateHasChanged();
         }
     }
 
@@ -142,70 +136,31 @@
         {
             task.IsCompleted = (bool)isChecked;
             await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
-            Grid.Refresh();
-            InvokeAsync(StateHasChanged);
+            StateHasChanged();
         }
     }
-
-    private void UpdateRow(int taskItemId)
+    private async void OnNotesChanged(int taskItemId, string newNotes)
     {
         var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
         if (task != null)
         {
-            // Trigger row re-render by updating the data source
-            var index = Tasks.IndexOf(task);
-            Tasks.RemoveAt(index);
-            Tasks.Insert(index, task);
-            ReloadTheRowsNow();
-            InvokeAsync(StateHasChanged);
+            task.Notes = newNotes;
+            // Call your save method here, e.g., _taskService.SaveNotes(taskItemId, newNotes);
         }
     }
 
-    private async void ReloadTheRowsNow()
-    {
-        Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
-    }
 
-    private void OpenMenu(MouseEventArgs args, int taskItemId)
+    private string GetRowClass(TaskItemViewModel task)
     {
-        if (dropDownButtons.ContainsKey(taskItemId))
+        var classes = new List<string>();
+        if (task.IsHighlighted)
         {
-            // dropDownButtons[taskItemId].Open();
+            classes.Add("highlighted-row");
         }
-    }
-    private void GetDropDownRef(SfDropDownButton dropDownButton, int taskItemId)
-    {
-        if (!dropDownButtons.ContainsKey(taskItemId))
+        if (task.IsCompleted)
         {
-            dropDownButtons[taskItemId] = dropDownButton;
+            classes.Add("completed-row");
         }
-    }
-    private List<MenuItem> GetMenuItems(int taskItemId)
-    {
-        return new List<MenuItem>
-        {
-            new MenuItem { Text = "Edit", Url = $"/TrackTasks/Edit/{taskItemId}" },
-            new MenuItem { Text = "Delete", Url = $"/TrackTasks/Delete/{taskItemId}" }
-        };
-    }
-
-    private void OnRowDataBound(RowDataBoundEventArgs<TaskItemViewModel> args)
-    {
-        var row = args.Row;
-        if (args.Data.IsHighlighted)
-        {
-            args.Row.AddClass(new string[] { "highlighted-row" });
-        }
-        if (args.Data.IsCompleted == true)
-        {
-            args.Row.AddClass(new string[] { "completed-row" });
-        }
-    }
-
-    private void OnRowSelected(RowSelectEventArgs<TaskItemViewModel> args)
-    {
-        var selectedTask = args.Data;
-        // Handle row selection logic here
-        Console.WriteLine($"Selected Task: {selectedTask.TaskItemName}");
+        return string.Join(" ", classes);
     }
 }

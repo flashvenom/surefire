@@ -1,0 +1,211 @@
+﻿@page "/Renewals/Sf/{RenewalId:int}"
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.SplitButtons
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Shared
+@using Microsoft.AspNetCore.Components
+@inject RenewalService RenewalService
+
+@rendermode InteractiveServer
+
+<_toolbar />
+
+<div class="page-content">
+    @if (renewal != null){
+        <h1>Viewing renewal with ID @renewal.RenewalId</h1>
+
+        <SfGrid @ref="Grid" DataSource="@Tasks" EnableHover="false" RowHeight="20">
+            <GridSelectionSettings CheckboxOnly="true" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row"></GridSelectionSettings>
+
+            <GridColumns>
+                <GridColumn HeaderText="-" Width="100">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                        <SfDropDownButton CssClass="e-primary" IconCss="e-icons e-plus-icon" Id="@(task.TaskItemId.ToString())">
+                            <DropDownMenuItems>
+                                <DropDownMenuItem Text="Dashboard" IconCss=@DASHBOARD></DropDownMenuItem>
+                                <DropDownMenuItem Text="Notifications" IconCss=@NOTIFICATION></DropDownMenuItem>
+                                <DropDownMenuItem Text="User Settings" IconCss=@SETTINGS></DropDownMenuItem>
+                                <DropDownMenuItem Text="Log Out" IconCss=@LOGOUT></DropDownMenuItem>
+                            </DropDownMenuItems>
+                        </SfDropDownButton>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="" Width="50">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                            <input type="checkbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="TaskItemName" HeaderText="Task Name"></GridColumn>
+                <GridColumn HeaderText="Status" Width="50">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                            @task.Status
+                        }
+                    </Template>
+                </GridColumn>
+                
+                <GridColumn HeaderText="Notes">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                            <input type="text" value="@task.Notes" class="form-control" />
+                        }
+                    </Template>
+                </GridColumn>
+                
+                
+            </GridColumns>
+            <GridEvents RowDataBound="@(OnRowDataBound)" TValue="TaskItemViewModel"></GridEvents>
+        </SfGrid>
+    }
+    else
+    {
+        <h1>Loading renewal...</h1>
+    }
+</div>
+<style>s
+    :root {
+        --color-sf-primary-bg-color-pressed: #000;
+    }
+
+    :root .highlighted-row {
+        background-color: #ffd800 !important;
+    }
+    :root .completed-row {
+        opacity: .5 !important;
+    }
+
+    :root .e-grid .e-rowcell {
+        line-height: 10px !important;
+        padding:3px 0px !important;
+        margin: 0px !important;
+    }
+    :root .e-btn .e-primary:active {
+        background-color: #0078d4 !important;
+    }
+
+</style>
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+
+    private Renewal renewal;
+    private List<TaskItemViewModel> Tasks;
+    SfGrid<TaskItemViewModel> Grid { get; set; }
+    private Dictionary<int, SfDropDownButton> dropDownButtons = new Dictionary<int, SfDropDownButton>();
+
+    const string DASHBOARD = "e-icons e-dashboard";
+    const string NOTIFICATION = "e-icons e-notifications";
+    const string SETTINGS = "e-icons e-settings";
+    const string LOGOUT = "e-icons e-logout";
+
+    protected override async Task OnInitializedAsync()
+    {
+        renewal = await RenewalService.GetRenewalByIdAsync(RenewalId);
+        Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
+            new BreadcrumbItem { Text = "Editing #" + RenewalId }
+        });
+    }
+
+    private void OnNotesChanged(int taskItemId, string newNotes)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.Notes = newNotes;
+            // Call your save method here, e.g., _taskService.SaveNotes(taskItemId, newNotes);
+        }
+    }
+
+    private async void OnCompletedChanged(int taskItemId, object isChecked)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.IsCompleted = (bool)isChecked;
+            await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
+            Grid.Refresh();
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void UpdateRow(int taskItemId)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            // Trigger row re-render by updating the data source
+            var index = Tasks.IndexOf(task);
+            Tasks.RemoveAt(index);
+            Tasks.Insert(index, task);
+            ReloadTheRowsNow();
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void ReloadTheRowsNow()
+    {
+        Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
+    }
+
+    private void OpenMenu(MouseEventArgs args, int taskItemId)
+    {
+        if (dropDownButtons.ContainsKey(taskItemId))
+        {
+            // dropDownButtons[taskItemId].Open();
+        }
+    }
+    private void GetDropDownRef(SfDropDownButton dropDownButton, int taskItemId)
+    {
+        if (!dropDownButtons.ContainsKey(taskItemId))
+        {
+            dropDownButtons[taskItemId] = dropDownButton;
+        }
+    }
+    private List<MenuItem> GetMenuItems(int taskItemId)
+    {
+        return new List<MenuItem>
+        {
+            new MenuItem { Text = "Edit", Url = $"/TrackTasks/Edit/{taskItemId}" },
+            new MenuItem { Text = "Delete", Url = $"/TrackTasks/Delete/{taskItemId}" }
+        };
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<TaskItemViewModel> args)
+    {
+        var row = args.Row;
+        if (args.Data.IsHighlighted)
+        {
+            args.Row.AddClass(new string[] { "highlighted-row" });
+        }
+        if (args.Data.IsCompleted == true)
+        {
+            args.Row.AddClass(new string[] { "completed-row" });
+        }
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<TaskItemViewModel> args)
+    {
+        var selectedTask = args.Data;
+        // Handle row selection logic here
+        Console.WriteLine($"Selected Task: {selectedTask.TaskItemName}");
+    }
+}

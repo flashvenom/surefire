@@ -25,11 +25,10 @@ namespace Mantis.Domain.Renewals.ViewModels
     public class TaskItemViewModel
     {
         public int TaskItemId { get; set; }
-        public string TaskName { get; set; }
-        public bool Completed { get; set; }
-        public bool Highlighted { get; set; }
-        public bool Hidden { get; set; }
-        public bool Important { get; set; }
+        public string TaskItemName { get; set; }
+        public bool IsCompleted { get; set; }
+        public bool IsHighlighted { get; set; }
+        public bool IsHidden { get; set; }
         public string Status { get; set; }
         public string Notes { get; set; }
     }

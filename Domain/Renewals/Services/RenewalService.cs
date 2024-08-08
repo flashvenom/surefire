@@ -5,6 +5,7 @@ using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Mantis.Data;
 using Mantis.Domain.Renewals.Models;
+using Mantis.Domain.Renewals.ViewModels;
 using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Shared;
@@ -105,16 +106,25 @@ namespace Mantis.Domain.Renewals.Services
                 .Select(t => new TaskItemViewModel
                 {
                     TaskItemId = t.Id,
-                    TaskName = t.TaskName,
-                    Completed = t.Completed,
-                    Highlighted = t.Highlighted,
-                    Hidden = t.Hidden,
-                    Important = t.Important,
+                    TaskItemName = t.TaskName,
+                    IsCompleted = t.Completed,
+                    IsHighlighted = t.Highlighted,
+                    IsHidden = t.Hidden,
                     Status = t.Status,
                     Notes = t.Notes
                 }).ToListAsync();
 
             return tasks;
+        }
+
+        public async Task UpdateTaskCompleted(int taskItemId, bool isCompleted)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            if (task != null)
+            {
+                task.Completed = isCompleted;
+                await _context.SaveChangesAsync();
+            }
         }
 
 

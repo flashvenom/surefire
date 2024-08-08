@@ -1,14 +1,15 @@
 ﻿@page "/Renewals/{RenewalId:int}"
+@using Syncfusion.Blazor
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Shared
+@using Microsoft.AspNetCore.Components
 @inject RenewalService RenewalService
 
 @rendermode InteractiveServer
@@ -18,29 +19,49 @@
 <div class="page-content">
     @if (renewal != null){
         <h1>Viewing renewal with ID @renewal.RenewalId</h1>
-        
-        <SfGrid DataSource="@Tasks" RowSelected="@(OnRowSelected)">
+
+        <SfGrid DataSource="@Tasks" RowSelected="@(OnRowSelected)" EnableHover="false" RowHeight="20">
+            <GridSelectionSettings CheckboxOnly="true" Mode="SelectionMode.Row"></GridSelectionSettings>
+
             <GridColumns>
-                <GridColumn Field="TaskName" HeaderText="Task Name"></GridColumn>
-                <GridColumn Field="Status" HeaderText="Status"></GridColumn>
-                <GridColumn HeaderText="Notes" Template="@(context => 
-                {
-                    return @<div>
-                        <input type="text" value="@context.Notes" class="form-control" @onblur="@(args => OnNotesChanged(context.Id, args.Value.ToString()))" />
-                    </div>;
-                })"></GridColumn>
-                <GridColumn HeaderText="Complete" Template="@(context => 
-                {
-                    return @<div>
-                        <input type="checkbox" checked="@context.Completed" @onchange="@(args => OnCompletedChanged(context.Id, args.Value))" />
-                    </div>;
-                })"></GridColumn>
-                <GridColumn HeaderText="Actions" Template="@(context => 
-                {
-                    return @<SfMenu Items="@GetMenuItems(context.Id)" CssClass="e-icons"></SfMenu>;
-                })"></GridColumn>
+                <GridColumn HeaderText="-" Width="100">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                            // <SfMenu Items="@GetMenuItems(task.TaskItemId)" CssClass="e-icons"></SfMenu>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="" Width="50">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                            <input type="checkbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="TaskItemName" HeaderText="Task Name"></GridColumn>
+                <GridColumn HeaderText="Status" Width="50">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                            @task.Status
+                        }
+                    </Template>
+                </GridColumn>
+                
+                <GridColumn HeaderText="Notes">
+                    <Template>
+                        @{
+                            var task = (TaskItemViewModel)context;
+                            <input type="text" value="@task.Notes" class="form-control" />
+                        }
+                    </Template>
+                </GridColumn>
+                
+                
             </GridColumns>
-            <GridRowSettings RowDataBound="@(args => OnRowDataBound(args))"></GridRowSettings>
+            <GridEvents RowDataBound="@(OnRowDataBound)" TValue="TaskItemViewModel"></GridEvents>
         </SfGrid>
     }
     else
@@ -48,7 +69,20 @@
         <h1>Loading renewal...</h1>
     }
 </div>
+<style>
+    :root .highlighted-row {
+        background-color: #ffd800 !important;
+    }
+    :root .completed-row {
+        opacity: .5 !important;
+    }
 
+    :root .e-grid .e-rowcell {
+        line-height: 10px !important;
+        padding: 0px !important;
+        margin: 0px !important;
+    }
+</style>
 @code {
     [Parameter]
     public int RenewalId { get; set; }
@@ -68,44 +102,53 @@
         });
     }
 
-    private void OnNotesChanged(int taskId, string newNotes)
+    private void OnNotesChanged(int taskItemId, string newNotes)
     {
-        var task = Tasks.FirstOrDefault(t => t.Id == taskId);
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
         if (task != null)
         {
             task.Notes = newNotes;
-            // Call your save method here, e.g., _taskService.SaveNotes(taskId, newNotes);
+            // Call your save method here, e.g., _taskService.SaveNotes(taskItemId, newNotes);
         }
     }
 
-    private void OnCompletedChanged(int taskId, bool completed)
+    private async void OnCompletedChanged(int taskItemId, object isChecked)
     {
-        var task = Tasks.FirstOrDefault(t => t.Id == taskId);
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
         if (task != null)
         {
-            task.Completed = completed;
-            // Call your save method here, e.g., _taskService.UpdateTaskStatus(taskId, completed);
+            task.IsCompleted = (bool)isChecked;
+            await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
+            StateHasChanged();
         }
     }
 
-    private List<MenuItem> GetMenuItems(int taskId)
+    private List<MenuItem> GetMenuItems(int taskItemId)
     {
         return new List<MenuItem>
         {
-            new MenuItem { Text = "Edit", Url = $"/TrackTasks/Edit/{taskId}" },
-            new MenuItem { Text = "Delete", Url = $"/TrackTasks/Delete/{taskId}" }
+            new MenuItem { Text = "Edit", Url = $"/TrackTasks/Edit/{taskItemId}" },
+            new MenuItem { Text = "Delete", Url = $"/TrackTasks/Delete/{taskItemId}" }
         };
     }
 
-    private void OnRowDataBound(RowDataBoundEventArgs<TaskViewModel> args)
+    private void OnRowDataBound(RowDataBoundEventArgs<TaskItemViewModel> args)
     {
-        if (args.Data.Important)
+        var row = args.Row;
+        if (args.Data.IsHighlighted)
         {
-            args.Row.AdditionalAttributes.Add("style", "background-color: yellow;");
+            args.Row.AddClass(new string[] { "highlighted-row" });
         }
-        if (args.Data.Status == "Completed")
+        if (args.Data.IsCompleted == true)
         {
-            args.Row.AdditionalAttributes.Add("style", "opacity: 0.5;");
+            args.Row.AddClass(new string[] { "completed-row" });
         }
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<TaskItemViewModel> args)
+    {
+        var selectedTask = args.Data;
+        // Handle row selection logic here
+        Console.WriteLine($"Selected Task: {selectedTask.TaskItemName}");
     }
 }

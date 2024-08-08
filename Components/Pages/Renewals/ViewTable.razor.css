@@ -1,0 +1,45 @@
+﻿.sf-threedot
+ {
+    opacity:.5;
+}
+
+.sf-threedot:hover {
+    cursor:pointer;
+    opacity:1;
+}
+.sf-completedcheckbox {
+    position: relative;
+    top:-4px;
+    left: 2px;
+}
+
+.highlighted-row td:nth-child(2) {
+    background-color: #ffe349ff !important;
+    color: #000000be !important;
+}
+
+.table thead {
+    text-align: left;
+    font-size:.8em;
+    color:#767676;
+}
+
+.da {
+    font-size: 10px;
+    color: #6b6b6b !important;
+}
+
+.ds {
+    font-size: 11px !important;
+}
+
+.db {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.eg {
+    font-size: .7em;
+    font-style: italic;
+    color: #838383;
+}

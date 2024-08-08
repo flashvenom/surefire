@@ -111,6 +111,8 @@ namespace Mantis.Domain.Renewals.Services
                     IsHighlighted = t.Highlighted,
                     IsHidden = t.Hidden,
                     Status = t.Status,
+                    TaskGoalDate = t.GoalDate,
+                    TaskCompletedDate = t.CompletedDate,
                     Notes = t.Notes
                 }).ToListAsync();
 
@@ -123,6 +125,17 @@ namespace Mantis.Domain.Renewals.Services
             if (task != null)
             {
                 task.Completed = isCompleted;
+                task.CompletedDate = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task UpdateTaskHighlight(int taskItemId, bool isHighlighted)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            if (task != null)
+            {
+                task.Highlighted = isHighlighted;
                 await _context.SaveChangesAsync();
             }
         }

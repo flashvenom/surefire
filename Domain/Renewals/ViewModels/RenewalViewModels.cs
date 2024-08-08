@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Mantis.Domain.Clients.Models;
+using Mantis.Data;
 
 namespace Mantis.Domain.Renewals.ViewModels
 {
@@ -31,5 +32,8 @@ namespace Mantis.Domain.Renewals.ViewModels
         public bool IsHidden { get; set; }
         public string Status { get; set; }
         public string Notes { get; set; }
+        public DateTime? TaskGoalDate { get; set; }
+        public DateTime? TaskCompletedDate { get; set; }
+        public ApplicationUser AssignedSubUser { get; set; }
     }
 }

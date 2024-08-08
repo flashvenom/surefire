@@ -5,6 +5,7 @@
 @using Mantis.Components.Layout
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Routing
 @using System.Security.Claims;
 
 @inherits LayoutComponentBase
@@ -35,6 +36,8 @@
     </div>
 </div>
 
+
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -54,6 +57,10 @@
         <article class="myarticleclass">
             @Body
         </article>
+        <FluentDialogProvider />
+        <FluentToastProvider />
+        <FluentTooltipProvider />
+        <FluentMessageBarProvider />
     </main>
 </div>
 

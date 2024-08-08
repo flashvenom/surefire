@@ -3,13 +3,13 @@ using Mantis.Components.Account;
 using Mantis.Data;
 using Mantis.Domain.Carriers.Services;
 using Mantis.Domain.Clients.Services;
+using Mantis.Domain.Renewals.Services;
 using Mantis.Domain.Shared.Services;
 using Mantis.Domain.User.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Syncfusion.Blazor;
-using Syncfusion.Blazor.Internal;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +44,7 @@ bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedError
 builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<CarrierService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<RenewalService>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddSingleton<BreadcrumbService>();

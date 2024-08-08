@@ -1,19 +1,27 @@
+using Mantis.Data;
 using Mantis.Domain.Carriers.Models;
-using Mantis.Domain.Renewals.Models;
+using Mantis.Domain.Policies.Models;
+using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Shared;
 using System.Collections.Generic;
 
-namespace Mantis.Domain.Policies.Models
+namespace Mantis.Domain.Renewals.Models
 {
     public class Renewal
     {
         public int RenewalId { get; set; }
         public DateTime RenewalDate { get; set; }
-
+        public string? ExpiringPolicyNumber { get; set; }
+        public decimal? ExpiringPremium { get; set; }
         public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
         public ICollection<TrackTask> TrackTasks { get; set; } = new List<TrackTask>();
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
-        public Carrier Carrier { get; set; }
-        public Carrier Wholesaler { get; set; }
+        public Carrier? Carrier { get; set; }
+        public Carrier? Wholesaler { get; set; }
+        public Policy? Policy { get; set; }
+        public int? PolicyId { get; set; }
+        public Client Client { get; set; }
+        public Product Product { get; set; }
+        public ApplicationUser AssignedTo { get; set; }
     }
 }

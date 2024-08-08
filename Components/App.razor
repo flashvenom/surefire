@@ -5,15 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="Mantis.styles.css" />
     <link rel="stylesheet" href="https://use.typekit.net/kir6qlu.css">
     <link rel="icon" type="image/png" href="favicon.png" />
-    
-
     <HeadOutlet />
-
     <link rel="stylesheet" href="_content/Syncfusion.Blazor.Themes/fluent2.css" />
     <script src="_content/Syncfusion.Blazor.Core/scripts/syncfusion-blazor.min.js" type="text/javascript"></script>
 </head>
@@ -22,23 +18,11 @@
     <Routes />
     <script src="_framework/blazor.web.js"></script>
     <script src="/app.js"></script>
-    <script>
-        window.initializeSearchListViewFocus = function (textBoxElement, listViewElement) {
-            textBoxElement.addEventListener('keydown', function (event) {
-                if (event.key === 'ArrowDown') {
-                    listViewElement.focus();
-                    event.preventDefault();
-                }
-            });
-
-            listViewElement.addEventListener('keydown', function (event) {
-                if (event.key === 'ArrowUp' && listViewElement.querySelector('.e-active') === null) {
-                    textBoxElement.focus();
-                    event.preventDefault();
-                }
-            });
+    <style>
+        :root html, body {
+            margin: 0px !important;
+            padding: 0px !important;
         }
-    </script>
+    </style>
 </body>
-
 </html>

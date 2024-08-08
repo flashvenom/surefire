@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240807202430_AddingTasksRelationshipsContext")]
+    partial class AddingTasksRelationshipsContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -103,9 +106,6 @@ namespace Mantis.Migrations
 
                     b.Property<string>("CarrierName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CarrierNickname")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("City")
@@ -446,16 +446,7 @@ namespace Mantis.Migrations
                     b.Property<int>("ClientId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ExpiringPolicyNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("ExpiringPremium")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("PolicyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
+                    b.Property<int>("PolicyId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("RenewalDate")
@@ -473,8 +464,6 @@ namespace Mantis.Migrations
                     b.HasIndex("ClientId");
 
                     b.HasIndex("PolicyId");
-
-                    b.HasIndex("ProductId");
 
                     b.HasIndex("WholesalerId");
 
@@ -741,15 +730,7 @@ namespace Mantis.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LineCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LineName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LineNickname")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -1096,11 +1077,6 @@ namespace Mantis.Migrations
                     b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
                         .WithMany("Renewals")
                         .HasForeignKey("PolicyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Domain.Shared.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1116,8 +1092,6 @@ namespace Mantis.Migrations
                     b.Navigation("Client");
 
                     b.Navigation("Policy");
-
-                    b.Navigation("Product");
 
                     b.Navigation("Wholesaler");
                 });

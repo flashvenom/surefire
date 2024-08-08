@@ -1,5 +1,12 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+:root html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0px !important;
+    padding: 0px !important;
 }
 :root .sf-quicklist .e-listview {
     border: 0px;

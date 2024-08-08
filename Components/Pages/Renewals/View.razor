@@ -1,0 +1,111 @@
+﻿@page "/Renewals/{RenewalId:int}"
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Shared
+@inject RenewalService RenewalService
+
+@rendermode InteractiveServer
+
+<_toolbar />
+
+<div class="page-content">
+    @if (renewal != null){
+        <h1>Viewing renewal with ID @renewal.RenewalId</h1>
+        
+        <SfGrid DataSource="@Tasks" RowSelected="@(OnRowSelected)">
+            <GridColumns>
+                <GridColumn Field="TaskName" HeaderText="Task Name"></GridColumn>
+                <GridColumn Field="Status" HeaderText="Status"></GridColumn>
+                <GridColumn HeaderText="Notes" Template="@(context => 
+                {
+                    return @<div>
+                        <input type="text" value="@context.Notes" class="form-control" @onblur="@(args => OnNotesChanged(context.Id, args.Value.ToString()))" />
+                    </div>;
+                })"></GridColumn>
+                <GridColumn HeaderText="Complete" Template="@(context => 
+                {
+                    return @<div>
+                        <input type="checkbox" checked="@context.Completed" @onchange="@(args => OnCompletedChanged(context.Id, args.Value))" />
+                    </div>;
+                })"></GridColumn>
+                <GridColumn HeaderText="Actions" Template="@(context => 
+                {
+                    return @<SfMenu Items="@GetMenuItems(context.Id)" CssClass="e-icons"></SfMenu>;
+                })"></GridColumn>
+            </GridColumns>
+            <GridRowSettings RowDataBound="@(args => OnRowDataBound(args))"></GridRowSettings>
+        </SfGrid>
+    }
+    else
+    {
+        <h1>Loading renewal...</h1>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+
+    private Renewal renewal;
+    private List<TaskItemViewModel> Tasks;
+
+    protected override async Task OnInitializedAsync()
+    {
+        renewal = await RenewalService.GetRenewalByIdAsync(RenewalId);
+        Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
+            new BreadcrumbItem { Text = "Editing #" + RenewalId }
+        });
+    }
+
+    private void OnNotesChanged(int taskId, string newNotes)
+    {
+        var task = Tasks.FirstOrDefault(t => t.Id == taskId);
+        if (task != null)
+        {
+            task.Notes = newNotes;
+            // Call your save method here, e.g., _taskService.SaveNotes(taskId, newNotes);
+        }
+    }
+
+    private void OnCompletedChanged(int taskId, bool completed)
+    {
+        var task = Tasks.FirstOrDefault(t => t.Id == taskId);
+        if (task != null)
+        {
+            task.Completed = completed;
+            // Call your save method here, e.g., _taskService.UpdateTaskStatus(taskId, completed);
+        }
+    }
+
+    private List<MenuItem> GetMenuItems(int taskId)
+    {
+        return new List<MenuItem>
+        {
+            new MenuItem { Text = "Edit", Url = $"/TrackTasks/Edit/{taskId}" },
+            new MenuItem { Text = "Delete", Url = $"/TrackTasks/Delete/{taskId}" }
+        };
+    }
+
+    private void OnRowDataBound(RowDataBoundEventArgs<TaskViewModel> args)
+    {
+        if (args.Data.Important)
+        {
+            args.Row.AdditionalAttributes.Add("style", "background-color: yellow;");
+        }
+        if (args.Data.Status == "Completed")
+        {
+            args.Row.AdditionalAttributes.Add("style", "opacity: 0.5;");
+        }
+    }
+}

@@ -1,4 +1,6 @@
+using Mantis.Data;
 using Mantis.Domain.Shared;
+using Mantis.Domain.Renewals.Models;
 
 namespace Mantis.Domain.Renewals.Models
 {
@@ -24,8 +26,9 @@ namespace Mantis.Domain.Renewals.Models
         public bool Hidden { get; set; } = false;
         public bool Highlighted { get; set; } = false;
         public string? Notes { get; set; }
+        public Renewal Renewal { get; set; }
         public DateTime? CompletedDate { get; set; }
         public DateTime? GoalDate { get; set; }
-        
+        public ApplicationUser? AssignedTo { get; set; }
     }
 }

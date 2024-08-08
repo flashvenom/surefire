@@ -10,6 +10,7 @@ namespace Mantis.Domain.Carriers.Models
         public int CarrierId { get; set; }
         public string LookupCode { get; set; }
         public string CarrierName { get; set; }
+        public string? CarrierNickname { get; set; }
         public string? StreetAddress { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }

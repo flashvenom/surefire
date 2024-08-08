@@ -1,0 +1,61 @@
+﻿@page "/Renewals/MasterTasks"
+@using Mantis.Domain.Renewals.Models
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor
+@rendermode InteractiveServer
+
+<_toolbar />
+
+
+<div class="page-content">
+    <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" 
+        Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
+        <GridEvents OnActionFailure="@ActionFailure" TValue="TaskMaster"></GridEvents>
+        <SfDataManager Url="https://localhost:7074/api/TaskMaster"
+                       InsertUrl="https://localhost:7074/api/TaskMaster/Insert"
+                       UpdateUrl="https://localhost:7074/api/TaskMaster/Update"
+                       RemoveUrl="https://localhost:7074/api/TaskMaster/Delete"
+                       Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+        <GridPageSettings PageSize="20"></GridPageSettings>
+        <GridColumns>
+            <GridColumn Field=@nameof(TaskMaster.Id) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
+            <GridColumn Field=@nameof(TaskMaster.TaskName) HeaderText="Name" Width="400"></GridColumn>
+            <GridColumn Field=@nameof(TaskMaster.Description) HeaderText="Description"></GridColumn>
+            <GridColumn Field=@nameof(TaskMaster.DaysBeforeExpiration) HeaderText="GoalDays"></GridColumn>
+            <GridColumn Field=@nameof(TaskMaster.ParentTaskId) HeaderText="Parent Task"></GridColumn>
+            <GridColumn Field=@nameof(TaskMaster.ForType) HeaderText="For Type"></GridColumn>
+            <GridColumn Field=@nameof(TaskMaster.Important) HeaderText="Important"></GridColumn>
+            <GridColumn Field=@nameof(TaskMaster.OrderNumber) HeaderText="Order"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+</div>
+@statusMy
+
+@code {
+    SfGrid<TaskMaster> Grid { get; set; }
+    SfDataManager DataManager { get; set; }
+    string statusMy = "Loading";
+    public List<TaskMaster> GridData { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        statusMy = "Loaded!";
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
+            new BreadcrumbItem { Text = "Master Tasks" }
+        });
+    }
+
+    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    {
+        statusMy = "ERROR ON GRID!<br>";
+        statusMy += args.Error.ToString();
+        StateHasChanged();
+    }
+}

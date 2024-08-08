@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240807183237_RenewalManagerPrep")]
+    partial class RenewalManagerPrep
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -103,9 +106,6 @@ namespace Mantis.Migrations
 
                     b.Property<string>("CarrierName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CarrierNickname")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("City")
@@ -428,7 +428,7 @@ namespace Mantis.Migrations
                     b.ToTable("Policies");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Renewals.Models.Renewal", b =>
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.Renewal", b =>
                 {
                     b.Property<int>("RenewalId")
                         .ValueGeneratedOnAdd()
@@ -437,7 +437,6 @@ namespace Mantis.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RenewalId"));
 
                     b.Property<string>("AssignedToId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("CarrierId")
@@ -446,16 +445,7 @@ namespace Mantis.Migrations
                     b.Property<int>("ClientId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ExpiringPolicyNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("ExpiringPremium")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int?>("PolicyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("RenewalDate")
@@ -474,14 +464,12 @@ namespace Mantis.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.HasIndex("ProductId");
-
                     b.HasIndex("WholesalerId");
 
                     b.ToTable("Renewals");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Renewals.Models.Submission", b =>
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.Submission", b =>
                 {
                     b.Property<int>("SubmissionId")
                         .ValueGeneratedOnAdd()
@@ -521,43 +509,6 @@ namespace Mantis.Migrations
                     b.ToTable("Submissions");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Renewals.Models.TaskMaster", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("DaysBeforeExpiration")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ForType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Important")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("OrderNumber")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ParentTaskId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TaskName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParentTaskId");
-
-                    b.ToTable("TaskMasters");
-                });
-
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.TrackTask", b =>
                 {
                     b.Property<int>("Id")
@@ -590,7 +541,7 @@ namespace Mantis.Migrations
                     b.Property<int>("OrderNumber")
                         .HasColumnType("int");
 
-                    b.Property<int>("RenewalId")
+                    b.Property<int?>("RenewalId")
                         .HasColumnType("int");
 
                     b.Property<string>("Status")
@@ -607,7 +558,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("RenewalId");
 
-                    b.ToTable("TrackTasks");
+                    b.ToTable("TrackTask");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Address", b =>
@@ -741,15 +692,7 @@ namespace Mantis.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LineCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("LineName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LineNickname")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -1074,13 +1017,11 @@ namespace Mantis.Migrations
                     b.Navigation("Wholesaler");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Renewals.Models.Renewal", b =>
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.Renewal", b =>
                 {
                     b.HasOne("Mantis.Data.ApplicationUser", "AssignedTo")
                         .WithMany()
-                        .HasForeignKey("AssignedToId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("AssignedToId");
 
                     b.HasOne("Mantis.Domain.Carriers.Models.Carrier", "Carrier")
                         .WithMany()
@@ -1095,14 +1036,7 @@ namespace Mantis.Migrations
 
                     b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
                         .WithMany("Renewals")
-                        .HasForeignKey("PolicyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Domain.Shared.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("PolicyId");
 
                     b.HasOne("Mantis.Domain.Carriers.Models.Carrier", "Wholesaler")
                         .WithMany()
@@ -1117,12 +1051,10 @@ namespace Mantis.Migrations
 
                     b.Navigation("Policy");
 
-                    b.Navigation("Product");
-
                     b.Navigation("Wholesaler");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Renewals.Models.Submission", b =>
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.Submission", b =>
                 {
                     b.HasOne("Mantis.Domain.Carriers.Models.Carrier", "Carrier")
                         .WithMany()
@@ -1136,10 +1068,9 @@ namespace Mantis.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Mantis.Domain.Renewals.Models.Renewal", "Renewal")
+                    b.HasOne("Mantis.Domain.Policies.Models.Renewal", null)
                         .WithMany("Submissions")
-                        .HasForeignKey("RenewalId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("RenewalId");
 
                     b.HasOne("Mantis.Domain.Carriers.Models.Carrier", "Wholesaler")
                         .WithMany()
@@ -1151,35 +1082,20 @@ namespace Mantis.Migrations
 
                     b.Navigation("Product");
 
-                    b.Navigation("Renewal");
-
                     b.Navigation("Wholesaler");
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Renewals.Models.TaskMaster", b =>
-                {
-                    b.HasOne("Mantis.Domain.Renewals.Models.TaskMaster", null)
-                        .WithMany()
-                        .HasForeignKey("ParentTaskId")
-                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.TrackTask", b =>
                 {
                     b.HasOne("Mantis.Data.ApplicationUser", "AssignedTo")
                         .WithMany()
-                        .HasForeignKey("AssignedToId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("AssignedToId");
 
-                    b.HasOne("Mantis.Domain.Renewals.Models.Renewal", "Renewal")
+                    b.HasOne("Mantis.Domain.Policies.Models.Renewal", null)
                         .WithMany("TrackTasks")
-                        .HasForeignKey("RenewalId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("RenewalId");
 
                     b.Navigation("AssignedTo");
-
-                    b.Navigation("Renewal");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Attachment", b =>
@@ -1196,7 +1112,7 @@ namespace Mantis.Migrations
                         .WithMany("Attachments")
                         .HasForeignKey("PolicyId");
 
-                    b.HasOne("Mantis.Domain.Renewals.Models.Renewal", null)
+                    b.HasOne("Mantis.Domain.Policies.Models.Renewal", null)
                         .WithMany("Attachments")
                         .HasForeignKey("RenewalId");
                 });
@@ -1300,7 +1216,7 @@ namespace Mantis.Migrations
                     b.Navigation("Vehicles");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Renewals.Models.Renewal", b =>
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.Renewal", b =>
                 {
                     b.Navigation("Attachments");
 

@@ -1,0 +1,30 @@
+﻿@namespace Mantis.Components.Pages.Policies
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager NavigationManager
+
+<div class="page-toolbar">
+    <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Policy</SfButton>
+
+    <NavLink class="toolbar-link" href="Policies" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+    </NavLink>
+
+    <NavLink class="toolbar-link" href="Policies/Products" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Toolbox())" />
+    </NavLink>
+</div>
+
+<style>
+    .e-plus-icon::before {
+        content: '\e805';
+    }
+</style>
+
+@code {
+    private void NavigateToRenewalCreate()
+    {
+        NavigationManager.NavigateTo("/Policies");
+    }
+}

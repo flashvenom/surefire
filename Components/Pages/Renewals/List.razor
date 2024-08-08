@@ -1,0 +1,74 @@
+﻿@page "/Renewals/List"
+@using Mantis.Domain.Renewals.Models
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Shared
+@rendermode InteractiveServer
+
+<_toolbar />
+
+
+<div class="page-content">
+    <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true"
+            Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
+        <GridEvents OnActionFailure="@ActionFailure" TValue="Renewal"></GridEvents>
+        <SfDataManager Url="https://localhost:7074/api/Renewal"
+                       InsertUrl="https://localhost:7074/api/Renewal/Insert"
+                       UpdateUrl="https://localhost:7074/api/Renewal/Update"
+                       RemoveUrl="https://localhost:7074/api/Renewal/Delete"
+                       Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+        <GridPageSettings PageSize="20"></GridPageSettings>
+        <GridColumns>
+            <GridColumn Field=@nameof(Renewal.RenewalId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
+            <GridColumn Field="Client.Name" HeaderText="Client"></GridColumn>
+            <GridColumn Field="Product.LineNickname" HeaderText="Line"></GridColumn>
+            <GridColumn Field=@nameof(Renewal.ExpiringPolicyNumber) HeaderText="x-Policy #"></GridColumn>
+            <GridColumn Field="Policy.PolicyNumber" HeaderText="x-Policy #"></GridColumn>
+            <GridColumn Field=@nameof(Renewal.ExpiringPremium) HeaderText="x-Premium"></GridColumn>
+            <GridColumn Field=@nameof(Renewal.AssignedTo) HeaderText="Assigned"></GridColumn>
+            <GridColumn Field=@nameof(Renewal.RenewalDate) HeaderText="Expiration"></GridColumn>
+            <GridColumn Field="Carrier.CarrierName" HeaderText="Carrier"></GridColumn>
+            <GridColumn Field="Wholesaler.CarrierName" HeaderText="Wholesaler"></GridColumn>
+            <GridColumn HeaderText="Actions" Width="120">
+                <Template>
+                    <SfButton CssClass="e-primary" OnClick="@(args => NavigateToRenewal(context as Renewal))">View</SfButton>
+                </Template>
+            </GridColumn>
+        </GridColumns>
+    </SfGrid>
+</div>
+@statusMy
+
+@code {
+    SfGrid<Renewal> Grid { get; set; }
+    SfDataManager DataManager { get; set; }
+    string statusMy = "Loading";
+    public List<Renewal> GridData { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var copyData = GridData;
+        statusMy = "Loaded!";
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
+            new BreadcrumbItem { Text = "Edit" }
+        });
+    }
+    private void NavigateToRenewal(Renewal renewal)
+    {
+        Navigation.NavigateTo($"/Renewals/{renewal.RenewalId}");
+    }
+    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    {
+        statusMy = "ERROR ON GRID!<br>";
+        statusMy += args.Error.ToString();
+        StateHasChanged();
+    }
+}

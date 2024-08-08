@@ -4,9 +4,13 @@
 @using Mantis.Domain.Shared.Services
 @using Mantis.Components.Layout
 @using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims;
 
 @inherits LayoutComponentBase
 @inject BreadcrumbService BreadcrumbService
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
 
 <div class="top-bar">
     <div class="left-icons">
@@ -21,10 +25,13 @@
     </div>
 
     <div class="right-icons" style="color:#fff;">
-        <SfButton CssClass="e-flat e-icon-btn" IconCss="e-icons e-plus-icon"></SfButton>
-        <SfButton CssClass="e-flat e-icon-btn">
-            <span class="e-icons e-user"></span>
-        </SfButton>
+        @if (User.Identity.IsAuthenticated == true)
+        {
+            <a class="sf-useremail" href="/Account/Manage">@User.Identity.Name</a>
+        }
+        <a href="/Account/Manage" class="e-icon-btn e-icons">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Person())" />
+        </a>
     </div>
 </div>
 
@@ -105,12 +112,18 @@
         align-items: center;
     }
 
-    .e-icon-btn {
+    :root .e-icon-btn {
         background-color: transparent;
         border: none;
         opacity: 0.7;
-        color: white;
+        color: #fff !important;
+        fill: #fff;
         transition: opacity 0.3s;
+    }
+
+    :root .e-icon-btn svg {
+        color: #fff !important;
+        fill: #fff !important;
     }
 
         .e-icon-btn:hover {
@@ -133,3 +146,18 @@
         flex-grow: 1;
     }
 </style>
+@code {
+    private ClaimsPrincipal User { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        //User = (await UserManager.GetUserAsync(SignInManager.Context.User))?.Principal;
+        User = (await authenticationStateTask).User;
+    }
+    private void NavigateToManage()
+    {
+        Navigation.NavigateTo("/Account/Manage");
+    }
+}

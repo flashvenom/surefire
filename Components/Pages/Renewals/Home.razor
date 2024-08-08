@@ -1,4 +1,4 @@
-﻿@page "/Policies"
+﻿@page "/Renewals"
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
@@ -6,12 +6,10 @@
 @using Syncfusion.Blazor
 @rendermode InteractiveServer
 
-<link href="mantis.css" rel="stylesheet" />
-
 <_toolbar />
 
 <div class="page-content">
-    Policy list here
+    Renewal Manager Homepage
 </div>
 
 @code {
@@ -21,7 +19,7 @@
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Policies" }
+            new BreadcrumbItem { Text = "Renewals" }
         });
     }
 }

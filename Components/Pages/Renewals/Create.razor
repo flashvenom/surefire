@@ -1,0 +1,194 @@
+﻿@page "/Renewals/Create"
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Shared
+@rendermode InteractiveServer
+@inject RenewalService RenewalService
+@inject NavigationManager NavigationManager
+
+<_toolbar />
+
+<div class="page-content">
+    <EditForm OnValidSubmit="HandleValidSubmit" EditContext="@editContext" FormName="NewRenewalFormThing">
+        <DataAnnotationsValidator />
+        <h1>Create New Renewal</h1>
+        <div class="sfpage-newcarrier">
+            <div class="sf-col-1">
+                @if (clients != null)
+                {
+                    <div class="sf-formcontainer">
+                        <SfDropDownList TValue="int?" TItem="Client" Placeholder="Select Client" DataSource="@clients" @bind-Value="renewalViewModel.ClientId" FloatLabelType="FloatLabelType.Auto" AllowFiltering="true">
+                            <DropDownListFieldSettings Value="ClientId" Text="Name"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => renewalViewModel.ClientId)" class="sf-validation" />
+                    </div>
+                }
+                else
+                {
+                    <p>Loading clients...</p>
+                }
+                
+                <div class="sf-formcontainer">
+                    <SfDatePicker TValue="DateTime" Placeholder="Select Date" @bind-Value="renewalViewModel.RenewalDate" FloatLabelType="FloatLabelType.Always"></SfDatePicker>
+                    <ValidationMessage For="@(() => renewalViewModel.RenewalDate)" class="sf-validation" />
+                </div>
+
+                @if (carriers != null)
+                {
+                    <div class="sf-formcontainer">
+                        <SfDropDownList TValue="int?" TItem="Carrier" Placeholder="Select Carrier" DataSource="@carriers" @bind-Value="renewalViewModel.CarrierId" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => renewalViewModel.CarrierId)" class="sf-validation" />
+                    </div>
+                }
+                else
+                {
+                    <p>Loading carriers...</p>
+                }
+
+                <div class="sf-formcontainer">
+                    <SfNumericTextBox TValue="decimal" Placeholder="Expiring Premium" @bind-Value="renewalViewModel.ExpiringPremium" FloatLabelType="FloatLabelType.Auto"></SfNumericTextBox>
+                </div>
+            </div><!--/column1-->
+            <div class="sf-col-2">
+                @if (products != null)
+                {
+                    <div class="sf-formcontainer">
+                        <SfDropDownList TValue="int?" TItem="Product" Placeholder="Select Product" DataSource="@products" @bind-Value="renewalViewModel.ProductId" FloatLabelType="FloatLabelType.Auto">
+                            <DropDownListFieldSettings Value="ProductId" Text="LineName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => renewalViewModel.ProductId)" class="sf-validation" />
+                    </div>
+                }
+                else
+                {
+                    <p>Loading products...</p>
+                }
+
+                @if (users != null)
+                {
+                    <div class="sf-formcontainer">
+                        <SfDropDownList TValue="string" TItem="ApplicationUser" Placeholder="Assign To" DataSource="@users" @bind-Value="renewalViewModel.AssignedToId" FloatLabelType="FloatLabelType.Auto">
+                            <DropDownListFieldSettings Value="Id" Text="UserName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => renewalViewModel.AssignedToId)" class="sf-validation" />
+                    </div>
+                }
+                else
+                {
+                    <p>Loading users...</p>
+                }
+
+                @if (wholesalers != null)
+                {
+                    <div class="sf-formcontainer">
+                        <SfDropDownList TValue="int?" TItem="Carrier" Placeholder="Select Wholesaler" DataSource="@wholesalers" @bind-Value="renewalViewModel.WholesalerId" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(() => renewalViewModel.WholesalerId)" class="sf-validation" />
+                    </div>
+                }
+                else
+                {
+                    <p>Loading wholesalers...</p>
+                }
+
+                <div class="sf-formcontainer">
+                    <SfTextBox TValue="string" Placeholder="Expiring Policy Number" @bind-Value="renewalViewModel.ExpiringPolicyNumber" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                </div>
+                
+            </div><!--/column2-->
+        </div>
+
+        <SfButton CssClass="e-primary" Click="@HandleValidSubmit">Create Renewal</SfButton>
+    </EditForm>
+</div>
+@messageMe
+
+<style>
+    :root .sf-validation {
+        font-size: 13px !important;
+        color: #bd7b7b;
+        padding-top:4px;
+    }
+</style>
+@code {
+    private RenewalViewModel renewalViewModel = new();
+    private List<Carrier> carriers;
+    private List<Carrier> wholesalers;
+    private List<Product> products;
+    private List<Client> clients;
+    private List<ApplicationUser> users;
+    private EditContext editContext;
+    private ValidationMessageStore? messageStore;
+    private string messageMe = "Loaded...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(renewalViewModel);
+        editContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new(editContext);
+        carriers = await RenewalService.GetCarriersAsync();
+        wholesalers = carriers.Where(c => c.Wholesaler).ToList();
+        products = await RenewalService.GetProductsAsync();
+        clients = await RenewalService.GetClientsAsync();
+        users = await RenewalService.GetUsersAsync();
+
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
+            new BreadcrumbItem { Text = "Create" }
+        });
+    }
+    private void HandleValidationRequested(object? sender,
+        ValidationRequestedEventArgs args)
+    {
+        messageMe = "Validating";
+        messageStore?.Clear();
+        InvokeAsync(StateHasChanged);
+
+    }
+
+    private void Submit()
+    {
+        messageMe = "Form submitted";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var renewal = new Renewal
+            {
+                RenewalDate = renewalViewModel.RenewalDate,
+                Carrier = carriers.FirstOrDefault(c => c.CarrierId == renewalViewModel.CarrierId),
+                Wholesaler = wholesalers.FirstOrDefault(w => w.CarrierId == renewalViewModel.WholesalerId),
+                Client = clients.FirstOrDefault(c => c.ClientId == renewalViewModel.ClientId),
+                Product = products.FirstOrDefault(p => p.ProductId == renewalViewModel.ProductId),
+                ExpiringPolicyNumber = renewalViewModel.ExpiringPolicyNumber,
+                AssignedTo = users.FirstOrDefault(u => u.Id == renewalViewModel.AssignedToId),
+                ExpiringPremium = renewalViewModel.ExpiringPremium
+            };
+
+        await RenewalService.NewRenewalAsync(renewal);
+        NavigationManager.NavigateTo("/Renewals/" + renewal.RenewalId);
+    }
+    public void Dispose()
+    {
+        if (editContext is not null)
+        {
+            editContext.OnValidationRequested -= HandleValidationRequested;
+        }
+    }
+}

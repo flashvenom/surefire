@@ -1,7 +1,7 @@
 using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Shared;
 
-namespace Mantis.Domain.Policies.Models
+namespace Mantis.Domain.Renewals.Models
 {
     public class Submission
     {
@@ -12,5 +12,6 @@ namespace Mantis.Domain.Policies.Models
         public Product Product { get; set; }
         public Carrier Carrier { get; set; }
         public Carrier Wholesaler { get; set; }
+        public Renewal? Renewal { get; set; }
     }
 }

@@ -30,17 +30,6 @@ namespace Mantis.Domain.Carriers.Services
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             carrier.CreatedBy = currentUser;
-            //var carrier = new Carrier
-            //{
-            //    CarrierName = fields["CarrierName"],
-            //    StreetAddress = fields["StreetAddress"],
-            //    City = fields["City"],
-            //    State = fields["State"],
-            //    Zip = fields["ZipCode"],
-            //    Phone = fields["Phone"],
-            //    CreatedBy = currentUser
-            //};
-
             _context.Carriers.Add(carrier);
             await _context.SaveChangesAsync();
         }

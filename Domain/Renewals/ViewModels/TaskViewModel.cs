@@ -1,8 +1,8 @@
 namespace Mantis.Domain.Renewals.ViewModels
 {
-    public class TasksViewModel
+    public class TasksHomeViewModel
     {
-        public ICollection<MarketingEntryViewModel> MarketingEntries { get; set; }
+        public ICollection<RenewalViewModel> MarketingEntries { get; set; }
         public List<ImportantTaskViewModel> ImportantTasks { get; set; }
         public List<ImportantTaskViewModel> PastDueTasks { get; set; }
         public List<ImportantTaskViewModel> UpcomingTasks { get; set; }
@@ -23,7 +23,7 @@ namespace Mantis.Domain.Renewals.ViewModels
         public string CsrAssigned { get; set; }
         public bool Highlighted { get; set; }
     }
-    public class TaskViewModel
+    public class TaskItemViewModel
     {
         public int Id { get; set; }
         public string TaskName { get; set; }

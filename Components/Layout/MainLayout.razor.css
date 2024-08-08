@@ -1,5 +1,15 @@
+:root .sf-useremail {
+    font-size: .7em;
+    color: #fff;
+    opacity: .4;
+    -webkit-text-decoration: none;
+    text-decoration: none;
+    transition: opacity .5s;
+}
+:root .sf-useremail:hover {
+    opacity: .9;
+}
 sf-search-bar {
-    
 }
 .sf-search-input {
     font-family: 'Segoe UI Variable Text';

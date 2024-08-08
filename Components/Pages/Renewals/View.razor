@@ -29,7 +29,7 @@
                     <Template>
                         @{
                             var task = (TaskItemViewModel)context;
-                            <SfDropDownButton CssClass="e-primary" IconCss="e-icons e-plus-icon" Id="@(task.TaskItemId.ToString())">
+                        <SfDropDownButton CssClass="e-primary" IconCss="e-icons e-plus-icon" Id="@(task.TaskItemId.ToString())">
                             <DropDownMenuItems>
                                 <DropDownMenuItem Text="Dashboard" IconCss=@DASHBOARD></DropDownMenuItem>
                                 <DropDownMenuItem Text="Notifications" IconCss=@NOTIFICATION></DropDownMenuItem>

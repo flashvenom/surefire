@@ -23,6 +23,7 @@
     <None Remove="Components\Pages\Clients\Commercial.razor.css" />
     <None Remove="Components\Pages\Clients\List.razor.css" />
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
+    <None Remove="Components\Pages\Renewals\View - Copy.razor.css" />
     <None Remove="Components\Pages\Renewals\View.razor.css" />
   </ItemGroup>
 

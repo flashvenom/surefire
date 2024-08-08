@@ -1,0 +1,135 @@
+﻿@page "/Renewals/Table/{RenewalId:int}"
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Microsoft.AspNetCore.Components
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.SplitButtons
+@inject RenewalService RenewalService
+
+@rendermode InteractiveServer
+
+<_toolbar />
+
+<div class="page-content">
+    @if (renewal != null)
+    {
+        <h1>Viewing renewal with ID @renewal.RenewalId</h1>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Menu</th>
+                    <th>Done</th>
+                    <th>Task Name</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var task in Tasks)
+                {
+                    <tr class="@GetRowClass(task)">
+                        <td>
+                            <SfDropDownButton CssClass="e-primary" IconCss="e-icons e-plus-icon" Id="dropdown-@(task.TaskItemId.ToString())">
+                            <DropDownMenuItems>
+                                    <DropDownMenuItem Text="Dashboard" IconCss="e-icons e-plus-icon"></DropDownMenuItem>
+                                    <DropDownMenuItem Text="Notifications" IconCss="e-icons e-plus-icon"></DropDownMenuItem>
+                                    <DropDownMenuItem Text="User Settings" IconCss="e-icons e-plus-icon"></DropDownMenuItem>
+                                    <DropDownMenuItem Text="Log Out" IconCss="e-icons e-plus-icon"></DropDownMenuItem>
+                            </DropDownMenuItems>
+                        </SfDropDownButton>
+
+                            <div class="dropdown">
+                                @* <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton_@task.TaskItemId" data-bs-toggle="dropdown" aria-expanded="false">
+                                    ...
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton_@task.TaskItemId">
+                                    <li><a class="dropdown-item" href="/TrackTasks/Edit/@task.TaskItemId">Edit</a></li>
+                                    <li><a class="dropdown-item" href="/TrackTasks/Delete/@task.TaskItemId">Delete</a></li>
+                                </ul> *@
+                            </div>
+                        </td>
+                        <td>
+                            <input type="checkbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+                        </td>
+                        <td>@task.TaskItemName</td>
+                        <td>@task.Status</td>
+                        <td>
+                            <input type="text" value="@task.Notes" class="form-control" />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <h1>Loading renewal...</h1>
+    }
+</div>
+
+<style>
+    .highlighted-row {
+        background-color: #ffd800 !important;
+    }
+
+    .completed-row {
+        opacity: .5 !important;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+
+    private Renewal renewal;
+    private List<TaskItemViewModel> Tasks;
+
+    protected override async Task OnInitializedAsync()
+    {
+        renewal = await RenewalService.GetRenewalByIdAsync(RenewalId);
+        Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
+            new BreadcrumbItem { Text = "Editing #" + RenewalId }
+        });
+    }
+
+    private async void OnNotesChanged(int taskItemId, string newNotes)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.Notes = newNotes;
+            // Call your save method here, e.g., _taskService.SaveNotes(taskItemId, newNotes);
+        }
+    }
+
+    private async void OnCompletedChanged(int taskItemId, object isChecked)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.IsCompleted = (bool)isChecked;
+            await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
+            StateHasChanged();
+        }
+    }
+
+    private string GetRowClass(TaskItemViewModel task)
+    {
+        var classes = new List<string>();
+        if (task.IsHighlighted)
+        {
+            classes.Add("highlighted-row");
+        }
+        if (task.IsCompleted)
+        {
+            classes.Add("completed-row");
+        }
+        return string.Join(" ", classes);
+    }
+}

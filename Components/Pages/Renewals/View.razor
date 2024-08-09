@@ -6,33 +6,80 @@
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SplitButtons
 @using Mantis.Domain.Shared.Helpers;
+@using System.Timers
 @inject RenewalService RenewalService
 
 @rendermode InteractiveServer
 
-<_toolbar />
+@if (renewal != null)
+    {
+        <div class="sf-renewalheader">
+            <div>
+                <span class="sf-linecode">@renewal.Product.LineCode</span>
+                <span class="sf-renewaldate">@(renewal.RenewalDate.ToString("M/d") ?? "")</span>
+            </div>
+            <div>
+                <span class="sf-clientname">@renewal.Client.Name</span>
+            </div>
+            <div>
+            @if (renewal.Carrier != null)
+            {
+                <span class="sf-pilltitle">Carrier</span>
 
+                <span class="sf-pillvalue">@renewal.Carrier.CarrierName</span>
+            }
+            @if (renewal.Wholesaler != null)
+            {
+                <span class="sf-pilltitle">Wholesaler</span>
+
+                <span class="sf-pillvalue">@renewal.Wholesaler.CarrierName</span>
+            }
+
+            @if (renewal.Policy != null)
+            {
+                <span class="sf-pilltitle">Expiring Policy</span>
+                <span class="sf-pillvalue">@renewal.Policy.PolicyNumber</span>
+            }
+            @if (renewal.ExpiringPolicyNumber != null)
+            {
+                <span class="sf-pilltitle">Expiring Policy</span>
+                <span class="sf-pillvalue">@renewal.ExpiringPolicyNumber</span>
+            }
+
+            @if (renewal.ExpiringPremium != null)
+            {
+                <span class="sf-pilltitle">Expiring Premium</span>
+                <span class="sf-pillvalue">@renewal.ExpiringPremium</span>
+            }
+            </div>
+        </div>
+       }
 <div class="page-content">
+
+
+
     @if (renewal != null)
     {
-        <h1>@renewal.Client.Name - @renewal.RenewalId</h1>
-       
-        <table class="table">
+
+        <FluentTabs ActiveTabId="tab-1" Size="TabSize.Large">
+            <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab">
+            
+            <table class="table">
             <thead>
                 <tr>
                     <th></th>
                     <th style="width:280px">Task</th>
                     <th>Status</th>
                     <th style="width:400px">Notes</th>
-                    <th>SubAssigned</th>
+                    <th>Sub</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var task in Tasks)
                 {
                     <tr class="@GetRowClass(task)">
-                        <td>
-                            <a id="myId-@(task.TaskItemId)" class="sf-threedot"><FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Accent" /></a>
+                        <td class="sf-leftcell">
+                            <a id="myId-@(task.TaskItemId)" class="sf-threedot"><FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Fill" /></a>
                             <FluentMenu Anchor="@("myId-" + task.TaskItemId)" Trigger="MouseButton.Left" Anchored="true" VerticalInset="true">
                                 <FluentMenuItem OnClick="@((e) => HighlightRow(task.TaskItemId))">
                                     <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" Color="Color.FillInverse" Slot="start" /></span>
@@ -49,13 +96,30 @@
                         <td style="padding:0px 5px;">@task.TaskItemName</td>
                         <td class="ds">@((MarkupString)DateHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
                         <td>
-                            <input type="text" value="@task.Notes" class="e-input" />
+                            <input type="text" value="@task.Notes" class="e-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
                         </td>
-                        <td>@(task.AssignedSubUser?.Email ?? "")</td>
+                        <td>
+                            @if (task.AssignedSubUser != null)
+                            {
+                                <div style="display: flex; align-items: center;">
+                                    <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
+                                    <span class="sf-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
+                                </div>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
+
+            </FluentTab>
+            <FluentTab Id="tab-2" Label="Submissions" Class="sf-tab">
+                Submissions
+            </FluentTab>
+            <FluentTab Id="tab-3" Label="Notes" Class="sf-tab">
+                Notes Here
+            </FluentTab>
+        </FluentTabs>
     }
     else
     {
@@ -68,19 +132,39 @@
         background-color: #ffe762ff !important;
         color: #000000be !important;
     }
-
+    
+    .sf-tab-container {
+        background-color:#fff;
+        border-radius:5px;
+        box-shadow:0px 0px 5px #ccc;
+    }
     :root .e-input {
         padding: 5px; /* Adjust the padding as needed */
         height:20px !important;
         font-size: 12px !important; /* Adjust the font size as needed */
     }
+
+    :root th {
+        font-weight:300 !important;
+    }
     .sf-threedot {
         opacity:.3;
+    }
+
+    .sf-tab {
+        background-color:#fff;
+        border-radius:5px;
     }
 
     .sf-threedot:hover {
         opacity: 1;
     }
+
+        .sf-threedot svg {
+            position:relative;
+            top:1px;
+            left:2px;
+        }
 
     .completed-row > td:not(:first-child) {
         opacity: .5 !important;
@@ -98,6 +182,7 @@
 
     private Renewal renewal;
     private List<TaskItemViewModel> Tasks;
+    private Dictionary<int, Timer> _debounceTimers = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,8 +192,36 @@
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
-            new BreadcrumbItem { Text = "Editing #" + RenewalId }
+            new BreadcrumbItem { Text = "Edit-" + RenewalId }
         });
+    }
+
+    private void OnNotesInputChanged(int taskItemId, string newNotes)
+    {
+        if (_debounceTimers.ContainsKey(taskItemId))
+        {
+            _debounceTimers[taskItemId].Stop();
+            _debounceTimers[taskItemId].Dispose();
+        }
+
+        var timer = new Timer(500);
+        timer.Elapsed += async (sender, e) => await SaveNotesAsync(taskItemId, newNotes);
+        timer.AutoReset = false;
+        timer.Start();
+
+        _debounceTimers[taskItemId] = timer;
+    }
+
+    private async Task SaveNotesAsync(int taskItemId, string newNotes)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.Notes = newNotes;
+            await RenewalService.UpdateTaskNotesAsync(taskItemId, newNotes);
+
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async void EditRow(int taskid)
@@ -137,15 +250,6 @@
             task.IsCompleted = (bool)isChecked;
             await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
             StateHasChanged();
-        }
-    }
-    private async void OnNotesChanged(int taskItemId, string newNotes)
-    {
-        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
-        if (task != null)
-        {
-            task.Notes = newNotes;
-            // Call your save method here, e.g., _taskService.SaveNotes(taskItemId, newNotes);
         }
     }
 

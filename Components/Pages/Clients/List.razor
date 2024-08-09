@@ -5,13 +5,16 @@
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Renewals.Models
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Lists
 @using Mantis.Data
+@using Mantis.Domain.Renewals.Services
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject RenewalService RenewalService
 @inject CrmApiService CrmApiService
 @inject ClientService ClientService
 @inject IJSRuntime jsRuntime
@@ -52,7 +55,7 @@
         <div class="sf-col-container">
             <div class="sf-col sf-col-1">
                     <h3>Current Policies</h3>
-                    @* <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner> *@
+                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                     <div class="policy-container">
                         @foreach (var policy in currentPolicies)
                         {
@@ -69,9 +72,10 @@
                                     <div>@policy.Premium.ToString("C")</div>
                                 </div>
                             </div>
+                            <FluentButton OnClick="@((e) => EditPolicy(policy.PolicyId))">Edit Policy</FluentButton> <FluentButton OnClick="@((e) => CreateRenewal(policy.PolicyId))">Create Renewal</FluentButton>
                         }
                         <h4>Past Policies</h4>
-                        @* <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner> *@
+                        <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                         @foreach (var policy in pastPolicies)
                         {
                             <div class="past-policy">
@@ -82,6 +86,7 @@
                                 <div class="sf-da">@policy.EffectiveDate.ToShortDateString()</div>
                                 <div class="sf-da">@policy.ExpirationDate.ToShortDateString()</div>
                             </div>
+                            
                         }
                         @if (clientPolicies != null)
                         {
@@ -202,6 +207,22 @@
             await SearchBox.AddIconAsync("append", "e-icons e-date-icon");
         }
     }
+
+    private async void EditPolicy(int policyid)
+    {
+        Console.WriteLine("editing policy " + policyid);
+        //await RenewalService.UpdateTaskHighlight(taskid, task.IsHighlighted);
+    }
+
+    private async Task CreateRenewal(int policyid)
+    {
+        Console.WriteLine("create renewal for " + policyid);
+        var renewal = await RenewalService.CreateRenewalFromPolicy(policyid);
+        //var renewal = await RenewalService.GetRenewalByPolicyId(policyid);
+        int renewalid = renewal.RenewalId;
+        Navigation.NavigateTo($"/Renewals/{renewalid}");
+    }
+
     private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
         searchTerm = e.Value.ToString();

@@ -210,3 +210,9 @@ hr {
     .fluent-list-item span {
         margin-left: 0.5em;
     }
+
+.sf-initials {
+    font-family: "montserrat", sans-serif;
+    font-weight:500;
+    color:#8a8a8a;
+}

@@ -78,6 +78,94 @@ namespace Mantis.Domain.Renewals.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Renewal> CreateRenewalFromPolicy(int policyid)
+        {
+            var policy = await _context.Policies
+                .Include(p => p.Client)
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Product)
+                .FirstOrDefaultAsync(p => p.PolicyId == policyid);
+
+            Renewal renewal = new Renewal
+            {
+                ExpiringPolicyNumber = policy.PolicyNumber,
+                Wholesaler = policy.Wholesaler,
+                Carrier = policy.Carrier,
+                Client = policy.Client,
+                ExpiringPremium = policy.Premium,
+                RenewalDate = policy.ExpirationDate
+            };
+
+            if (policy.Product == null)
+            {
+                if (policy.eType.Contains("professional"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 5);
+                }else if (policy.eType.Contains("general"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 3);
+                }else if (policy.eType.Contains("work"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 2);
+                }else if (policy.eType.Contains("auto"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 4);
+                }else if (policy.eType.Contains("business") || policy.eType.Contains("bop"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 6);
+                }
+                else if (policy.eType.Contains("umb"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 7);
+                }
+                else if (policy.eType.Contains("practice") || policy.eType.Contains("epli") || policy.eTypeCode.Contains("epli"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 8);
+                }
+                else if (policy.eType.Contains("med"))
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 9);
+                }
+                else
+                {
+                    renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 10);
+                }
+            }
+            else
+            {
+                renewal.Product = policy.Product;
+            }
+
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            renewal.AssignedTo = currentUser;
+
+            _context.Renewals.Add(renewal);
+
+            var taskMasters = await _context.TaskMasters.ToListAsync();
+            foreach (var taskMaster in taskMasters)
+            {
+                var goalDate = taskMaster.DaysBeforeExpiration.HasValue
+                    ? renewal.RenewalDate.AddDays(-(taskMaster.DaysBeforeExpiration.Value))
+                    : (DateTime?)null;
+
+                var trackTask = new TrackTask
+                {
+                    Renewal = renewal,
+                    OrderNumber = taskMaster.OrderNumber,
+                    TaskName = taskMaster.TaskName,
+                    GoalDate = goalDate,
+                    Status = "Pending",
+                    Completed = false,
+                    Hidden = false,
+                    Notes = taskMaster.Description
+                };
+                _context.TrackTasks.Add(trackTask);
+            }
+            await _context.SaveChangesAsync();
+            return renewal;
+        }
+
         public async Task<Renewal> GetRenewalByIdAsync(int renewalId)
         {
             var renewalRecord = await _context.Renewals
@@ -196,7 +284,16 @@ namespace Mantis.Domain.Renewals.Services
                 await _context.SaveChangesAsync();
             }
         }
-
+        public async Task UpdateTaskNotesAsync(int taskItemId, string newNotes)
+        {
+            var task = await _context.TrackTasks.FirstOrDefaultAsync(t => t.Id == taskItemId);
+            if (task != null)
+            {
+                task.Notes = newNotes;
+                _context.TrackTasks.Update(task);
+                await _context.SaveChangesAsync();
+            }
+        }
 
 
     }

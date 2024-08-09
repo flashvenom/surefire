@@ -3,6 +3,7 @@ using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Renewals.Models;
 using System.Text.Json.Serialization;
+using Mantis.Data;
 
 namespace Mantis.Domain.Policies.Models
 {
@@ -35,5 +36,8 @@ namespace Mantis.Domain.Policies.Models
         public int ClientId { get; set; }
         [JsonIgnore]
         public Client Client { get; set; }
+        public ApplicationUser? Producer { get; set; }
+        public ApplicationUser? CSR { get; set; }
+        public ApplicationUser? CreatedBy { get; set; }
     }
 }

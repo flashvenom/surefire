@@ -47,6 +47,7 @@ builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<CarrierService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RenewalService>();
+builder.Services.AddScoped<PolicyService>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddSingleton<BreadcrumbService>();

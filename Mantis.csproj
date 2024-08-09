@@ -23,6 +23,7 @@
     <None Remove="Components\Pages\Clients\Commercial.razor.css" />
     <None Remove="Components\Pages\Clients\List.razor.css" />
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
+    <None Remove="Components\Pages\Renewals\Home.razor.css" />
     <None Remove="Components\Pages\Renewals\View.razor.css" />
     <None Remove="Components\Pages\Renewals\ViewSf.razor.css" />
     <None Remove="Components\Pages\Renewals\ViewTable.razor.css" />
@@ -32,6 +33,7 @@
     <Content Include="Components\Pages\Clients\Commercial.razor.css" />
     <Content Include="Components\Pages\Clients\List.razor.css" />
     <Content Include="Components\Pages\Renewals\Create.razor.css" />
+    <Content Include="Components\Pages\Renewals\Home.razor.css" />
     <Content Include="Components\Pages\Renewals\ViewSf.razor.css" />
     <Content Include="Components\Pages\Renewals\View.razor.css" />
   </ItemGroup>

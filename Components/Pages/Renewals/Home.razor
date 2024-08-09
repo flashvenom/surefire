@@ -4,22 +4,91 @@
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
+@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+
+@inject PolicyService PolicyService
+
 @rendermode InteractiveServer
 
 <_toolbar />
 
 <div class="page-content">
-    Renewal Manager Homepage
+    <h1 class="renewalheader">Renewal Sheets</h1>
+
+    <div class="filter-section">
+        <SfDropDownList TValue="string" @bind-Value="SelectedAssignedUser" DataSource="@AssignedUsers" Placeholder="Select Assigned User"></SfDropDownList>
+        <SfDropDownList TValue="int" @bind-Value="SelectedMonth" DataSource="Months" Placeholder="Select Month"></SfDropDownList>
+        <SfDropDownList TValue="int" @bind-Value="SelectedYear" DataSource="Years" Placeholder="Select Year"></SfDropDownList>
+        <button @onclick="ApplyFilters">Apply Filters</button>
+    </div>
+
+    <div class="homelist">
+        <table class="table" style="font-size:1.25em;">
+            <thead>
+                <tr>
+                    <th><strong>Insured Name</strong></th>
+                    <th>Policy Type</th>
+                    <th>Expiration Date</th>
+                    <th>Carrier</th>
+                    <th>CSR</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in FilteredPolicies)
+                {
+                    <tr>
+                        <td><a href="/MarketingEntry/Details/@item.Id">@item.InsuredName</a></td>
+                        <td>@item.PolicyType</td>
+                        <td>@item.ExpirationDate.ToShortDateString()</td>
+                        <td>@item.WholesalerName <strong>@item.CarrierName</strong></td>
+                        <td>@item.CsrAssigned</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 @code {
-    
+    private string SelectedAssignedUser { get; set; }
+    private int? SelectedMonth { get; set; }
+    private int? SelectedYear { get; set; }
+    private List<Policy> Policies { get; set; } = new List<Policy>();
+    private List<string> AssignedUsers { get; set; } = new List<string>();
+
+    private List<int> Months => Enumerable.Range(1, 12).ToList();
+    private List<int> Years => Policies.Select(p => p.ExpirationDate.Year).Distinct().OrderBy(y => y).ToList();
+
     protected override async Task OnInitializedAsync()
     {
+        // Load policies from the service
+        await LoadPolicies();
+
+        // Populate AssignedUsers dropdown options
+        AssignedUsers = Policies.Select(p => p.CsrAssigned).Distinct().ToList();
+
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Renewals" }
         });
+    }
+
+    private async Task LoadPolicies()
+    {
+        Policies = await PolicyService.GetPoliciesAsync(SelectedAssignedUser, SelectedMonth, SelectedYear);
+    }
+
+    private List<Policy> FilteredPolicies => Policies
+        .Where(p => string.IsNullOrEmpty(SelectedAssignedUser) || p.CsrAssigned == SelectedAssignedUser)
+        .Where(p => !SelectedMonth.HasValue || p.ExpirationDate.Month == SelectedMonth.Value)
+        .Where(p => !SelectedYear.HasValue || p.ExpirationDate.Year == SelectedYear.Value)
+        .ToList();
+
+    private async Task ApplyFilters()
+    {
+        await LoadPolicies();
+        StateHasChanged(); // Refresh the UI with the filtered policies
     }
 }

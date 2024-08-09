@@ -21,7 +21,7 @@ namespace Mantis.Domain.Carriers.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<List<Carrier>> GetCarriersAsync()
+        public async Task<List<Carrier>> GetAllCarriersAsync()
         {
             return await _context.Carriers.ToListAsync();
         }

@@ -3,10 +3,13 @@
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Shared.Services
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Domain.Carriers.Models
 @using Mantis.Domain.Shared
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavigationManager
 @inject SharedService SharedService
+@inject CarrierService CarrierService
 
 <PageTitle>Edit</PageTitle>
 
@@ -53,14 +56,26 @@ else
                 </div>
                 <div class="mb-3">
                     <label for="product" class="form-label">Product:</label>
-                    <InputSelect id="product" @bind-Value="Renewal.Product" class="form-control">
+                    <InputSelect id="product" @bind-Value="Renewal.ProductId" class="form-control">
                         <option value="">Select a product</option>
                         @foreach (var product in Products)
                         {
-                            <option value="@product">@product.LineName</option>
+                            <option value="@product.ProductId">@product.LineName</option>
                         }
                     </InputSelect>
-                    <ValidationMessage For="() => Renewal.Product" class="text-danger" />
+                    <ValidationMessage For="() => Renewal.ProductId" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="carrier" class="form-label">Carrier:</label>
+                    <InputSelect id="carrier" @bind-Value="Renewal.CarrierId" class="form-control">
+                        <option value="">Select a carrier</option>
+                        @foreach (var carrier in Carriers)
+                        {
+                            <option value="@carrier.CarrierId">@carrier.CarrierName</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Renewal.CarrierId" class="text-danger" />
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
@@ -80,11 +95,13 @@ else
     public Renewal? Renewal { get; set; }
 
     private List<Product> Products { get; set; }
+    private List<Carrier> Carriers { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         Renewal ??= await DbContext.Renewals
             .Include(r => r.Product) // Ensure the Product is included
+            .Include(r => r.Carrier) // Ensure the Product is included
             .FirstOrDefaultAsync(m => m.RenewalId == RenewalId);
 
         if (Renewal is null)
@@ -95,11 +112,25 @@ else
 
         // Fetch all products for the dropdown
         Products = await SharedService.GetAllProductsAsync();
+        Carriers = await CarrierService.GetAllCarriersAsync();
+
+        // If a product is already selected, set the ProductId
+        if (Renewal.Product != null)
+        {
+            Renewal.ProductId = Renewal.Product.ProductId;
+        }
+        // If a product is already selected, set the ProductId
+        if (Renewal.Carrier != null)
+        {
+            Renewal.CarrierId = Renewal.Carrier.CarrierId;
+        }
     }
 
     public async Task UpdateRenewal()
     {
-        await InvokeAsync(StateHasChanged);
+        // Find the selected Product based on ProductId
+        Renewal.Product = Products.FirstOrDefault(p => p.ProductId == Renewal.ProductId);
+        Renewal.Carrier = Carriers.FirstOrDefault(p => p.CarrierId == Renewal.CarrierId);
 
         DbContext.Attach(Renewal!).State = EntityState.Modified;
 

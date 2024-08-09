@@ -23,5 +23,7 @@ namespace Mantis.Domain.Renewals.Models
         public Client Client { get; set; }
         public Product Product { get; set; }
         public ApplicationUser AssignedTo { get; set; }
+        public string AssignedToId { get; set; }
+
     }
 }

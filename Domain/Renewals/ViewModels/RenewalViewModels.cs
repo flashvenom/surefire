@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Renewals.Models;
+using Mantis.Domain.Carriers.Models;
+using Mantis.Domain.Policies.Models;
+using Mantis.Domain.Shared;
 using Mantis.Data;
 
 namespace Mantis.Domain.Renewals.ViewModels
@@ -21,6 +25,57 @@ namespace Mantis.Domain.Renewals.ViewModels
         public int? ClientId { get; set; }
         [Required(ErrorMessage = "Please choose a user.")]
         public string? AssignedToId { get; set; }
+    }
+
+    public class RenewalEditViewModel
+    {
+        public int RenewalId { get; set; }
+        public string? PolicyNumber { get; set; }
+        public decimal? ExpiringPremium { get; set; }
+        public DateTime RenewalDate { get; set; }
+        public string Status { get; set; }
+        public string AssignedToId { get; set; }
+        public int ProductId { get; set; }
+        public int CarrierId { get; set; }
+        public int WholesalerId { get; set; }
+        public int ClientId { get; set; }
+        public string Notes { get; set; }
+
+        public List<UserViewModel> Users { get; set; } = new();
+        public List<ProductViewModel> Products { get; set; } = new();
+        public List<CarrierViewModel> Carriers { get; set; } = new();
+        public List<WholesalerViewModel> Wholesalers { get; set; } = new();
+        public List<ClientViewModel> Clients { get; set; } = new();
+    }
+
+    public class UserViewModel
+    {
+        public string UserId { get; set; }
+        public string UserName { get; set; }
+    }
+
+    public class ProductViewModel
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; }
+    }
+
+    public class CarrierViewModel
+    {
+        public int CarrierId { get; set; }
+        public string CarrierName { get; set; }
+    }
+
+    public class WholesalerViewModel
+    {
+        public int WholesalerId { get; set; }
+        public string WholesalerName { get; set; }
+    }
+
+    public class ClientViewModel
+    {
+        public int ClientId { get; set; }
+        public string ClientName { get; set; }
     }
 
     public class TaskItemViewModel

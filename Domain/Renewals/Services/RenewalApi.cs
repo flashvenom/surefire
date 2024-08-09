@@ -90,11 +90,14 @@ namespace Mantis.Domain.Renewals.Services
         }
 
         [HttpPost("Delete")]
-        public void Delete([FromBody] CRUDModel<Renewal> Value)
+        public async Task Delete([FromBody] CRUDModel<Renewal> Value)
         {
-            //BRTEAKPOINT DOES NOT HIT HERE
-            var existingOrder = _context.Renewals.Find(Value.Value.RenewalId);
-            //Delete Code
+            
+            int renewalId = Convert.ToInt32(Value.Key.ToString());
+            var selectedRenewal = await _context.Renewals.FindAsync(renewalId);
+            _context.Renewals.Remove(selectedRenewal);
+            _context.SaveChangesAsync();
+
         }
     }
 }

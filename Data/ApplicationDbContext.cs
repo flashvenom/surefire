@@ -106,6 +106,24 @@ namespace Mantis.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Policy>()
+                .HasOne(c => c.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Policy>()
+                .HasOne(c => c.CSR)
+                .WithMany()
+                .HasForeignKey("CSRId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Policy>()
+                .HasOne(c => c.Producer)
+                .WithMany()
+                .HasForeignKey("ProducerId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Policy>()
                 .Property(p => p.Premium)
                 .HasColumnType("decimal(18,2)");
 
@@ -191,7 +209,7 @@ namespace Mantis.Data
                 .HasOne(t => t.Renewal)
                 .WithMany(r => r.TrackTasks)
                 .HasForeignKey("RenewalId")
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<TrackTask>()
                 .HasOne(t => t.AssignedTo)

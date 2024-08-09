@@ -47,6 +47,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.9.3" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.9.3" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Syncfusion.Blazor.Calendars" Version="26.2.7" />
     <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="26.2.7" />

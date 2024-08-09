@@ -1,0 +1,110 @@
+﻿@page "/Renewals/edit"
+
+@using Microsoft.EntityFrameworkCore
+@using Mantis.Domain.Renewals.Models
+@inject IDbContextFactory<Mantis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h4>Renewal</h4>
+<hr />
+@if (Renewal is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Renewal" OnValidSubmit="UpdateRenewal" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Renewal.RenewalId" value="@Renewal.RenewalId" />
+                <div class="mb-3">
+                    <label for="renewaldate" class="form-label">RenewalDate:</label>
+                    <InputDate id="renewaldate" @bind-Value="Renewal.RenewalDate" class="form-control" />
+                    <ValidationMessage For="() => Renewal.RenewalDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="expiringpolicynumber" class="form-label">ExpiringPolicyNumber:</label>
+                    <InputText id="expiringpolicynumber" @bind-Value="Renewal.ExpiringPolicyNumber" class="form-control" />
+                    <ValidationMessage For="() => Renewal.ExpiringPolicyNumber" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="expiringpremium" class="form-label">ExpiringPremium:</label>
+                    <InputNumber id="expiringpremium" @bind-Value="Renewal.ExpiringPremium" class="form-control" />
+                    <ValidationMessage For="() => Renewal.ExpiringPremium" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="policyid" class="form-label">PolicyId:</label>
+                    <InputNumber id="policyid" @bind-Value="Renewal.PolicyId" class="form-control" />
+                    <ValidationMessage For="() => Renewal.PolicyId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="assignedtoid" class="form-label">AssignedToId:</label>
+                    <InputText id="assignedtoid" @bind-Value="Renewal.AssignedToId" class="form-control" />
+                    <ValidationMessage For="() => Renewal.AssignedToId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/renewals">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int RenewalId { get; set; }
+
+    [SupplyParameterFromForm]
+    public Renewal? Renewal { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Renewal ??= await context.Renewals.FirstOrDefaultAsync(m => m.RenewalId == RenewalId);
+
+        if (Renewal is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdateRenewal()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Renewal!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!RenewalExists(Renewal!.RenewalId))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/renewals");
+    }
+
+    bool RenewalExists(int renewalid)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Renewals.Any(e => e.RenewalId == renewalid);
+    }
+}

@@ -11,10 +11,12 @@
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Carriers.Models
 @using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Users.Services
 @using Mantis.Domain.Shared
 @rendermode InteractiveServer
 @inject RenewalService RenewalService
 @inject NavigationManager NavigationManager
+@inject UserService UserService
 
 <_toolbar />
 
@@ -143,7 +145,7 @@
         wholesalers = carriers.Where(c => c.Wholesaler).ToList();
         products = await RenewalService.GetProductsAsync();
         clients = await RenewalService.GetClientsAsync();
-        users = await RenewalService.GetUsersAsync();
+        users = await UserService.GetAllUsers();
 
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {

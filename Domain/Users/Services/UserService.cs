@@ -5,8 +5,9 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Mantis.Domain.Policies.Models;
 
-namespace Mantis.Domain.User.Services
+namespace Mantis.Domain.Users.Services
 {
     public class UserService
     {
@@ -24,6 +25,12 @@ namespace Mantis.Domain.User.Services
             var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var loggedInUser = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
             return loggedInUser;
+        }
+
+        public async Task<List<ApplicationUser>> GetAllUsers()
+        {
+            var allUsers = await _dbContext.Users.ToListAsync();
+            return allUsers;
         }
     }
 }

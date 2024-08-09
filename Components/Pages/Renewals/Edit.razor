@@ -1,0 +1,120 @@
+﻿@page "/Renewals/Edit/{renewalId:int}"
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Microsoft.AspNetCore.Components
+@inject RenewalService RenewalService
+@inject SharedService SharedService
+@inject NavigationManager Navigation
+
+@rendermode InteractiveServer
+
+@if (renewal != null){
+<EditForm Model="@renewal" OnValidSubmit="HandleValidSubmit" FormName="editRenewalForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Policy Number</label>
+        <InputText @bind-Value="renewal.PolicyNumber" class="form-control" />
+    </div>
+    <div>
+        <label>Expiring Premium</label>
+        <InputNumber @bind-Value="renewal.ExpiringPremium" class="form-control" />
+    </div>
+    <div>
+        <label>Renewal Date</label>
+        <InputDate @bind-Value="renewal.RenewalDate" class="form-control" />
+    </div>
+    <div>
+        <label>Status</label>
+        <InputText @bind-Value="renewal.Status" class="form-control" />
+    </div>
+    <div>
+        <label>Assigned To</label>
+        <InputSelect @bind-Value="renewal.AssignedToId" class="form-control">
+            <option value="">Select a user</option>
+            @foreach (var user in renewal.Users)
+            {
+                <option value="@user.UserId">@user.UserName</option>
+            }
+        </InputSelect>
+    </div>
+    <div>
+        <label>Product</label>
+        <InputSelect @bind-Value="renewal.ProductId" class="form-control">
+            <option value="">Select a product</option>
+            @foreach (var product in renewal.Products)
+            {
+                <option value="@product.ProductId">@product.ProductName</option>
+            }
+        </InputSelect>
+    </div>
+    <div>
+        <label>Carrier</label>
+        <InputSelect @bind-Value="renewal.CarrierId" class="form-control">
+            <option value="">Select a carrier</option>
+            @foreach (var carrier in renewal.Carriers)
+            {
+                <option value="@carrier.CarrierId">@carrier.CarrierName</option>
+            }
+        </InputSelect>
+    </div>
+    <div>
+        <label>Wholesaler</label>
+        <InputSelect @bind-Value="renewal.WholesalerId" class="form-control">
+            <option value="">Select a wholesaler</option>
+            @foreach (var wholesaler in renewal.Wholesalers)
+            {
+                <option value="@wholesaler.WholesalerId">@wholesaler.WholesalerName</option>
+            }
+        </InputSelect>
+    </div>
+    <div>
+        <label>Client</label>
+        <InputSelect @bind-Value="renewal.ClientId" class="form-control">
+            <option value="">Select a client</option>
+            @foreach (var client in renewal.Clients)
+            {
+                <option value="@client.ClientId">@client.ClientName</option>
+            }
+        </InputSelect>
+    </div>
+    <div>
+        <label>Notes</label>
+        <InputTextArea @bind-Value="renewal.Notes" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+}
+else
+{
+    <p>Loading...</p>
+}
+@code {
+    [Parameter]
+    public int renewalId { get; set; }
+
+    private RenewalEditViewModel renewal = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the renewal details
+        renewal = await RenewalService.GetRenewalEditViewModelByIdAsync(renewalId);
+
+        // Fetch all products and populate the dropdown
+        renewal.Products = await SharedService.GetAllProductsViewModelAsync();
+
+        var selectedProduct = renewal.Products.FirstOrDefault(p => p.ProductId == renewal.ProductId);
+        if (selectedProduct != null)
+        {
+            renewal.ProductId = selectedProduct.ProductId;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await RenewalService.UpdateRenewalAsync(renewal);
+        Navigation.NavigateTo("/Renewals/" + renewal.RenewalId);
+    }
+}

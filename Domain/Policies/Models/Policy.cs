@@ -37,6 +37,7 @@ namespace Mantis.Domain.Policies.Models
         [JsonIgnore]
         public Client Client { get; set; }
         public ApplicationUser? Producer { get; set; }
+        public string? CSRId { get; set; }
         public ApplicationUser? CSR { get; set; }
         public ApplicationUser? CreatedBy { get; set; }
     }

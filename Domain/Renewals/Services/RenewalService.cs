@@ -11,6 +11,7 @@ using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Shared;
 using Microsoft.EntityFrameworkCore;
 using Mantis.Domain.Renewals.ViewModels;
+using Mantis.Domain.Policies.Models;
 
 
 namespace Mantis.Domain.Renewals.Services
@@ -28,27 +29,59 @@ namespace Mantis.Domain.Renewals.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        //Fill the objects here now, but use the appropriate methods from the Domain classes ASAP
-        public async Task<List<Carrier>> GetCarriersAsync()
+
+
+        public async Task<RenewalEditViewModel> GetRenewalEditViewModelByIdAsync(int renewalId)
         {
-            return await _context.Carriers.ToListAsync();
+            var renewal = await _context.Renewals
+                .Where(r => r.RenewalId == renewalId)
+                .Select(r => new RenewalEditViewModel
+                {
+                    RenewalId = r.RenewalId,
+                    PolicyNumber = r.ExpiringPolicyNumber,
+                    ExpiringPremium = r.ExpiringPremium,
+                    RenewalDate = r.RenewalDate,
+                    AssignedToId = r.AssignedToId,
+                    ProductId = r.Product.ProductId,
+                    CarrierId = r.Carrier.CarrierId,
+                    WholesalerId = r.Wholesaler.CarrierId
+                })
+                .FirstOrDefaultAsync();
+
+            return renewal;
         }
 
-        public async Task<List<Product>> GetProductsAsync()
+        // Update the Renewal record
+        public async Task UpdateRenewalAsync(RenewalEditViewModel model)
         {
-            var products = await _context.Products.ToListAsync();
-            return products;
-        }
+            var renewal = await _context.Renewals.FindAsync(model.RenewalId);
 
-        public async Task<List<ApplicationUser>> GetUsersAsync()
-        {
-            return await _context.Users.ToListAsync();
-        }
+            if (renewal != null)
+            {
+                //renewal.Policy.PolicyNumber = model.PolicyNumber;
+                //renewal.ExpiringPremium = model.ExpiringPremium;
+                //renewal.RenewalDate = model.RenewalDate;
+                //renewal.AssignedToId = model.AssignedToId;
+                renewal.Product.ProductId = model.ProductId;
+                //renewal.Carrier.CarrierId = model.CarrierId;
+                //renewal.Wholesaler.CarrierId = model.WholesalerId;
+                //renewal.Client.ClientId = model.ClientId;
 
-        public async Task<List<Client>> GetClientsAsync()
+                _context.Renewals.Update(renewal);
+                await _context.SaveChangesAsync();
+            }
+        }
+        public async Task<List<Renewal>> GetAllRenewalsAsync()
         {
-            var clients = await _context.Clients.ToListAsync();
-            return clients;
+            var renewals = await _context.Renewals
+                .Include(p => p.Client)
+                .Include(p => p.AssignedTo)
+                .Include(p => p.Policy)
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Product)
+                .ToListAsync();
+            return renewals;
         }
 
         public async Task NewRenewalAsync(Renewal renewal)
@@ -295,6 +328,25 @@ namespace Mantis.Domain.Renewals.Services
             }
         }
 
+
+
+        //Fill the objects here now, but use the appropriate methods from the Domain classes ASAP
+        public async Task<List<Carrier>> GetCarriersAsync()
+        {
+            return await _context.Carriers.ToListAsync();
+        }
+
+        public async Task<List<Product>> GetProductsAsync()
+        {
+            var products = await _context.Products.ToListAsync();
+            return products;
+        }
+        public async Task<List<Client>> GetClientsAsync()
+        {
+            var clients = await _context.Clients.ToListAsync();
+            return clients;
+        }
+        //END------------------------
 
     }
 

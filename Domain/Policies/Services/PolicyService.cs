@@ -1,16 +1,10 @@
 ﻿using System.Data;
 using Microsoft.AspNetCore.Identity;
 using Mantis.Data;
-using Mantis.Domain.Renewals.Models;
-using Mantis.Domain.Renewals.ViewModels;
 using Mantis.Domain.Policies.Models;
-using Mantis.Domain.Clients.Models;
-using Mantis.Domain.Shared;
 using Microsoft.EntityFrameworkCore;
-using Mantis.Domain.Renewals.ViewModels;
 
-
-namespace Mantis.Data
+namespace Mantis.Domain.Policies.Services
 {
     public class PolicyService
     {
@@ -31,13 +25,14 @@ namespace Mantis.Data
             return policies;
         }
 
-        public async Task<List<Policy>> GetPoliciesAsync(string assignedUser = null, int? month = null, int? year = null)
+        public async Task<List<Policy>> GetPoliciesAsync(string assignedUserId = null, int? month = null, int? year = null)
         {
             var query = _context.Policies.AsQueryable();
+            var user = await _userManager.FindByIdAsync(assignedUserId);
 
-            if (!string.IsNullOrEmpty(assignedUser))
+            if (!string.IsNullOrEmpty(assignedUserId))
             {
-                query = query.Where(p => p.CSR == assignedUser);
+                query = query.Where(p => p.CSR == user);
             }
 
             if (month.HasValue)

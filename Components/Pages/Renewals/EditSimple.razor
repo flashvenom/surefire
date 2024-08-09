@@ -17,7 +17,7 @@
 
 <h4>Renewal</h4>
 <hr />
-@if (Renewal is null || Products is null)
+@if (Renewal is null || Products is null || Carriers is null || Wholesalers is null)
 {
     <p><em>Loading...</em></p>
 }
@@ -65,7 +65,6 @@ else
                     </InputSelect>
                     <ValidationMessage For="() => Renewal.ProductId" class="text-danger" />
                 </div>
-
                 <div class="mb-3">
                     <label for="carrier" class="form-label">Carrier:</label>
                     <InputSelect id="carrier" @bind-Value="Renewal.CarrierId" class="form-control">
@@ -76,6 +75,17 @@ else
                         }
                     </InputSelect>
                     <ValidationMessage For="() => Renewal.CarrierId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="wholesaler" class="form-label">Wholesaler:</label>
+                    <InputSelect id="wholesaler" @bind-Value="Renewal.WholesalerId" class="form-control">
+                        <option value="">Select a wholesaler</option>
+                        @foreach (var wholesaler in Wholesalers)
+                        {
+                            <option value="@wholesaler.CarrierId">@wholesaler.CarrierName</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Renewal.WholesalerId" class="text-danger" />
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
@@ -96,12 +106,14 @@ else
 
     private List<Product> Products { get; set; }
     private List<Carrier> Carriers { get; set; }
+    private List<Carrier> Wholesalers { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         Renewal ??= await DbContext.Renewals
-            .Include(r => r.Product) // Ensure the Product is included
-            .Include(r => r.Carrier) // Ensure the Product is included
+            .Include(r => r.Product)    // Ensure the Product is included
+            .Include(r => r.Carrier)    // Ensure the Carrier is included
+            .Include(r => r.Wholesaler) // Ensure the Wholesaler is included
             .FirstOrDefaultAsync(m => m.RenewalId == RenewalId);
 
         if (Renewal is null)
@@ -110,27 +122,40 @@ else
             return;
         }
 
-        // Fetch all products for the dropdown
+        // Fetch all products, carriers, and wholesalers for the dropdowns
         Products = await SharedService.GetAllProductsAsync();
         Carriers = await CarrierService.GetAllCarriersAsync();
+        Wholesalers = await CarrierService.GetAllWholesalersAsync();
 
-        // If a product is already selected, set the ProductId
+        // Set the selected ProductId, CarrierId, and WholesalerId if they are already selected
         if (Renewal.Product != null)
         {
             Renewal.ProductId = Renewal.Product.ProductId;
         }
-        // If a product is already selected, set the ProductId
         if (Renewal.Carrier != null)
         {
             Renewal.CarrierId = Renewal.Carrier.CarrierId;
         }
+        if (Renewal.Wholesaler != null)
+        {
+            Renewal.WholesalerId = Renewal.Wholesaler.CarrierId;
+        }
+
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
+            new BreadcrumbItem { Text = "Edit" }
+        });
+        InvokeAsync(StateHasChanged);
     }
 
     public async Task UpdateRenewal()
     {
-        // Find the selected Product based on ProductId
+        // Find the selected Product, Carrier, and Wholesaler based on their IDs
         Renewal.Product = Products.FirstOrDefault(p => p.ProductId == Renewal.ProductId);
-        Renewal.Carrier = Carriers.FirstOrDefault(p => p.CarrierId == Renewal.CarrierId);
+        Renewal.Carrier = Carriers.FirstOrDefault(c => c.CarrierId == Renewal.CarrierId);
+        Renewal.Wholesaler = Wholesalers.FirstOrDefault(w => w.CarrierId == Renewal.WholesalerId);
 
         DbContext.Attach(Renewal!).State = EntityState.Modified;
 

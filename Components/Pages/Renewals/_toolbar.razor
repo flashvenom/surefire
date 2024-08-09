@@ -14,10 +14,12 @@
     <NavLink class="toolbar-link" href="Renewals/MasterTasks" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.ShieldTask())" />
     </NavLink>
-
-    <NavLink class="toolbar-link" href="@("Renewals/Edit/" + RenewalId)" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
-    </NavLink>
+    @if (RenewalId != 0)
+    {
+        <NavLink class="toolbar-link" href="@("Renewals/Edit/" + RenewalId)" Match="NavLinkMatch.Prefix">
+                <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+        </NavLink>
+    }
 </div>
 
 <style>

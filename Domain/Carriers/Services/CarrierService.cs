@@ -26,6 +26,11 @@ namespace Mantis.Domain.Carriers.Services
             return await _context.Carriers.ToListAsync();
         }
 
+        public async Task<List<Carrier>> GetAllWholesalersAsync()
+        {
+            return await _context.Carriers.Where(r => r.Wholesaler == true).ToListAsync();
+        }
+
         public async Task NewCarrierQuick(Carrier carrier)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);

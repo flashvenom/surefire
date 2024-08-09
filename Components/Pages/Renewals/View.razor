@@ -193,6 +193,7 @@
             new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
             new BreadcrumbItem { Text = "Edit-" + RenewalId }
         });
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnNotesInputChanged(int taskItemId, string newNotes)

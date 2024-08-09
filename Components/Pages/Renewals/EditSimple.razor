@@ -6,10 +6,12 @@
 @using Mantis.Domain.Carriers.Services
 @using Mantis.Domain.Carriers.Models
 @using Mantis.Domain.Shared
+@using Mantis.Domain.Users.Services
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavigationManager
 @inject SharedService SharedService
 @inject CarrierService CarrierService
+@inject UserService UserService
 
 <PageTitle>Edit</PageTitle>
 
@@ -48,6 +50,22 @@ else
                     <label for="policyid" class="form-label">PolicyId:</label>
                     <InputNumber id="policyid" @bind-Value="Renewal.PolicyId" class="form-control" />
                     <ValidationMessage For="() => Renewal.PolicyId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="clientid" class="form-label">ClientId:</label>
+                    <InputNumber id="clientid" @bind-Value="Renewal.ClientId" class="form-control" />
+                    <ValidationMessage For="() => Renewal.ClientId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="assignedto" class="form-label">AssignedTo:</label>
+                    <InputSelect id="assignedto" @bind-Value="Renewal.AssignedToId" class="form-control">
+                        <option value="">Select a product</option>
+                        @foreach (var user in Users)
+                        {
+                            <option value="@user.Id">@user.FirstName</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Renewal.ProductId" class="text-danger" />
                 </div>
                 <div class="mb-3">
                     <label for="assignedtoid" class="form-label">AssignedToId:</label>
@@ -107,6 +125,7 @@ else
     private List<Product> Products { get; set; }
     private List<Carrier> Carriers { get; set; }
     private List<Carrier> Wholesalers { get; set; }
+    private List<ApplicationUser> Users { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,6 +133,8 @@ else
             .Include(r => r.Product)    // Ensure the Product is included
             .Include(r => r.Carrier)    // Ensure the Carrier is included
             .Include(r => r.Wholesaler) // Ensure the Wholesaler is included
+            .Include(r => r.Client) // Ensure the client is included
+            .Include(r => r.AssignedTo) // Ensure the classignedient is included
             .FirstOrDefaultAsync(m => m.RenewalId == RenewalId);
 
         if (Renewal is null)
@@ -126,6 +147,7 @@ else
         Products = await SharedService.GetAllProductsAsync();
         Carriers = await CarrierService.GetAllCarriersAsync();
         Wholesalers = await CarrierService.GetAllWholesalersAsync();
+        Users = await UserService.GetAllUsersAsync();
 
         // Set the selected ProductId, CarrierId, and WholesalerId if they are already selected
         if (Renewal.Product != null)
@@ -139,6 +161,10 @@ else
         if (Renewal.Wholesaler != null)
         {
             Renewal.WholesalerId = Renewal.Wholesaler.CarrierId;
+        }
+        if (Renewal.AssignedTo != null)
+        {
+            Renewal.AssignedToId = Renewal.AssignedTo.Id;
         }
 
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
@@ -156,6 +182,7 @@ else
         Renewal.Product = Products.FirstOrDefault(p => p.ProductId == Renewal.ProductId);
         Renewal.Carrier = Carriers.FirstOrDefault(c => c.CarrierId == Renewal.CarrierId);
         Renewal.Wholesaler = Wholesalers.FirstOrDefault(w => w.CarrierId == Renewal.WholesalerId);
+        Renewal.AssignedTo = Users.FirstOrDefault(w => w.Id == Renewal.AssignedToId);
 
         DbContext.Attach(Renewal!).State = EntityState.Modified;
 

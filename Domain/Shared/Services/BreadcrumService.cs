@@ -34,4 +34,19 @@ namespace Mantis.Domain.Shared.Services
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
+
+    public class NavigationService
+    {
+        private string _lastClientPage = "/Clients/List";
+
+        public void SetLastClientPage(string url)
+        {
+            _lastClientPage = url;
+        }
+
+        public string GetLastClientPage()
+        {
+            return _lastClientPage;
+        }
+    }
 }

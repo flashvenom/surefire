@@ -1,6 +1,7 @@
 ﻿@implements IDisposable
 @using Microsoft.FluentUI.AspNetCore.Components
 @inject NavigationManager NavigationManager
+@inject NavigationService NavigationService
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" style="display:none" />
 
@@ -21,7 +22,7 @@
 
 <div class="sfnav @(GetNavItemClass("Clients"))">
     <div class="nb-blueline@(GetNavItemClass("Clients"))"></div>
-    <NavLink class="nav-link" href="Clients/List" Match="NavLinkMatch.Prefix" title="Clients">
+    <NavLink class="nav-link" href="@NavigationService.GetLastClientPage()" Match="NavLinkMatch.Prefix" title="Clients">
         @if (GetNavItemClass("Clients") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.Briefcase())" Class="active-icon" />

@@ -11,13 +11,6 @@ html, body {
 :root {
     --color-sf-primary-bg-color-pressed: #000;
 }
-.page {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    background-color: #e8e8e8;
-    height: calc(100vh - 50px);
-}
 main {
     flex: 1;
     background-color: #e8e8e8;
@@ -40,7 +33,7 @@ main {
     height: calc(100vh - 160px);
     max-height: 90vh;
     max-width: 100vw;
-    overflow:scroll;
+    overflow-y:scroll;
 }
 .page-toolbar {
     display: flex;
@@ -51,21 +44,61 @@ main {
     margin-bottom: 10px;
     box-shadow: 0px 0px 10px #ccc;
     border-radius: 5px;
+    align-items: center;
 }
 
 .toolbar-link {
     color: #000;
-    background-color: blueviolet;
-    height: 20px;
+    height: 24px;
+    font-size: 13px;
+    text-decoration: none;
+    margin-right: 15px;
+    opacity:.7;
+}
+.toolbar-link:hover {
+    opacity:.9;
+}
+.toolbar-link svg {
+    fill: #000 !important;
 }
 
-    .toolbar-link svg {
-        background-color: aqua;
+.toolbar-text {
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+    font-family: 'Segoe UI';
+    position: relative;
+    top: -7px;
+    left: -2px;
+}
+    :root .toolbar-text a {
+        color: #5f5f5f !important;
     }
 
-
+.sf-verthr {
+    width: 1px;
+    height: 30px;
+    background-color: #c6c6c6 !important;
+    margin-left: 15px;
+    margin-right: 10px;
+}
+.sf-verthr2 {
+    width: 1px;
+    height: 30px;
+    background-color: #c6c6c6 !important;
+    margin-right: 15px;
+}
+:root .e-btn .e-btn-icon.e-icon-left {
+    width: 1.5em !important;
+}
+:root .e-btn .e-btn-icon{
+    position:relative;
+    top:-1px;
+    left:-2px;
+}
+.e-plus-icon::before {
+    content: '\e805';
+}
 /*--------------------------Other Styles----------------------------*/
-
 :root .sf-quicklist .e-listview {
     border: 0px;
 }

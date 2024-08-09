@@ -1,4 +1,5 @@
 ﻿@page "/Clients/List"
+@page "/Clients/List/{ClientId:int}"
 
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Linq
@@ -14,6 +15,7 @@
 @using Mantis.Domain.Renewals.Services
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject NavigationService NavigationService
 @inject RenewalService RenewalService
 @inject CrmApiService CrmApiService
 @inject ClientService ClientService
@@ -61,7 +63,7 @@
                         {
                             <div class="policy">
                                 <div class="policy-header">
-                                    <div>@policy.eType</div>
+                                    <div>@policy.eType <span style="font-size:7px;">@policy.PolicyId</span></div>
                                     <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
                                 </div>
                                 <div class="policy-details">
@@ -176,6 +178,9 @@
 </style>
 
 @code {
+    [Parameter]
+    public int? ClientId { get; set; }
+
     private string searchTerm = string.Empty;
     private List<Client> clients = new();
     private List<Client> filteredClients = new();
@@ -188,12 +193,23 @@
     private bool isLoadingCrmId = false;
     private string isLoadingWhat = "Initializing";
     SfTextBox SearchBox { get; set; }
-    
+
     protected override async Task OnInitializedAsync()
     {
         debounceTimer = new System.Timers.Timer(100);
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += (sender, args) => FilterClients();
+
+        if (ClientId.HasValue)
+        {
+            currentPolicies.Clear();
+            pastPolicies.Clear();
+            clientPolicies.Clear();
+            isLoadingWhat += ".";
+            var clientId = ClientId;
+            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+            SortAndSeparatePolicies();
+        }
 
         clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
         filteredClients = new List<Client>(clients);
@@ -203,6 +219,40 @@
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Clients" }
         });
+    }
+
+    public async void OnAfterRenderAsync()
+    {
+        string s4hjs = "ecvw";
+    }
+    public void OnParametersSet()
+    {
+        string s2hjs = "ecvw";
+        if (ClientId.HasValue)
+        {
+            currentPolicies.Clear();
+            pastPolicies.Clear();
+            clientPolicies.Clear();
+            InvokeAsync(StateHasChanged);
+            isLoadingWhat += ".";
+            var clientId = ClientId;
+            SortAndSeparatePolicies();
+        }
+    }
+    protected async void OnParametersSetAsync()
+    {
+        string shjs = "ecvw";
+        if (ClientId.HasValue)
+        {
+            currentPolicies.Clear();
+            pastPolicies.Clear();
+            clientPolicies.Clear();
+            InvokeAsync(StateHasChanged);
+            isLoadingWhat += ".";
+            var clientId = ClientId;
+            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+            SortAndSeparatePolicies();
+        }
     }
 
     private async void AddDateIcon()
@@ -240,6 +290,7 @@
     {
         try
         {
+            //Same code as ParameterLoad - reuse by making it a method
             currentPolicies.Clear();
             pastPolicies.Clear();
             clientPolicies.Clear();
@@ -256,6 +307,7 @@
             }
             // Separate and sort policies
             SortAndSeparatePolicies();
+            NavigationService.SetLastClientPage("/Clients/List/" + clientId);
         }
         catch (Exception ex)
         {

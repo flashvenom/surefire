@@ -127,36 +127,37 @@ namespace Mantis.Domain.Renewals.Services
                 Carrier = policy.Carrier,
                 Client = policy.Client,
                 ExpiringPremium = policy.Premium,
-                RenewalDate = policy.ExpirationDate
+                RenewalDate = policy.ExpirationDate,
+                Policy = policy
             };
 
             if (policy.Product == null)
             {
-                if (policy.eType.Contains("professional"))
+                if (policy.eType.Contains("professional", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 5);
-                }else if (policy.eType.Contains("general"))
+                }else if (policy.eType.Contains("general", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 3);
-                }else if (policy.eType.Contains("work"))
+                }else if (policy.eType.Contains("work", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 2);
-                }else if (policy.eType.Contains("auto"))
+                }else if (policy.eType.Contains("auto", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 4);
-                }else if (policy.eType.Contains("business") || policy.eType.Contains("bop"))
+                }else if (policy.eType.Contains("business", StringComparison.OrdinalIgnoreCase) || policy.eType.Contains("bop"))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 6);
                 }
-                else if (policy.eType.Contains("umb"))
+                else if (policy.eType.Contains("umb", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 7);
                 }
-                else if (policy.eType.Contains("practice") || policy.eType.Contains("epli") || policy.eTypeCode.Contains("epli"))
+                else if (policy.eType.Contains("practice", StringComparison.OrdinalIgnoreCase) || policy.eType.Contains("epli") || policy.eTypeCode.Contains("epli"))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 8);
                 }
-                else if (policy.eType.Contains("med"))
+                else if (policy.eType.Contains("med", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 9);
                 }

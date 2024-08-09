@@ -7,17 +7,32 @@
 <div class="page-toolbar">
     <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Renewal</SfButton>
 
-    <NavLink class="toolbar-link" href="Renewals/List" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+    <span class="sf-verthr"></span>
+
+    <NavLink class="toolbar-link" href="Renewals" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.BookStar())" />
+        <span class="toolbar-text">Browse</span>
     </NavLink>
+
+    <NavLink class="toolbar-link" href="Renewals/List" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Everything</span>
+    </NavLink>
+
+    <span class="sf-verthr2"></span>
 
     <NavLink class="toolbar-link" href="Renewals/MasterTasks" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.ShieldTask())" />
+        <span class="toolbar-text">Master Tasks</span>
     </NavLink>
+
     @if (RenewalId != 0)
     {
+        <span class="sf-verthr2"></span>
+
         <NavLink class="toolbar-link" href="@("Renewals/Edit/" + RenewalId)" Match="NavLinkMatch.Prefix">
-                <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit Renewal</span>
         </NavLink>
     }
 </div>

@@ -10,7 +10,7 @@
 <link href="mantis.css" rel="stylesheet" />
 
 <div class="page-toolbar">
-    <SfButton CssClass="e-primary">New Carrier</SfButton>
+    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Carrier</SfButton>
 </div>
 
 <div class="page-content">
@@ -21,15 +21,16 @@
                         UpdateUrl="https://localhost:7074/api/Carrier/Update" 
                         RemoveUrl="https://localhost:7074/api/Carrier/Delete" 
                         Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
-        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
+        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
             <GridColumn Field=@nameof(Carrier.CarrierId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.CarrierName) HeaderText="Carrier Name" Width="400"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.CarrierName) HeaderText="Name" Width="300"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.CarrierNickname) HeaderText="Nickname"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Phone) HeaderText="Phone"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Website) HeaderText="Website"></GridColumn>
             <GridColumn Field=@nameof(Carrier.QuotingWebsite) HeaderText="Quoting"></GridColumn>
-            <GridColumn HeaderText="Full Address" Width="300">
+            <GridColumn HeaderText="Full Address" AllowEditing="false">
                 <Template>
                     @{
                         var order = (Carrier)context;

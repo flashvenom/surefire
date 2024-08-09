@@ -21,23 +21,31 @@
 <_toolbar />
 
 <div class="page-content">
-    <h1 class="renewalheader">Renewal Sheets</h1>
+    <h1 class="renewalheader">Renewal Manager</h1>
 
     <div class="filter-section">
-        <SfDropDownList TValue="string" TItem="ApplicationUser" @bind-Value="SelectedAssignedUserId" DataSource="@AssignedUsers" Placeholder="Select Assigned User"></SfDropDownList>
-       @*  <SfDropDownList TValue="int" @bind-Value="SelectedMonth" DataSource="Months" Placeholder="Select Month"></SfDropDownList>
-        <SfDropDownList TValue="int" @bind-Value="SelectedYear" DataSource="Years" Placeholder="Select Year"></SfDropDownList> *@
-        @* <button @onclick="ApplyFilters">Apply Filters</button> *@
+        <div>
+            <FluentSelect TOption="ApplicationUser" Label="Assigned To" Items="@AssignedUsers" Id="assignedto-listbox" Placeholder="Everyone" @bind-Value="AssignedUserId" @bind-selectedOption="SelectedApplicationUser" />
+        </div>
+        <div>
+            (MonthDropDown)
+        </div>
+        <div>
+            (YearDropDown)
+        </div>
     </div>
 
     <div class="homelist">
         <table class="table" style="font-size:1.25em;">
             <thead>
                 <tr>
+                    <th>Renewal</th>
                     <th><strong>Insured Name</strong></th>
                     <th>Policy Type</th>
-                    <th>Expiration Date</th>
                     <th>Carrier</th>
+                    <th>MGA</th>
+                    <th>ExpiringPolicyNumber</th>
+                    <th>PolicyId</th>
                     <th>CSR</th>
                 </tr>
             </thead>
@@ -45,10 +53,13 @@
                 @foreach (var item in FilteredRenewals)
                 {
                     <tr>
+                        <td>@item.RenewalDate.ToShortDateString()</td>
                         <td><a href="/Renewals/@item.RenewalId">@item.Client?.Name</a></td>
                         <td>@item.Product?.LineNickname</td>
-                        <td>@item.RenewalDate.ToShortDateString()</td>
-                        <td>@item.Wholesaler?.CarrierName <strong>@item.Carrier?.CarrierName</strong></td>
+                        <td>@item.Carrier?.CarrierName</td>
+                        <td>@item.Wholesaler?.CarrierName</td>
+                        <td>@item.Policy?.PolicyNumber</td>
+                        <td>@item.Policy?.PolicyId</td>
                         <td>@item.AssignedTo?.FirstName</td>
                     </tr>
                 }
@@ -59,6 +70,8 @@
 
 @code {
     private string SelectedAssignedUserId { get; set; }
+    private string AssignedUserId { get; set; }
+    private ApplicationUser SelectedApplicationUser { get; set; }
     private int? SelectedMonth { get; set; }
     private int? SelectedYear { get; set; }
     private List<Renewal> Renewals { get; set; } = new List<Renewal>();
@@ -83,3 +96,9 @@
         });
     }
 }
+<style>
+    h1 {
+        margin-top:0px !important;
+        padding-top: 0px !important;
+    }
+</style>

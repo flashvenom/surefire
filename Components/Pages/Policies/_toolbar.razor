@@ -7,20 +7,18 @@
 <div class="page-toolbar">
     <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Policy</SfButton>
 
-    <NavLink class="toolbar-link" href="Policies" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
-    </NavLink>
+    <span class="sf-verthr"></span>
 
+    <NavLink class="toolbar-link" href="Policies" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Everything</span>
+    </NavLink>
+    @* lot molecule scles *@
     <NavLink class="toolbar-link" href="Policies/Products" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.Toolbox())" />
+        <FluentIcon Value="@(new Icons.Regular.Size24.Tag())" />
+        <span class="toolbar-text">Product Lines</span>
     </NavLink>
 </div>
-
-<style>
-    .e-plus-icon::before {
-        content: '\e805';
-    }
-</style>
 
 @code {
     private void NavigateToRenewalCreate()

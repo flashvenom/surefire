@@ -4,17 +4,25 @@
 @using Microsoft.AspNetCore.Components.Routing
 
 <div class="page-toolbar">
-    <SfButton CssClass="e-primary">New Client</SfButton>
+    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Client</SfButton>
+    
+    <span class="sf-verthr"></span>
 
     <NavLink class="toolbar-link" href="Clients/List" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Everything</span>
     </NavLink>
 
     <NavLink class="toolbar-link" href="Clients/Commercial" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.Building())" />
+        <FluentIcon Value="@(new Icons.Regular.Size24.BookGlobe())" />
+        <span class="toolbar-text">Commercial</span>
     </NavLink>
 
     <NavLink class="toolbar-link" href="Clients/Personal" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.PersonAccounts())" />
+        <FluentIcon Value="@(new Icons.Regular.Size24.BookContacts())" />
+        <span class="toolbar-text">Personal</span>
     </NavLink>
+
+    <span class="sf-verthr2"></span>
+
 </div>

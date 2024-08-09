@@ -59,6 +59,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Components\Pages\RenewalPages\" />
     <Folder Include="Domain\Carriers\ViewModels\" />
   </ItemGroup>
 

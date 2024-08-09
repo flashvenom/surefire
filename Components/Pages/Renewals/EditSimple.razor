@@ -1,9 +1,12 @@
-﻿@page "/Renewals/edit"
+﻿@page "/Renewals/Edit/{RenewalId:int}"
 
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Renewals.Models
-@inject IDbContextFactory<Mantis.Data.ApplicationDbContext> DbFactory
+@using Mantis.Domain.Shared.Services
+@using Mantis.Domain.Shared
+@inject ApplicationDbContext DbContext
 @inject NavigationManager NavigationManager
+@inject SharedService SharedService
 
 <PageTitle>Edit</PageTitle>
 
@@ -11,7 +14,7 @@
 
 <h4>Renewal</h4>
 <hr />
-@if (Renewal is null)
+@if (Renewal is null || Products is null)
 {
     <p><em>Loading...</em></p>
 }
@@ -48,6 +51,17 @@ else
                     <InputText id="assignedtoid" @bind-Value="Renewal.AssignedToId" class="form-control" />
                     <ValidationMessage For="() => Renewal.AssignedToId" class="text-danger" />
                 </div>
+                <div class="mb-3">
+                    <label for="product" class="form-label">Product:</label>
+                    <InputSelect id="product" @bind-Value="Renewal.Product" class="form-control">
+                        <option value="">Select a product</option>
+                        @foreach (var product in Products)
+                        {
+                            <option value="@product">@product.LineName</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Renewal.Product" class="text-danger" />
+                </div>
                 <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
         </div>
@@ -59,33 +73,39 @@ else
 </div>
 
 @code {
-    [SupplyParameterFromQuery]
+    [Parameter]
     public int RenewalId { get; set; }
 
     [SupplyParameterFromForm]
     public Renewal? Renewal { get; set; }
 
+    private List<Product> Products { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        Renewal ??= await context.Renewals.FirstOrDefaultAsync(m => m.RenewalId == RenewalId);
+        Renewal ??= await DbContext.Renewals
+            .Include(r => r.Product) // Ensure the Product is included
+            .FirstOrDefaultAsync(m => m.RenewalId == RenewalId);
 
         if (Renewal is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
+
+        // Fetch all products for the dropdown
+        Products = await SharedService.GetAllProductsAsync();
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see https://aka.ms/RazorPagesCRUD.
     public async Task UpdateRenewal()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Attach(Renewal!).State = EntityState.Modified;
+        await InvokeAsync(StateHasChanged);
+
+        DbContext.Attach(Renewal!).State = EntityState.Modified;
 
         try
         {
-            await context.SaveChangesAsync();
+            await DbContext.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -104,7 +124,6 @@ else
 
     bool RenewalExists(int renewalid)
     {
-        using var context = DbFactory.CreateDbContext();
-        return context.Renewals.Any(e => e.RenewalId == renewalid);
+        return DbContext.Renewals.Any(e => e.RenewalId == renewalid);
     }
 }

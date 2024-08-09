@@ -197,6 +197,12 @@
 
         clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
         filteredClients = new List<Client>(clients);
+
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Clients" }
+        });
     }
 
     private async void AddDateIcon()

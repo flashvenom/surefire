@@ -74,7 +74,9 @@
     .page {
         display: flex;
         flex-direction: column;
-        height: 100vh;
+        height: calc(100vh - 50px);
+        position: relative;
+        background-color: #e8e8e8;
     }
     .top-bar {
         width: 100%;
@@ -84,11 +86,20 @@
         align-items: center;
         justify-content: space-between;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 0 10px;
-        position: sticky;
-        top: 0;
+        position: fixed;
+        top: 0px;
+        z-index: 1000;
     }
-
+    .sidebar {
+        padding-top:20px;
+        position: fixed;
+        top: 50px;
+        width:50px;
+        height: calc(100vh - 70px);
+        border-right: 1px solid #cecece;
+        background-color: #e8e8e8;
+        z-index: 1000;
+    }
     .left-icons {
         display: flex;
         align-items: center;

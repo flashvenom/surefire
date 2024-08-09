@@ -1,10 +1,10 @@
 ﻿@page "/Renewals"
-@using Syncfusion.Blazor
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor
 
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
@@ -81,6 +81,5 @@
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Renewals" }
         });
-        InvokeAsync(StateHasChanged);
     }
 }

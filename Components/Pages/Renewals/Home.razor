@@ -1,20 +1,15 @@
 ﻿@page "/Renewals"
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor.DropDowns
-@using Syncfusion.Blazor
-
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Users.Services
-
+@using Microsoft.AspNetCore.Components.Authorization
 @inject PolicyService PolicyService
 @inject RenewalService RenewalService
 @inject UserService UserService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @rendermode InteractiveServer
 
@@ -22,83 +17,150 @@
 
 <div class="page-content">
     <h1 class="renewalheader">Renewal Manager</h1>
-
+    UbM: @UnboundSelectedMonth | SM: @SelectedMonth
     <div class="filter-section">
-        <div>
-            <FluentSelect TOption="ApplicationUser" Label="Assigned To" Items="@AssignedUsers" Id="assignedto-listbox" Placeholder="Everyone" @bind-Value="AssignedUserId" @bind-selectedOption="SelectedApplicationUser" />
+        <div class="month-selector">
+            <button @onclick="PrevMonth">&lt;</button>
+            <select @onchange="@FormChange" value="@htmlMonth">
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+            <button @onclick="NextMonth">&gt;</button><br />
         </div>
-        <div>
-            (MonthDropDown)
-        </div>
-        <div>
-            (YearDropDown)
-        </div>
-    </div>
 
-    <div class="homelist">
-        <table class="table" style="font-size:1.25em;">
-            <thead>
-                <tr>
-                    <th>Renewal</th>
-                    <th><strong>Insured Name</strong></th>
-                    <th>Policy Type</th>
-                    <th>Carrier</th>
-                    <th>MGA</th>
-                    <th>ExpiringPolicyNumber</th>
-                    <th>PolicyId</th>
-                    <th>CSR</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in FilteredRenewals)
-                {
-                    <tr>
-                        <td>@item.RenewalDate.ToShortDateString()</td>
-                        <td><a href="/Renewals/@item.RenewalId">@item.Client?.Name</a></td>
-                        <td>@item.Product?.LineNickname</td>
-                        <td>@item.Carrier?.CarrierName</td>
-                        <td>@item.Wholesaler?.CarrierName</td>
-                        <td>@item.Policy?.PolicyNumber</td>
-                        <td>@item.Policy?.PolicyId</td>
-                        <td>@item.AssignedTo?.FirstName</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+
     </div>
+    @if(RenewalList != null){
+        <div class="homelist">
+            <table class="table" style="font-size:1.25em;">
+                <thead>
+                    <tr>
+                        <th>Renewal</th>
+                        <th><strong>Insured Name</strong></th>
+                        <th>Policy Type</th>
+                        <th>Carrier</th>
+                        <th>MGA</th>
+                        <th>ExpiringPolicyNumber</th>
+                        <th>PolicyId</th>
+                        <th>CSR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in RenewalList)
+                    {
+                        <tr>
+                            <td>@item.RenewalDate.ToShortDateString()</td>
+                            <td><a href="/Renewals/@item.RenewalId">@item.Client?.Name</a></td>
+                            <td>@item.Product?.LineNickname</td>
+                            <td>@item.Carrier?.CarrierName</td>
+                            <td>@item.Wholesaler?.CarrierName</td>
+                            <td>@item.Policy?.PolicyNumber</td>
+                            <td>@item.Policy?.PolicyId</td>
+                            <td>@item.AssignedTo?.FirstName</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
 </div>
 
 @code {
-    private string SelectedAssignedUserId { get; set; }
-    private string AssignedUserId { get; set; }
-    private ApplicationUser SelectedApplicationUser { get; set; }
-    private int? SelectedMonth { get; set; }
-    private int? SelectedYear { get; set; }
-    private List<Renewal> Renewals { get; set; } = new List<Renewal>();
-    private List<ApplicationUser> AssignedUsers { get; set; } = new List<ApplicationUser>();
-    private List<int> Months => Enumerable.Range(1, 12).ToList();
-    private List<int> Years => Renewals.Select(p => p.RenewalDate.Year).Distinct().OrderBy(y => y).ToList();
-    private List<Renewal> FilteredRenewals => Renewals
-        .Where(p => string.IsNullOrEmpty(SelectedAssignedUserId) || p.AssignedToId == SelectedAssignedUserId)
-        .Where(p => !SelectedMonth.HasValue || p.RenewalDate.Month == SelectedMonth.Value)
-        .Where(p => !SelectedYear.HasValue || p.RenewalDate.Year == SelectedYear.Value)
-        .ToList();
+    //Month Variables
+    string UnboundSelectedMonth;
+    int SelectedMonth = DateTime.Now.Month;
+    private int htmlMonth { get; set; } = 1;
+
+    //YearVariables
+    string UnboundSelectedYear;
+    int SelectedYear = DateTime.Now.Year;
+    private int htmlYear { get; set; } = 2024;
+
+
+    Renewal Renewals { get; set; }
+    List<Renewal> RenewalList { get; set; } // Added list of renewals variable
 
     protected override async Task OnInitializedAsync()
     {
-        Renewals = await RenewalService.GetAllRenewalsAsync();
-        AssignedUsers = await UserService.GetAllUsers();
 
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Renewals" }
-        });
     }
+
+    private void FormChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        UnboundSelectedMonth = args.Value.ToString();
+        SelectedMonth = Convert.ToInt16(UnboundSelectedMonth);
+        htmlMonth = SelectedMonth;
+        GetFilteredList();
+
+    }
+    private void GetFilteredList()
+    {
+        RenewalList = RenewalService.GetFilteredRenewalList(SelectedMonth, 2024, null);
+    }
+
+    private void PrevMonth()
+    {
+        if (SelectedMonth > 1)
+        {
+            SelectedMonth--;
+        }
+        else
+        {
+            SelectedMonth = 12;
+        }
+        htmlMonth = SelectedMonth;
+        GetFilteredList();
+    }
+
+    private void NextMonth()
+    {
+        if (SelectedMonth < 12)
+        {
+            SelectedMonth++;
+        }
+        else
+        {
+            SelectedMonth = 1;
+        }
+        htmlMonth = SelectedMonth;
+        GetFilteredList();
+    }
+
 }
+
 <style>
     h1 {
-        margin-top:0px !important;
+        margin-top: 0px !important;
         padding-top: 0px !important;
     }
+
+    .filter-section {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .month-selector, .year-selector {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .month-selector button, .year-selector button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
 </style>

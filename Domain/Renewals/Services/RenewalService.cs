@@ -51,6 +51,56 @@ namespace Mantis.Domain.Renewals.Services
             return renewal;
         }
 
+        public async Task<List<Renewal>> GetFilteredRenewalListAsync(int? myMonth, int? myYear, string? myUserId)
+        {
+            // Default to the current month and year if they are null
+            int month = myMonth ?? DateTime.Now.Month;
+            int year = myYear ?? DateTime.Now.Year;
+
+            var renewals = await _context.Renewals
+                .Where(r => r.RenewalDate.Month == 9 && r.RenewalDate.Year == 2024)
+                .Include(r => r.Product)
+                .Include(r => r.Client)
+                .Include(r => r.Carrier)
+                .Include(r => r.Wholesaler)
+                .Include(r => r.Policy)
+                .ToListAsync();
+
+
+            // Execute the query and return the filtered list
+            return renewals;
+        }
+
+        public List<Renewal> GetFilteredRenewalList(int? myMonth, int? myYear, string? myUserId)
+        {
+            // Default to the current month and year if they are null
+            int month = myMonth ?? DateTime.Now.Month;
+            int year = myYear ?? DateTime.Now.Year;
+
+            var renewals = _context.Renewals
+                .Where(r => r.RenewalDate.Month == month && r.RenewalDate.Year == myYear)
+                .Include(r => r.Product)
+                .Include(r => r.Client)
+                .Include(r => r.Carrier)
+                .Include(r => r.Wholesaler)
+                .Include(r => r.Policy)
+                .Include(r => r.AssignedTo)
+                .ToList();
+
+
+            // Execute the query and return the filtered list
+            return renewals;
+        }
+
+        public async Task<List<Renewal>> GetFilteredRenewalList222(int myMonth, int myYear, string? myUserId)
+        {
+            ApplicationUser user = await _userManager.FindByIdAsync(myUserId);
+
+            var renewal = await _context.Renewals.ToListAsync();
+                
+            return renewal;
+        }
+
         // Update the Renewal record
         public async Task UpdateRenewalAsync(RenewalEditViewModel model)
         {

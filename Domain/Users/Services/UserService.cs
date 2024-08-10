@@ -33,6 +33,12 @@ namespace Mantis.Domain.Users.Services
             return allUsers;
         }
 
+        public async Task<ApplicationUser> GetUserById(string userId)
+        {
+            ApplicationUser user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            return user;
+        }
+
         public async Task<List<ApplicationUser>> GetAllUsersAsync()
         {
             var allUsers = await _dbContext.Users.ToListAsync();

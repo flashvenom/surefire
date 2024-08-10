@@ -16,42 +16,32 @@
 @if (renewal != null)
     {
         <div class="sf-renewalheader">
-            <div>
-                <span class="sf-linecode">@renewal.Product.LineCode</span>
-                <span class="sf-renewaldate">@(renewal.RenewalDate.ToString("M/d") ?? "")</span>
+            <div class="sf-col-1">
+                <span class="sf-clientname">@renewal.Client.Name</span><br>
+                <span class="sf-linecode">@renewal.Product.LineName</span>
             </div>
-            <div>
-                <span class="sf-clientname">@renewal.Client.Name</span>
+            <div class="sf-rendate">
+            <span class="sf-rent">RENEWS</span>
+                <span class="sf-renewaldate">@(renewal.RenewalDate.ToString("M/d") ?? "")</span><br>
             </div>
-            <div>
-            @if (renewal.Carrier != null)
-            {
-                <span class="sf-pilltitle">Carrier</span>
-
-                <span class="sf-pillvalue">@renewal.Carrier.CarrierName</span>
-            }
-            @if (renewal.Wholesaler != null)
-            {
-                <span class="sf-pilltitle">Wholesaler</span>
-
-                <span class="sf-pillvalue">@renewal.Wholesaler.CarrierName</span>
-            }
-
+            <div class="sf-rendate-2">
             @if (renewal.Policy != null)
             {
-                <span class="sf-pilltitle">Expiring Policy</span>
-                <span class="sf-pillvalue">@renewal.Policy.PolicyNumber</span>
+                <div class="innersep">
+                    <span class="sf-runt">EXPIRING POLICY NO.</span<br />
+                    <span class="sf-rekt">@(renewal.Policy.PolicyNumber)</span><br />
+                    <span class="sf-runt">PREMIUM</span><br />
+                    <span class="sf-rekt">@(renewal.Policy.Premium)</span>
+                </div>
             }
-            @if (renewal.ExpiringPolicyNumber != null)
+            @if (renewal.Carrier != null && renewal.Wholesaler != null)
             {
-                <span class="sf-pilltitle">Expiring Policy</span>
-                <span class="sf-pillvalue">@renewal.ExpiringPolicyNumber</span>
-            }
-
-            @if (renewal.ExpiringPremium != null)
-            {
-                <span class="sf-pilltitle">Expiring Premium</span>
-                <span class="sf-pillvalue">@renewal.ExpiringPremium</span>
+                <div class="innersep leftpad">
+                    <span class="sf-runt">CARRIER</span<br />
+                    <span class="sf-rekt">@(renewal.Carrier.CarrierName)</span><br />
+                    <span class="sf-runt">WHOLESALER</span><br />
+                    <span class="sf-rekt">@(renewal.Wholesaler.CarrierName)</span>
+                </div>
             }
             </div>
         </div>

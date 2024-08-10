@@ -1,6 +1,8 @@
 ﻿@implements IDisposable
 @using Microsoft.FluentUI.AspNetCore.Components
+@using Mantis.Domain.Shared.Services
 @inject NavigationManager NavigationManager
+@inject SharedService SharedService
 @inject NavigationService NavigationService
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" style="display:none" />
@@ -50,21 +52,22 @@
 </div>
 <br />
 
-<div class="sfnav @(GetNavItemClass("Policies"))">
-    <div class="nb-blueline@(GetNavItemClass("Policies"))"></div>
-    <NavLink class="nav-link" href="Policies" Match="NavLinkMatch.Prefix" title="Policies">
-        @if (GetNavItemClass("Policies") == "nb-active")
+<div class="sfnav @(GetNavItemClass("Renewals"))">
+    <div class="nb-blueline@(GetNavItemClass("Renewals"))"></div>
+    <NavLink class="nav-link" href="Renewals" Match="NavLinkMatch.Prefix" title="Renewals">
+        @if (GetNavItemClass("Renewals") == "nb-active")
         {
-            <FluentIcon Value="@(new Icons.Filled.Size24.DocumentMultiple())" Class="active-icon" />
+            <FluentIcon Value="@(new Icons.Filled.Size24.ApprovalsApp())" Class="active-icon" />
         }
         else
         {
-            <FluentIcon Value="@(new Icons.Regular.Size24.DocumentMultiple())" Class="inactive-icon" />
+            <FluentIcon Value="@(new Icons.Regular.Size24.ApprovalsApp())" Class="inactive-icon" />
         }
     </NavLink>
 </div>
 <br />
-
+<hr>
+<br />
 <div class="sfnav @(GetNavItemClass("Carriers"))">
     <div class="nb-blueline@(GetNavItemClass("Carriers"))"></div>
     <NavLink class="nav-link" href="Carriers" Match="NavLinkMatch.Prefix" title="Carriers">
@@ -95,20 +98,23 @@
 </div>
 <br />
 
-<div class="sfnav @(GetNavItemClass("Renewals"))">
-    <div class="nb-blueline@(GetNavItemClass("Renewals"))"></div>
-    <NavLink class="nav-link" href="Renewals" Match="NavLinkMatch.Prefix" title="Renewals">
-        @if (GetNavItemClass("Renewals") == "nb-active")
+
+
+<div class="sfnav @(GetNavItemClass("Policies"))">
+    <div class="nb-blueline@(GetNavItemClass("Policies"))"></div>
+    <NavLink class="nav-link" href="Policies" Match="NavLinkMatch.Prefix" title="Policies">
+        @if (GetNavItemClass("Policies") == "nb-active")
         {
-            <FluentIcon Value="@(new Icons.Filled.Size24.ApprovalsApp())" Class="active-icon" />
+            <FluentIcon Value="@(new Icons.Filled.Size24.DocumentMultiple())" Class="active-icon" />
         }
         else
         {
-            <FluentIcon Value="@(new Icons.Regular.Size24.ApprovalsApp())" Class="inactive-icon" />
+            <FluentIcon Value="@(new Icons.Regular.Size24.DocumentMultiple())" Class="inactive-icon" />
         }
     </NavLink>
 </div>
 <br />
+
 
 <style>
 :root .nb-bluelinenb-active {
@@ -220,36 +226,6 @@
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
+
+
 }
-
-@* 
-<style>
-    .custom-icon-color {
-        color: #0078D4; /* Your desired default color */
-    }
-    .e-icons.e-medium {
-        font-size: 20px !important;
-    }
-    .nav-link {
-        position: relative;
-        color:#000;
-        padding: 0px;
-    }
-
-        .nav-link .selected-nav-item {
-            color: #000;
-        }
-
-        .nav-link:hover::after {
-            content: attr(title);
-            position: absolute;
-            left: 100%;
-            margin-left: 8px;
-            background: #333;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-</style>
- *@

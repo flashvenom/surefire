@@ -13,6 +13,8 @@ namespace Mantis.Data
         public string? LastName { get; set; }
 
         public string? PictureUrl { get; set; }
+        public string? LastLookupClient { get; set; }
+        public string? LastLookupPerson { get; set; }
     }
 
 }

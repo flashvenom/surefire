@@ -1,0 +1,21 @@
+﻿:root h1 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 100;
+    font-size:3em;
+    color: #8a8a8a;
+    padding-top:0px;
+    padding-bottom:0px;
+    margin-top:0px;
+    margin-bottom:0px;
+}
+i {
+    font-family: "montserrat-italic";
+    font-weight:100;
+    font-size: 2em;
+    margin-top: 0px;
+    padding-top: 0px;
+    color: #b0b0b0;
+}
+.img-fluid {
+    width:100%;
+}

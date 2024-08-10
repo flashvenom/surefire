@@ -45,6 +45,12 @@ namespace Mantis.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("LastLookupClient")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastLookupPerson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("LastName")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");

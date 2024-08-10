@@ -45,6 +45,8 @@ h4 {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
+    /*background-color: #9b9b9b;
+    border-radius:8px;*/
 }
 
 .past-policy {
@@ -65,8 +67,8 @@ h4 {
     }
 
 .sf-pp {
-    width:130px;
-    overflow:hidden;
+    width: 130px;
+    overflow: hidden;
 }
 .sf-da {
     width: 50px;
@@ -143,7 +145,8 @@ h4 {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    border: 1px solid #ccc;
+    background-color:#fff;
+    /*border: 1px solid #ccc;*/
 }
 .sf-col {
     
@@ -167,13 +170,15 @@ h4 {
 
 .sf-selected {
     width: 100%;
-    margin: 5px;
+    box-shadow:0px 0px 6px #0000002b;
 }
 .sf-header {
     display: flex;
     justify-content: normal;
     flex-direction: row;
-    background-color: #d8d8d8;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#f9f9f9+0,eaeaea+100 */
+    background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(234,234,234,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+
     padding-top: 12px;
     padding-bottom: 8px;
     padding-left: 15px;

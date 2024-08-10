@@ -23,14 +23,26 @@ Mantis is a comprehensive insurance management system designed to streamline the
 
 ## Roadmap
 
-### Client View Page
-- Relevant Carriers (so you can you to service and quoting website and see underwriters and emails and phone numbers)
-- Relevant people for carriers, and company
-- Notes field for knowing what's going on with them
-- Notes from renewals in process
-- Certificates
-- 
+- **Connect to voip system - bring up toast/card showing who is calling based on callerID**
+- **Add AI side panel for common tasks**
+- **Add settings page with gear icon upper left**
+- **Add picture for people**
+- **Add logo of business - grab first google image result of "business name + logo"**
+- **Add Google Map link to address"**
+- **Use AI to get JSON data of any location/address"**
+- **Add "touch field" to store things in common / small talk"**
+- **Use AI to search client website and address lookup to get company details, industry codes, etc - new info pops up as (?) you click a check to confirm data, red x to throw away bad data**
+- **CLIENT PAGE: renewals section, menu section switches: Glance | Policies | Attachments | Claims | Applications**
+- **Applications section will store basic data commonly used on apps like # of employees, gross sales, etc.**
+- **Client portal with no sign-in required - a one time use key is emailed, they can update annual check-ups, see policies, etc**
 
+- ## ToDo
+- **Create dummy database with fake client data**
+- **Submission tab in renewal center**
+- **Duplicate renewal center for 'Leads Processing'**
+- **SMART BREAD CRUMS: When you open a policy, certificate, etc - it adds it to the BreadCrum trail, and it stays there until you click the X or leave the client entirely - so you can switch between policies / other screens**
+
+ 
 ## Installation
 
 ### Prerequisites

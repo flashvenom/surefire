@@ -25,17 +25,23 @@
 <_toolbar />
 
 <div class="page-content">
-    <div class="sf-quicklist">
-        <SfTextBox @ref=@SearchBox Placeholder="Type to search clients..." @bind-Value="searchTerm" @oninput="OnInputChanged" CssClass="search-input small-input" ShowClearButton="true" />
-        <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
-            <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
-            <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
-        </SfListView>
-    </div>
+    <div style="display:flex; flex-direction:row;">
+        <div class="@dynamicClass">
+            <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
+            </FluentTextField>
+            <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
+                <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
+                <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
+            </SfListView>
+        </div>
+        @* <div id="divSepClick" class="sf-collapse" @onclick="TestClick"><img src="/img/arrow.png" /></div> *@
+    </div>    
     
     @if (selectedClient != null)
     {
-    <div class="sf-selected">
+    <div class="sf-selected" style="position:relative;">
+            <div class="tinyexpander" @onclick="TestClick"><img src="/img/tinyexpand.png" /></div>
         <div class="sf-header">
             <div class="client-header">
                 @selectedClient.Name <br />
@@ -155,25 +161,46 @@
         display: flex;
         flex-direction: row;
     }
-    :root .e-input:not(:valid), .e-input:valid, .e-float-input.e-control-wrapper input:not(:valid), .e-float-input.e-control-wrapper input:valid, .e-float-input input:not(:valid), .e-float-input input:valid, .e-input-group input:not(:valid), .e-input-group input:valid, .e-input-group.e-control-wrapper input:not(:valid), .e-input-group.e-control-wrapper input:valid, .e-float-input.e-control-wrapper textarea:not(:valid), .e-float-input.e-control-wrapper textarea:valid, .e-float-input textarea:not(:valid), .e-float-input textarea:valid, .e-input-group.e-control-wrapper textarea:not(:valid), .e-input-group.e-control-wrapper textarea:valid, .e-input-group textarea:not(:valid), .e-input-group textarea:valid {
-        font-size: 14px !important;
-        height: 5px !important;
-        background-color: none !important;
+    .tinyexpander {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        opacity:.3;
+    }
+    .tinyexpander:hover {
+        opacity:1;
+        cursor:pointer;
+    }
+    :root .sf-quicklist {
+        width:300px !important;
+        overflow: hidden;
+        transition: all 0.5s ease;
+    }
+    :root .sf-quicklist-close {
+        width:1px !important;
+        overflow: hidden;
+        transition: all 0.5s ease;
     }
 
     :root .sf-quicklist .e-listview {
         padding: 0px !important;
         margin: 0px !important;
+        
     }
         :root .e-listview .e-list-item {
             padding: 0px !important;
             margin: 0px !important;
             height: 25px !important;
         }
-    .search-input.small-input {
-        font-size: 0.875em; /* Adjust font size */
-        padding: 0.5em; /* Adjust padding */
-        border: 0px;
+
+    :root .sf-collapse {
+        width:15px;
+        background-color: #e2e2e2;
+        height:100%;
+        float:right;
+    }
+    :root .sf-searchquick {
+        width: 290px !important
     }
 </style>
 
@@ -192,6 +219,9 @@
     private List<Policy> pastPolicies = new();
     private bool isLoadingCrmId = false;
     private string isLoadingWhat = "Initializing";
+
+    private string dynamicClass = "sf-quicklist";
+
     SfTextBox SearchBox { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -219,6 +249,18 @@
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Clients" }
         });
+    }
+    public void TestClick()
+    {
+        if(dynamicClass == "sf-quicklist")
+        {
+            dynamicClass = "sf-quicklist-close";
+        }
+        else
+        {
+            dynamicClass = "sf-quicklist";
+        }
+
     }
 
     public async void OnAfterRenderAsync()

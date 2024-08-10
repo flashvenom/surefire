@@ -27,6 +27,11 @@ namespace Mantis.Domain.Users.Services
             return loggedInUser;
         }
 
+        public string GetLoggedInUserId()
+        {
+            return _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+
         public async Task<List<ApplicationUser>> GetAllUsers()
         {
             var allUsers = await _dbContext.Users.ToListAsync();

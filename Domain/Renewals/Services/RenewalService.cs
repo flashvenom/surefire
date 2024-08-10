@@ -64,8 +64,16 @@ namespace Mantis.Domain.Renewals.Services
                 .Include(r => r.Carrier)
                 .Include(r => r.Wholesaler)
                 .Include(r => r.Policy)
+                .Include(r => r.AssignedTo)
                 .ToListAsync();
 
+            if(myUserId != null)
+            {
+                if(myUserId != "Everyone")
+                {
+                    renewals = renewals.Where(r => r.AssignedToId == myUserId).ToList();
+                }
+            }
 
             // Execute the query and return the filtered list
             return renewals;
@@ -87,6 +95,13 @@ namespace Mantis.Domain.Renewals.Services
                 .Include(r => r.AssignedTo)
                 .ToList();
 
+            if (myUserId != null)
+            {
+                if (myUserId != "Everyone")
+                {
+                    renewals = renewals.Where(r => r.AssignedToId == myUserId).ToList();
+                }
+            }
 
             // Execute the query and return the filtered list
             return renewals;

@@ -5,23 +5,21 @@
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Users.Services
 @using Microsoft.AspNetCore.Components.Authorization
-@inject PolicyService PolicyService
+@using Microsoft.FluentUI.AspNetCore.Components
+
 @inject RenewalService RenewalService
 @inject UserService UserService
-@inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @rendermode InteractiveServer
 
 <_toolbar />
 
 <div class="page-content">
-    <h1 class="renewalheader">Renewal Manager</h1>
-    UbM: @UnboundSelectedMonth | SM: @SelectedMonth
+    <h1 class="renewalheader">Upcoming Renewals</h1>
     <div class="filter-section">
         <div class="month-selector">
-            <button @onclick="PrevMonth">&lt;</button>
-            <select @onchange="@FormChange" value="@htmlMonth">
+            <a class="sf-chevron" @onclick="PrevMonth"><FluentIcon Value="@(new Icons.Filled.Size24.CaretLeft())" Color="Color.FillInverse" Slot="start" /></a>
+            <select @onchange="@FormChangeMonth" value="@htmlMonth" class="e-input e-dropdownlist sf-eformbld">
                 <option value="1">January</option>
                 <option value="2">February</option>
                 <option value="3">March</option>
@@ -35,38 +33,65 @@
                 <option value="11">November</option>
                 <option value="12">December</option>
             </select>
-            <button @onclick="NextMonth">&gt;</button><br />
+            <a class="sf-chevron" @onclick="NextMonth"><FluentIcon Value="@(new Icons.Filled.Size24.CaretRight())" Color="Color.FillInverse" Slot="start" /></a><br />
         </div>
 
+        <div class="year-selector" style="margin-left:75px;">
+            <select @onchange="@FormChangeYear" value="@htmlYear" class="e-input e-dropdownlist">
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+            </select>
+        </div>
 
+        <div class="user-selector" style="margin-left:75px;">
+            <select @onchange="@FormChangeUser" value="@htmlUser" class="e-input e-dropdownlist">
+                <option value="Everyone">Everyone</option>
+                @if(allUsers != null){
+                    @foreach (var item in allUsers)
+                    {
+                        <option value="@item.Id">@item.FirstName @item.LastName</option>
+                    }
+                }
+            </select>
+        </div>
     </div>
     @if(RenewalList != null){
         <div class="homelist">
-            <table class="table" style="font-size:1.25em;">
-                <thead>
-                    <tr>
+            <table class="sf-table">
+                <thead class="sf-thead">
+                    <tr class="sf-rentable">
                         <th>Renewal</th>
+                        <th>Line</th>
                         <th><strong>Insured Name</strong></th>
-                        <th>Policy Type</th>
                         <th>Carrier</th>
                         <th>MGA</th>
-                        <th>ExpiringPolicyNumber</th>
-                        <th>PolicyId</th>
-                        <th>CSR</th>
+                        <th>Policy #</th>
+                        <th>Id #</th>
+                        <th>Assigned To</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in RenewalList)
                     {
                         <tr>
-                            <td>@item.RenewalDate.ToShortDateString()</td>
-                            <td><a href="/Renewals/@item.RenewalId">@item.Client?.Name</a></td>
-                            <td>@item.Product?.LineNickname</td>
-                            <td>@item.Carrier?.CarrierName</td>
-                            <td>@item.Wholesaler?.CarrierName</td>
-                            <td>@item.Policy?.PolicyNumber</td>
-                            <td>@item.Policy?.PolicyId</td>
-                            <td>@item.AssignedTo?.FirstName</td>
+                            <td>@item.RenewalDate.ToString("MM/d")</td>
+                            <td class="sf-td-mono">@item.Product?.LineCode</td>
+                            <td class="sf-td-bold"><a href="/Renewals/@item.RenewalId">@item.Client?.Name</a></td>
+                            
+                            <td class="sf-td-sm">@item.Carrier?.CarrierName</td>
+                            <td class="sf-td-sm2">@item.Wholesaler?.CarrierNickname</td>
+                            <td class="sf-td-sm">@item.Policy?.PolicyNumber</td>
+                            <td class="sf-td-mono">@item.Policy?.PolicyId</td>
+                            <td>
+                                <img src="img/staff/@item.AssignedTo.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
+                                @item.AssignedTo?.FirstName @item.AssignedTo?.LastName
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -77,66 +102,68 @@
 </div>
 
 @code {
-    //Month Variables
-    string UnboundSelectedMonth;
-    int SelectedMonth = DateTime.Now.Month;
-    private int htmlMonth { get; set; } = 1;
-
-    //YearVariables
-    string UnboundSelectedYear;
-    int SelectedYear = DateTime.Now.Year;
-    private int htmlYear { get; set; } = 2024;
-
+    int htmlMonth { get; set; } = DateTime.Now.Month;
+    int htmlYear { get; set; } = DateTime.Now.Year;
+    string htmlUser { get; set; }
+    private List<ApplicationUser> allUsers { get; set; }
 
     Renewal Renewals { get; set; }
     List<Renewal> RenewalList { get; set; } // Added list of renewals variable
 
     protected override async Task OnInitializedAsync()
     {
-
-    }
-
-    private void FormChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
-    {
-        UnboundSelectedMonth = args.Value.ToString();
-        SelectedMonth = Convert.ToInt16(UnboundSelectedMonth);
-        htmlMonth = SelectedMonth;
+        htmlUser = UserService.GetLoggedInUserId();
+        allUsers = await UserService.GetAllUsers();
         GetFilteredList();
-
     }
+
+    private void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        htmlMonth = Convert.ToInt16(args.Value.ToString());
+        GetFilteredList();
+    }
+    private void FormChangeYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        htmlYear = Convert.ToInt16(args.Value.ToString());
+        GetFilteredList();
+    }
+    private void FormChangeUser(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        htmlUser = args.Value.ToString();
+        GetFilteredList();
+    }
+
     private void GetFilteredList()
     {
-        RenewalList = RenewalService.GetFilteredRenewalList(SelectedMonth, 2024, null);
+        RenewalList = RenewalService.GetFilteredRenewalList(htmlMonth, htmlYear, htmlUser);
     }
 
     private void PrevMonth()
     {
-        if (SelectedMonth > 1)
+        if (htmlMonth > 1)
         {
-            SelectedMonth--;
+            htmlMonth--;
         }
         else
         {
-            SelectedMonth = 12;
+            htmlMonth = 12;
+            htmlYear--;
         }
-        htmlMonth = SelectedMonth;
         GetFilteredList();
     }
-
     private void NextMonth()
     {
-        if (SelectedMonth < 12)
+        if (htmlMonth < 12)
         {
-            SelectedMonth++;
+            htmlMonth++;
         }
         else
         {
-            SelectedMonth = 1;
+            htmlMonth = 1;
+            htmlYear++;
         }
-        htmlMonth = SelectedMonth;
         GetFilteredList();
     }
-
 }
 
 <style>
@@ -145,22 +172,27 @@
         padding-top: 0px !important;
     }
 
+    :root .e-dropdownlist 
+    {
+        font-size:1.5em !important;
+
+    }
+
+    :root .e-input {
+        padding-left: 9px;
+        padding-right: 22px;
+        height: 40px;
+    }
+
+    :root .sf-eformbld {
+        font-weight: bold !important;
+    }
+
     .filter-section {
         display: flex;
         gap: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
     }
 
-    .month-selector, .year-selector {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-        .month-selector button, .year-selector button {
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            font-size: 1.5em;
-        }
+   
 </style>

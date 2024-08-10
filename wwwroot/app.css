@@ -126,11 +126,64 @@ a, .btn-link {
     background-color: #1b6ec2;
     border-color: #1861ac;
 }
-
+.sf-table {
+    width:100%;
+    text-decoration:none;
+}
+.sf-table a {
+    text-decoration: none;
+}
+.sf-table tbody td {
+    padding:3px 0px;
+}
+.sf-table tbody {
+    font-size:1.3em;
+}
+    .sf-table th {
+        border-bottom: 3px solid #ccc;
+    }
+    .sf-table tbody {
+        font-size: 1.3em;
+    }
+    .sf-table tbody td {
+        border-bottom:1px solid #ccc;
+    }
+    .sf-table tbody tr > :first-child {
+        text-align:right;
+        padding-right:15px;
+    }
+.sf-td-bold {
+    font-weight:bold;
+}
+.sf-td-sm {
+    font-size:15px;
+}
+.sf-td-sm2 {
+    font-size: 15px;
+    font-weight:bold;
+}
+.sf-td-mono {
+    font-family: 'Cascadia Mono';
+    color: #909090 !important;
+}
+.sf-thead {
+    font-size: 12px;
+    font-family: 'Segoe UI';
+    font-weight: 600;
+    text-align: left;
+    color: #7a7a7a;
+}
+.sf-rentable > :first-child {
+    width:40px;
+    text-align:right;
+    padding-right:15px;
+}
+.sf-rentable > :nth-child(2) {
+    width: 50px;
+}
 /*.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }*/
-
 .content {
     padding-top: 1.1rem;
 }

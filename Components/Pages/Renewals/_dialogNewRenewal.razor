@@ -1,0 +1,33 @@
+﻿@implements IDialogContentComponent<Carrier>
+
+<FluentMessageBarProvider MaxMessageCount="1" />
+
+@using Mantis.Domain.Carriers.Models
+
+<p>Your lastname is years young </p>
+@* 
+<FluentTextField @bind-Value="@Content.">Your firstname:</FluentTextField>
+<FluentTextField @bind-Value="@Content.Lastname">Your lastname:</FluentTextField>
+<FluentNumberField @bind-Value="@Content.Age">Your age:</FluentNumberField> *@
+
+@if (Dialog != null)
+{
+    <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical" Style="border: 1px solid red; padding: 10px">
+        <span>This section is visible only when component is hosted inside a Dialog</span>
+        <FluentButton OnClick="@(() => ToggleDialogPrimaryActionButton(true))">Enable Dialog Primary Action</FluentButton>
+        <FluentButton OnClick="@(() => ToggleDialogPrimaryActionButton(false))">Disable Dialog Primary Action</FluentButton>
+    </FluentStack>
+}
+
+@code {
+    [Parameter]
+    public Carrier Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+
+    private void ToggleDialogPrimaryActionButton(bool enable)
+    {
+        Dialog!.TogglePrimaryActionButton(enable);
+    }
+}

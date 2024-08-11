@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Domain\Carriers\ViewModels\**" />
+    <Content Remove="Domain\Carriers\ViewModels\**" />
+    <EmbeddedResource Remove="Domain\Carriers\ViewModels\**" />
+    <None Remove="Domain\Carriers\ViewModels\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="Components\Layout\NavMenu - Copy.razor" />
     <Content Remove="Components\Pages\Carriers\CarrierDialog.razor" />
     <Content Remove="Components\Pages\Carriers\Carriers - Copy.razor" />
@@ -20,24 +27,18 @@
     <None Remove="Components\Layout\NavMenu - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses.razor.css" />
-    <None Remove="Components\Pages\Clients\Commercial.razor.css" />
-    <None Remove="Components\Pages\Clients\List.razor.css" />
     <None Remove="Components\Pages\Home.razor.css" />
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
     <None Remove="Components\Pages\Renewals\Home - Copy.razor.css" />
     <None Remove="Components\Pages\Renewals\Home.razor.css" />
     <None Remove="Components\Pages\Renewals\View.razor.css" />
-    <None Remove="Components\Pages\Renewals\ViewSf.razor.css" />
     <None Remove="Components\Pages\Renewals\ViewTable.razor.css" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Components\Pages\Clients\Commercial.razor.css" />
-    <Content Include="Components\Pages\Clients\List.razor.css" />
     <Content Include="Components\Pages\Home.razor.css" />
     <Content Include="Components\Pages\Renewals\Create.razor.css" />
     <Content Include="Components\Pages\Renewals\Home.razor.css" />
-    <Content Include="Components\Pages\Renewals\ViewSf.razor.css" />
     <Content Include="Components\Pages\Renewals\View.razor.css" />
   </ItemGroup>
 
@@ -59,11 +60,6 @@
     <PackageReference Include="Syncfusion.Blazor.SplitButtons" Version="26.2.7" />
     <PackageReference Include="Syncfusion.Blazor.Themes" Version="26.2.7" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Components\Pages\RenewalPages\" />
-    <Folder Include="Domain\Carriers\ViewModels\" />
   </ItemGroup>
 
   <ItemGroup>

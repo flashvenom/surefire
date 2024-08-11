@@ -1,0 +1,51 @@
+﻿@page "/Renewals/Submisssions/{RenewalId:int}"
+
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.SplitButtons
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Domain.Carriers.Models
+
+
+@inject RenewalService RenewalService
+@inject CarrierService CarrierService
+
+@rendermode InteractiveServer
+
+@if (AllCarriers != null)
+{
+    <div class="sf-newsubmissionbox">
+            <SfDropDownList TValue="int?" TItem="Carrier" Placeholder="Select Carrier" DataSource="@AllCarriers" AllowFiltering="true" FloatLabelType="FloatLabelType.Always">
+                <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+            </SfDropDownList>
+    </div>
+}
+else
+{
+    <p>Loading carriers...</p>
+}
+
+<style>
+    .sf-newsubmissionbox {
+        padding:5px;
+        background-color:#ccc;
+    }
+
+</style>
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+
+    [Parameter]
+    public List<Carrier> AllCarriers { get; set; }
+
+    
+    private List<Carrier> AllWholesalers;
+    private int SelectedCarrierId;
+    private int SelectedWholsalerId;
+}

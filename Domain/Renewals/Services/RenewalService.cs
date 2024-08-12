@@ -67,7 +67,13 @@ namespace Mantis.Domain.Renewals.Services
                 await _context.SaveChangesAsync();
             }
         }
-        
+
+        public async Task UpdateNotesAndPremiumAsync(Submission submission)
+        {
+            _context.Submissions.Update(submission);
+            await _context.SaveChangesAsync();
+        }
+
 
         public List<Renewal> GetFilteredRenewalList(int? myMonth, int? myYear, string? myUserId)
         {

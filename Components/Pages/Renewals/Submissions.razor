@@ -64,20 +64,30 @@
                         }
                     </div>
                 }
-                <div class="maincontent">
-                    <span class="f-mtitle">Notes</span><br />
-                    <FluentTextArea Value="@item.Notes" Style="width:100% !important;" />
+                <div class="maincontent" style="min-width:500px;">
+                    <table style="width:100%;">
+                        <tr>
+                            <td><span class="f-mtitle">Premium</span></td>
+                            <td><SfNumericTextBox ID="@("numbox-" + item.SubmissionId)" TValue="int?" @bind-Value=@item.Premium Format="c2" FloatLabelType="@FloatLabelType.Never"></SfNumericTextBox></td>
+                            <td colspan="2"><SfButton Content="Save" CssClass="e-primary" Style="width:100% !important; height:100% !important;" OnClick="@(async () => await SaveSubmissionAsync(item))"></SfButton> </td>
+                        </tr>
+                        <tr>
+                            <td><span class="f-mtitle">Notes</span></td>
+                            <td><FluentTextArea ID="@("notesbox-" + item.SubmissionId)" @bind-Value="@item.Notes" Style="width:100% !important; height:100% !important;" /></td>
+                        </tr>
+                    </table>
+                    
+                    
                 </div>
                 <div class="mainpremium">
                     <span class="f-tpremium">PREMIUM</span><br />
-                    <span class="f-mpremium">$15,267 @item.Premium</span>
+                    <span class="f-mpremium">@item.Premium?.ToString("C")</span>
                 </div>
                 
             </div>
 
 
-            <div style="position:relative; top:15px; max-width:800px; margin-left:auto;">
-                <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.Bottom" ID="orientation-stepper" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item.StatusInt, item.SubmissionId))">
+                <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.End" ID="@("stepper-" + @item.SubmissionId)" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item.StatusInt, item.SubmissionId))">
                     <StepperSteps>
                         <StepperStep IconCss="e-icons e-plus-icon" Label="Started"></StepperStep>
                         <StepperStep IconCss="e-icons e-pencil-icon" Label="Submitted"></StepperStep>
@@ -88,7 +98,7 @@
                         <StepperStep IconCss="e-icons e-check-icon" Label="Accepted"></StepperStep>
                     </StepperSteps>
                 </SfStepper>
-            </div>
+           
         </div>
         <div style="height:45px;"></div>
     }
@@ -186,16 +196,21 @@ else
     {
         await RenewalService.CreateNewSubmissionAsync(RenewalId, SelectedCarrierId, SelectedWholsalerId);
         AllSubmissions = await RenewalService.GetSubmissionsByRenewalId(RenewalId);
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
     protected override async Task OnInitializedAsync()
     {
         AllSubmissions = await RenewalService.GetSubmissionsByRenewalId(RenewalId);
+        await InvokeAsync(StateHasChanged);
     }
     private async Task OnStepperValueChanged(StepperChangedEventArgs args, int submissionStatusInt, int submissionId)
     {
-
         await RenewalService.UpdateSubmissionStatusAsync(args.ActiveStep, submissionId);
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task SaveSubmissionAsync(Submission submissionitem)
+    {
+        await RenewalService.UpdateNotesAndPremiumAsync(submissionitem);
         await InvokeAsync(StateHasChanged);
     }
 }

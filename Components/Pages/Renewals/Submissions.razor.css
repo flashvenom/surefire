@@ -57,10 +57,11 @@
 }
 .contentflex {
     line-height: 16px;
-    gap: 4s0px;
+    align-self: flex-start;
+    gap: 40px;
 }
 .mainpremium {
-    flex: 0;
+    align-self: flex-start;
     text-align: center;
     background-color: #6d6d6d;
     color: #fff;
@@ -83,8 +84,8 @@
     letter-spacing:3px;
 }
 .maincontent {
-    flex:2;
+    min-width:500px;
 }
 .carrier {
-    flex:1;
+    align-self: flex-start;
 }

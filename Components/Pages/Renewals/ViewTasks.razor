@@ -1,0 +1,148 @@
+﻿@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Microsoft.AspNetCore.Components
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.SplitButtons
+@using Mantis.Domain.Shared.Helpers;
+@using System.Timers
+
+@inject RenewalService RenewalService
+
+@rendermode InteractiveServer
+
+<table class="table">
+    <thead>
+        <tr>
+            <th></th>
+            <th style="width:280px">Task</th>
+            <th>Status</th>
+            <th style="width:400px">Notes</th>
+            <th>Sub</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var task in Tasks)
+        {
+            <tr class="@GetRowClass(task)">
+                <td class="sf-leftcell">
+                    <a id="myId-@(task.TaskItemId)" class="sf-threedot"><FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Fill" /></a>
+                    <FluentMenu Anchor="@("myId-" + task.TaskItemId)" Trigger="MouseButton.Left" Anchored="true" VerticalInset="true">
+                        <FluentMenuItem OnClick="@((e) => HighlightRow(task.TaskItemId))">
+                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" Color="Color.FillInverse" Slot="start" /></span>
+                            Highlight
+                        </FluentMenuItem>
+                        <FluentMenuItem OnClick="@((e) => EditRow(task.TaskItemId))">
+                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" Color="Color.FillInverse" Slot="start" /></span>
+                            Edit
+                        </FluentMenuItem>
+                    </FluentMenu>
+                    <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+                </td>
+                <td style="padding:0px 5px;">@task.TaskItemName</td>
+                <td class="ds">@((MarkupString)DateHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
+                <td>
+                    <input type="text" value="@task.Notes" class="e-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
+                </td>
+                <td>
+                    @if (task.AssignedSubUser != null)
+                    {
+                        <div style="display: flex; align-items: center;">
+                            <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
+                            <span class="sf-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
+                        </div>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+
+    private Renewal renewal;
+    private List<TaskItemViewModel> Tasks;
+    private Dictionary<int, Timer> _debounceTimers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        renewal = await RenewalService.GetRenewalByIdAsync(RenewalId);
+        Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
+    }
+
+    private void OnNotesInputChanged(int taskItemId, string newNotes)
+    {
+        if (_debounceTimers.ContainsKey(taskItemId))
+        {
+            _debounceTimers[taskItemId].Stop();
+            _debounceTimers[taskItemId].Dispose();
+        }
+
+        var timer = new Timer(500);
+        timer.Elapsed += async (sender, e) => await SaveNotesAsync(taskItemId, newNotes);
+        timer.AutoReset = false;
+        timer.Start();
+
+        _debounceTimers[taskItemId] = timer;
+    }
+
+    private async Task SaveNotesAsync(int taskItemId, string newNotes)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.Notes = newNotes;
+            await RenewalService.UpdateTaskNotesAsync(taskItemId, newNotes);
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void EditRow(int taskid)
+    {
+        Console.WriteLine("editing row " + taskid);
+        Navigation.NavigateTo($"/Renewals/EditTrackTask/{taskid}");
+    }
+
+    private async void HighlightRow(int taskid)
+    {
+        Console.WriteLine("Highlighting row " + taskid);
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskid);
+        if (task != null)
+        {
+            task.IsHighlighted = !task.IsHighlighted;
+            await RenewalService.UpdateTaskHighlight(taskid, task.IsHighlighted);
+            StateHasChanged();
+        }
+    }
+
+    private async void OnCompletedChanged(int taskItemId, object isChecked)
+    {
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.IsCompleted = (bool)isChecked;
+            await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
+            StateHasChanged();
+        }
+    }
+
+
+    private string GetRowClass(TaskItemViewModel task)
+    {
+        var classes = new List<string>();
+        if (task.IsHighlighted)
+        {
+            classes.Add("highlighted-row");
+        }
+        if (task.IsCompleted)
+        {
+            classes.Add("completed-row");
+        }
+        return string.Join(" ", classes);
+    }
+}
+

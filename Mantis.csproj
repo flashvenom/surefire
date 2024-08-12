@@ -27,7 +27,6 @@
     <None Remove="Components\Pages\Renewals\Home - Copy.razor.css" />
     <None Remove="Components\Pages\Renewals\Home.razor.css" />
     <None Remove="Components\Pages\Renewals\View.razor.css" />
-    <None Remove="Components\Pages\Renewals\ViewSf.razor.css" />
     <None Remove="Components\Pages\Renewals\ViewTable.razor.css" />
   </ItemGroup>
 
@@ -37,7 +36,6 @@
     <Content Include="Components\Pages\Home.razor.css" />
     <Content Include="Components\Pages\Renewals\Create.razor.css" />
     <Content Include="Components\Pages\Renewals\Home.razor.css" />
-    <Content Include="Components\Pages\Renewals\ViewSf.razor.css" />
     <Content Include="Components\Pages\Renewals\View.razor.css" />
   </ItemGroup>
 

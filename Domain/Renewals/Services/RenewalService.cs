@@ -28,56 +28,52 @@ namespace Mantis.Domain.Renewals.Services
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
-
-
-
-        public async Task<RenewalEditViewModel> GetRenewalEditViewModelByIdAsync(int renewalId)
+        public async Task<Submission> CreateNewSubmissionAsync(int renewalId, int? carrierId = null, int? wholesalerId = null)
         {
-            var renewal = await _context.Renewals
-                .Where(r => r.RenewalId == renewalId)
-                .Select(r => new RenewalEditViewModel
-                {
-                    RenewalId = r.RenewalId,
-                    PolicyNumber = r.ExpiringPolicyNumber,
-                    ExpiringPremium = r.ExpiringPremium,
-                    RenewalDate = r.RenewalDate,
-                    AssignedToId = r.AssignedToId,
-                    ProductId = r.Product.ProductId,
-                    CarrierId = r.Carrier.CarrierId,
-                    WholesalerId = r.Wholesaler.CarrierId
-                })
-                .FirstOrDefaultAsync();
+            Submission submission = new Submission();
 
-            return renewal;
-        }
-
-        public async Task<List<Renewal>> GetFilteredRenewalListAsync(int? myMonth, int? myYear, string? myUserId)
-        {
-            // Default to the current month and year if they are null
-            int month = myMonth ?? DateTime.Now.Month;
-            int year = myYear ?? DateTime.Now.Year;
-
-            var renewals = await _context.Renewals
-                .Where(r => r.RenewalDate.Month == 9 && r.RenewalDate.Year == 2024)
-                .Include(r => r.Product)
-                .Include(r => r.Client)
-                .Include(r => r.Carrier)
-                .Include(r => r.Wholesaler)
-                .Include(r => r.Policy)
-                .Include(r => r.AssignedTo)
-                .ToListAsync();
-
-            if(myUserId != null)
+            if (carrierId.HasValue)
             {
-                if(myUserId != "Everyone")
-                {
-                    renewals = renewals.Where(r => r.AssignedToId == myUserId).ToList();
-                }
+                var carrier = await _context.Carriers.FirstOrDefaultAsync(c => c.CarrierId == carrierId.Value);
+                submission.Carrier = carrier;
             }
 
-            // Execute the query and return the filtered list
-            return renewals;
+            if (wholesalerId.HasValue)
+            {
+                var wholesaler = await _context.Carriers.FirstOrDefaultAsync(c => c.CarrierId == wholesalerId.Value);
+                submission.Wholesaler = wholesaler;
+            }
+
+            
+
+            var renewal = await _context.Renewals.FirstOrDefaultAsync(c => c.RenewalId == renewalId);
+            submission.Renewal = renewal;
+            submission.SubmissionStatus = "Started";
+            submission.Product = renewal.Product;
+            submission.SubmissionDate = DateTime.Now;
+            _context.Submissions.Add(submission);
+            await _context.SaveChangesAsync();
+
+            return submission;
         }
+
+        public async Task UpdateSubmissionStatusAsync(int submissionStatusId, int submissionId)
+        {
+            var submission = await _context.Submissions.FindAsync(submissionId);
+            if (submission != null)
+            {
+                submission.StatusInt = submissionStatusId;
+                _context.Submissions.Update(submission);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task UpdateNotesAndPremiumAsync(Submission submission)
+        {
+            _context.Submissions.Update(submission);
+            await _context.SaveChangesAsync();
+        }
+
 
         public List<Renewal> GetFilteredRenewalList(int? myMonth, int? myYear, string? myUserId)
         {
@@ -106,49 +102,7 @@ namespace Mantis.Domain.Renewals.Services
             // Execute the query and return the filtered list
             return renewals;
         }
-
-        public async Task<List<Renewal>> GetFilteredRenewalList222(int myMonth, int myYear, string? myUserId)
-        {
-            ApplicationUser user = await _userManager.FindByIdAsync(myUserId);
-
-            var renewal = await _context.Renewals.ToListAsync();
-                
-            return renewal;
-        }
-
-        // Update the Renewal record
-        public async Task UpdateRenewalAsync(RenewalEditViewModel model)
-        {
-            var renewal = await _context.Renewals.FindAsync(model.RenewalId);
-
-            if (renewal != null)
-            {
-                //renewal.Policy.PolicyNumber = model.PolicyNumber;
-                //renewal.ExpiringPremium = model.ExpiringPremium;
-                //renewal.RenewalDate = model.RenewalDate;
-                //renewal.AssignedToId = model.AssignedToId;
-                renewal.Product.ProductId = model.ProductId;
-                //renewal.Carrier.CarrierId = model.CarrierId;
-                //renewal.Wholesaler.CarrierId = model.WholesalerId;
-                //renewal.Client.ClientId = model.ClientId;
-
-                _context.Renewals.Update(renewal);
-                await _context.SaveChangesAsync();
-            }
-        }
-        public async Task<List<Renewal>> GetAllRenewalsAsync()
-        {
-            var renewals = await _context.Renewals
-                .Include(p => p.Client)
-                .Include(p => p.AssignedTo)
-                .Include(p => p.Policy)
-                .Include(p => p.Carrier)
-                .Include(p => p.Wholesaler)
-                .Include(p => p.Product)
-                .ToListAsync();
-            return renewals;
-        }
-
+        
         public async Task NewRenewalAsync(Renewal renewal)
         {
             _context.Renewals.Add(renewal);
@@ -401,7 +355,6 @@ namespace Mantis.Domain.Renewals.Services
         {
             return await _context.Carriers.ToListAsync();
         }
-
         public async Task<List<Product>> GetProductsAsync()
         {
             var products = await _context.Products.ToListAsync();
@@ -414,6 +367,41 @@ namespace Mantis.Domain.Renewals.Services
         }
         //END------------------------
 
+        //Not used?
+        public async Task<RenewalEditViewModel> GetRenewalEditViewModelByIdAsync(int renewalId)
+        {
+            var renewal = await _context.Renewals
+                .Where(r => r.RenewalId == renewalId)
+                .Select(r => new RenewalEditViewModel
+                {
+                    RenewalId = r.RenewalId,
+                    PolicyNumber = r.ExpiringPolicyNumber,
+                    ExpiringPremium = r.ExpiringPremium,
+                    RenewalDate = r.RenewalDate,
+                    AssignedToId = r.AssignedToId,
+                    ProductId = r.Product.ProductId,
+                    CarrierId = r.Carrier.CarrierId,
+                    WholesalerId = r.Wholesaler.CarrierId
+                })
+                .FirstOrDefaultAsync();
+
+            return renewal;
+        }
+        public async Task<List<Submission>> GetSubmissionsByRenewalId(int renewalId)
+        {
+            var submissions = await _context.Submissions
+                .Where(s => s.Renewal.RenewalId == renewalId)
+                .Include(s => s.Carrier)
+                    .ThenInclude(c => c.Contacts)
+                .Include(s => s.Wholesaler)
+                    .ThenInclude(w => w.Contacts)
+                .Include(s => s.Renewal)
+                .Include(s => s.Product)
+                .ToListAsync();
+
+            return submissions;
+        }
+        
     }
 
 }

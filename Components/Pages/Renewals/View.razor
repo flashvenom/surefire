@@ -1,13 +1,18 @@
 ﻿@page "/Renewals/{RenewalId:int}"
-@using Mantis.Domain.Renewals.Models
-@using Mantis.Domain.Renewals.ViewModels
-@using Mantis.Domain.Renewals.Services
+
 @using Microsoft.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SplitButtons
 @using Mantis.Domain.Shared.Helpers;
+@using Mantis.Domain.Carriers.Services;
+@using Mantis.Domain.Carriers.Models;
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+
 @using System.Timers
 @inject RenewalService RenewalService
+@inject CarrierService CarrierService
 
 @rendermode InteractiveServer
 
@@ -47,6 +52,7 @@
         </div>
        }
 <div class="page-content">
+    
     @if (renewal != null)
     {
 
@@ -54,56 +60,58 @@
             <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab">
             
             <table class="table">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th style="width:280px">Task</th>
-                    <th>Status</th>
-                    <th style="width:400px">Notes</th>
-                    <th>Sub</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var task in Tasks)
-                {
-                    <tr class="@GetRowClass(task)">
-                        <td class="sf-leftcell">
-                            <a id="myId-@(task.TaskItemId)" class="sf-threedot"><FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Fill" /></a>
-                            <FluentMenu Anchor="@("myId-" + task.TaskItemId)" Trigger="MouseButton.Left" Anchored="true" VerticalInset="true">
-                                <FluentMenuItem OnClick="@((e) => HighlightRow(task.TaskItemId))">
-                                    <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" Color="Color.FillInverse" Slot="start" /></span>
-                                    Highlight
-                                </FluentMenuItem>
-                                <FluentMenuItem OnClick="@((e) => EditRow(task.TaskItemId))">
-                                    <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" Color="Color.FillInverse" Slot="start" /></span>
-                                    Edit
-                                </FluentMenuItem>
-
-                            </FluentMenu>
-                            <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
-                        </td>
-                        <td style="padding:0px 5px;">@task.TaskItemName</td>
-                        <td class="ds">@((MarkupString)DateHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
-                        <td>
-                            <input type="text" value="@task.Notes" class="e-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
-                        </td>
-                        <td>
-                            @if (task.AssignedSubUser != null)
-                            {
-                                <div style="display: flex; align-items: center;">
-                                    <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
-                                    <span class="sf-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
-                                </div>
-                            }
-                        </td>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th style="width:280px">Task</th>
+                        <th>Status</th>
+                        <th style="width:400px">Notes</th>
+                        <th>Sub</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var task in Tasks)
+                    {
+                        <tr class="@GetRowClass(task)">
+                            <td class="sf-leftcell">
+                                <a id="myId-@(task.TaskItemId)" class="sf-threedot"><FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Fill" /></a>
+                                <FluentMenu Anchor="@("myId-" + task.TaskItemId)" Trigger="MouseButton.Left" Anchored="true" VerticalInset="true">
+                                    <FluentMenuItem OnClick="@((e) => HighlightRow(task.TaskItemId))">
+                                        <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" Color="Color.FillInverse" Slot="start" /></span>
+                                        Highlight
+                                    </FluentMenuItem>
+                                    <FluentMenuItem OnClick="@((e) => EditRow(task.TaskItemId))">
+                                        <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" Color="Color.FillInverse" Slot="start" /></span>
+                                        Edit
+                                    </FluentMenuItem>
+
+                                </FluentMenu>
+                                <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+                            </td>
+                            <td style="padding:0px 5px;">@task.TaskItemName</td>
+                            <td class="ds">@((MarkupString)DateHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
+                            <td>
+                                <input type="text" value="@task.Notes" class="e-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
+                            </td>
+                            <td>
+                                @if (task.AssignedSubUser != null)
+                                {
+                                    <div style="display: flex; align-items: center;">
+                                        <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
+                                        <span class="sf-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
 
             </FluentTab>
-            <FluentTab Id="tab-2" Label="Submissions" Class="sf-tab">
-                Submissions
+            <FluentTab Id="tab-2" Label="Submissions" Class="sf-tab-2">
+                
+                <Submissions RenewalId="@RenewalId" AllCarriers="@AllCarriers" AllWholesalers="@AllWholesalers" />
+
             </FluentTab>
             <FluentTab Id="tab-3" Label="Notes" Class="sf-tab">
                 Notes Here
@@ -128,9 +136,9 @@
         box-shadow:0px 0px 5px #ccc;
     }
     :root .e-input {
-        padding: 5px; /* Adjust the padding as needed */
+        padding: 5px;
         height:20px !important;
-        font-size: 12px !important; /* Adjust the font size as needed */
+        font-size: 12px !important;
     }
 
     :root th {
@@ -154,7 +162,6 @@
             top:1px;
             left:2px;
         }
-
     .completed-row > td:not(:first-child) {
         opacity: .5 !important;
     }
@@ -169,14 +176,25 @@
     [Parameter]
     public int RenewalId { get; set; }
 
+    //Page
     private Renewal renewal;
+
+    //Task
     private List<TaskItemViewModel> Tasks;
     private Dictionary<int, Timer> _debounceTimers = new();
+
+    //Submissions
+    public List<Carrier> AllCarriers;
+    private List<Carrier> AllWholesalers;
+    private int SelectedCarrierId;
+    private int SelectedWholsalerId;
 
     protected override async Task OnInitializedAsync()
     {
         renewal = await RenewalService.GetRenewalByIdAsync(RenewalId);
         Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
+        AllCarriers = await CarrierService.GetAllCarriersAsync();
+        AllWholesalers = await CarrierService.GetAllWholesalersAsync();
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
@@ -185,6 +203,7 @@
         });
         InvokeAsync(StateHasChanged);
     }
+
 
     private void OnNotesInputChanged(int taskItemId, string newNotes)
     {
@@ -242,7 +261,6 @@
             StateHasChanged();
         }
     }
-
 
     private string GetRowClass(TaskItemViewModel task)
     {

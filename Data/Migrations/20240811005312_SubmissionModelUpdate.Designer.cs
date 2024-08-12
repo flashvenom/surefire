@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240811005312_SubmissionModelUpdate")]
+    partial class SubmissionModelUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,9 +141,6 @@ namespace Mantis.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("NewSubmissionEmail")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
@@ -151,12 +151,6 @@ namespace Mantis.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("QuotingWebsite")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ServicingEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ServicingWebsite")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("State")
@@ -297,9 +291,6 @@ namespace Mantis.Migrations
                     b.Property<int?>("AddressId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("Billing")
-                        .HasColumnType("bit");
-
                     b.Property<int?>("CarrierId")
                         .HasColumnType("int");
 
@@ -314,9 +305,6 @@ namespace Mantis.Migrations
 
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsInactive")
-                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(max)");
@@ -333,17 +321,8 @@ namespace Mantis.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("Representative")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Service")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Underwriter")
-                        .HasColumnType("bit");
 
                     b.HasKey("ContactId");
 
@@ -548,12 +527,6 @@ namespace Mantis.Migrations
                     b.Property<int?>("CarrierId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Premium")
-                        .HasColumnType("int");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
@@ -562,9 +535,6 @@ namespace Mantis.Migrations
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("StatusInt")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("SubmissionDate")
                         .HasColumnType("datetime2");

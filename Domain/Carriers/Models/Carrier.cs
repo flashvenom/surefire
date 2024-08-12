@@ -18,6 +18,9 @@ namespace Mantis.Domain.Carriers.Models
         public string? Phone { get; set; }
         public string? Website { get; set; }
         public string? QuotingWebsite { get; set; }
+        public string? ServicingWebsite { get; set; }
+        public string? NewSubmissionEmail { get; set; }
+        public string? ServicingEmail { get; set; }
         public bool IssuingCarrier { get; set; }
         public bool Wholesaler { get; set; } = false;
         public string? AppetiteJson { get; set; }

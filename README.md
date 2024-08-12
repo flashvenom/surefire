@@ -41,6 +41,7 @@ Mantis is a comprehensive insurance management system designed to streamline the
 - **Submission tab in renewal center**
 - **Duplicate renewal center for 'Leads Processing'**
 - **SMART BREAD CRUMS: When you open a policy, certificate, etc - it adds it to the BreadCrum trail, and it stays there until you click the X or leave the client entirely - so you can switch between policies / other screens**
+- **(IVANS Api?) Add more carrier data to cross check against clients/policies - Not just what lines they quote, but what lines they are good at, what SIC codes and industries they specialize in, 5 star rating AMBest rating, etc**
 
  
 ## Installation

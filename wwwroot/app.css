@@ -95,8 +95,29 @@ main {
     top:-1px;
     left:-2px;
 }
-.e-plus-icon::before {
+:root .e-plus-icon::before {
     content: '\e805';
+}
+:root .e-pencil-icon::before {
+    content: '\e740';
+}
+:root .e-pencil-icon::before {
+    content: '\e740';
+}
+:root .e-changes-icon::before {
+    content: '\e7a8';
+}
+:root .e-send-icon::before {
+    content: '\e71d';
+}
+:root .e-trash-icon::before {
+    content: '\e820';
+}
+:root .e-check-icon::before {
+    content: '\e727';
+}
+:root .e-signature-icon::before {
+    content: '\e897';
 }
 /*--------------------------Other Styles----------------------------*/
 :root .sf-quicklist .e-listview {

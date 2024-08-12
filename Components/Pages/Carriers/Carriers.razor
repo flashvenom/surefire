@@ -29,7 +29,10 @@
             <GridColumn Field=@nameof(Carrier.CarrierNickname) HeaderText="Nickname"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Phone) HeaderText="Phone"></GridColumn>
             <GridColumn Field=@nameof(Carrier.Website) HeaderText="Website"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.QuotingWebsite) HeaderText="Quoting"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.QuotingWebsite) HeaderText="Quoting URL"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.NewSubmissionEmail) HeaderText="Submit Email"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.ServicingWebsite) HeaderText="Service URL"></GridColumn>
+            <GridColumn Field=@nameof(Carrier.ServicingEmail) HeaderText="Service Email"></GridColumn>
             <GridColumn HeaderText="Full Address" AllowEditing="false">
                 <Template>
                     @{

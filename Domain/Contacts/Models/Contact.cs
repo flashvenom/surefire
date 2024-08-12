@@ -16,7 +16,11 @@ namespace Mantis.Domain.Contacts.Models
         public string? Fax { get; set; }
         public string? Mobile { get; set; }
         public string? Notes { get; set; }
-
+        public bool Underwriter { get; set; }
+        public bool Service { get; set; }
+        public bool Billing { get; set; }
+        public bool Representative { get; set; }
+        public bool IsInactive { get; set; }
         public Address? Address { get; set; }
     }
 }

@@ -21,6 +21,16 @@
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #ccc;
+    border-left: 10px solid #0f6cbd;
+}
+
+.submissioncontainer-declined {
+    background-color: #ffc6c6;
+    opacity:.8;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #750000;
+    border-left: 10px solid #750000;
 }
 
 .sf-newsubmissionbox {

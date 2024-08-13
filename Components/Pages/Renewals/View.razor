@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SplitButtons
+@using Syncfusion.Blazor.RichTextEditor
 @using Mantis.Domain.Shared.Helpers;
 @using Mantis.Domain.Carriers.Services;
 @using Mantis.Domain.Carriers.Models;
@@ -56,7 +57,7 @@
     @if (renewal != null)
     {
 
-        <FluentTabs ActiveTabId="tab-1" Size="TabSize.Large">
+        <FluentTabs Size="TabSize.Large">
             <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab">
             
             <table class="table">
@@ -79,6 +80,10 @@
                                     <FluentMenuItem OnClick="@((e) => HighlightRow(task.TaskItemId))">
                                         <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" Color="Color.FillInverse" Slot="start" /></span>
                                         Highlight
+                                    </FluentMenuItem>
+                                    <FluentMenuItem OnClick="@((e) => AssignToMe(task.TaskItemId))">
+                                        <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PersonArrowLeft())" Color="Color.FillInverse" Slot="start" /></span>
+                                        Assign To Me
                                     </FluentMenuItem>
                                     <FluentMenuItem OnClick="@((e) => EditRow(task.TaskItemId))">
                                         <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" Color="Color.FillInverse" Slot="start" /></span>
@@ -110,11 +115,12 @@
             </FluentTab>
             <FluentTab Id="tab-2" Label="Submissions" Class="sf-tab-2">
                 
-                <Submissions RenewalId="@RenewalId" AllCarriers="@AllCarriers" AllWholesalers="@AllWholesalers" />
+                <Submissions Renewal="@renewal" RenewalId="@RenewalId" AllCarriers="@AllCarriers" AllWholesalers="@AllWholesalers" />
 
             </FluentTab>
             <FluentTab Id="tab-3" Label="Notes" Class="sf-tab">
-                Notes Here
+                <SfRichTextEditor @bind-Value="@renewal.Notes" Height="500" />
+                <SfButton Content="Save Notes" CssClass="e-primary" OnClick="@(args => SaveRenewal(args, renewal))"></SfButton>
             </FluentTab>
         </FluentTabs>
     }
@@ -233,6 +239,11 @@
         }
     }
 
+    private async Task SaveRenewal(MouseEventArgs arg, Renewal renewal)
+    {
+        await RenewalService.UpdateRenewal(renewal);
+    }
+
     private async void EditRow(int taskid)
     {
         Console.WriteLine("editing row " + taskid);
@@ -249,6 +260,18 @@
             await RenewalService.UpdateTaskHighlight(taskid, task.IsHighlighted);
             StateHasChanged();
         }
+    }
+
+    private async void AssignToMe(int taskid)
+    {
+        Console.WriteLine("Assigning to me " + taskid);
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskid);
+        if (task != null)
+        {
+            task.AssignedSubUser = await RenewalService.AssignToMe(taskid);
+            StateHasChanged();
+        }
+
     }
 
     private async void OnCompletedChanged(int taskItemId, object isChecked)

@@ -205,7 +205,7 @@
 </style>
 
 @code {
-    [Parameter]
+    [Parameter, SupplyParameterFromQuery]
     public int? ClientId { get; set; }
 
     private string searchTerm = string.Empty;
@@ -235,7 +235,7 @@
             currentPolicies.Clear();
             pastPolicies.Clear();
             clientPolicies.Clear();
-            isLoadingWhat += ".";
+            isLoadingWhat += "!";
             var clientId = ClientId;
             selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
             SortAndSeparatePolicies();
@@ -263,39 +263,39 @@
 
     }
 
-    public async void OnAfterRenderAsync()
-    {
-        string s4hjs = "ecvw";
-    }
-    public void OnParametersSet()
-    {
-        string s2hjs = "ecvw";
-        if (ClientId.HasValue)
-        {
-            currentPolicies.Clear();
-            pastPolicies.Clear();
-            clientPolicies.Clear();
-            InvokeAsync(StateHasChanged);
-            isLoadingWhat += ".";
-            var clientId = ClientId;
-            SortAndSeparatePolicies();
-        }
-    }
-    protected async void OnParametersSetAsync()
-    {
-        string shjs = "ecvw";
-        if (ClientId.HasValue)
-        {
-            currentPolicies.Clear();
-            pastPolicies.Clear();
-            clientPolicies.Clear();
-            InvokeAsync(StateHasChanged);
-            isLoadingWhat += ".";
-            var clientId = ClientId;
-            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
-            SortAndSeparatePolicies();
-        }
-    }
+    // public async void OnAfterRenderAsync()
+    // {
+    //     string s4hjs = "ecvw";
+    // }
+    // public void OnParametersSet()
+    // {
+    //     string s2hjs = "ecvw";
+    //     if (ClientId.HasValue)
+    //     {
+    //         currentPolicies.Clear();
+    //         pastPolicies.Clear();
+    //         clientPolicies.Clear();
+    //         InvokeAsync(StateHasChanged);
+    //         isLoadingWhat += ".";
+    //         var clientId = ClientId;
+    //         SortAndSeparatePolicies();
+    //     }
+    // }
+    // protected async void OnParametersSetAsync()
+    // {
+    //     string shjs = "ecvw";
+    //     if (ClientId.HasValue)
+    //     {
+    //         currentPolicies.Clear();
+    //         pastPolicies.Clear();
+    //         clientPolicies.Clear();
+    //         InvokeAsync(StateHasChanged);
+    //         isLoadingWhat += ".";
+    //         var clientId = ClientId;
+    //         selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+    //         SortAndSeparatePolicies();
+    //     }
+    // }
 
     private async void AddDateIcon()
     {
@@ -345,7 +345,7 @@
                 isLoadingCrmId = true;
                 isLoadingWhat += ".:";
                 InvokeAsync(StateHasChanged);
-                await LoadCrmClientIdAndPolicies(selectedClient.LookupCode);
+                await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
             }
             // Separate and sort policies
             SortAndSeparatePolicies();
@@ -357,11 +357,12 @@
         }
         finally
         {
-            isLoadingWhat += ".";
+            ClientId = selectedClient.ClientId; //Does nothing
+            isLoadingWhat += "Donzo";
             InvokeAsync(StateHasChanged);
         }
     }
-    private async Task LoadCrmClientIdAndPolicies(string lookupCode)
+    private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
     {
         
         crmClientId = string.Empty;
@@ -372,7 +373,7 @@
             var accessToken = await CrmApiService.GetAccessTokenAsync();
             var jsonResponse = await CrmApiService.GetClientDetailsAsync(lookupCode, accessToken);
             var clientData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
-            isLoadingWhat += ".";
+            isLoadingWhat += "$";
             InvokeAsync(StateHasChanged);
             if (clientData != null && clientData.ContainsKey("_embedded"))
             {
@@ -384,7 +385,7 @@
                     {
                         crmClientId = clientsList[0]["id"].ToString();
                         await LoadClientPolicies(crmClientId, accessToken);
-                        isLoadingWhat += ".";
+                        isLoadingWhat += "%";
                         InvokeAsync(StateHasChanged);
                     }
                 }
@@ -402,7 +403,7 @@
             isLoadingCrmId = false;
             SortAndSeparatePolicies();
             isLoadingWhat = "Done!";
-            InvokeAsync(StateHasChanged);
+            NavigationManager.NavigateTo("Clients/List/" + clientid);
         }
     }
     
@@ -411,7 +412,7 @@
         try
         {
             var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
-            isLoadingWhat += ".";
+            isLoadingWhat += "^";
             InvokeAsync(StateHasChanged);
             var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
 
@@ -443,7 +444,7 @@
         finally
         {
             InvokeAsync(StateHasChanged);
-            isLoadingWhat += ".";
+            isLoadingWhat += "*";
         }
     }
     private void SortAndSeparatePolicies()
@@ -459,6 +460,8 @@
             .Where(p => p.ExpirationDate < today)
             .OrderByDescending(p => p.EffectiveDate)
             .ToList();
+
+        isLoadingWhat = "X";
     }
     private void FilterClients()
     {

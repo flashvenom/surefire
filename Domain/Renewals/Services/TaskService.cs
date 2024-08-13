@@ -1,103 +1,156 @@
-//using Folient.Data;
-//using Folient.Domain.Renewals.Models;
-//using Folient.Domain.Renewals.ViewModels;
-//using Microsoft.EntityFrameworkCore;
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
+using Mantis.Data;
+using Mantis.Domain.Renewals.ViewModels;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-//namespace Folient.Domain.Renewals.Services
-//{
-//    public class TaskService
-//    {
-//        private readonly ApplicationDbContext _context;
+namespace Mantis.Domain.Renewals.Services
+{
+    public class TaskService
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-//        public TaskService(ApplicationDbContext context)
-//        {
-//            _context = context;
-//        }
+        public TaskService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor)
+        {
+            _context = context;
+            _userManager = userManager;
+            _httpContextAccessor = httpContextAccessor;
+        }
 
-//        public async Task<List<ImportantTaskViewModel>> GetHighlightedTasksAsync()
-//        {
-//            var marketingEntries = await _context.MarketingEntries
-//                .Include(me => me.Tasks)
-//                .ToListAsync();
+        public async Task<List<HomePageTasksViewModel>> GetHomePageTasksAsync()
+        {
+            var today = DateTime.Today;
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
 
-//            var highlightedTasks = marketingEntries
-//                .SelectMany(me => me.Tasks
-//                .Where(t => !t.Completed && t.Highlighted)
-//                    .Select(t => new ImportantTaskViewModel
-//                    {
-//                        InsuredName = me.InsuredName,
-//                        InsuredId = me.Id,
-//                        PolicyType = me.PolicyType,
-//                        TaskName = t.TaskName,
-//                        GoalDate = t.GoalDate,
-//                        Note = t.Notes,
-//                        ExpirationDate = me.ExpirationDate,
-//                        DaysLeft = string.Empty,
-//                        Type = "Reminder",
-//                        CsrAssigned = me.CsrAssigned
-//                    }))
-//                .ToList();
-//            return highlightedTasks;
-//        }
+            // Fetch all TrackTasks from the database
+            var tasks = await _context.TrackTasks
+                .Include(t => t.Renewal)
+                    .ThenInclude(r => r.Policy)
+                        .ThenInclude(s => s.Product)
+                .Include(t => t.Renewal)
+                    .ThenInclude(r => r.Client)
+                .Where(t => t.Completed == false)
+                .Where(t => t.GoalDate != null || t.Highlighted == true)
+                .Where(t => t.AssignedTo == currentUser || t.Renewal.AssignedTo == currentUser)
+                .ToListAsync();
 
-//        public async Task<List<ImportantTaskViewModel>> GetPastDueTasksAsync()
-//        {
-//            var marketingEntries = await _context.MarketingEntries
-//                .Include(me => me.Tasks)
-//                .ToListAsync();
+            // Create the ViewModel list
+            var result = tasks.Select(t => new HomePageTasksViewModel
+            {
+                RenewalId = t.Renewal.RenewalId,
+                TaskName = t.TaskName,
+                TaskNote = t.Notes,
+                Highlighted = t.Highlighted,
+                GoalDate = t.GoalDate,
+                ClientName = t.Renewal.Client.Name,
+                ClientId = t.Renewal.Client.ClientId,
+                PolicyProduct = t.Renewal.Policy?.Product.LineCode,
+                RenewalDate = t.Renewal.RenewalDate,
+                Priority = t.GoalDate.HasValue
+                    ? (t.GoalDate < today
+                        ? $"<span style='color:red'>{(today - t.GoalDate.Value).Days} Days Past Due</span>"
+                        : $"{(t.GoalDate.Value - today).Days} Days Left")
+                    : "ASAP"
+            }).ToList();
 
-//            var pastDueTasks = marketingEntries
-//                .SelectMany(me => me.Tasks
-//                    .Where(t => !t.Completed && t.GoalDate.HasValue && t.GoalDate.Value < DateTime.Now)
-//                    .Select(t => new ImportantTaskViewModel
-//                    {
-//                        InsuredName = me.InsuredName,
-//                        InsuredId = me.Id,
-//                        PolicyType = me.PolicyType,
-//                        TaskName = t.TaskName,
-//                        GoalDate = t.GoalDate,
-//                        Note = t.Notes,
-//                        ExpirationDate = me.ExpirationDate,
-//                        DaysLeft = $"{(DateTime.Now.Date - t.GoalDate.Value.Date).Days} Days Past Due",
-//                        Type = "Past Due",
-//                        CsrAssigned = me.CsrAssigned
-//                    }))
-//                .OrderBy(t => t.GoalDate)
-//                .ToList();
-//            return pastDueTasks;
-//        }
+            // Order by IsHighlighted, Past Due, and Next 20 upcoming tasks
+            return result
+                .OrderByDescending(t => t.Highlighted)
+                .ThenByDescending(t => t.GoalDate.HasValue && t.GoalDate < today)
+                .ThenBy(t => t.GoalDate)
+                .Take(15)
+                .ToList();
+        }
 
-//        public async Task<List<ImportantTaskViewModel>> GetUpcomingTasksAsync()
-//        {
-//            var marketingEntries = await _context.MarketingEntries
-//                .Include(me => me.Tasks)
-//                .ToListAsync();
+        public async Task<List<HomePageTasksViewModel>> GetIncompleteTasks()
+        {
+            var today = DateTime.Today;
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
 
-//            var upcomingTasks = marketingEntries
-//                .SelectMany(me => me.Tasks
-//                    .Where(t => !t.Completed && t.GoalDate.HasValue && t.GoalDate.Value >= DateTime.Now && t.GoalDate.Value <= DateTime.Now.AddDays(14))
-//                .OrderBy(t => t.GoalDate)
-//                    .Select(t => new ImportantTaskViewModel
-//                    {
-//                        InsuredName = me.InsuredName,
-//                        InsuredId = me.Id,
-//                        PolicyType = me.PolicyType,
-//                        TaskName = t.TaskName,
-//                        GoalDate = t.GoalDate,
-//                        Note = t.Notes,
-//                        ExpirationDate = me.ExpirationDate,
-//                        DaysLeft = $"{(t.GoalDate.Value.Date - DateTime.Now.Date).Days} Days Left",
-//                        Type = "Upcoming",
-//                        CsrAssigned = me.CsrAssigned
-//                    }))
-//                .OrderBy(t => t.GoalDate)
-//                .ToList();
+            // Fetch all TrackTasks from the database
+            var tasks = await _context.TrackTasks
+                .Include(t => t.Renewal)
+                    .ThenInclude(r => r.Policy)
+                        .ThenInclude(s => s.Product)
+                .Include(t => t.Renewal)
+                    .ThenInclude(r => r.Client)
+                .Where(t => t.Completed == false)
+                .Where(t => t.GoalDate != null || t.Highlighted == true)
+                .Where(t => t.AssignedTo == currentUser || t.Renewal.AssignedTo == currentUser)
+                .ToListAsync();
 
-//            return upcomingTasks;
-//        }
-//    }
-//}
+            // Create the ViewModel list
+            var result = tasks.Select(t => new HomePageTasksViewModel
+            {
+                RenewalId = t.Renewal.RenewalId,
+                TaskName = t.TaskName,
+                TaskNote = t.Notes,
+                Highlighted = t.Highlighted,
+                GoalDate = t.GoalDate,
+                ClientName = t.Renewal.Client.Name,
+                ClientId = t.Renewal.Client.ClientId,
+                PolicyProduct = t.Renewal.Policy?.Product.LineCode,
+                RenewalDate = t.Renewal.RenewalDate,
+                Priority = t.GoalDate.HasValue
+                    ? (t.GoalDate < today
+                        ? $"<span style='color:red'>{(today - t.GoalDate.Value).Days} Days Past Due</span>"
+                        : $"{(t.GoalDate.Value - today).Days} Days Left")
+                    : "ASAP"
+            }).ToList();
+
+            // Order by IsHighlighted, Past Due, and Next 20 upcoming tasks
+            return result
+                .OrderByDescending(t => t.Highlighted)
+                .ThenByDescending(t => t.GoalDate.HasValue && t.GoalDate < today)
+                .ThenBy(t => t.GoalDate)
+                .Take(15)
+                .ToList();
+        }
+
+        public async Task<List<HomePageTasksViewModel>> GetIncompleteTasksForCurrentUserAsync()
+        {
+            // Get the currently logged-in user
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
+            // Fetch all incomplete TrackTasks assigned to the current user or sub-assigned
+            var tasks = await _context.TrackTasks
+                .Include(t => t.Renewal)
+                    .ThenInclude(r => r.Policy)
+                        .ThenInclude(p => p.Product)
+                .Include(t => t.Renewal)
+                    .ThenInclude(r => r.Client)
+                .Where(t => t.Completed == false)
+                .Where(t => t.AssignedTo == currentUser || t.Renewal.AssignedTo == currentUser)
+                .OrderBy(t => t.GoalDate ?? t.Renewal.RenewalDate) // Order by GoalDate or RenewalDate if GoalDate is null
+                .Take(30)
+                .ToListAsync();
+
+            // Create the ViewModel list
+            var result = tasks.Select(t => new HomePageTasksViewModel
+            {
+                RenewalId = t.Renewal.RenewalId,
+                TaskName = t.TaskName,
+                TaskNote = t.Notes,
+                Highlighted = t.Highlighted,
+                GoalDate = t.GoalDate,
+                ClientName = t.Renewal.Client.Name,
+                ClientId = t.Renewal.Client.ClientId,
+                PolicyProduct = t.Renewal.Policy?.Product.LineCode,
+                RenewalDate = t.Renewal.RenewalDate,
+                Priority = t.GoalDate.HasValue
+                    ? (t.GoalDate < DateTime.Today
+                        ? $"<span style='color:red'>{(DateTime.Today - t.GoalDate.Value).Days} Days Past Due</span>"
+                        : $"{(t.GoalDate.Value - DateTime.Today).Days} Days Left")
+                    : "ASAP"
+            }).ToList();
+
+            return result;
+        }
+
+    }
+}

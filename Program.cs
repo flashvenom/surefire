@@ -35,7 +35,7 @@ builder.Services.AddAuthentication(options =>
 //builder.Services.AddAuthorization();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString), ServiceLifetime.Scoped);
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
@@ -54,8 +54,8 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RenewalService>();
 builder.Services.AddScoped<PolicyService>();
 builder.Services.AddScoped<SharedService>();
+builder.Services.AddScoped<TaskService>();
 builder.Services.AddSingleton<NavigationService>();
-
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddSingleton<BreadcrumbService>();
 builder.Services.AddHttpContextAccessor();

@@ -16,88 +16,97 @@
 
 @rendermode InteractiveServer
 
-@if(AllSubmissions != null) {
-    @foreach (var item in AllSubmissions)
+@if(renewal != null) {
+    @foreach (var item in renewal.Submissions)
     {
-        <div class="submissioncontainer">
-            <div class="contentflex">
-                @if (item.Wholesaler != null)
-                {
-                    <div class="carrier">
-                        <div class="carriertitle">@item.Wholesaler.CarrierName</div>
-                        <div class="contentflex">
-                            <div>
-                                @foreach (var contact in item.Wholesaler.Contacts)
-                                {
-                                    <div class="f-title">UNDERWRITER</div>
-                                    <div class="f-txt">@contact.FirstName @contact.LastName</div>
-                                    <div class="f-txt">@contact.Title</div>
-                                    <div class="f-txt">@contact.Email</div>
-                                    <div class="f-txt">@contact.Phone</div>
-                                }
-                            </div>
-                            <div>
-                                <div class="f-title">SUBMISSIONS</div>
-                                <span class="f-txt"><a href="@item.Wholesaler.QuotingWebsite"><FluentIcon Value="@(new Icons.Regular.Size28.Globe())" Color="Color.FillInverse" /></a></span>
-                                <span class="f-txt"><a href="mailto:@item.Wholesaler.NewSubmissionEmail"><FluentIcon Value="@(new Icons.Regular.Size28.Mail())" Color="Color.FillInverse" /></a></span>
+
+        <div class="@(item.StatusInt != 5 ? "submissioncontainer" : "submissioncontainer-declined")">
+
+            @if (item.StatusInt != 5) { 
+                <div class="contentflex">
+                    @if (item.Wholesaler != null)
+                    {
+                        <div class="carrier">
+                            <div class="carriertitle">@item.Wholesaler.CarrierName</div>
+                            <div class="contentflex">
+                                <div>
+                                    @foreach (var contact in item.Wholesaler.Contacts)
+                                    {
+                                        <div class="f-title">UNDERWRITER</div>
+                                        <div class="f-txt">@contact.FirstName @contact.LastName</div>
+                                        <div class="f-txt">@contact.Title</div>
+                                        <div class="f-txt">@contact.Email</div>
+                                        <div class="f-txt">@contact.Phone</div>
+                                    }
+                                </div>
+                                <div>
+                                    <div class="f-title">SUBMISSIONS</div>
+                                    <span class="f-txt"><a href="@item.Wholesaler.QuotingWebsite"><FluentIcon Value="@(new Icons.Regular.Size28.Globe())" Color="Color.FillInverse" /></a></span>
+                                    <span class="f-txt"><a href="mailto:@item.Wholesaler.NewSubmissionEmail"><FluentIcon Value="@(new Icons.Regular.Size28.Mail())" Color="Color.FillInverse" /></a></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                }
-                @if (item.Carrier != null)
-                {
-                    <div class="carrier">
-                        <span class="carriertitle">@item.Carrier.CarrierName</span><br />
-                        @foreach (var contact in item.Carrier.Contacts)
-                        {
-                            <div class="f-title">UNDERWRITER</div>
-                            <div class="f-txt">@contact.FirstName @contact.LastName</div>
-                            <div class="f-txt">@contact.Title</div>
-                            <div class="f-txt">@contact.Email</div>
-                            <div class="f-txt">@contact.Phone</div>
-                        }
-                        @if (item.Carrier.QuotingWebsite != null && item.Carrier.NewSubmissionEmail != null)
-                        {
-                            <div class="f-title">SUBMISSIONS</div>
-                            <span class="f-txt">@item.Carrier.QuotingWebsite</span>
-                            <span class="f-txt">@item.Carrier.NewSubmissionEmail</span>
-                        }
-                    </div>
-                }
-                <div class="maincontent" style="min-width:500px;">
-                    <table style="width:100%;">
-                        <tr>
-                            <td><span class="f-mtitle">Premium</span></td>
-                            <td><SfNumericTextBox ID="@("numbox-" + item.SubmissionId)" TValue="int?" @bind-Value=@item.Premium Format="c2" FloatLabelType="@FloatLabelType.Never"></SfNumericTextBox></td>
-                            <td colspan="2"><SfButton Content="Save" CssClass="e-primary" Style="width:100% !important; height:100% !important;" OnClick="@(async () => await SaveSubmissionAsync(item))"></SfButton> </td>
-                        </tr>
-                        <tr>
-                            <td><span class="f-mtitle">Notes</span></td>
-                            <td><FluentTextArea ID="@("notesbox-" + item.SubmissionId)" @bind-Value="@item.Notes" Style="width:100% !important; height:100% !important;" /></td>
-                        </tr>
-                    </table>
+                    }
+                    @if (item.Carrier != null)
+                    {
+                        <div class="carrier">
+                            <span class="carriertitle">@item.Carrier.CarrierName</span><br />
+                            @foreach (var contact in item.Carrier.Contacts)
+                            {
+                                <div class="f-title">UNDERWRITER</div>
+                                <div class="f-txt">@contact.FirstName @contact.LastName</div>
+                                <div class="f-txt">@contact.Title</div>
+                                <div class="f-txt">@contact.Email</div>
+                                <div class="f-txt">@contact.Phone</div>
+                            }
+                            @if (item.Carrier.QuotingWebsite != null && item.Carrier.NewSubmissionEmail != null)
+                            {
+                                <div class="f-title">SUBMISSIONS</div>
+                                <span class="f-txt">@item.Carrier.QuotingWebsite</span>
+                                <span class="f-txt">@item.Carrier.NewSubmissionEmail</span>
+                            }
+                        </div>
+                    }
+                    <div class="maincontent" style="min-width:500px;">
+                        <table style="width:100%;">
+                            <tr>
+                                <td><span class="f-mtitle">Premium</span></td>
+                                <td><SfNumericTextBox ID="@("numbox-" + item.SubmissionId)" TValue="int?" @bind-Value=@item.Premium Format="c2" FloatLabelType="@FloatLabelType.Never"></SfNumericTextBox></td>
+                                <td colspan="2"><SfButton Content="Save" CssClass="e-primary" Style="width:100% !important; height:100% !important;" OnClick="@(args => SaveSubmissionItem(args, item))"></SfButton> </td>
+                            </tr>
+                            <tr>
+                                <td><span class="f-mtitle">Notes</span></td>
+                                <td><SfTextBox ID="@("notesbox-" + item.SubmissionId)" @bind-Value="@item.Notes" Style="width:100% !important; height:100% !important;" /></td>
+                            </tr>
+                        </table>
                     
                     
+                    </div>
+                    <div class="mainpremium">
+                        <span class="f-tpremium">PREMIUM</span><br />
+                        <span class="f-mpremium">@item.Premium?.ToString("C")</span>
+                    </div>
+                
                 </div>
-                <div class="mainpremium">
-                    <span class="f-tpremium">PREMIUM</span><br />
-                    <span class="f-mpremium">@item.Premium?.ToString("C")</span>
+            }
+            else
+            {
+                <div style="padding-bottom:10px;">
+                <span class="carriertitle">@item.Wholesaler?.CarrierName | @item.Carrier?.CarrierName | @item.Premium?.ToString("C")</span><br />
                 </div>
                 
-            </div>
-
-
-                <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.End" ID="@("stepper-" + @item.SubmissionId)" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item.StatusInt, item.SubmissionId))">
-                    <StepperSteps>
-                        <StepperStep IconCss="e-icons e-plus-icon" Label="Started"></StepperStep>
-                        <StepperStep IconCss="e-icons e-pencil-icon" Label="Submitted"></StepperStep>
-                        <StepperStep IconCss="e-icons e-changes-icon" Label="Underwriting"></StepperStep>
-                        <StepperStep IconCss="e-icons e-send-icon" Label="Quoted"></StepperStep>
-                        <StepperStep IconCss="e-icons e-signature-icon" Label="Proposed"></StepperStep>
-                        <StepperStep IconCss="e-icons e-trash-icon" Label="Declined"></StepperStep>
-                        <StepperStep IconCss="e-icons e-check-icon" Label="Accepted"></StepperStep>
-                    </StepperSteps>
-                </SfStepper>
+            }
+            <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.End" ID="@("stepper-" + @item.SubmissionId)" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item))">
+                <StepperSteps>
+                    <StepperStep IconCss="e-icons e-plus-icon" Label="Started"></StepperStep>
+                    <StepperStep IconCss="e-icons e-pencil-icon" Label="Submitted"></StepperStep>
+                    <StepperStep IconCss="e-icons e-changes-icon" Label="Underwriting"></StepperStep>
+                    <StepperStep IconCss="e-icons e-send-icon" Label="Quoted"></StepperStep>
+                    <StepperStep IconCss="e-icons e-signature-icon" Label="Proposed"></StepperStep>
+                    <StepperStep IconCss="e-icons e-trash-icon" Label="Declined"></StepperStep>
+                    <StepperStep IconCss="e-icons e-check-icon" Label="Accepted"></StepperStep>
+                </StepperSteps>
+            </SfStepper>
            
         </div>
         <div style="height:45px;"></div>
@@ -182,12 +191,15 @@ else
     public int RenewalId { get; set; }
 
     [Parameter]
+    public Renewal renewal { get; set; }
+
+    [Parameter]
     public List<Carrier> AllCarriers { get; set; }
 
     [Parameter]
     public List<Carrier> AllWholesalers { get; set; }
 
-    public List<Submission> AllSubmissions { get; set; }
+    //public List<Submission> AllSubmissions { get; set; }
 
     private int SelectedCarrierId { get; set; }
     private int SelectedWholsalerId { get; set; }
@@ -195,22 +207,19 @@ else
     public async Task CreateSubmission()
     {
         await RenewalService.CreateNewSubmissionAsync(RenewalId, SelectedCarrierId, SelectedWholsalerId);
-        AllSubmissions = await RenewalService.GetSubmissionsByRenewalId(RenewalId);
         await InvokeAsync(StateHasChanged);
     }
     protected override async Task OnInitializedAsync()
     {
-        AllSubmissions = await RenewalService.GetSubmissionsByRenewalId(RenewalId);
         await InvokeAsync(StateHasChanged);
     }
-    private async Task OnStepperValueChanged(StepperChangedEventArgs args, int submissionStatusInt, int submissionId)
+    private async Task OnStepperValueChanged(StepperChangedEventArgs args, Submission submission)
     {
-        await RenewalService.UpdateSubmissionStatusAsync(args.ActiveStep, submissionId);
-        await InvokeAsync(StateHasChanged);
+        submission.StatusInt = args.ActiveStep;
+        //await RenewalService.UpdateSubmissionStatusAsync(args.ActiveStep, submission);
     }
-    private async Task SaveSubmissionAsync(Submission submissionitem)
+    private async Task SaveSubmissionItem(MouseEventArgs args, Submission submissionitem)
     {
         await RenewalService.UpdateNotesAndPremiumAsync(submissionitem);
-        await InvokeAsync(StateHasChanged);
     }
 }

@@ -25,6 +25,7 @@ namespace Mantis.Domain.Policies.Models
         public Carrier? Carrier { get; set; }
         public Carrier? Wholesaler { get; set; }
         public Product? Product { get; set; }
+        public int? ProductId { get; set; }
 
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
         public ICollection<Claim> Claims { get; set; } = new List<Claim>();

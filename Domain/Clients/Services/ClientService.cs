@@ -105,7 +105,64 @@ namespace Mantis.Domain.Clients.Services
                         }
                     }
 
-                    client.Policies.Add(policy);
+                    switch (policy.eTypeCode)
+                    {
+                        case "EQFL":
+                            policy.ProductId = 17;
+                            break;
+                        case "EPLX":
+                            policy.ProductId = 8;
+                            break;
+                        case "EART":
+                            policy.ProductId = 18;
+                            break;
+                        case "ACCD":
+                            policy.ProductId = 11;
+                            break;
+                        case "GDEN":
+                        case "DENT":
+                            policy.ProductId = 15;
+                            break;
+                        case "CUMB":
+                            policy.ProductId = 7;
+                            break;
+                        case "INLM":
+                            policy.ProductId = 16;
+                            break;
+                        case "EPLI":
+                            policy.ProductId = 8;
+                            break;
+                        case "BOP":
+                            policy.ProductId = 6;
+                            break;
+                        case "GLIA":
+                            policy.ProductId = 3;
+                            break;
+                        case "WCOM":
+                            policy.ProductId = 2;
+                            break;
+                        case "PROP":
+                            policy.ProductId = 14;
+                            break;
+                        case "BAUT":
+                            policy.ProductId = 4;
+                            break;
+                        case "PROF":
+                            policy.ProductId = 5;
+                            break;
+                        case "GHEA":
+                            policy.ProductId = 9;
+                            break;
+                        case "BOND":
+                            policy.ProductId = 12;
+                            break;
+                        case "CPKG":
+                            policy.ProductId = 13;
+                            break;
+                        default:
+                            policy.ProductId = 10;
+                            break;
+                    }
 
                     client.Policies.Add(policy);
                 }

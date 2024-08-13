@@ -20,6 +20,7 @@
     <Content Remove="Components\Pages\Carriers\Carriers - Copy.razor" />
     <Content Remove="Components\Pages\Clients\Test.razor" />
     <Content Remove="Components\Pages\Counter.razor" />
+    <Content Remove="Components\Pages\Renewals\ViewTasks.razor" />
     <Content Remove="Components\Pages\Weather.razor" />
   </ItemGroup>
 
@@ -47,6 +48,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.9.3" />
@@ -56,6 +58,7 @@
     <PackageReference Include="Syncfusion.Blazor.Calendars" Version="26.2.7" />
     <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="26.2.7" />
     <PackageReference Include="Syncfusion.Blazor.Grid" Version="26.2.7" />
+    <PackageReference Include="Syncfusion.Blazor.RichTextEditor" Version="26.2.7" />
     <PackageReference Include="Syncfusion.Blazor.Spinner" Version="26.2.7" />
     <PackageReference Include="Syncfusion.Blazor.SplitButtons" Version="26.2.7" />
     <PackageReference Include="Syncfusion.Blazor.Themes" Version="26.2.7" />
@@ -67,6 +70,10 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Domain\Shared\ViewModels\" />
   </ItemGroup>
 
 </Project>

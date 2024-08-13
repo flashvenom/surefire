@@ -12,6 +12,7 @@ using Mantis.Domain.Shared;
 using Microsoft.EntityFrameworkCore;
 using Mantis.Domain.Renewals.ViewModels;
 using Mantis.Domain.Policies.Models;
+using Microsoft.Build.Framework;
 
 
 namespace Mantis.Domain.Renewals.Services
@@ -28,6 +29,8 @@ namespace Mantis.Domain.Renewals.Services
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
+
+        //Methods for: Submissions.razor
         public async Task<Submission> CreateNewSubmissionAsync(int renewalId, int? carrierId = null, int? wholesalerId = null)
         {
             Submission submission = new Submission();
@@ -57,24 +60,113 @@ namespace Mantis.Domain.Renewals.Services
             return submission;
         }
 
-        public async Task UpdateSubmissionStatusAsync(int submissionStatusId, int submissionId)
+        public async Task UpdateSubmissionStatusAsync(int submissionStatusId, Submission submission)
         {
-            var submission = await _context.Submissions.FindAsync(submissionId);
-            if (submission != null)
-            {
-                submission.StatusInt = submissionStatusId;
-                _context.Submissions.Update(submission);
-                await _context.SaveChangesAsync();
-            }
+            submission.StatusInt = submissionStatusId;
+            await _context.SaveChangesAsync();   
         }
 
         public async Task UpdateNotesAndPremiumAsync(Submission submission)
         {
-            _context.Submissions.Update(submission);
             await _context.SaveChangesAsync();
         }
 
+        //Method for: View.razor
+        public async Task<Renewal> GetRenewalByIdAsync(int renewalId)
+        {
+            var renewalRecord = await _context.Renewals
+                    .Include(r => r.Carrier)
+                    .Include(r => r.Wholesaler)
+                    .Include(r => r.Client)
+                    .Include(r => r.Product)
+                    .Include(r => r.AssignedTo)
+                    .Include(r => r.Submissions)
+                        .ThenInclude(s => s.Carrier)
+                            .ThenInclude(c => c.Contacts)
+                    .Include(r => r.Submissions)
+                        .ThenInclude(s => s.Wholesaler)
+                            .ThenInclude(w => w.Contacts)
+                    .Include(r => r.TrackTasks)
+                    .FirstOrDefaultAsync(r => r.RenewalId == renewalId);
 
+            if (renewalRecord != null)
+            {
+                return renewalRecord;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<TaskItemViewModel>> GetTasksForRenewalAsync(int renewalId)
+        {
+            var tasks = await _context.TrackTasks
+                .Where(t => t.Renewal.RenewalId == renewalId)
+                .Select(t => new TaskItemViewModel
+                {
+                    TaskItemId = t.Id,
+                    TaskItemName = t.TaskName,
+                    IsCompleted = t.Completed,
+                    IsHighlighted = t.Highlighted,
+                    IsHidden = t.Hidden,
+                    Status = t.Status,
+                    TaskGoalDate = t.GoalDate,
+                    TaskCompletedDate = t.CompletedDate,
+                    AssignedSubUser = t.AssignedTo,
+                    Notes = t.Notes
+                }).ToListAsync();
+
+            return tasks;
+        }
+
+        public async Task UpdateTaskCompleted(int taskItemId, bool isCompleted)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            if (task != null)
+            {
+                task.Completed = isCompleted;
+                task.CompletedDate = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task UpdateRenewal(Renewal renewal)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateTaskHighlight(int taskItemId, bool isHighlighted)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            if (task != null)
+            {
+                task.Highlighted = isHighlighted;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<ApplicationUser> AssignToMe(int taskItemId)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            task.AssignedTo = currentUser;
+            await _context.SaveChangesAsync();
+            return currentUser;
+        }
+        
+        public async Task UpdateTaskNotesAsync(int taskItemId, string newNotes)
+        {
+            var task = await _context.TrackTasks.FirstOrDefaultAsync(t => t.Id == taskItemId);
+            if (task != null)
+            {
+                task.Notes = newNotes;
+                _context.TrackTasks.Update(task);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        //Methods for: Home.razor
         public List<Renewal> GetFilteredRenewalList(int? myMonth, int? myYear, string? myUserId)
         {
             // Default to the current month and year if they are null
@@ -102,7 +194,8 @@ namespace Mantis.Domain.Renewals.Services
             // Execute the query and return the filtered list
             return renewals;
         }
-        
+
+        //Methods for: Create.razor List.razor
         public async Task NewRenewalAsync(Renewal renewal)
         {
             _context.Renewals.Add(renewal);
@@ -155,16 +248,20 @@ namespace Mantis.Domain.Renewals.Services
                 if (policy.eType.Contains("professional", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 5);
-                }else if (policy.eType.Contains("general", StringComparison.OrdinalIgnoreCase))
+                }
+                else if (policy.eType.Contains("general", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 3);
-                }else if (policy.eType.Contains("work", StringComparison.OrdinalIgnoreCase))
+                }
+                else if (policy.eType.Contains("work", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 2);
-                }else if (policy.eType.Contains("auto", StringComparison.OrdinalIgnoreCase))
+                }
+                else if (policy.eType.Contains("auto", StringComparison.OrdinalIgnoreCase))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 4);
-                }else if (policy.eType.Contains("business", StringComparison.OrdinalIgnoreCase) || policy.eType.Contains("bop"))
+                }
+                else if (policy.eType.Contains("business", StringComparison.OrdinalIgnoreCase) || policy.eType.Contains("bop"))
                 {
                     renewal.Product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 6);
                 }
@@ -219,69 +316,7 @@ namespace Mantis.Domain.Renewals.Services
             return renewal;
         }
 
-        public async Task<Renewal> GetRenewalByIdAsync(int renewalId)
-        {
-            var renewalRecord = await _context.Renewals
-                    .Include(r => r.Carrier)
-                    .Include(r => r.Wholesaler)
-                    .Include(r => r.Client)
-                    .Include(r => r.Product)
-                    .Include(r => r.AssignedTo)
-                    .Include(r => r.TrackTasks)
-                    .FirstOrDefaultAsync(r => r.RenewalId == renewalId);
-
-            if (renewalRecord != null)
-            {
-                return renewalRecord;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public async Task<List<TaskItemViewModel>> GetTasksForRenewalAsync(int renewalId)
-        {
-            var tasks = await _context.TrackTasks
-                .Where(t => t.Renewal.RenewalId == renewalId)
-                .Select(t => new TaskItemViewModel
-                {
-                    TaskItemId = t.Id,
-                    TaskItemName = t.TaskName,
-                    IsCompleted = t.Completed,
-                    IsHighlighted = t.Highlighted,
-                    IsHidden = t.Hidden,
-                    Status = t.Status,
-                    TaskGoalDate = t.GoalDate,
-                    TaskCompletedDate = t.CompletedDate,
-                    AssignedSubUser = t.AssignedTo,
-                    Notes = t.Notes
-                }).ToListAsync();
-
-            return tasks;
-        }
-
-        public async Task UpdateTaskCompleted(int taskItemId, bool isCompleted)
-        {
-            var task = await _context.TrackTasks.FindAsync(taskItemId);
-            if (task != null)
-            {
-                task.Completed = isCompleted;
-                task.CompletedDate = DateTime.Now;
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task UpdateTaskHighlight(int taskItemId, bool isHighlighted)
-        {
-            var task = await _context.TrackTasks.FindAsync(taskItemId);
-            if (task != null)
-            {
-                task.Highlighted = isHighlighted;
-                await _context.SaveChangesAsync();
-            }
-        }
-
+        //Seperated Create and Editor pages
         public async Task<TrackTaskEditViewModel> GetTrackTaskByIdAsync(int taskId)
         {
             var task = await _context.TrackTasks
@@ -337,20 +372,7 @@ namespace Mantis.Domain.Renewals.Services
                 await _context.SaveChangesAsync();
             }
         }
-        public async Task UpdateTaskNotesAsync(int taskItemId, string newNotes)
-        {
-            var task = await _context.TrackTasks.FirstOrDefaultAsync(t => t.Id == taskItemId);
-            if (task != null)
-            {
-                task.Notes = newNotes;
-                _context.TrackTasks.Update(task);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-
-
-        //Fill the objects here now, but use the appropriate methods from the Domain classes ASAP
+        
         public async Task<List<Carrier>> GetCarriersAsync()
         {
             return await _context.Carriers.ToListAsync();

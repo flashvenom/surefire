@@ -4,11 +4,13 @@
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Users.Services
+@using Microsoft.AspNetCore.WebUtilities;
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.FluentUI.AspNetCore.Components
 
 @inject RenewalService RenewalService
 @inject UserService UserService
+@inject NavigationManager NavigationManager
 
 @rendermode InteractiveServer
 
@@ -102,9 +104,15 @@
 </div>
 
 @code {
-    int htmlMonth { get; set; } = DateTime.Now.Month;
-    int htmlYear { get; set; } = DateTime.Now.Year;
-    string htmlUser { get; set; }
+    [Parameter]
+    public int htmlMonth { get; set; } = DateTime.Now.Month;
+
+    [Parameter]
+    public int htmlYear { get; set; } = DateTime.Now.Year;
+
+    [Parameter] //, SupplyParameterFromQuery(Name = "user")
+    public string htmlUser { get; set; }
+
     private List<ApplicationUser> allUsers { get; set; }
 
     Renewal Renewals { get; set; }
@@ -112,27 +120,61 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // var uri = new Uri(NavigationManager.Uri);
+        // var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        // if (!query.ContainsKey("month") && !query.ContainsKey("year") && !query.ContainsKey("user"))
+        // {
+        //     //This is all CRAP - we need to handle both the browser back button and the initial load of the page and clicking back to the renewal list from the UI - I have no idea how to handle that
+        //     //Need this I guess because if you go to /Renewals it doesn't bind the default values to the dropdowns since we're using @onchange and not @bind (which we're doing because using @bind doesn't work with the FluentUI dropdowns for some reason)
+        //     NavigationManager.NavigateTo("/Renewals?month=" + DateTime.Now.Month + "&year=" + DateTime.Now.Year + "&user=Everyone");
+        // }
         htmlUser = UserService.GetLoggedInUserId();
         allUsers = await UserService.GetAllUsers();
         GetFilteredList();
     }
 
+
     private void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
-        htmlMonth = Convert.ToInt16(args.Value.ToString());
+        htmlMonth = Convert.ToInt16(args.Value);
+        //UpdateQueryString();
         GetFilteredList();
     }
     private void FormChangeYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
         htmlYear = Convert.ToInt16(args.Value.ToString());
+        //UpdateQueryString();
         GetFilteredList();
     }
     private void FormChangeUser(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
         htmlUser = args.Value.ToString();
+        //UpdateQueryString();
         GetFilteredList();
     }
+    private void UpdateQueryString()
+    {
+        
 
+        // var uri = new Uri(NavigationManager.Uri);
+        // var baseUri = uri.GetLeftPart(UriPartial.Path);
+
+        // var queryParams = new Dictionary<string, string>
+        // {
+        //     { "month", htmlMonth.ToString() },
+        //     { "year", htmlYear.ToString() },
+        //     { "user", htmlUser }
+        // };
+        // htmlMonth = Convert.ToInt16(QueryHelpers.ParseQuery(uri.Query)["month"]);
+        // htmlYear = Convert.ToInt16(QueryHelpers.ParseQuery(uri.Query)["year"]);
+        // htmlUser = QueryHelpers.ParseQuery(uri.Query)["user"];
+        // StateHasChanged();
+
+        // var newUri = QueryHelpers.AddQueryString(baseUri, queryParams);
+        // NavigationManager.NavigateTo(newUri, forceLoad: true);
+        
+    }
     private void GetFilteredList()
     {
         RenewalList = RenewalService.GetFilteredRenewalList(htmlMonth, htmlYear, htmlUser);

@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <None Remove="Components\Layout\NavMenu - Copy.razor.css" />
+    <None Remove="Components\Pages\Carriers\Create.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses.razor.css" />
     <None Remove="Components\Pages\Home.razor.css" />
@@ -37,6 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Components\Pages\Carriers\Create.razor.css" />
     <Content Include="Components\Pages\Home.razor.css" />
     <Content Include="Components\Pages\Renewals\Create.razor.css" />
     <Content Include="Components\Pages\Renewals\Home.razor.css" />

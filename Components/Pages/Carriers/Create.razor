@@ -1,0 +1,93 @@
+﻿@page "/Carriers/Edit/{CarrierId:int?}"
+
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Shared
+@using Mantis.Domain.Carriers.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject NavigationManager NavigationManager
+@inject CarrierService CarrierService
+
+<div class="page-content">
+    <EditForm OnValidSubmit="HandleValidSubmit" EditContext="@editContext" FormName="TheFormGo">
+        <DataAnnotationsValidator />
+        <h1>@(isEdit ? "Edit Carrier" : "Create New Carrier")</h1>
+        <div class="sfpage-newcarrier">
+            <div class="sf-col-1">
+
+                    <SfTextBox TValue="string" Placeholder="Carrier Name" @bind-Value="carrier.CarrierName" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                    <SfTextBox TValue="string" Placeholder="Lookup Code" @bind-Value="carrier.LookupCode" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                    <SfTextBox TValue="string" Placeholder="Nickname" @bind-Value="carrier.CarrierNickname" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                    <SfTextBox TValue="string" Placeholder="Street Address" @bind-Value="carrier.StreetAddress" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                    <SfTextBox TValue="string" Placeholder="City" @bind-Value="carrier.City" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                    <SfTextBox TValue="string" Placeholder="State" @bind-Value="carrier.State" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                    <SfTextBox TValue="string" Placeholder="Zip" @bind-Value="carrier.Zip" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                    <SfTextBox TValue="string" Placeholder="Phone" @bind-Value="carrier.Phone" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+
+            </div>
+            <div class="sf-col-2">
+                <SfTextBox TValue="string" Placeholder="Website" @bind-Value="carrier.Website" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                <SfTextBox TValue="string" Placeholder="Quoting Website" @bind-Value="carrier.QuotingWebsite" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                <SfTextBox TValue="string" Placeholder="Servicing Website" @bind-Value="carrier.ServicingWebsite" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                <SfTextBox TValue="string" Placeholder="New Submission Email" @bind-Value="carrier.NewSubmissionEmail" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                <SfTextBox TValue="string" Placeholder="Servicing Email" @bind-Value="carrier.ServicingEmail" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                <SfCheckBox Label="Issuing Carrier" @bind-Checked="carrier.IssuingCarrier"></SfCheckBox>
+                <SfCheckBox Label="Wholesaler" @bind-Checked="carrier.Wholesaler"></SfCheckBox>
+                <SfTextBox TValue="string" Placeholder="Appetite JSON" @bind-Value="carrier.AppetiteJson" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                <SfTextBox TValue="string" Placeholder="Quotelines JSON" @bind-Value="carrier.QuotelinesJson" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+                <SfTextBox TValue="string" Placeholder="Notes" @bind-Value="carrier.Notes" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+            </div>
+        </div>
+
+        <SfButton CssClass="e-primary" Click="@HandleValidSubmit">@buttonText</SfButton>
+    </EditForm>
+    cc<br />
+    <div style="height:50px;"></div>
+    vv<br /><br />
+</div>
+
+@code {
+    private Carrier carrier = new();
+    private EditContext editContext;
+    private bool isEdit = false;
+    private string buttonText = "Create Carrier";
+
+    [Parameter]
+    public int? CarrierId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CarrierId.HasValue)
+        {
+            isEdit = true;
+            buttonText = "Update Carrier";
+            carrier = await CarrierService.GetCarrierByIdAsync(CarrierId.Value);
+        }
+
+        editContext = new EditContext(carrier);
+
+        // Update breadcrumbs based on the action
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Carriers", Url = "/Carriers" },
+            new BreadcrumbItem { Text = isEdit ? "Edit" : "Create" }
+        });
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (isEdit)
+        {
+            await CarrierService.UpdateCarrierAsync(carrier);
+        }
+        else
+        {
+            await CarrierService.CreateCarrierAsync(carrier);
+        }
+
+        NavigationManager.NavigateTo("/Carriers");
+    }
+}

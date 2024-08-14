@@ -1,0 +1,40 @@
+﻿.sfpage-newcarrier {
+    display: flex;
+    flex-direction:row;
+    max-width:900px;
+}
+.sf-col {
+    flex: 1;
+    padding:0px;
+}
+.sf-col-1 {
+    flex: 1;
+    padding-right: 20px;
+}
+.sf-col-2 {
+    flex: 1;
+    padding-left: 20px;
+}
+.sf-formcontainer {
+    height:85px;
+    vertical-align:top;
+}
+:root h1 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 200;
+    font-size:2em;
+    font-style: normal;
+    color: #b2b2b2 !important;
+    padding:0px;
+    padding-bottom:10px !important;
+    margin: 0px;
+}
+.e-input-group {
+    margin-bottom:20px;
+    padding-bottom:20px;
+}
+:root .sf-validation {
+    font-size: 12px !important;
+    font-size: 12px !important;
+    color: #bd7b7b;
+}

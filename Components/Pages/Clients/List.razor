@@ -237,11 +237,11 @@
             clientPolicies.Clear();
             isLoadingWhat += "!";
             var clientId = ClientId;
-            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+            selectedClient = await Http.GetFromJsonAsync<Client>($"https://mantismetro.azurewebsites.net/api/Client/{clientId}");
             SortAndSeparatePolicies();
         }
 
-        clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
+        clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
         filteredClients = new List<Client>(clients);
 
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
@@ -262,40 +262,6 @@
         }
 
     }
-
-    // public async void OnAfterRenderAsync()
-    // {
-    //     string s4hjs = "ecvw";
-    // }
-    // public void OnParametersSet()
-    // {
-    //     string s2hjs = "ecvw";
-    //     if (ClientId.HasValue)
-    //     {
-    //         currentPolicies.Clear();
-    //         pastPolicies.Clear();
-    //         clientPolicies.Clear();
-    //         InvokeAsync(StateHasChanged);
-    //         isLoadingWhat += ".";
-    //         var clientId = ClientId;
-    //         SortAndSeparatePolicies();
-    //     }
-    // }
-    // protected async void OnParametersSetAsync()
-    // {
-    //     string shjs = "ecvw";
-    //     if (ClientId.HasValue)
-    //     {
-    //         currentPolicies.Clear();
-    //         pastPolicies.Clear();
-    //         clientPolicies.Clear();
-    //         InvokeAsync(StateHasChanged);
-    //         isLoadingWhat += ".";
-    //         var clientId = ClientId;
-    //         selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
-    //         SortAndSeparatePolicies();
-    //     }
-    // }
 
     private async void AddDateIcon()
     {
@@ -339,7 +305,7 @@
             InvokeAsync(StateHasChanged);
             isLoadingWhat += ".";
             var clientId = filteredClients[args.Index].ClientId;
-            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+            selectedClient = await Http.GetFromJsonAsync<Client>($"https://mantismetro.azurewebsites.net/api/Client/{clientId}");
             if (selectedClient.eClientId == null)
             {
                 isLoadingCrmId = true;

@@ -5,12 +5,13 @@
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
+@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
 <link href="mantis.css" rel="stylesheet" />
 
 <div class="page-toolbar">
-    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Carrier</SfButton>
+    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon" href="Carriers/Edit" OnClick="@CreateNewCarrier">New Carrier</SfButton>
 </div>
 
 <div class="page-content">
@@ -75,6 +76,11 @@
     {
         string dhjdhjd = "423432";
         StateHasChanged();
+    }
+
+    public void CreateNewCarrier()
+    {
+        NavigationManager.NavigateTo("/Carriers/Edit");
     }
 
     private void OnBeginHandler(ActionEventArgs<Carrier> Args) 

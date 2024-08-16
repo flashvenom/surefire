@@ -14,9 +14,9 @@ namespace Mantis.Domain.Renewals.Models
         public string Notes { get; set; }
         public string? ExpiringPolicyNumber { get; set; }
         public decimal? ExpiringPremium { get; set; }
-        public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
-        public ICollection<TrackTask> TrackTasks { get; set; } = new List<TrackTask>();
-        public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
+        public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
+        public DateTime? DateModified { get; set; } = DateTime.UtcNow;
+
         public Carrier? Carrier { get; set; }
         public int? CarrierId { get; set; }
         public Carrier? Wholesaler { get; set; }
@@ -29,6 +29,10 @@ namespace Mantis.Domain.Renewals.Models
         public int ProductId { get; set; }
         public ApplicationUser AssignedTo { get; set; }
         public string AssignedToId { get; set; }
+
+        public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+        public ICollection<TrackTask> TrackTasks { get; set; } = new List<TrackTask>();
+        public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
 
     }
 }

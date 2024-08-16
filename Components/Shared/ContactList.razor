@@ -21,7 +21,9 @@
     {
         foreach(var item in Contacts)
         {
+            
             <div class="m-contact">
+                <a href="/Contacts/Edit/@(item.ContactId)"><span class="e-btnhover e-icons e-pencil-icon" style="float:right"></span></a>
                 <span class="m-name">@item.FirstName @item.LastName</span><br />
                 @if(item.Title != null){<span class="m-title">@item.Title</span><br />}
                 @if(item.Email != null){<span class="m-email">@item.Email</span><br />}

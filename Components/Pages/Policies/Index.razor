@@ -1,0 +1,91 @@
+﻿@page "/Policies"
+@using Mantis.Domain.Policies.Models
+@using Mantis.Components.Pages.Policies
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<link href="mantis.css" rel="stylesheet" />
+
+<_toolbar PolicyId="@PolicyId" />
+
+<div class="page-content">
+    <SfGrid @ref="Grid" DataSource="@PolicyData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
+        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="PolicyDto"></GridEvents>
+        <SfDataManager Url="https://localhost:7074/api/Policy/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+        <GridPageSettings PageSize="12"></GridPageSettings>
+        <GridColumns>
+            <GridColumn Field=@nameof(PolicyDto.PolicyId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.PolicyNumber) HeaderText="Policy Number" Width="150"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.LineType) HeaderText="Line Type"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.CarrierName) HeaderText="Carrier"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.WholesalerName) HeaderText="Wholesaler"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.EffectiveDate) HeaderText="Effective Date" Format="MM-dd-yyyy"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.ExpirationDate) HeaderText="Expiration Date" Format="MM-dd-yyyy"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.ClientName) HeaderText="Client Name"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.Premium) HeaderText="Premium" Format="C"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.Status) HeaderText="Status"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.Notes) HeaderText="Notes"></GridColumn>
+            <GridColumn Field=@nameof(PolicyDto.ProducerName) HeaderText="Producer"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+   
+</div>
+@statusMy
+
+@code {
+    SfGrid<PolicyDto> Grid { get; set; }
+    SfDataManager DataManager { get; set; }
+    string statusMy = "Loading";
+    public List<PolicyDto> PolicyData { get; set; }
+    public int PolicyId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        statusMy = "Loading...";
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Policies" }
+        });
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    {
+        StateHasChanged();
+    }
+
+    public void CreateNewPolicy()
+    {
+        NavigationManager.NavigateTo("/Policies/Create");
+    }
+
+    private void OnBeginHandler(ActionEventArgs<PolicyDto> Args)
+    {
+        statusMy = "Clicked";
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            if (Args.Action == "Add")
+            {
+                var policy = Args.Data;
+            }
+        }
+        statusMy = "Clicked...";
+        InvokeAsync(StateHasChanged);
+    }
+    private void RowSelected(RowSelectEventArgs<PolicyDto> args)
+    {
+        PolicyId = args.Data.PolicyId;
+    }
+    private void RowDoubleClicked(RecordDoubleClickEventArgs<PolicyDto> args)
+    {
+        PolicyId = args.RowData.PolicyId;
+        NavigationManager.NavigateTo($"/Policies/Edit/{PolicyId}");
+    }
+}

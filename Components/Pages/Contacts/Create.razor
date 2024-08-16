@@ -1,29 +1,131 @@
 ﻿@page "/Contacts/Create"
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Contacts.Services
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Carriers.Models
 @using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavigationManager
+@inject ContactService ContactService
+
 @rendermode InteractiveServer
 
-<link href="mantis.css" rel="stylesheet" />
-
-<div class="page-toolbar">
-    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Contact</SfButton>
-</div>
-
 <div class="page-content">
-    People goes here
+    <div class="mh1">Create New Contact</div>
+    <EditForm EditContext="@editContext" OnValidSubmit="CreateContact">
+        <DataAnnotationsValidator />
+
+        <div class="mf-flex mf-flex-row mf-row-container">
+            <div class="mf-item-lg">
+                <div class="mb-3">
+                    <SfTextBox id="firstName" Placeholder="First Name" @bind-Value="NewContact.FirstName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.FirstName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="lastName" Placeholder="Last Name" @bind-Value="NewContact.LastName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.LastName" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <SfTextBox id="title" Placeholder="Title / Department" @bind-Value="NewContact.Title" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Title" class="text-danger" />
+                </div>
+                @if (ConfirmedParentType == "Carrier")
+                {
+                    <table>
+                        <tr>
+                            <td>
+                                <div class="cb">
+                                    <FluentCheckbox id="underwriter" Label="Underwriter" @bind-Value="NewContact.Underwriter" />
+                                </div>
+                                <div class="cb">
+                                    <FluentCheckbox id="service" Label="Service" @bind-Value="NewContact.Service" />
+                                </div>
+                            </td>
+                            <td>
+                                <div class="cb">
+                                    <FluentCheckbox id="billing" Label="Billing" @bind-Value="NewContact.Billing" />
+                                </div>
+                                <div class="cb">
+                                    <FluentCheckbox id="rep" Label="Account Rep" @bind-Value="NewContact.Representative" />
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+            <div class="mf-item-lg mf-pad-left">
+                <div class="mb-3">
+                    <SfTextBox id="email" Placeholder="Email" @bind-Value="NewContact.Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Email" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="phone" Placeholder="Phone" @bind-Value="NewContact.Phone" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Phone" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="mobile" Placeholder="Mobile" @bind-Value="NewContact.Mobile" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Mobile" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="notes" Placeholder="Notes" @bind-Value="NewContact.Notes" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Notes" class="text-danger" />
+                </div>
+            </div>
+        </div>
+
+        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Create</FluentButton>
+    </EditForm>
+</div>
+<div>
+    <a href="/@ParentType/View/@ParentId">Back to Details</a>
 </div>
 
 @code {
-    
-    protected override async Task OnInitializedAsync()
+    [Parameter] public string ParentType { get; set; }
+    [Parameter] public int ParentId { get; set; }
+
+    public string ConfirmedParentType { get; set; }
+
+    private Contact NewContact { get; set; } = new Contact();
+    private EditContext editContext;
+
+    protected override void OnInitialized()
     {
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        editContext = new EditContext(NewContact);
+
+        // Retrieve query parameters from the URL
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+
+        if (queryParams.TryGetValue("ParentType", out var parentType))
         {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "People" }
-        });
+            if (parentType == "Carrier")
+            {
+                ConfirmedParentType = "Carrier";
+                NewContact.CarrierId = int.TryParse(queryParams["ParentId"], out var parentId) ? parentId : (int?)null;
+            }
+            else if (parentType == "Client")
+            {
+                ConfirmedParentType = "Client";
+                NewContact.ClientId = int.TryParse(queryParams["ParentId"], out var parentId) ? parentId : (int?)null;
+            }
+        }
+    }
+
+    private async Task CreateContact()
+    {
+        if (editContext.Validate()) // Check if the form is valid
+        {
+            await ContactService.CreateContactAsync(NewContact);
+            GoBack();
+        }
+    }
+
+    public void GoBack()
+    {
+        NavigationManager.NavigateTo($"/{(NewContact.CarrierId != null ? "Carriers" : "Clients")}/Details/{NewContact.CarrierId ?? NewContact.ClientId}");
     }
 }

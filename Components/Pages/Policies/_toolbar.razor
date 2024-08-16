@@ -11,16 +11,29 @@
 
     <NavLink class="toolbar-link" href="Policies" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
-        <span class="toolbar-text">Everything</span>
+        <span class="toolbar-text">Browse</span>
     </NavLink>
-    @* lot molecule scles *@
+
     <NavLink class="toolbar-link" href="Policies/Products" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.Tag())" />
         <span class="toolbar-text">Product Lines</span>
     </NavLink>
+
+    @if (PolicyId != 0)
+    {
+        <span class="sf-verthr2"></span>
+
+        <NavLink class="toolbar-link" href="@("Policies/Edit/" + PolicyId)" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit</span>
+        </NavLink>
+    }
 </div>
 
 @code {
+    [Parameter]
+    public int PolicyId { get; set; }
+
     private void NavigateToRenewalCreate()
     {
         NavigationManager.NavigateTo("/Policies");

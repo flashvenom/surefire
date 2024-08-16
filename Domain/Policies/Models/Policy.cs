@@ -20,10 +20,14 @@ namespace Mantis.Domain.Policies.Models
         public DateTime EffectiveDate { get; set; }
         public DateTime ExpirationDate { get; set; }
         public decimal Premium { get; set; }
+        public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
+        public DateTime? DateModified { get; set; } = DateTime.UtcNow;
 
         public Application? Application { get; set; }
         public Carrier? Carrier { get; set; }
+        public int? CarrierId { get; set; }
         public Carrier? Wholesaler { get; set; }
+        public int? WholesalerId { get; set; }
         public Product? Product { get; set; }
         public int? ProductId { get; set; }
 
@@ -41,5 +45,21 @@ namespace Mantis.Domain.Policies.Models
         public string? CSRId { get; set; }
         public ApplicationUser? CSR { get; set; }
         public ApplicationUser? CreatedBy { get; set; }
+    }
+
+    public class PolicyDto
+    {
+        public int PolicyId { get; set; }
+        public string PolicyNumber { get; set; }
+        public DateTime EffectiveDate { get; set; }
+        public DateTime ExpirationDate { get; set; }
+        public decimal Premium { get; set; }
+        public string? Status { get; set; }
+        public string? Notes { get; set; }
+        public string ClientName { get; set; } // Include only the necessary client data
+        public string LineType { get; set; } // Include only the necessary client data
+        public string CarrierName { get; set; }
+        public string WholesalerName { get; set; }
+        public string ProducerName { get; set; }
     }
 }

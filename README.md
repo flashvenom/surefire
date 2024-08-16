@@ -21,27 +21,35 @@ Mantis is a comprehensive insurance management system designed to streamline the
 - **Newtonsoft.Json**
 - **SQL Server**
 
-## Roadmap
+## Wishlist
+### General
 
 - **Connect to voip system - bring up toast/card showing who is calling based on callerID**
 - **Add AI side panel for common tasks**
 - **Add settings page with gear icon upper left**
 - **Add picture for people**
-- **Add logo of business - grab first google image result of "business name + logo"**
 - **Add Google Map link to address"**
 - **Use AI to get JSON data of any location/address"**
-- **Add "touch field" to store things in common / small talk"**
 - **Use AI to search client website and address lookup to get company details, industry codes, etc - new info pops up as (?) you click a check to confirm data, red x to throw away bad data**
-- **CLIENT PAGE: renewals section, menu section switches: Glance | Policies | Attachments | Claims | Applications**
+
 - **Applications section will store basic data commonly used on apps like # of employees, gross sales, etc.**
 - **Client portal with no sign-in required - a one time use key is emailed, they can update annual check-ups, see policies, etc**
+### Clients
+- **NOTES fields - "Permanent Notes (for "personal touch" to store things in common / small talk and then a "Recent Events" field in which the notes get smaller lighter as weeks go by**
+- **Add logo of business - grab first google image result of "business name + logo"**
+- **BRAIN: Use email address of client to pull latest email chains and use AI to summarize**
+### Carriers
+- **(IVANS Api?) Add more carrier data to cross check against clients/policies - Not just what lines they quote, but what lines they are good at, what SIC codes and industries they specialize in, 5 star rating AMBest rating, etc**
+- **Use the JSON fields to add Targeted Lines of Buisness and Industries**
+
 
 - ## ToDo
+- **CLIENT PAGE: renewals section, menu section switches: Glance | Policies | Attachments | Claims | Applications**
+- **Get a basic master search going using the top search bar**
 - **Create dummy database with fake client data**
-- **Submission tab in renewal center**
-- **Duplicate renewal center for 'Leads Processing'**
+- DONE | Submission tab in renewal center
+- **Duplicate renewal center for 'Leads' and new business**
 - **SMART BREAD CRUMS: When you open a policy, certificate, etc - it adds it to the BreadCrum trail, and it stays there until you click the X or leave the client entirely - so you can switch between policies / other screens**
-- **(IVANS Api?) Add more carrier data to cross check against clients/policies - Not just what lines they quote, but what lines they are good at, what SIC codes and industries they specialize in, 5 star rating AMBest rating, etc**
 
  
 ## Installation

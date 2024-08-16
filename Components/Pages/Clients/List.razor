@@ -305,7 +305,7 @@
             InvokeAsync(StateHasChanged);
             isLoadingWhat += ".";
             var clientId = filteredClients[args.Index].ClientId;
-            selectedClient = await Http.GetFromJsonAsync<Client>($"https://mantismetro.azurewebsites.net/api/Client/{clientId}");
+            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
             if (selectedClient.eClientId == null)
             {
                 isLoadingCrmId = true;

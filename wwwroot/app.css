@@ -101,9 +101,6 @@ main {
 :root .e-pencil-icon::before {
     content: '\e740';
 }
-:root .e-pencil-icon::before {
-    content: '\e740';
-}
 :root .e-changes-icon::before {
     content: '\e7a8';
 }
@@ -118,6 +115,21 @@ main {
 }
 :root .e-signature-icon::before {
     content: '\e897';
+}
+
+:root .mh1 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 200;
+    font-size: 2em;
+    font-style: normal;
+    color: #b2b2b2 !important;
+    padding: 0px;
+    padding-bottom: 10px !important;
+    margin: 0px;
+}
+:root .text-danger {
+    font-size: 10px !important;
+    color: #f00 !important;
 }
 /*--------------------------Contacts----------------------------*/
 .m-contact {
@@ -155,6 +167,13 @@ main {
     flex-direction: row;
     justify-content: flex-start;
 }
+:root .mf-flex-row {
+    display: flex !important;
+    -ms-flex-direction: row;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    justify-content: flex-start;
+}
 .mf-item-xs {
     flex-basis: 10%
 }
@@ -173,12 +192,25 @@ main {
 .mf-pad-left {
     margin-left:25px;
 }
-
-    /*--------------------------Other Styles----------------------------*/
-: root .sf-quicklist .e-listview {
-    border: 0px;
+.mf-row-container {
+    max-width:900px !important;
+}
+/*--------------------------Forms Styles----------------------------*/
+.cb {
+    padding:5px 0px;
+}
+/*--------------------------Other Styles----------------------------*/
+:root .e-btnhover {
+    opacity:.5;
+}
+:root .e-btnhover:hover {
+    opacity:1;
+    cursor:pointer;
 }
 
+:root .sf-quicklist .e-listview {
+    border: 0px;
+}
     :root .sf-quicklist .e-listview .e-list-item {
         border: 0px;
     }

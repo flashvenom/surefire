@@ -51,20 +51,23 @@ namespace Mantis.Domain.Shared.Helpers
                 return phoneNumber; // Return the original phone number if it's null or empty
             }
 
+            // Store the original phone number
+            string originalPhoneNumber = phoneNumber;
+
             // Remove any non-numeric characters (like spaces, dashes, or parentheses)
             var digits = new string(phoneNumber.Where(char.IsDigit).ToArray());
 
-            // Ensure the string has at least 10 digits
-            if (digits.Length < 10)
+            // If the digits string is exactly 10 digits long, format it as (###) ###-####
+            if (digits.Length == 10)
             {
-                return phoneNumber; // Return the original phone number if it's too short to format
+                return string.Format("({0}) {1}-{2}",
+                                     digits.Substring(0, 3),
+                                     digits.Substring(3, 3),
+                                     digits.Substring(6, 4));
             }
 
-            // Format the string as (###) ###-####
-            return string.Format("({0}) {1}-{2}",
-                                 digits.Substring(0, 3),
-                                 digits.Substring(3, 3),
-                                 digits.Substring(6, 4));
+            // If the digits string is not exactly 10 digits, return the original phone number
+            return originalPhoneNumber;
         }
 
     }

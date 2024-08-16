@@ -1,0 +1,158 @@
+﻿@page "/Policies/Edit/{PolicyId:int}"
+
+@using Microsoft.EntityFrameworkCore
+@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Shared.Services
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Shared
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject SharedService SharedService
+@inject CarrierService CarrierService
+
+@rendermode InteractiveServer
+
+<PageTitle>Edit Policy</PageTitle>
+
+<_toolbar PolicyId="@PolicyId" />
+
+<div class="page-content">
+    <div class="mh1">Edit Policy</div>
+    @if (Policy is null || Products is null || Carriers is null || Wholesalers is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <EditForm Model="Policy" OnValidSubmit="UpdatePolicy">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mf-flex mf-flex-row mf-row-container">
+                <div class="mf-item-lg">
+
+                    <div class="mb-3">
+                        <SfDropDownList TValue="int?" TItem="Product" DataSource="@Products" Placeholder="Line of Business" @bind-Value="Policy.ProductId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Text="LineName" Value="ProductId" />
+                        </SfDropDownList>
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="policynumber" @bind-Value="Policy.PolicyNumber" Placeholder="Policy Number" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Policy.PolicyNumber" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfNumericTextBox TValue="decimal" @bind-Value="Policy.Premium" Placeholder="Premium" FloatLabelType="FloatLabelType.Always" Format="C2" />
+                        <ValidationMessage For="() => Policy.Premium" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox @bind-Value="Policy.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Policy.Notes" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox @bind-Value="Policy.Status" Placeholder="Status" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Policy.Status" class="text-danger" />
+                    </div>
+                </div>
+                <div class="mf-item-lg mf-pad-left">
+                    <div class="mb-3">
+                        <SfDatePicker TValue="DateTime" @bind-Value="Policy.EffectiveDate" Placeholder="Effective Date" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Policy.EffectiveDate" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfDatePicker TValue="DateTime" @bind-Value="Policy.ExpirationDate" Placeholder="Expiration Date" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Policy.ExpirationDate" class="text-danger" />
+                    </div>
+
+                    <br />
+
+                    <div class="mb-3">
+                        <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Carriers" Placeholder="Issuing Carrier" @bind-Value="Policy.CarrierId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
+                            @* <SfDataManager Url="https://localhost:7074/api/Carrier" Adaptor="Syncfusion.Blazor.Adaptors.WebApiAdaptor" /> *@
+                            <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                        </SfDropDownList>
+                    </div>
+                    <div class="mb-3">
+                        <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Wholesalers" Placeholder="Wholesaler" @bind-Value="Policy.WholesalerId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                        </SfDropDownList>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Policy</FluentButton>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int PolicyId { get; set; }
+
+    private Policy? Policy { get; set; }
+    private List<Product> Products { get; set; }
+    private List<Carrier> Carriers { get; set; }
+    private List<Carrier> Wholesalers { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Policy = await DbContext.Policies
+            .Include(p => p.Carrier)
+            .Include(p => p.Wholesaler)
+            .Include(p => p.Product)
+            .FirstOrDefaultAsync(p => p.PolicyId == PolicyId);
+
+        if (Policy == null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        Products = await SharedService.GetAllProductsAsync();
+        Carriers = await CarrierService.GetAllCarriersAsync();
+        Wholesalers = await CarrierService.GetAllWholesalersAsync();
+
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Policies", Url = "/Policies" },
+            new BreadcrumbItem { Text = "Edit" }
+        });
+    }
+
+    private async Task UpdatePolicy()
+    {
+        DbContext.Attach(Policy!).State = EntityState.Modified;
+
+        try
+        {
+            await DbContext.SaveChangesAsync();
+            NavigationManager.NavigateTo("/policies");
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!PolicyExists(Policy!.PolicyId))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private bool PolicyExists(int policyId)
+    {
+        return DbContext.Policies.Any(e => e.PolicyId == policyId);
+    }
+    public void GoBack()
+    {
+        NavigationManager.NavigateTo("/Policies");
+    }
+}

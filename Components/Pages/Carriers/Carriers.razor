@@ -13,13 +13,9 @@
 <_toolbar CarrierId="@CarrierId" />
 
 <div class="page-content">
-    <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
-        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="@ActionFailure" RowSelected="@RowSelected" TValue="Carrier"></GridEvents>
-        <SfDataManager  Url="https://localhost:7074/api/Carrier" 
-                        InsertUrl="https://localhost:7074/api/Carrier/Insert" 
-                        UpdateUrl="https://localhost:7074/api/Carrier/Update" 
-                        RemoveUrl="https://localhost:7074/api/Carrier/Delete" 
-                        Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+    <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
+        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="Carrier"></GridEvents>
+        <SfDataManager  Url="https://localhost:7074/api/Carrier" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
@@ -99,5 +95,10 @@
     {
         CarrierId = args.Data.CarrierId;
         //NavigationManager.NavigateTo($"/Carriers/Edit/{carrierId}");
+    }
+    private void RowDoubleClicked(RecordDoubleClickEventArgs<Carrier> args)
+    {
+        CarrierId = args.RowData.CarrierId;
+        NavigationManager.NavigateTo($"/Carriers/Details/{CarrierId}");
     }
 }

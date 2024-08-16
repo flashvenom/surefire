@@ -30,6 +30,8 @@ namespace Mantis.Domain.Carriers.Models
         public string? AppetiteJson { get; set; }
         public string? QuotelinesJson { get; set; }
         public string? Notes { get; set; }
+        public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
+        public DateTime? DateModified { get; set; } = DateTime.UtcNow;
 
         public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
         public Address? Address { get; set; }

@@ -1,0 +1,135 @@
+﻿@page "/Contacts/Edit/{ContactId:int}"
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Contacts.Services
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Carriers.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@inject NavigationManager NavigationManager
+@inject ContactService ContactService
+
+@rendermode InteractiveServer
+
+<div class="page-content">
+    <div class="mh1">Edit Contact</div>
+     @if (Contact != null && editContext != null)
+    {
+    <EditForm EditContext="@editContext" OnValidSubmit="UpdateContact">
+        <DataAnnotationsValidator />
+
+        <div class="mf-flex mf-flex-row mf-row-container">
+            <div class="mf-item-lg">
+                <div class="mb-3">
+                    <SfTextBox id="firstName" Placeholder="First Name" @bind-Value="Contact.FirstName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Contact.FirstName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="lastName" Placeholder="Last Name" @bind-Value="Contact.LastName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Contact.LastName" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <SfTextBox id="title" Placeholder="Title / Department" @bind-Value="Contact.Title" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Contact.Title" class="text-danger" />
+                </div>
+                @if (ConfirmedParentType == "Carrier")
+                {
+                    <table>
+                        <tr>
+                            <td>
+                                <div class="cb">
+                                    <FluentCheckbox id="underwriter" Label="Underwriter" @bind-Value="Contact.Underwriter" />
+                                </div>
+                                <div class="cb">
+                                    <FluentCheckbox id="service" Label="Service" @bind-Value="Contact.Service" />
+                                </div>
+                            </td>
+                            <td>
+                                <div class="cb">
+                                    <FluentCheckbox id="billing" Label="Billing" @bind-Value="Contact.Billing" />
+                                </div>
+                                <div class="cb">
+                                    <FluentCheckbox id="rep" Label="Account Rep" @bind-Value="Contact.Representative" />
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+            <div class="mf-item-lg mf-pad-left">
+                <div class="mb-3">
+                    <SfTextBox id="email" Placeholder="Email" @bind-Value="Contact.Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Contact.Email" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="phone" Placeholder="Phone" @bind-Value="Contact.Phone" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Contact.Phone" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="mobile" Placeholder="Mobile" @bind-Value="Contact.Mobile" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Contact.Mobile" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="notes" Placeholder="Notes" @bind-Value="Contact.Notes" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Contact.Notes" class="text-danger" />
+                </div>
+            </div>
+        </div>
+
+        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save</FluentButton>
+    </EditForm>
+    }
+    else
+    {
+        <p><em>Loading...</em></p>
+    }
+</div>
+<div>
+    <a href="/@(ConfirmedParentType)/View/@ContactId">Back to Details</a>
+</div>
+
+@code {
+    [Parameter] public int ContactId { get; set; }
+    private Contact Contact { get; set; } = new Contact();
+    private EditContext editContext;
+    public string ConfirmedParentType { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load the contact by ID
+        Contact = await ContactService.GetContactByIdAsync(ContactId);
+        if (Contact == null)
+        {
+            // Handle case where contact is not found
+            NavigationManager.NavigateTo("/Contacts");
+            return;
+        }
+
+        editContext = new EditContext(Contact);
+
+        // Determine parent type (Carrier or Client)
+        if (Contact.CarrierId.HasValue)
+        {
+            ConfirmedParentType = "Carrier";
+        }
+        else if (Contact.ClientId.HasValue)
+        {
+            ConfirmedParentType = "Client";
+        }
+    }
+
+    private async Task UpdateContact()
+    {
+        if (editContext.Validate()) // Check if the form is valid
+        {
+            await ContactService.UpdateContactAsync(Contact);
+            GoBack();
+        }
+    }
+
+    public void GoBack()
+    {
+        NavigationManager.NavigateTo($"/{(Contact.CarrierId != null ? "Carriers" : "Clients")}/Details/{Contact.CarrierId ?? Contact.ClientId}");
+    }
+}

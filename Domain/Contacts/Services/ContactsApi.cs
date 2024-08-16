@@ -26,7 +26,15 @@ namespace Mantis.Domain.Contacts.Services
         public List<Contact> GetContactsList(string ParentType, int ParentId)
         {
             // Filter contacts based on ParentType and ParentId
-            return _context.Contacts.Take(5).ToList();
+            if(ParentType == "Carrier")
+            {
+                return _context.Contacts.Where(x => x.CarrierId == ParentId).ToList();
+            }
+            else
+            {
+                return _context.Contacts.Take(5).ToList();
+            }
+            
         }
     }
 }

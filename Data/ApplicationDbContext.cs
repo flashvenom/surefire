@@ -82,6 +82,18 @@ namespace Mantis.Data
                 .WithMany()
                 .HasForeignKey("AddressId");
 
+            modelBuilder.Entity<Contact>()
+                .HasOne(c => c.Client)
+                .WithMany(cl => cl.Contacts)
+                .HasForeignKey(c => c.ClientId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Contact>()
+                .HasOne(c => c.Carrier)
+                .WithMany(cr => cr.Contacts)
+                .HasForeignKey(c => c.CarrierId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Policy>()
                 .HasOne(p => p.Application)
                 .WithMany()

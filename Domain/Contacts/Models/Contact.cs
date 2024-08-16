@@ -22,5 +22,11 @@ namespace Mantis.Domain.Contacts.Models
         public bool Representative { get; set; }
         public bool IsInactive { get; set; }
         public Address? Address { get; set; }
+
+        //Navigation Properties
+        public int? ClientId { get; set; }
+        public Client? Client { get; set; }
+        public int? CarrierId { get; set; }
+        public Carrier? Carrier { get; set; }
     }
 }

@@ -119,8 +119,63 @@ main {
 :root .e-signature-icon::before {
     content: '\e897';
 }
-/*--------------------------Other Styles----------------------------*/
-:root .sf-quicklist .e-listview {
+/*--------------------------Contacts----------------------------*/
+.m-contact {
+    padding: 5px;
+    border: 1px solid #e4e4e4;
+    border-left:5px solid #ccc;
+    border-radius: 3px;
+    max-width: 300px;
+    margin-bottom: 11px;
+    font-family: "montserrat", sans-serif;
+}
+
+.m-name {
+    font-size: 1em;
+    font-weight: 700;
+}
+.m-title {
+    font-size: .7em;
+    font-style: italic;
+}
+.m-email {
+    font-size: .7em;
+}
+.m-phone {
+    font-size: .9em;
+    font-weight: 300;
+}
+/*--------------------------Flex----------------------------*/
+.mf-flex {
+    display:flex;
+}
+.mf-row {
+    -ms-flex-direction: row;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+.mf-item-xs {
+    flex-basis: 10%
+}
+.mf-item-sm {
+    flex-basis: 20%
+}
+.mf-item-md {
+    flex-basis: 35%
+}
+.mf-item-xmd {
+    flex-basis: 40%
+}
+.mf-item-lg {
+    flex-basis: 50%
+}
+.mf-pad-left {
+    margin-left:25px;
+}
+
+    /*--------------------------Other Styles----------------------------*/
+: root .sf-quicklist .e-listview {
     border: 0px;
 }
 

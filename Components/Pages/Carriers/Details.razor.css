@@ -43,3 +43,11 @@
     font-style: normal;
     font-size: .5em;
 }
+.m-h3 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 100;
+    font-style: normal;
+    font-size: 2em;
+    color:#a7a7a7;
+    margin-bottom:10px;
+}

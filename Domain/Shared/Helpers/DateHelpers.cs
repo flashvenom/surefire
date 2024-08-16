@@ -13,7 +13,7 @@ using Mantis.Domain.Shared;
 
 namespace Mantis.Domain.Shared.Helpers
 {
-    public static class DateHelper
+    public static class DateHelper //Rename to STRING helper
     {
         public static string FormatRenewalStatus(DateTime? goalDate, bool isCompleted, DateTime? completedDate)
         {
@@ -44,5 +44,28 @@ namespace Mantis.Domain.Shared.Helpers
                 }
             }
         }
+        public static string FormatPhoneNumber(string phoneNumber)
+        {
+            if (string.IsNullOrEmpty(phoneNumber))
+            {
+                return phoneNumber; // Return the original phone number if it's null or empty
+            }
+
+            // Remove any non-numeric characters (like spaces, dashes, or parentheses)
+            var digits = new string(phoneNumber.Where(char.IsDigit).ToArray());
+
+            // Ensure the string has at least 10 digits
+            if (digits.Length < 10)
+            {
+                return phoneNumber; // Return the original phone number if it's too short to format
+            }
+
+            // Format the string as (###) ###-####
+            return string.Format("({0}) {1}-{2}",
+                                 digits.Substring(0, 3),
+                                 digits.Substring(3, 3),
+                                 digits.Substring(6, 4));
+        }
+
     }
 }

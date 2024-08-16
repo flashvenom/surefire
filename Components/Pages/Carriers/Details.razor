@@ -3,6 +3,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Carriers.Models
 @using Mantis.Domain.Carriers.Services
+@using Mantis.Components.Shared
 @using Mantis.Data
 @inject CarrierService CarrierService
 @inject NavigationManager NavigationManager
@@ -36,64 +37,81 @@ else {
         </div>
 
         <div class="client-header-2">
-        <span class="client-email">Company Website: @carrier.Website</span><br />
-        <span class="client-email">Quote Website: @carrier.QuotingWebsite</span><br />
-        <span class="client-email">Service Portal: @carrier.ServicingWebsite</span>
+            <span class="client-email">Company Website: @carrier.Website</span>
         </div>
 
         <div class="client-header-3">
             <span class="client-phone">@carrier.Phone</span><br />
-            <span class="client-email">Submissions: @carrier.NewSubmissionEmail</span><br />
-            <span class="client-email">Service: @carrier.ServicingEmail</span>
         </div>
     </div>
 
     <div class="page-content">
-        <h3>Contacts</h3>
+        <div class="mf-flex mf-row">
+            <div class="mf-item-sm">
+                <div class="m-h3">Contacts</div>
+                <ContactList ParentType="Carrier" ParentId="@CarrierId" />
+            </div>
+            <div class="mf-item-md mf-pad-left">
+                <div class="m-h3">Service</div>
+                <span class="client-email">Service Portal: @carrier.ServicingWebsite</span><br />
+                <span class="client-email">Service: @carrier.ServicingEmail</span>
 
+                <div style="height:35px;"></div>
 
-        <dl class="row">
-            <dt class="col-sm-2">LookupCode</dt>
-            <dd class="col-sm-10">@carrier.LookupCode</dd>
-            <dt class="col-sm-2">CarrierName</dt>
-            <dd class="col-sm-10">@carrier.CarrierName</dd>
-            <dt class="col-sm-2">CarrierNickname</dt>
-            <dd class="col-sm-10">@carrier.CarrierNickname</dd>
-            <dt class="col-sm-2">StreetAddress</dt>
-            <dd class="col-sm-10">@carrier.StreetAddress</dd>
-            <dt class="col-sm-2">City</dt>
-            <dd class="col-sm-10">@carrier.City</dd>
-            <dt class="col-sm-2">State</dt>
-            <dd class="col-sm-10">@carrier.State</dd>
-            <dt class="col-sm-2">Zip</dt>
-            <dd class="col-sm-10">@carrier.Zip</dd>
-            <dt class="col-sm-2">Phone</dt>
-            <dd class="col-sm-10">@carrier.Phone</dd>
-            <dt class="col-sm-2">Website</dt>
-            <dd class="col-sm-10">@carrier.Website</dd>
-            <dt class="col-sm-2">QuotingWebsite</dt>
-            <dd class="col-sm-10">@carrier.QuotingWebsite</dd>
-            <dt class="col-sm-2">ServicingWebsite</dt>
-            <dd class="col-sm-10">@carrier.ServicingWebsite</dd>
-            <dt class="col-sm-2">NewSubmissionEmail</dt>
-            <dd class="col-sm-10">@carrier.NewSubmissionEmail</dd>
-            <dt class="col-sm-2">ServicingEmail</dt>
-            <dd class="col-sm-10">@carrier.ServicingEmail</dd>
-            <dt class="col-sm-2">IssuingCarrier</dt>
-            <dd class="col-sm-10">@carrier.IssuingCarrier</dd>
-            <dt class="col-sm-2">Wholesaler</dt>
-            <dd class="col-sm-10">@carrier.Wholesaler</dd>
-            <dt class="col-sm-2">AppetiteJson</dt>
-            <dd class="col-sm-10">@carrier.AppetiteJson</dd>
-            <dt class="col-sm-2">QuotelinesJson</dt>
-            <dd class="col-sm-10">@carrier.QuotelinesJson</dd>
-            <dt class="col-sm-2">Notes</dt>
-            <dd class="col-sm-10">@carrier.Notes</dd>
-        </dl>
-        <div>
-            <a href="@($"/carriers/edit?carrierid={carrier.CarrierId}")">Edit</a> |
-            <a href="@($"/carriers")">Back to List</a>
+                <div class="m-h3">Quoting</div>
+                <span class="client-email">Online Quotes: @carrier.QuotingWebsite</span><br />
+                <span class="client-email">Submission Email: @carrier.NewSubmissionEmail</span><br />
+            </div>
+            <div class="mf-item-sm mf-pad-left" style="font-size:.5em;">
+                <div class="m-h3">Tech Trash</div>
+                <dl class="row">
+                    <dt class="col-sm-2">LookupCode</dt>
+                    <dd class="col-sm-10">@carrier.LookupCode</dd>
+                    <dt class="col-sm-2">CarrierName</dt>
+                    <dd class="col-sm-10">@carrier.CarrierName</dd>
+                    <dt class="col-sm-2">CarrierNickname</dt>
+                    <dd class="col-sm-10">@carrier.CarrierNickname</dd>
+                    <dt class="col-sm-2">StreetAddress</dt>
+                    <dd class="col-sm-10">@carrier.StreetAddress</dd>
+                    <dt class="col-sm-2">City</dt>
+                    <dd class="col-sm-10">@carrier.City</dd>
+                    <dt class="col-sm-2">State</dt>
+                    <dd class="col-sm-10">@carrier.State</dd>
+                    <dt class="col-sm-2">Zip</dt>
+                    <dd class="col-sm-10">@carrier.Zip</dd>
+                    <dt class="col-sm-2">Phone</dt>
+                    <dd class="col-sm-10">@carrier.Phone</dd>
+                    <dt class="col-sm-2">Website</dt>
+                    <dd class="col-sm-10">@carrier.Website</dd>
+                    <dt class="col-sm-2">QuotingWebsite</dt>
+                    <dd class="col-sm-10">@carrier.QuotingWebsite</dd>
+                    <dt class="col-sm-2">ServicingWebsite</dt>
+                    <dd class="col-sm-10">@carrier.ServicingWebsite</dd>
+                    <dt class="col-sm-2">NewSubmissionEmail</dt>
+                    <dd class="col-sm-10">@carrier.NewSubmissionEmail</dd>
+                    <dt class="col-sm-2">ServicingEmail</dt>
+                    <dd class="col-sm-10">@carrier.ServicingEmail</dd>
+                    <dt class="col-sm-2">IssuingCarrier</dt>
+                    <dd class="col-sm-10">@carrier.IssuingCarrier</dd>
+                    <dt class="col-sm-2">Wholesaler</dt>
+                    <dd class="col-sm-10">@carrier.Wholesaler</dd>
+                    <dt class="col-sm-2">AppetiteJson</dt>
+                    <dd class="col-sm-10">@carrier.AppetiteJson</dd>
+                    <dt class="col-sm-2">QuotelinesJson</dt>
+                    <dd class="col-sm-10">@carrier.QuotelinesJson</dd>
+                    <dt class="col-sm-2">Notes</dt>
+                    <dd class="col-sm-10">@carrier.Notes</dd>
+                </dl>
+                <div>
+                    <a href="@($"/carriers/edit?carrierid={carrier.CarrierId}")">Edit</a> |
+                    <a href="@($"/carriers")">Back to List</a>
+                </div>
+
+            </div>
         </div>
+        
+
+       
     </div>
         
 }

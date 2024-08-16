@@ -1,0 +1,67 @@
+﻿@namespace Mantis.Components.Shared
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@using Mantis.Domain.Contacts.Models
+@using Newtonsoft.Json;
+@using Mantis.Domain.Shared.Helpers
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<div>
+    @if (Contacts == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (!Contacts.Any())
+    {
+        <p>No contacts found for this parent.</p>
+    }
+    else
+    {
+        foreach(var item in Contacts)
+        {
+            <div class="m-contact">
+                <span class="m-name">@item.FirstName @item.LastName</span><br />
+                @if(item.Title != null){<span class="m-title">@item.Title</span><br />}
+                @if(item.Email != null){<span class="m-email">@item.Email</span><br />}
+                @if(item.Phone != null){<span class="m-phone">@DateHelper.FormatPhoneNumber(item.Phone)</span>}
+            </div>
+        }
+    }
+    <FluentButton Appearance="Appearance.Accent" OnClick="NewContact" Class="e-button">New Contact</FluentButton>
+</div>
+
+@code {
+    [Parameter]
+    public string ParentType { get; set; }
+
+    [Parameter]
+    public int ParentId { get; set; }
+
+    private List<Contact> Contacts { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadContacts();
+    }
+
+    private async Task LoadContacts()
+    {
+        var response = await Http.GetAsync($"https://localhost:7074/api/Contacts/{ParentType}/{ParentId}");
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            Contacts = JsonConvert.DeserializeObject<List<Contact>>(json);
+        }
+        else
+        {
+            // Handle error case (e.g., display a message or retry logic)
+            Contacts = new List<Contact>();
+        }
+    }
+    private void NewContact()
+    {
+        NavigationManager.NavigateTo($"/Contacts/Create?ParentType={ParentType}&ParentId={ParentId}");
+    }
+}

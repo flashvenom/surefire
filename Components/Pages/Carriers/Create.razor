@@ -1,93 +1,109 @@
-﻿@page "/Carriers/Edit/{CarrierId:int?}"
+﻿@page "/Carriers/Create"
 
+@using Microsoft.EntityFrameworkCore
+@using Mantis.Domain.Carriers.Models
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor.Buttons
-@using Mantis.Domain.Carriers.Models
-@using Mantis.Domain.Shared
-@using Mantis.Domain.Carriers.Services
-@using Microsoft.AspNetCore.Components.Forms
+@inject ApplicationDbContext _db
 @inject NavigationManager NavigationManager
-@inject CarrierService CarrierService
+
+@rendermode InteractiveServer
+
+<PageTitle>Create</PageTitle>
+
+<_toolbar />
 
 <div class="page-content">
-    <EditForm OnValidSubmit="HandleValidSubmit" EditContext="@editContext" FormName="TheFormGo">
+    <h1>Create New Carrier</h1>
+    <EditForm method="post" EditContext="editContext" OnValidSubmit="AddCarrier" FormName="create">
         <DataAnnotationsValidator />
-        <h1>@(isEdit ? "Edit Carrier" : "Create New Carrier")</h1>
+
         <div class="sfpage-newcarrier">
             <div class="sf-col-1">
-
-                    <SfTextBox TValue="string" Placeholder="Carrier Name" @bind-Value="carrier.CarrierName" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                    <SfTextBox TValue="string" Placeholder="Lookup Code" @bind-Value="carrier.LookupCode" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                    <SfTextBox TValue="string" Placeholder="Nickname" @bind-Value="carrier.CarrierNickname" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                    <SfTextBox TValue="string" Placeholder="Street Address" @bind-Value="carrier.StreetAddress" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                    <SfTextBox TValue="string" Placeholder="City" @bind-Value="carrier.City" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                    <SfTextBox TValue="string" Placeholder="State" @bind-Value="carrier.State" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                    <SfTextBox TValue="string" Placeholder="Zip" @bind-Value="carrier.Zip" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                    <SfTextBox TValue="string" Placeholder="Phone" @bind-Value="carrier.Phone" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-
+                <div class="mb-3">
+                    <SfTextBox id="carriername" Placeholder="Carrier Name" @bind-Value="Carrier.CarrierName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.CarrierName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="lookupcode" Placeholder="Lookup Code" @bind-Value="Carrier.LookupCode" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.LookupCode" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="carriernickname" Placeholder="Nickname" @bind-Value="Carrier.CarrierNickname" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.CarrierNickname" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="phone" Placeholder="Main Phone" @bind-Value="Carrier.Phone" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.Phone" class="text-danger" />
+                </div>
+                <div class="cb">
+                    <FluentCheckbox id="isuer" Label="Issuer" @bind-Value="Carrier.IssuingCarrier" />
+                </div>
+                <div class="cb">
+                    <FluentCheckbox id="wholesaler" @bind-Value="Carrier.Wholesaler" Label="Wholesaler" />
+                    <ValidationMessage For="() => Carrier.Wholesaler" class="text-danger" />
+                </div>
             </div>
             <div class="sf-col-2">
-                <SfTextBox TValue="string" Placeholder="Website" @bind-Value="carrier.Website" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                <SfTextBox TValue="string" Placeholder="Quoting Website" @bind-Value="carrier.QuotingWebsite" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                <SfTextBox TValue="string" Placeholder="Servicing Website" @bind-Value="carrier.ServicingWebsite" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                <SfTextBox TValue="string" Placeholder="New Submission Email" @bind-Value="carrier.NewSubmissionEmail" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                <SfTextBox TValue="string" Placeholder="Servicing Email" @bind-Value="carrier.ServicingEmail" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                <SfCheckBox Label="Issuing Carrier" @bind-Checked="carrier.IssuingCarrier"></SfCheckBox>
-                <SfCheckBox Label="Wholesaler" @bind-Checked="carrier.Wholesaler"></SfCheckBox>
-                <SfTextBox TValue="string" Placeholder="Appetite JSON" @bind-Value="carrier.AppetiteJson" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                <SfTextBox TValue="string" Placeholder="Quotelines JSON" @bind-Value="carrier.QuotelinesJson" FloatLabelType="FloatLabelType.Always"></SfTextBox>
-                <SfTextBox TValue="string" Placeholder="Notes" @bind-Value="carrier.Notes" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+
+                <div class="mb-3">
+                    <SfTextBox id="website" @bind-Value="Carrier.Website" Placeholder="Website" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.Website" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="quotingwebsite" @bind-Value="Carrier.QuotingWebsite" Placeholder="Quoting URL" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.QuotingWebsite" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="servicingwebsite" @bind-Value="Carrier.ServicingWebsite" Placeholder="Servicing URL" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.ServicingWebsite" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="newsubmissionemail" @bind-Value="Carrier.NewSubmissionEmail" Placeholder="New Submission Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.NewSubmissionEmail" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="servicingemail" @bind-Value="Carrier.ServicingEmail" Placeholder="Servicing Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.ServicingEmail" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <SfTextBox id="notes" @bind-Value="Carrier.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.Notes" class="text-danger" />
+                </div>
             </div>
         </div>
-
-        <SfButton CssClass="e-primary" Click="@HandleValidSubmit">@buttonText</SfButton>
+        <button type="submit" class="btn btn-primary">Create</button>
     </EditForm>
-    cc<br />
-    <div style="height:50px;"></div>
-    vv<br /><br />
+</div>
+
+<div>
+    <a href="/carriers">Back to List</a>
 </div>
 
 @code {
-    private Carrier carrier = new();
+    [SupplyParameterFromForm]
+    public Carrier Carrier { get; set; } = new();
+
     private EditContext editContext;
-    private bool isEdit = false;
-    private string buttonText = "Create Carrier";
 
-    [Parameter]
-    public int? CarrierId { get; set; }
-
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        if (CarrierId.HasValue)
+        // Ensure the model is properly initialized before passing it to the EditContext
+        if (Carrier == null)
         {
-            isEdit = true;
-            buttonText = "Update Carrier";
-            carrier = await CarrierService.GetCarrierByIdAsync(CarrierId.Value);
+            Carrier = new Carrier();
         }
-
-        editContext = new EditContext(carrier);
-
-        // Update breadcrumbs based on the action
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Carriers", Url = "/Carriers" },
-            new BreadcrumbItem { Text = isEdit ? "Edit" : "Create" }
-        });
+        editContext = new EditContext(Carrier);
     }
 
-    private async Task HandleValidSubmit()
+    public async Task AddCarrier()
     {
-        if (isEdit)
+        if (editContext.Validate()) // Check if the form is valid
         {
-            await CarrierService.UpdateCarrierAsync(carrier);
+            _db.Carriers.Add(Carrier);
+            await _db.SaveChangesAsync();
+            NavigationManager.NavigateTo("/Carriers");
         }
-        else
-        {
-            await CarrierService.CreateCarrierAsync(carrier);
-        }
-
-        NavigationManager.NavigateTo("/Carriers");
     }
 }

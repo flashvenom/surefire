@@ -1,0 +1,48 @@
+﻿@namespace Mantis.Components.Pages.Carriers
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager NavigationManager
+
+<div class="page-toolbar">
+    <SfButton @onclick="@((args) => CreateCarrier())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Carrier</SfButton>
+    
+    <span class="sf-verthr"></span>
+
+    <NavLink class="toolbar-link" href="Carriers" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Browse</span>
+    </NavLink>
+
+    @if (CarrierId != 0)
+    {
+        <span class="sf-verthr2"></span>
+
+        <NavLink class="toolbar-link" href="@("Carriers/Edit/" + CarrierId)" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit</span>
+        </NavLink>
+
+        <NavLink class="toolbar-link" href="@("Carriers/Details/" + CarrierId)" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+            <span class="toolbar-text">View</span>
+        </NavLink>
+    }
+
+</div>
+
+<style>
+    .e-plus-icon::before {
+        content: '\e805';
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int CarrierId { get; set; }
+
+    private void CreateCarrier()
+    {
+        NavigationManager.NavigateTo("/Carriers/Create");
+    }
+}

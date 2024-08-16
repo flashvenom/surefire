@@ -45,10 +45,12 @@
     font-size: 12px !important;
     color: #bd7b7b;
 }
+
 .cb {
-    padding:7px;
+    padding: 7px;
 }
+
 .text-danger {
-    font-size:10px !important;
-    color:#f00;
+    font-size: 10px !important;
+    color: #f00;
 }

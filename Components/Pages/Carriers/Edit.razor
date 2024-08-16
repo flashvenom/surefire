@@ -1,0 +1,153 @@
+﻿@page "/Carriers/Edit/{CarrierId:int}"
+
+@using Microsoft.EntityFrameworkCore
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Data
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@inject CarrierService CarrierService
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<PageTitle>Edit</PageTitle>
+
+<_toolbar CarrierId="@CarrierId" />
+
+@if (carrier is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<div class="page-content">
+    <h1>Edit Carrier</h1>
+        <EditForm method="post" Model="carrier" OnValidSubmit="UpdateCarrier" FormName="edit" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="sfpage-newcarrier">
+                <div class="sf-col-1">
+
+                    <input type="hidden" name="carrier.CarrierId" value="@carrier.CarrierId" />
+                    
+                    <div class="mb-3">
+                        <SfTextBox id="carriername" @bind-Value="carrier.CarrierName" Placeholder="Carrier Name" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.CarrierName" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox @bind-Value="carrier.LookupCode" Placeholder="Lookup Code" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.LookupCode" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="carriernickname" @bind-Value="carrier.CarrierNickname" Placeholder="Carrier Nickname" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.CarrierNickname" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="streetaddress" @bind-Value="carrier.StreetAddress" Placeholder="Street Address" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.StreetAddress" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="city" @bind-Value="carrier.City" Placeholder="City" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.City" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="state" @bind-Value="carrier.State" Placeholder="State" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.State" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="zip" @bind-Value="carrier.Zip" Placeholder="Zip" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.Zip" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="phone" @bind-Value="carrier.Phone" Placeholder="Phone" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.Phone" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    
+                </div>
+                <div class="sf-col-2">
+                    <div class="mb-3">
+                        <SfTextBox id="website" @bind-Value="carrier.Website" Placeholder="Website" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.Website" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="quotingwebsite" @bind-Value="carrier.QuotingWebsite" Placeholder="Quoting Website" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.QuotingWebsite" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="servicingwebsite" @bind-Value="carrier.ServicingWebsite" Placeholder="Servicing Website" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.ServicingWebsite" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="newsubmissionemail" @bind-Value="carrier.NewSubmissionEmail" Placeholder="New Submission Email" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.NewSubmissionEmail" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="servicingemail" @bind-Value="carrier.ServicingEmail" Placeholder="Servicing Email" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.ServicingEmail" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="cb">
+                        <FluentCheckbox id="issuingcarrier" @bind-Value="carrier.IssuingCarrier" Label="Issuer" />
+                        <ValidationMessage For="() => carrier.IssuingCarrier" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="cb">
+                        <FluentCheckbox id="wholesaler" @bind-Value="carrier.Wholesaler" Label="Wholesaler" />
+                        <ValidationMessage For="() => carrier.Wholesaler" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="appetitejson" @bind-Value="carrier.AppetiteJson" Placeholder="AppetiteJson" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.AppetiteJson" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="quotelinesjson" @bind-Value="carrier.QuotelinesJson" Placeholder="QuotelinesJson" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.QuotelinesJson" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="notes" @bind-Value="carrier.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => carrier.Notes" class="text-danger" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                </div>
+            </div>
+            <SfButton Content="Save Carrier" type="submit" CssClass="e-primary"></SfButton>
+            <SfButton CssClass="e-primary" type="button" @onclick="cancelSubmit">Cancel</SfButton>
+        </EditForm>
+    </div>
+
+}
+
+@code {
+    [Parameter]
+    public int CarrierId { get; set; }
+
+    [SupplyParameterFromForm]
+    public Carrier? carrier { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        carrier = await CarrierService.GetCarrierByIdAsync(CarrierId);
+
+        if (carrier is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    public void cancelSubmit()
+    {
+        NavigationManager.NavigateTo("/Carriers");
+    }
+
+    public async Task UpdateCarrier()
+    {
+        try
+        {
+            await CarrierService.UpdateCarrierAsync(carrier);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw;
+        }
+
+        NavigationManager.NavigateTo("/Carriers/Details/" + CarrierId);
+    }
+}

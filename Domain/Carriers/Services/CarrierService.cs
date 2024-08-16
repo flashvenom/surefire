@@ -45,7 +45,8 @@ namespace Mantis.Domain.Carriers.Services
         public async Task<Carrier> GetCarrierByIdAsync(int carrierId)
         {
             return await _context.Carriers
-                .Include(c => c.Contacts) // Include related entities as needed
+                .Include(c => c.Address)
+                .Include(c => c.Contacts)
                 .FirstOrDefaultAsync(c => c.CarrierId == carrierId);
         }
 
@@ -54,8 +55,6 @@ namespace Mantis.Domain.Carriers.Services
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             carrier.CreatedBy = currentUser;
-
-            ValidateCarrier(carrier);
             
             _context.Carriers.Add(carrier);
             await _context.SaveChangesAsync();

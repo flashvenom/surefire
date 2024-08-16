@@ -1,6 +1,8 @@
 using Mantis.Data;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Shared;
+using System.ComponentModel.DataAnnotations;
+
 using System.Collections.Generic;
 
 namespace Mantis.Domain.Carriers.Models
@@ -8,7 +10,9 @@ namespace Mantis.Domain.Carriers.Models
     public class Carrier
     {
         public int CarrierId { get; set; }
+        [Required]
         public string LookupCode { get; set; }
+        [Required]
         public string CarrierName { get; set; }
         public string? CarrierNickname { get; set; }
         public string? StreetAddress { get; set; }

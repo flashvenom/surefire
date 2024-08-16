@@ -10,13 +10,11 @@
 
 <link href="mantis.css" rel="stylesheet" />
 
-<div class="page-toolbar">
-    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon" href="Carriers/Edit" OnClick="@CreateNewCarrier">New Carrier</SfButton>
-</div>
+<_toolbar CarrierId="@CarrierId" />
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
-        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="@ActionFailure" TValue="Carrier"></GridEvents>
+        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="@ActionFailure" RowSelected="@RowSelected" TValue="Carrier"></GridEvents>
         <SfDataManager  Url="https://localhost:7074/api/Carrier" 
                         InsertUrl="https://localhost:7074/api/Carrier/Insert" 
                         UpdateUrl="https://localhost:7074/api/Carrier/Update" 
@@ -60,6 +58,7 @@
     SfDataManager DataManager { get; set; }
     string statusMy = "Loading";
     public List<Carrier> CarrierData { get; set; }
+    public int CarrierId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -80,7 +79,7 @@
 
     public void CreateNewCarrier()
     {
-        NavigationManager.NavigateTo("/Carriers/Edit");
+        NavigationManager.NavigateTo("/Carriers/Create");
     }
 
     private void OnBeginHandler(ActionEventArgs<Carrier> Args) 
@@ -96,4 +95,9 @@
         statusMy = "Clicked...";
         InvokeAsync(StateHasChanged);
     } 
+    private void RowSelected(RowSelectEventArgs<Carrier> args)
+    {
+        CarrierId = args.Data.CarrierId;
+        //NavigationManager.NavigateTo($"/Carriers/Edit/{carrierId}");
+    }
 }

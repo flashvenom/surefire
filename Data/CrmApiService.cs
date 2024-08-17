@@ -7,6 +7,7 @@ using Mantis.Data;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
+//If you happen to have an API to access "live" client data
 namespace Mantis.Data
 {
     public class CrmApiService
@@ -22,7 +23,7 @@ namespace Mantis.Data
 
         public async Task<string> GetAccessTokenAsync()
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.***REMOVED***/v1/auth/connect/token");
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.ams.com/token");
             var credentials = $"{_options.ClientId}:{_options.ClientSecret}";
             var encodedCredentials = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(credentials));
 
@@ -42,7 +43,7 @@ namespace Mantis.Data
 
         public async Task<string> GetClientDetailsAsync(string lookupCode, string accessToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/crm/v1/clients?lookupCode={lookupCode}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.ams.com/token?client={lookupCode}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -52,7 +53,7 @@ namespace Mantis.Data
 
         public async Task<string> GetClientPoliciesAsync(string clientId, string accessToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/policy/v1/clients/{clientId}/policies");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.ams.com/clients/{clientId}/poli");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -62,7 +63,7 @@ namespace Mantis.Data
 
         public async Task<string> GetPolicyLinesAsync(string ePolicyId, string accessToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/policy/v1/policies/{ePolicyId}/lines");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.ams.com/policies/{ePolicyId}/admin");
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
             var response = await _httpClient.SendAsync(request);

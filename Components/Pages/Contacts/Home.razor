@@ -1,29 +1,81 @@
-﻿@page "/People"
+﻿@page "/Contacts"
+@using Mantis.Domain.Contacts.Models
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
+@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
-
-<link href="mantis.css" rel="stylesheet" />
-
-<div class="page-toolbar">
-    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Contact</SfButton>
-</div>
+@* 
+<_toolbar ContactId="@ContactId" /> *@
 
 <div class="page-content">
-    People goes here
+    <SfGrid @ref="Grid" DataSource="@ContactData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
+        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="ContactDto"></GridEvents>
+        <SfDataManager Url="https://localhost:7074/api/Contacts/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+        <GridPageSettings PageSize="12"></GridPageSettings>
+        <GridColumns>
+            <GridColumn Field=@nameof(ContactDto.ContactId) HeaderText="Id" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.FirstName) HeaderText="First Name" Width="150"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.LastName) HeaderText="Last Name"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.Title) HeaderText="Title"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.Email) HeaderText="Email"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.Phone) HeaderText="Phone"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.Fax) HeaderText="Fax"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.Mobile) HeaderText="Mobile"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.AssociatedWith) HeaderText="Association"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.Notes) HeaderText="Notes" Width="300"></GridColumn>
+            <GridColumn Field=@nameof(ContactDto.DateCreated) HeaderText="Date Created" Format="MM-dd-yyyy"></GridColumn>
+        </GridColumns>
+    </SfGrid>
 </div>
 
 @code {
-    
+    SfGrid<ContactDto> Grid { get; set; }
+    SfDataManager DataManager { get; set; }
+    public List<ContactDto> ContactData { get; set; }
+    public int ContactId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "People" }
+            new BreadcrumbItem { Text = "Contacts" }
         });
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    {
+        StateHasChanged();
+    }
+
+    public void CreateNewContact()
+    {
+        NavigationManager.NavigateTo("/Contacts/Create");
+    }
+
+    private void OnBeginHandler(ActionEventArgs<ContactDto> Args)
+    {
+        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            if (Args.Action == "Add")
+            {
+                var contact = Args.Data;
+            }
+        }
+        InvokeAsync(StateHasChanged);
+    }
+    private void RowSelected(RowSelectEventArgs<ContactDto> args)
+    {
+        ContactId = args.Data.ContactId;
+    }
+    private void RowDoubleClicked(RecordDoubleClickEventArgs<ContactDto> args)
+    {
+        ContactId = args.RowData.ContactId;
+        NavigationManager.NavigateTo($"/Contacts/Edit/{ContactId}");
     }
 }

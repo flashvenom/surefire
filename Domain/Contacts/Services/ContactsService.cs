@@ -48,5 +48,27 @@ namespace Mantis.Domain.Contacts.Services
             }
         }
 
+        public List<ContactDto> GetContactsList()
+        {
+            return _context.Contacts
+                .Include(c => c.Client)
+                .Include(c => c.Carrier)
+                .Select(c => new ContactDto
+                {
+                    ContactId = c.ContactId,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Title = c.Title,
+                    Email = c.Email,
+                    Phone = c.Phone,
+                    Fax = c.Fax,
+                    Mobile = c.Mobile,
+                    Notes = c.Notes,
+                    DateCreated = c.DateCreated,
+                    AssociatedWith = c.Client != null ? c.Client.Name : c.Carrier != null ? c.Carrier.CarrierName : "N/A"
+                })
+                .ToList();
+        }
+
     }
 }

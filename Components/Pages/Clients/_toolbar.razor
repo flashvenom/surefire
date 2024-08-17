@@ -2,27 +2,43 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Syncfusion.Blazor.Buttons
 @using Microsoft.AspNetCore.Components.Routing
+@using Mantis.Domain.Shared
+@inject NavigationService NavigationService
+@inject NavigationManager NavigationManager
 
 <div class="page-toolbar">
-    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Client</SfButton>
+    <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Client</SfButton>
     
     <span class="sf-verthr"></span>
 
-    <NavLink class="toolbar-link" href="Clients/List" Match="NavLinkMatch.Prefix">
+    <NavLink class="toolbar-link" href="@NavigationService.GetLastClientPage()" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
-        <span class="toolbar-text">Everything</span>
-    </NavLink>
-
-    <NavLink class="toolbar-link" href="Clients/Commercial" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.BookGlobe())" />
-        <span class="toolbar-text">Commercial</span>
+        <span class="toolbar-text">Browse</span>
     </NavLink>
 
     <NavLink class="toolbar-link" href="Clients/Personal" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.BookContacts())" />
-        <span class="toolbar-text">Personal</span>
+        <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
+        <span class="toolbar-text">Data</span>
     </NavLink>
 
     <span class="sf-verthr2"></span>
 
+    @if (ClientId != 0)
+    {
+        <NavLink class="toolbar-link" href="@("Clients/Edit/" + ClientId)" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit</span>
+        </NavLink>
+    }
+
 </div>
+
+@code {
+    [Parameter]
+    public int ClientId { get; set; }
+
+    private void NavigateToRenewalCreate()
+    {
+        NavigationManager.NavigateTo("/Client/Create");
+    }
+}

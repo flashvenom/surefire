@@ -7,6 +7,7 @@
 @using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Renewals.Models
+@using Mantis.Components.Shared
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
@@ -22,7 +23,10 @@
 @inject IJSRuntime jsRuntime
 @rendermode InteractiveServer
 
-<_toolbar />
+@if (selectedClient != null)
+{
+    <_toolbar ClientId="selectedClient.ClientId" />
+}
 
 <div class="page-content">
     <div style="display:flex; flex-direction:row;">
@@ -35,33 +39,31 @@
                 <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
             </SfListView>
         </div>
-        @* <div id="divSepClick" class="sf-collapse" @onclick="TestClick"><img src="/img/arrow.png" /></div> *@
-    </div>    
-    
+    </div>
+
     @if (selectedClient != null)
     {
-    <div class="sf-selected" style="position:relative;">
-            <div class="tinyexpander" @onclick="TestClick"><img src="/img/tinyexpand.png" /></div>
-        <div class="sf-header">
-            <div class="client-header">
-                @selectedClient.Name <br />
-                <span class="client-address">
-                    @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
-                </span>
-            </div>
-                
-            <div class="client-header-2">
-                    
-            </div>
+        <div class="sf-selected" style="position:relative;">
+            <div class="tinyexpander" @onclick="ExpandDetails"><img src="/img/tinyexpand.png" /></div>
+            <div class="sf-header">
+                <div class="client-header">
+                    @selectedClient.Name <br />
+                    <span class="client-address">
+                        @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+                    </span>
+                </div>
 
-            <div class="client-header-3">
-                <span class="client-phone">@selectedClient.PhoneNumber</span><br />
+                <div class="client-header-2">
+                </div>
+
+                <div class="client-header-3">
+                    <span class="client-phone">@selectedClient.PhoneNumber</span><br />
                     <span class="client-email">@selectedClient.Email</span>
+                </div>
             </div>
-        </div>
 
-        <div class="sf-col-container">
-            <div class="sf-col sf-col-1">
+            <div class="sf-col-container">
+                <div class="sf-col sf-col-1">
                     <h3>Current Policies</h3>
                     <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                     <div class="policy-container">
@@ -94,40 +96,35 @@
                                 <div class="sf-da">@policy.EffectiveDate.ToShortDateString()</div>
                                 <div class="sf-da">@policy.ExpirationDate.ToShortDateString()</div>
                             </div>
-                            
+
                         }
                         @if (clientPolicies != null)
                         {
-                        <ul>
-                            @foreach (var policy in clientPolicies)
-                            {
-                                <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
-                            }
-                        </ul>
+                            <ul>
+                                @foreach (var policy in clientPolicies)
+                                {
+                                    <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
+                                }
+                            </ul>
                         }
                     </div>
-            </div>@* sf-col-1 *@
-            <div class="sf-col sf-col-2">
-                <h3>Primary Contact</h3>
+                </div>@* sf-col-1 *@
+
+                <div class="sf-col sf-col-2">
+                    <h3>Primary Contact</h3>
                     <strong>@selectedClient.PrimaryContact.FirstName @selectedClient.PrimaryContact.LastName</strong> <br />
                     @selectedClient.PrimaryContact.Phone<br />
                     <i>@selectedClient.PrimaryContact.Email</i><br />
-                    
 
                     <h4 class="sf-toppad">Additional Contacts</h4>
-                    @foreach (var contact in selectedClient.Contacts)
-                    {
-                        <li>@contact.FirstName @contact.LastName - @contact.Phone - @contact.Email</li>
-                    }
-
-
+                    <ContactList ParentType="Client" ParentId="@selectedClient.ClientId" />
+                    @selectedClient.ClientId .. @selectedClient.Contacts.Count
                     <h4 class="sf-toppad">Additional Info</h4>
                     @selectedClient.Website
-                
-                
-            </div>@* sf-col-2 *@
-            <div class="sf-col sf-col-3">
-                <h3>Technical Stuff</h3>
+                </div>@* sf-col-2 *@
+
+                <div class="sf-col sf-col-3">
+                    <h3>Technical Stuff</h3>
                     <p><strong>ID:</strong> @selectedClient.ClientId </p>
                     <p><strong>LookupCode:</strong> @selectedClient.LookupCode</p>
                     <p><strong>eClientId:</strong> @selectedClient.eClientId</p>
@@ -148,10 +145,10 @@
                     </p>
                     <p><strong>Loading:</strong> @isLoadingCrmId.ToString()</p>
                     <p><strong>Server Status:</strong> @isLoadingWhat</p>
+                </div>@* sf-col-3 *@
 
-            </div>@* sf-col-3 *@
+            </div>
         </div>
-    </div>
     }
     <div style="clear:both;"></div>
 </div>
@@ -161,23 +158,27 @@
         display: flex;
         flex-direction: row;
     }
+
     .tinyexpander {
         position: absolute;
         top: 0px;
         left: 0px;
-        opacity:.3;
+        opacity: .3;
     }
-    .tinyexpander:hover {
-        opacity:1;
-        cursor:pointer;
-    }
+
+        .tinyexpander:hover {
+            opacity: 1;
+            cursor: pointer;
+        }
+
     :root .sf-quicklist {
-        width:300px !important;
+        width: 300px !important;
         overflow: hidden;
         transition: all 0.5s ease;
     }
+
     :root .sf-quicklist-close {
-        width:1px !important;
+        width: 1px !important;
         overflow: hidden;
         transition: all 0.5s ease;
     }
@@ -185,20 +186,21 @@
     :root .sf-quicklist .e-listview {
         padding: 0px !important;
         margin: 0px !important;
-        
     }
-        :root .e-listview .e-list-item {
-            padding: 0px !important;
-            margin: 0px !important;
-            height: 25px !important;
-        }
+
+    :root .e-listview .e-list-item {
+        padding: 0px !important;
+        margin: 0px !important;
+        height: 25px !important;
+    }
 
     :root .sf-collapse {
-        width:15px;
+        width: 15px;
         background-color: #e2e2e2;
-        height:100%;
-        float:right;
+        height: 100%;
+        float: right;
     }
+
     :root .sf-searchquick {
         width: 290px !important
     }
@@ -211,16 +213,16 @@
     private string searchTerm = string.Empty;
     private List<Client> clients = new();
     private List<Client> filteredClients = new();
-    private System.Timers.Timer debounceTimer;
-    private Client selectedClient;
-    private string crmClientId = string.Empty;
     private List<Policy> clientPolicies = new();
     private List<Policy> currentPolicies = new();
     private List<Policy> pastPolicies = new();
-    private bool isLoadingCrmId = false;
-    private string isLoadingWhat = "Initializing";
 
+    private System.Timers.Timer debounceTimer;
+    private bool isLoadingCrmId = false;
+    private string crmClientId = string.Empty;
+    private string isLoadingWhat = "Initializing";
     private string dynamicClass = "sf-quicklist";
+    private Client selectedClient  { get; set; }
 
     SfTextBox SearchBox { get; set; }
 
@@ -250,9 +252,9 @@
             new BreadcrumbItem { Text = "Clients" }
         });
     }
-    public void TestClick()
+    public void ExpandDetails()
     {
-        if(dynamicClass == "sf-quicklist")
+        if (dynamicClass == "sf-quicklist")
         {
             dynamicClass = "sf-quicklist-close";
         }
@@ -260,29 +262,18 @@
         {
             dynamicClass = "sf-quicklist";
         }
-
-    }
-
-    private async void AddDateIcon()
-    {
-        if (SearchBox != null)
-        {
-            //Add icon to the TextBox
-            await SearchBox.AddIconAsync("append", "e-icons e-date-icon");
-        }
     }
 
     private async void EditPolicy(int policyid)
     {
         Console.WriteLine("editing policy " + policyid);
-        //await RenewalService.UpdateTaskHighlight(taskid, task.IsHighlighted);
+        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
     }
 
     private async Task CreateRenewal(int policyid)
     {
         Console.WriteLine("create renewal for " + policyid);
         var renewal = await RenewalService.CreateRenewalFromPolicy(policyid);
-        //var renewal = await RenewalService.GetRenewalByPolicyId(policyid);
         int renewalid = renewal.RenewalId;
         Navigation.NavigateTo($"/Renewals/{renewalid}");
     }
@@ -296,41 +287,30 @@
 
     private async void ClickHandler(ClickEventArgs<Client> args)
     {
-        try
-        {
             //Same code as ParameterLoad - reuse by making it a method
             currentPolicies.Clear();
             pastPolicies.Clear();
             clientPolicies.Clear();
-            InvokeAsync(StateHasChanged);
             isLoadingWhat += ".";
             var clientId = filteredClients[args.Index].ClientId;
             selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+
+            //Get policies if we haven't fetched them from the API before
             if (selectedClient.eClientId == null)
             {
                 isLoadingCrmId = true;
                 isLoadingWhat += ".:";
-                InvokeAsync(StateHasChanged);
                 await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
             }
+            
             // Separate and sort policies
-            SortAndSeparatePolicies();
             NavigationService.SetLastClientPage("/Clients/List/" + clientId);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"ClientId is null or error fetching client data: {ex.Message}");
-        }
-        finally
-        {
-            ClientId = selectedClient.ClientId; //Does nothing
-            isLoadingWhat += "Donzo";
-            InvokeAsync(StateHasChanged);
-        }
+            SortAndSeparatePolicies();
+        
     }
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
     {
-        
+        //API Call
         crmClientId = string.Empty;
         clientPolicies.Clear();
         try
@@ -340,7 +320,6 @@
             var jsonResponse = await CrmApiService.GetClientDetailsAsync(lookupCode, accessToken);
             var clientData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
             isLoadingWhat += "$";
-            InvokeAsync(StateHasChanged);
             if (clientData != null && clientData.ContainsKey("_embedded"))
             {
                 var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(clientData["_embedded"].ToString());
@@ -352,7 +331,6 @@
                         crmClientId = clientsList[0]["id"].ToString();
                         await LoadClientPolicies(crmClientId, accessToken);
                         isLoadingWhat += "%";
-                        InvokeAsync(StateHasChanged);
                     }
                 }
             }
@@ -367,19 +345,18 @@
         finally
         {
             isLoadingCrmId = false;
-            SortAndSeparatePolicies();
             isLoadingWhat = "Done!";
+            await InvokeAsync(StateHasChanged);
             NavigationManager.NavigateTo("Clients/List/" + clientid);
         }
     }
-    
+
     private async Task LoadClientPolicies(string clientId, string accessToken)
     {
         try
         {
             var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
             isLoadingWhat += "^";
-            InvokeAsync(StateHasChanged);
             var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
 
             if (policyData != null && policyData["_embedded"] != null)
@@ -409,10 +386,11 @@
         }
         finally
         {
-            InvokeAsync(StateHasChanged);
             isLoadingWhat += "*";
+            await InvokeAsync(StateHasChanged);
         }
     }
+    
     private void SortAndSeparatePolicies()
     {
         var today = DateTime.Today;
@@ -428,8 +406,9 @@
             .ToList();
 
         isLoadingWhat = "X";
+        StateHasChanged();
     }
-    private void FilterClients()
+    private async Task FilterClients()
     {
         if (string.IsNullOrEmpty(searchTerm))
         {
@@ -441,8 +420,7 @@
                 .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
-
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()

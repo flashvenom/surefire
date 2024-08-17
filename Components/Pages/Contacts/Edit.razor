@@ -130,6 +130,17 @@
 
     public void GoBack()
     {
-        NavigationManager.NavigateTo($"/{(Contact.CarrierId != null ? "Carriers" : "Clients")}/Details/{Contact.CarrierId ?? Contact.ClientId}");
+        if (Contact.CarrierId != null)
+        {
+            NavigationManager.NavigateTo($"/Carriers/Details/{Contact.CarrierId}");
+        }
+        else if (Contact.ClientId != null)
+        {
+            NavigationManager.NavigateTo($"/Clients/List/{Contact.ClientId}");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/Contacts");
+        }
     }
 }

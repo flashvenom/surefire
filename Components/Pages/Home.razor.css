@@ -19,9 +19,6 @@ i {
 .img-fluid {
     width:100%;
 }
-.highlighted {
-    background-color:#ffea007e;
-}
 .ttable {
     text-align: left;
     display: block !important;
@@ -32,10 +29,7 @@ i {
     font-size:1em;
 }
 .ttable th {
-    text-align: left;
-    color:#939393;
-    border-collapse: collapse;
-    font-size: .7em;
+    
 }
 #tasktable {
     padding-top: 10px;
@@ -70,9 +64,6 @@ tr .trow {
     height: 10px;
     font-size: .7em;
 }
-.page-content {
-    background-color:#fff !important;
-}
 .hprod {
     background-color: #646464;
     color: #fff;
@@ -104,4 +95,14 @@ tr .trow {
     font-size: 1.5em;
     padding-left: 7px;
     border-bottom: 1px solid #ccc;
+}
+.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.5em;
+    padding-top:5px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    background: linear-gradient(to right, #6858c7 0%,#593293 19%,#4e1359 47%,#ac283a 77%,#e55249 100%);
+    color: #fff;
+    text-align: center;
 }

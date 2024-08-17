@@ -53,7 +53,7 @@ namespace Mantis.Domain.Renewals.Services
                 RenewalDate = t.Renewal.RenewalDate,
                 Priority = t.GoalDate.HasValue
                     ? (t.GoalDate < today
-                        ? $"<span style='color:red'>{(today - t.GoalDate.Value).Days} Days Past Due</span>"
+                        ? $"<span style='color:red'>{(today - t.GoalDate.Value).Days} Days Late</span>"
                         : $"{(t.GoalDate.Value - today).Days} Days Left")
                     : "ASAP"
             }).ToList();
@@ -63,7 +63,7 @@ namespace Mantis.Domain.Renewals.Services
                 .OrderByDescending(t => t.Highlighted)
                 .ThenByDescending(t => t.GoalDate.HasValue && t.GoalDate < today)
                 .ThenBy(t => t.GoalDate)
-                .Take(15)
+                .Take(20)
                 .ToList();
         }
 
@@ -108,7 +108,7 @@ namespace Mantis.Domain.Renewals.Services
                 .OrderByDescending(t => t.Highlighted)
                 .ThenByDescending(t => t.GoalDate.HasValue && t.GoalDate < today)
                 .ThenBy(t => t.GoalDate)
-                .Take(15)
+                .Take(10)
                 .ToList();
         }
 

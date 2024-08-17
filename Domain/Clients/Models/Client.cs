@@ -2,9 +2,7 @@ using Mantis.Data;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Shared;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Mantis.Domain.Clients.Models
 {
@@ -22,6 +20,7 @@ namespace Mantis.Domain.Clients.Models
         public DateTime? UpdatedDate { get; set; }
 
         public ICollection<Policy> Policies { get; set; } = new List<Policy>();
+        [JsonIgnore]
         public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
         public ICollection<Location> Locations { get; set; } = new List<Location>();
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();

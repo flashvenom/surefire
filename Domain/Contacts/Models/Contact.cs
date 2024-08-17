@@ -33,4 +33,19 @@ namespace Mantis.Domain.Contacts.Models
         public int? CarrierId { get; set; }
         public Carrier? Carrier { get; set; }
     }
+    public class ContactDto
+    {
+        public int ContactId { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Title { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Fax { get; set; }
+        public string Mobile { get; set; }
+        public string Notes { get; set; }
+        public DateTime? DateCreated { get; set; }
+        public string AssociatedWith { get; set; } // This property will hold either Client Name or Carrier Name
+    }
+
 }

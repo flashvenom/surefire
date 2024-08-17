@@ -37,21 +37,6 @@
 </div>
 <br />
 
-<div class="sfnav @(GetNavItemClass("People"))">
-    <div class="nb-blueline@(GetNavItemClass("People"))"></div>
-    <NavLink class="nav-link" href="People" Match="NavLinkMatch.Prefix" title="People">
-        @if (GetNavItemClass("People") == "nb-active")
-        {
-            <FluentIcon Value="@(new Icons.Filled.Size24.People())" Class="active-icon" />
-        }
-        else
-        {
-            <FluentIcon Value="@(new Icons.Regular.Size24.People())" Class="inactive-icon" />
-        }
-    </NavLink>
-</div>
-<br />
-
 <div class="sfnav @(GetNavItemClass("Renewals"))">
     <div class="nb-blueline@(GetNavItemClass("Renewals"))"></div>
     <NavLink class="nav-link" href="Renewals" Match="NavLinkMatch.Prefix" title="Renewals">
@@ -78,6 +63,21 @@
         else
         {
             <FluentIcon Value="@(new Icons.Regular.Size24.BuildingRetailShield())" Class="inactive-icon" />
+        }
+    </NavLink>
+</div>
+<br />
+
+<div class="sfnav @(GetNavItemClass("Contacts"))">
+    <div class="nb-blueline@(GetNavItemClass("Contacts"))"></div>
+    <NavLink class="nav-link" href="Contacts" Match="NavLinkMatch.Prefix" title="Contacts">
+        @if (GetNavItemClass("Contacts") == "nb-active")
+        {
+            <FluentIcon Value="@(new Icons.Filled.Size24.People())" Class="active-icon" />
+        }
+        else
+        {
+            <FluentIcon Value="@(new Icons.Regular.Size24.People())" Class="inactive-icon" />
         }
     </NavLink>
 </div>

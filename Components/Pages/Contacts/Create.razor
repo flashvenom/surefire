@@ -126,6 +126,20 @@
 
     public void GoBack()
     {
-        NavigationManager.NavigateTo($"/{(NewContact.CarrierId != null ? "Carriers" : "Clients")}/Details/{NewContact.CarrierId ?? NewContact.ClientId}");
+        if (NewContact.CarrierId != null)
+        {
+            // Navigate to the Carrier's details page
+            NavigationManager.NavigateTo($"/Carriers/Details/{NewContact.CarrierId}");
+        }
+        else if (NewContact.ClientId != null)
+        {
+            // Navigate to the Client's list page
+            NavigationManager.NavigateTo($"/Clients/List/{NewContact.ClientId}");
+        }
+        else
+        {
+            // If neither CarrierId nor ClientId is present, navigate to the Contacts page
+            NavigationManager.NavigateTo("/Contacts");
+        }
     }
 }

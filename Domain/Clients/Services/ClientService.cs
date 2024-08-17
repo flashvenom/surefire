@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using Azure.Core;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace Mantis.Domain.Clients.Services
@@ -45,7 +46,23 @@ namespace Mantis.Domain.Clients.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateeClientId(int clientId, string eClientId)
+        public async Task<Client> GetClientById(int id)
+        {
+            var client = await _context.Clients
+                .Include(c => c.Address)
+                .Include(c => c.PrimaryContact)
+                .Include(c => c.Locations)
+                .Include(c => c.Contacts)
+                .Include(c => c.Policies)
+                    .ThenInclude(p => p.Carrier)
+                .Include(c => c.Policies)
+                    .ThenInclude(p => p.Wholesaler)
+                .FirstOrDefaultAsync(c => c.ClientId == id);
+
+            return client;
+        }
+
+        public async Task UpdateClientId(int clientId, string eClientId)
         {
             var client = await _context.Clients.FindAsync(clientId);
 

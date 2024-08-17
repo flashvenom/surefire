@@ -117,8 +117,8 @@
                     <i>@selectedClient.PrimaryContact.Email</i><br />
 
                     <h4 class="sf-toppad">Additional Contacts</h4>
-                    <ContactList ParentType="Client" ParentId="@selectedClient.ClientId" />
-                    @selectedClient.ClientId .. @selectedClient.Contacts.Count
+                    @* <ContactList ParentType="Client" ParentId="@selectedClient.ClientId" /> *@
+                    <ContactsListAll Contacts="@selectedClient.Contacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
                     <h4 class="sf-toppad">Additional Info</h4>
                     @selectedClient.Website
                 </div>@* sf-col-2 *@
@@ -208,7 +208,7 @@
 
 @code {
     [Parameter, SupplyParameterFromQuery]
-    public int? ClientId { get; set; }
+    public int ClientId { get; set; } = 91;
 
     private string searchTerm = string.Empty;
     private List<Client> clients = new();
@@ -232,16 +232,11 @@
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += (sender, args) => FilterClients();
 
-        if (ClientId.HasValue)
-        {
-            currentPolicies.Clear();
-            pastPolicies.Clear();
-            clientPolicies.Clear();
-            isLoadingWhat += "!";
-            var clientId = ClientId;
-            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
-            SortAndSeparatePolicies();
-        }
+        currentPolicies.Clear();
+        pastPolicies.Clear();
+        clientPolicies.Clear();
+        selectedClient = await ClientService.GetClientById(ClientId);
+        SortAndSeparatePolicies();
 
         clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
         filteredClients = new List<Client>(clients);
@@ -287,25 +282,26 @@
 
     private async void ClickHandler(ClickEventArgs<Client> args)
     {
-            //Same code as ParameterLoad - reuse by making it a method
-            currentPolicies.Clear();
-            pastPolicies.Clear();
-            clientPolicies.Clear();
-            isLoadingWhat += ".";
-            var clientId = filteredClients[args.Index].ClientId;
-            selectedClient = await Http.GetFromJsonAsync<Client>($"https://localhost:7074/api/Client/{clientId}");
+        //Same code as ParameterLoad - reuse by making it a method
+        currentPolicies.Clear();
+        pastPolicies.Clear();
+        clientPolicies.Clear();
+        //selectedClient.Contacts.Clear();
+        ClientId = filteredClients[args.Index].ClientId;
+        selectedClient = null;
+        selectedClient = await ClientService.GetClientById(ClientId);
 
-            //Get policies if we haven't fetched them from the API before
-            if (selectedClient.eClientId == null)
-            {
-                isLoadingCrmId = true;
-                isLoadingWhat += ".:";
-                await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
-            }
+        //Get policies if we haven't fetched them from the API before
+        if (selectedClient.eClientId == null)
+        {
+            isLoadingCrmId = true;
+            isLoadingWhat += ".:";
+            await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
+        }
             
-            // Separate and sort policies
-            NavigationService.SetLastClientPage("/Clients/List/" + clientId);
-            SortAndSeparatePolicies();
+        // Separate and sort policies
+        NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
+        SortAndSeparatePolicies();
         
     }
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)

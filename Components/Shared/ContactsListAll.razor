@@ -1,0 +1,75 @@
+﻿@namespace Mantis.Components.Shared
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Shared.Helpers
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<div>
+    @if (Contacts == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (!Contacts.Any())
+    {
+        <p>No contacts found for this parent.</p>
+    }
+    else
+    {
+        foreach (var item in Contacts)
+        {
+            <div class="m-contact">
+                <a href="/Contacts/Edit/@(item.ContactId)">
+                    <span class="e-btnhover e-icons e-pencil-icon" style="float:right"></span>
+                </a>
+                <span class="m-name">@item.FirstName @item.LastName</span><br />
+                @if (item.Title != null)
+                {
+                    <span class="m-title">@item.Title</span>
+
+                    <br />
+                }
+                @if (item.Email != null)
+                {
+                    <span class="m-email">@item.Email</span>
+
+                    <br />
+                }
+                @if (item.Phone != null)
+                {
+                    <span class="m-phone">@DateHelper.FormatPhoneNumber(item.Phone)</span>
+                }
+            </div>
+        }
+    }
+    <FluentButton Appearance="Appearance.Accent" OnClick="NewContact" Class="e-button">New Contact</FluentButton>
+</div>
+
+@code {
+    [Parameter]
+    public ICollection<Contact> Contacts { get; set; }  // List of contacts passed from the parent component
+
+    [Parameter]
+    public string ParentType { get; set; }
+
+    [Parameter]
+    public int ParentId { get; set; }
+
+    private void NewContact()
+    {
+        NavigationManager.NavigateTo($"/Contacts/Create?ParentType={ParentType}&ParentId={ParentId}");
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Dispose()
+    {
+
+    }
+
+}

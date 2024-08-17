@@ -69,9 +69,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Components\Shared\RelatedContacts.razor">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
     <Content Update="wwwroot\mantis.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

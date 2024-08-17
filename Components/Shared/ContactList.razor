@@ -30,12 +30,13 @@
                 @if(item.Phone != null){<span class="m-phone">@DateHelper.FormatPhoneNumber(item.Phone)</span>}
             </div>
         }
-        <span>@ParentType | @ParentId | @Contacts.Count</span>
     }
     <FluentButton Appearance="Appearance.Accent" OnClick="NewContact" Class="e-button">New Contact</FluentButton>
 </div>
 
 @code {
+    //TODO: This Component should just take a list of contacts as a parameter
+
     [Parameter]
     public string ParentType { get; set; }
 
@@ -48,11 +49,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-      
             await LoadContacts();
-        
     }
-
     private async Task LoadContacts()
     {
         var response = await Http.GetAsync($"https://localhost:7074/api/Contacts/{ParentType}/{ParentId}");

@@ -20,7 +20,6 @@ namespace Mantis.Domain.Clients.Models
         public DateTime? UpdatedDate { get; set; }
 
         public ICollection<Policy> Policies { get; set; } = new List<Policy>();
-        [JsonIgnore]
         public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
         public ICollection<Location> Locations { get; set; } = new List<Location>();
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();

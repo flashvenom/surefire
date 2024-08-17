@@ -78,6 +78,16 @@ main {
 .what {
     color: #808080;
 }
+.sf-tab {
+    background-color: #fff;
+    border-radius: 5px;
+    line-height: 1.1;
+}
+.sf-tab-container {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px #ccc;
+}
 /*--------------------------Side and Top Bars----------------------------*/
 .sidebar {
     padding-top: 20px;

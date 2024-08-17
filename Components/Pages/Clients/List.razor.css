@@ -24,7 +24,29 @@ h4 {
     max-width: 600px;
     margin: 0 auto;
 }
+:root .smallicon {
+    position:relative;
+    top:5px;
+}
+.smalltool {
+    font-size: 11px;
+    padding: 3px 5px;
+    margin: 0px;
+    color: #fff;
+    border:1px solid #ffffff68;
+    -webkit-text-decoration: none;
+    text-decoration: none;
+    border-radius:3px;
+}
 
+.smalltool:hover {
+    cursor:pointer;
+    border:1px solid #fff;
+}
+:root .smallbutton {
+    font-size: .6em !important;
+    width: 50px;
+}
 .policy {
     color: #fff;
     width: 100%;
@@ -32,11 +54,30 @@ h4 {
     padding-left: 7px;
     padding-right: 7px;
     margin-bottom: 15px;
-    border-left: 10px solid #64a2d8;
+    border-left: 10px solid #4f4f4f;
     border-radius: 5px;
-    background-color: #0f6cbd;
+    height: 45px;
+    background-color: #747474;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all .4s ease-in-out;
 }
+    .policy.expanded {
+        background-color: #0f6cbd;
+        transition: all .4s ease-in-out;
+        height: 76px;
+        border-left: 10px solid #64a2d8;
+        border-radius: 5px;
+    }
 
+    .policy .additional-links {
+        margin-top:5px;
+        transition: all .4s ease-in-out;
+    }
+
+    .policy.expanded .additional-links {
+        
+    }
 .policy-header {
     display: flex;
     justify-content: space-between;

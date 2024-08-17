@@ -4,9 +4,9 @@
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SplitButtons
 @using Syncfusion.Blazor.RichTextEditor
-@using Mantis.Domain.Shared.Helpers;
-@using Mantis.Domain.Carriers.Services;
-@using Mantis.Domain.Carriers.Models;
+@using Mantis.Domain.Shared.Helpers
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Domain.Carriers.Models
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
@@ -89,6 +89,10 @@
                                         <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" Color="Color.FillInverse" Slot="start" /></span>
                                         Edit
                                     </FluentMenuItem>
+                                    <FluentMenuItem OnClick="@((e) => HideRow(task.TaskItemId))">
+                                        <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.EyeOff())" Color="Color.FillInverse" Slot="start" /></span>
+                                        Hide
+                                    </FluentMenuItem>
 
                                 </FluentMenu>
                                 <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
@@ -170,6 +174,10 @@
         }
     .completed-row > td:not(:first-child) {
         opacity: .5 !important;
+    }
+
+    .hidden-row {
+        display:none;
     }
 
     .db {
@@ -262,6 +270,19 @@
         }
     }
 
+    private async void HideRow(int taskid)
+    {
+        Console.WriteLine("hiding row " + taskid);
+        var task = Tasks.FirstOrDefault(t => t.TaskItemId == taskid);
+        if (task != null)
+        {
+            task.IsHidden = !task.IsHidden;
+            task.IsCompleted = true;
+            await RenewalService.UpdateTaskHidden(taskid, task.IsHidden);
+            StateHasChanged();
+        }
+    }
+
     private async void AssignToMe(int taskid)
     {
         Console.WriteLine("Assigning to me " + taskid);
@@ -291,6 +312,10 @@
         if (task.IsHighlighted)
         {
             classes.Add("highlighted-row");
+        }
+        if (task.IsHidden)
+        {
+            classes.Add("hidden-row");
         }
         if (task.IsCompleted)
         {

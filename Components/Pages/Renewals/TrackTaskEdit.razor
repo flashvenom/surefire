@@ -1,76 +1,106 @@
 ﻿@page "/Renewals/EditTrackTask/{taskId:int}"
+
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
-@using Microsoft.AspNetCore.Components
+@using Mantis.Domain.Users.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
 @inject RenewalService RenewalService
+@inject UserService UserService
 @inject NavigationManager Navigation
 
 @rendermode InteractiveServer
 
-<EditForm Model="@task" OnValidSubmit="HandleValidSubmit" FormName="editTrackTaskForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<PageTitle>Edit Track Task</PageTitle>
 
-    <div>
-        <label>Task Name</label>
-        <InputText @bind-Value="task.TaskName" class="form-control" />
-    </div>
-    <div>
-        <label>Status</label>
-        <InputText @bind-Value="task.Status" class="form-control" />
-    </div>
-    <div>
-        <label>Completed</label>
-        <InputCheckbox @bind-Value="task.Completed" class="form-control" />
-    </div>
-    <div>
-        <label>Hidden</label>
-        <InputCheckbox @bind-Value="task.Hidden" class="form-control" />
-    </div>
-    <div>
-        <label>Highlighted</label>
-        <InputCheckbox @bind-Value="task.Highlighted" class="form-control" />
-    </div>
-    <div>
-        <label>Notes</label>
-        <InputTextArea @bind-Value="task.Notes" class="form-control" />
-    </div>
-    <div>
-        <label>Goal Date</label>
-        <InputDate @bind-Value="task.GoalDate" class="form-control" />
-    </div>
-    <div>
-        <label>Completed Date</label>
-        <InputDate @bind-Value="task.CompletedDate" class="form-control" />
-    </div>
-    <div>
-        <label>Assigned To</label>
-        <InputSelect @bind-Value="task.UserName" class="form-control">
-            <option value="">Select a user</option>
-            @foreach (var user in task.Users)
-            {
-                <option value="@user.UserName">@user.UserName</option>
-            }
-        </InputSelect>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save</button>
-</EditForm>
+<div class="page-content">
+    <div class="mh1">Edit Task</div>
+    @if (task == null || Users == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <EditForm Model="@task" OnValidSubmit="HandleValidSubmit" FormName="editTrackTaskForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mf-flex mf-flex-row mf-row-container">
+                <div class="mf-item-lg">
+                    <div class="mb-3">
+                        <SfTextBox id="taskName" @bind-Value="task.TaskName" Placeholder="Task Name" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.TaskName" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="status" @bind-Value="task.Status" Placeholder="Status" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.Status" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfDatePicker TValue="DateTime?" @bind-Value="task.GoalDate" Placeholder="Goal Date" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.GoalDate" class="text-danger" />
+                    </div>
+                    <table style="margin:23px;">
+                        <tr>
+                            <td><FluentCheckbox id="completed" @bind-Value="task.Completed" Label="Completed" /></td>
+                            <td><FluentCheckbox id="hidden" @bind-Value="task.Hidden" Label="Hidden" /></td>
+                            <td><FluentCheckbox id="highlighted" @bind-Value="task.Highlighted" Label="Highlighted" /></td>
+                        </tr>
+                    </table>
+                    
+                </div>
+                <div class="mf-item-lg mf-pad-left">
+                    
+                    <div class="mb-3">
+                        <SfDatePicker TValue="DateTime?" @bind-Value="task.CompletedDate" Placeholder="Completed Date" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.CompletedDate" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfDropDownList TValue="string" TItem="ApplicationUser" DataSource="@Users" Placeholder="Sub Assignee" @bind-Value="task.UserName" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Text="UserName" Value="UserName" />
+                        </SfDropDownList>
+                        <ValidationMessage For="() => task.UserName" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextArea id="notes" @bind-Value="task.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" Width="100%" />
+                        <ValidationMessage For="() => task.Notes" class="text-danger" />
+                    </div>
+                </div>
+            </div>
+            <br />
+            <SfButton Content="Cancel" CssClass="e-secondary" OnClick="CancelEdit"></SfButton>
+            <SfButton Content="Save" CssClass="e-primary" Type="Submit"></SfButton>
+        </EditForm>
+    }
+</div>
 
 @code {
     [Parameter]
     public int taskId { get; set; }
 
     private TrackTaskEditViewModel task = new();
+    private List<ApplicationUser> Users = new();
 
     protected override async Task OnInitializedAsync()
     {
         task = await RenewalService.GetTrackTaskByIdAsync(taskId);
+        Users = await UserService.GetAllUsersAsync();
+
+        if (task == null)
+        {
+            Navigation.NavigateTo("notfound");
+        }
     }
 
     private async Task HandleValidSubmit()
     {
         await RenewalService.UpdateTrackTaskAsync(task);
-        Navigation.NavigateTo("/Renewals/" + task.Renewal.RenewalId);
+        Navigation.NavigateTo($"/Renewals/{task.Renewal.RenewalId}");
+    }
+
+    private void CancelEdit()
+    {
+        Navigation.NavigateTo($"/Renewals/{task.Renewal.RenewalId}");
     }
 }

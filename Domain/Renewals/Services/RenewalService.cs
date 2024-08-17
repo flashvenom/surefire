@@ -146,6 +146,16 @@ namespace Mantis.Domain.Renewals.Services
             }
         }
 
+        public async Task UpdateTaskHidden(int taskItemId, bool isHidden)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            if (task != null)
+            {
+                task.Hidden = isHidden;
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task<ApplicationUser> AssignToMe(int taskItemId)
         {
             var task = await _context.TrackTasks.FindAsync(taskItemId);

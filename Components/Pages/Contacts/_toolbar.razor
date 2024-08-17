@@ -1,0 +1,31 @@
+﻿@namespace Mantis.Components.Pages.Contacts
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@using Mantis.Domain.Shared
+@using Mantis.Domain.Contacts.Models
+@inject NavigationManager NavigationManager
+
+<div class="page-toolbar">
+    <SfButton @onclick="@((args) => NavigateToContactCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Contact</SfButton>
+
+    <span class="sf-verthr2"></span>
+
+    @if (ContactId != 0)
+    {
+        <NavLink class="toolbar-link" href="@("Contacts/Edit/" + ContactId)" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit</span>
+        </NavLink>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int ContactId { get; set; }
+
+    private void NavigateToContactCreate()
+    {
+        NavigationManager.NavigateTo("/Contacts/Create");
+    }
+}

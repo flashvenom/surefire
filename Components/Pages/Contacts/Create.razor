@@ -3,6 +3,7 @@
 @using Mantis.Domain.Contacts.Services
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Carriers.Models
+@using Mantis.Components.Pages.Contacts
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Microsoft.AspNetCore.WebUtilities
@@ -10,6 +11,8 @@
 @inject ContactService ContactService
 
 @rendermode InteractiveServer
+
+<_toolbar />
 
 <div class="page-content">
     <div class="mh1">Create New Contact</div>

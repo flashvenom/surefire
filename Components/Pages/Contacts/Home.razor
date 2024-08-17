@@ -7,8 +7,8 @@
 @using Syncfusion.Blazor
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
-@* 
-<_toolbar ContactId="@ContactId" /> *@
+
+<_toolbar ContactId="@ContactId" />
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@ContactData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">

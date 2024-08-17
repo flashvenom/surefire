@@ -95,6 +95,14 @@
             Carrier = new Carrier();
         }
         editContext = new EditContext(Carrier);
+
+        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Carriers", Url = "/Carriers" },
+            new BreadcrumbItem { Text = "Create" }
+        });
+        StateHasChanged();
     }
 
     public async Task AddCarrier()

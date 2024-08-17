@@ -96,7 +96,6 @@
                                 <div class="sf-da">@policy.EffectiveDate.ToShortDateString()</div>
                                 <div class="sf-da">@policy.ExpirationDate.ToShortDateString()</div>
                             </div>
-
                         }
                         @if (clientPolicies != null)
                         {
@@ -117,7 +116,6 @@
                     <i>@selectedClient.PrimaryContact.Email</i><br />
 
                     <h4 class="sf-toppad">Additional Contacts</h4>
-                    @* <ContactList ParentType="Client" ParentId="@selectedClient.ClientId" /> *@
                     <ContactsListAll Contacts="@selectedClient.Contacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
                     <h4 class="sf-toppad">Additional Info</h4>
                     @selectedClient.Website
@@ -247,6 +245,7 @@
             new BreadcrumbItem { Text = "Clients" }
         });
     }
+
     public void ExpandDetails()
     {
         if (dynamicClass == "sf-quicklist")
@@ -282,14 +281,11 @@
 
     private async void ClickHandler(ClickEventArgs<Client> args)
     {
-        //Same code as ParameterLoad - reuse by making it a method
-        currentPolicies.Clear();
-        pastPolicies.Clear();
-        clientPolicies.Clear();
-        //selectedClient.Contacts.Clear();
         ClientId = filteredClients[args.Index].ClientId;
-        selectedClient = null;
         selectedClient = await ClientService.GetClientById(ClientId);
+        searchTerm = "";
+        debounceTimer.Stop();
+        debounceTimer.Start();
 
         //Get policies if we haven't fetched them from the API before
         if (selectedClient.eClientId == null)
@@ -304,6 +300,7 @@
         SortAndSeparatePolicies();
         
     }
+
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
     {
         //API Call
@@ -386,7 +383,7 @@
             await InvokeAsync(StateHasChanged);
         }
     }
-    
+
     private void SortAndSeparatePolicies()
     {
         var today = DateTime.Today;
@@ -404,6 +401,7 @@
         isLoadingWhat = "X";
         StateHasChanged();
     }
+
     private async Task FilterClients()
     {
         if (string.IsNullOrEmpty(searchTerm))

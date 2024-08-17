@@ -18,6 +18,7 @@
     <Content Remove="Components\Layout\NavMenu - Copy.razor" />
     <Content Remove="Components\Pages\Carriers\CarrierDialog.razor" />
     <Content Remove="Components\Pages\Carriers\Carriers - Copy.razor" />
+    <Content Remove="Components\Pages\Clients\IndexOld.razor" />
     <Content Remove="Components\Pages\Clients\Test.razor" />
     <Content Remove="Components\Pages\Counter.razor" />
     <Content Remove="Components\Pages\Renewals\ViewTasks.razor" />
@@ -28,6 +29,7 @@
     <None Remove="Components\Layout\NavMenu - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses.razor.css" />
+    <None Remove="Components\Pages\Clients\IndexOld.razor.css" />
     <None Remove="Components\Pages\Home.razor.css" />
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
     <None Remove="Components\Pages\Renewals\Home - Copy.razor.css" />

@@ -62,6 +62,53 @@ namespace Mantis.Domain.Clients.Services
             return client;
         }
 
+        public async Task UpdateClientAsync(Client client)
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            var existingClient = await _context.Clients
+                .Include(c => c.Address)
+                .FirstOrDefaultAsync(c => c.ClientId == client.ClientId);
+
+            if (existingClient != null)
+            {
+                // Update the basic client fields
+                existingClient.Name = client.Name;
+                existingClient.LookupCode = client.LookupCode;
+                existingClient.PhoneNumber = client.PhoneNumber;
+                existingClient.Email = client.Email;
+                existingClient.Website = client.Website;
+                existingClient.Comments = client.Comments;
+
+                // Update the associated Address
+                if (existingClient.Address != null && client.Address != null)
+                {
+                    existingClient.Address.AddressLine1 = client.Address.AddressLine1;
+                    existingClient.Address.AddressLine2 = client.Address.AddressLine2;
+                    existingClient.Address.City = client.Address.City;
+                    existingClient.Address.State = client.Address.State;
+                    existingClient.Address.PostalCode = client.Address.PostalCode;
+                }
+
+                // Update any other navigation properties if necessary
+                //existingClient.PrimaryContactId = client.PrimaryContactId;
+
+                // Track who made the changes, if necessary
+                existingClient.UpdatedDate = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // Create a new client
+        public async Task CreateClientAsync(Client client)
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            client.CreatedBy = currentUser;
+            client.eClientId = Guid.NewGuid().ToString();
+            _context.Clients.Add(client);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateClientId(int clientId, string eClientId)
         {
             var client = await _context.Clients.FindAsync(clientId);

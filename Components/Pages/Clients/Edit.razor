@@ -1,0 +1,107 @@
+﻿@page "/Clients/Edit/{ClientId:int}"
+
+@using Microsoft.EntityFrameworkCore
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Clients.Services
+@using Mantis.Data
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@inject ClientService ClientService
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<PageTitle>Edit Client</PageTitle>
+<div class="page-content">
+    <div class="mh1">Edit Client</div>
+    @if (client == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <EditForm Model="client" OnValidSubmit="UpdateClient" FormName="edit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mf-flex mf-flex-row mf-row-container">
+                <div class="mf-item-lg">
+                    <SfTextBox id="clientName" @bind-Value="client.Name" Placeholder="Client Name" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Name" class="text-danger" />
+
+                    <SfTextBox id="lookupCode" @bind-Value="client.LookupCode" Placeholder="Lookup Code" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.LookupCode" class="text-danger" />
+
+                    <SfTextBox id="phoneNumber" @bind-Value="client.PhoneNumber" Placeholder="Phone Number" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.PhoneNumber" class="text-danger" />
+
+                    <SfTextBox id="email" @bind-Value="client.Email" Placeholder="Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Email" class="text-danger" />
+
+                    <SfTextBox id="website" @bind-Value="client.Website" Placeholder="Website" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Website" class="text-danger" />
+
+                    <SfTextBox id="comments" @bind-Value="client.Comments" Placeholder="Comments" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Comments" class="text-danger" />
+                </div>
+
+                <div class="mf-item-lg mf-pad-left">
+                    <SfTextBox id="addressLine1" @bind-Value="client.Address.AddressLine1" Placeholder="Address Line 1" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.AddressLine1" class="text-danger" />
+
+                    <SfTextBox id="addressLine2" @bind-Value="client.Address.AddressLine2" Placeholder="Address Line 2" FloatLabelType="FloatLabelType.Always" />
+
+                    <SfTextBox id="city" @bind-Value="client.Address.City" Placeholder="City" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.City" class="text-danger" />
+
+                    <SfTextBox id="state" @bind-Value="client.Address.State" Placeholder="State" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.State" class="text-danger" />
+
+                    <SfTextBox id="postalCode" @bind-Value="client.Address.PostalCode" Placeholder="Postal Code" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.PostalCode" class="text-danger" />
+                </div>
+            </div>
+
+            <br />
+
+            <SfButton Content="Cancel" CssClass="e-secondary" type="button" @onclick="CancelEdit"></SfButton>&nbsp;
+            <SfButton Content="Update Client" CssClass="e-primary" type="submit"></SfButton>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int ClientId { get; set; }
+
+    private Client client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = await ClientService.GetClientById(ClientId);
+
+        if (client == null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateClient()
+    {
+        try
+        {
+            await ClientService.UpdateClientAsync(client);
+            NavigationManager.NavigateTo("/Clients/List/" + ClientId);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        NavigationManager.NavigateTo("/Clients/List/" + ClientId);
+    }
+}

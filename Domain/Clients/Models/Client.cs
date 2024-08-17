@@ -3,6 +3,7 @@ using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Shared;
 using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace Mantis.Domain.Clients.Models
 {
@@ -10,7 +11,9 @@ namespace Mantis.Domain.Clients.Models
     {
         public int ClientId { get; set; }
         public string? eClientId { get; set; }
+        [Required]
         public string LookupCode { get; set; }
+        [Required]
         public string Name { get; set; }
         public string? PhoneNumber { get; set; }
         public string? Email { get; set; }

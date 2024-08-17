@@ -16,7 +16,7 @@
         <span class="toolbar-text">Browse</span>
     </NavLink>
 
-    <NavLink class="toolbar-link" href="Clients/Personal" Match="NavLinkMatch.Prefix">
+    <NavLink class="toolbar-link" href="/Clients" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
         <span class="toolbar-text">Data</span>
     </NavLink>
@@ -39,6 +39,6 @@
 
     private void NavigateToRenewalCreate()
     {
-        NavigationManager.NavigateTo("/Client/Create");
+        NavigationManager.NavigateTo("/Clients/Create");
     }
 }

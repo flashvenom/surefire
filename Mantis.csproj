@@ -23,6 +23,7 @@
     <Content Remove="Components\Pages\Counter.razor" />
     <Content Remove="Components\Pages\Renewals\ViewTasks.razor" />
     <Content Remove="Components\Pages\Weather.razor" />
+    <Content Remove="wwwroot\mantis.css" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,13 +68,6 @@
     <PackageReference Include="Syncfusion.Blazor.SplitButtons" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Themes" Version="26.2.9" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="wwwroot\mantis.css">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>

@@ -2,19 +2,15 @@
 
 ## Overview
 
-Mantis is a comprehensive insurance management system designed to streamline the operations of commercial insurance brokers. It features robust client and policy management, seamless integration with external APIs, and efficient data handling capabilities.
+Surefire: an insurance agency management system for P&C brokers.
 
 ## Features
 
-- **Client Management**: Manage clients with detailed information, including primary contact, address, producer, CSR, and more.
-- **Policy Management**: Handle policies with various attributes such as policy number, type, status, and associated carriers and wholesalers.
-- **External API Integration**: Integrates with external APIs to fetch policy lines and related details.
-- **Authentication and Authorization**: Securely manage user access and roles using ASP.NET Core Identity.
-- **Data Persistence**: Efficiently manage data using Entity Framework Core.
+- **Track Client, Contact, Addresses, Policies and Renewals.
 
 ## Technologies Used
 
-- **ASP.NET Core**
+- **ASP.NET Core 8**
 - **Entity Framework Core**
 - **Blazor**
 - **SyncFusion Components**

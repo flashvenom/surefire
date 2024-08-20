@@ -1,19 +1,28 @@
 # Surefire
 
 ## Overview
-
-Surefire: an insurance agency management system for P&C brokers.
+Surefire: an insurance agency management system for independant P&C brokers designed with speed and efficiency in mind.
 
 ## Features
 
-- **Track Client, Contact, Addresses, Policies and Renewals.
+- **Track Clients, Contacts, Addresses and Policies. 
+- ![Surefire's client browser](https://flashvenom.com/images/surefire/clientscreen.gif)
+- **Designed to be intuitive and keep you moving through your day quickly 
+- ![Surefire's client browser](https://flashvenom.com/images/surefire/clients.jpg)
+- **Includes a renewal manager for employees to stay on top of thier marketing and submissions work-flow manager. 
+- ![Simple renewal tracking system](https://flashvenom.com/images/surefire/renewals.gif)
+- Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
+- ![Surefire's client browser](https://flashvenom.com/images/surefire/renewals.jpg)
+- **The homepage tells you what tasks you have to complete for upcoming renewals and when they're due.
+- ![Surefire's client browser](https://flashvenom.com/images/surefire/homepage.jpg)
+
 
 ## Technologies Used
 
 - **ASP.NET Core 8**
 - **Entity Framework Core**
 - **Blazor**
-- **SyncFusion Components**
+- **SyncFusion Components (DataGrid)**
 - **Newtonsoft.Json**
 - **SQL Server**
 
@@ -51,8 +60,17 @@ Surefire: an insurance agency management system for P&C brokers.
     dotnet run
     ```
 
-### Notes
+### Version History
+**.0.0.1 - 2021-08-20**
+- Initial Release
+- Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
+- Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
+- Uses Identity for user authentication and employee logins
+- Renewal Center with submission tracking
+- Master task editor to add tasks to be copied as workflow templates for renewals
+- Much more...
 
+### Roadmap / Wishlist
 - **Connect to voip system - bring up toast/card showing who is calling based on callerID**
 - **Add settings page with gear icon upper left**
 - **Add picture for people**

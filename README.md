@@ -5,16 +5,16 @@ Surefire: an insurance agency management system for independant P&C brokers desi
 
 ## Features
 
-- **Track Clients, Contacts, Addresses and Policies. 
-- ![Surefire's client browser](https://flashvenom.com/images/surefire/clientscreen.gif)
+- **Track Clients, Contacts, Addresses and Policies. (Screencap: https://flashvenom.com/images/surefire/clientscreen.gif)
+![Surefire's client browser](https://flashvenom.com/images/surefire/clientscreen.gif)
 - **Designed to be intuitive and keep you moving through your day quickly 
-- ![Surefire's client browser](https://flashvenom.com/images/surefire/clients.jpg)
-- **Includes a renewal manager for employees to stay on top of thier marketing and submissions work-flow manager. 
-- ![Simple renewal tracking system](https://flashvenom.com/images/surefire/renewals.gif)
+![Surefire's client browser](https://flashvenom.com/images/surefire/clients.jpg)
+- **Includes a renewal manager for employees to stay on top of thier marketing and submissions work-flow manager. (Screencap: https://flashvenom.com/images/surefire/renewals.gif)
+![Simple renewal tracking system](https://flashvenom.com/images/surefire/renewals.gif)
 - Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
-- ![Surefire's client browser](https://flashvenom.com/images/surefire/renewals.jpg)
+![Surefire's client browser](https://flashvenom.com/images/surefire/renewals.jpg)
 - **The homepage tells you what tasks you have to complete for upcoming renewals and when they're due.
-- ![Surefire's client browser](https://flashvenom.com/images/surefire/homepage.jpg)
+![Surefire's client browser](https://flashvenom.com/images/surefire/homepage.jpg)
 
 
 ## Technologies Used

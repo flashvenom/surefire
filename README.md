@@ -1,2 +1,2 @@
 # surefire
-Open-source insurance agency management system built on Blazor .net8
+This branch was built as a placeholder, please switch to the public dev branch.

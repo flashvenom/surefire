@@ -13,7 +13,7 @@
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@ContactData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="ContactDto"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Contacts/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Contacts/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>

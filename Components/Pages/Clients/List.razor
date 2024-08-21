@@ -275,7 +275,7 @@
         selectedClient = await ClientService.GetClientById(ClientId);
         SortAndSeparatePolicies();
 
-        clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
+        clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
         filteredClients = new List<Client>(clients);
 
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>

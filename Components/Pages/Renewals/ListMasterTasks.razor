@@ -14,10 +14,10 @@
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" 
         Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
         <GridEvents OnActionFailure="@ActionFailure" TValue="TaskMaster"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/TaskMaster"
-                       InsertUrl="https://localhost:7074/api/TaskMaster/Insert"
-                       UpdateUrl="https://localhost:7074/api/TaskMaster/Update"
-                       RemoveUrl="https://localhost:7074/api/TaskMaster/Delete"
+        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/TaskMaster"
+                       InsertUrl="https://mantismetro.azurewebsites.net/api/TaskMaster/Insert"
+                       UpdateUrl="https://mantismetro.azurewebsites.net/api/TaskMaster/Update"
+                       RemoveUrl="https://mantismetro.azurewebsites.net/api/TaskMaster/Delete"
                        Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="20"></GridPageSettings>

@@ -16,10 +16,10 @@
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true"
             Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
         <GridEvents OnActionFailure="@ActionFailure" TValue="Renewal"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Renewal"
-                       InsertUrl="https://localhost:7074/api/Renewal/Insert"
-                       UpdateUrl="https://localhost:7074/api/Renewal/Update"
-                       RemoveUrl="https://localhost:7074/api/Renewal/Delete"
+        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Renewal"
+                       InsertUrl="https://mantismetro.azurewebsites.net/api/Renewal/Insert"
+                       UpdateUrl="https://mantismetro.azurewebsites.net/api/Renewal/Update"
+                       RemoveUrl="https://mantismetro.azurewebsites.net/api/Renewal/Delete"
                        Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="20"></GridPageSettings>

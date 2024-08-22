@@ -13,46 +13,54 @@
 <PageTitle>Log in</PageTitle>
 
 <div class="page-content">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Please login...</h2>
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label for="email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                @* <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div> *@
-            </EditForm>
-        </section>
+    <section style="width:300px; padding-left:40px;">
+        <StatusMessage Message="@errorMessage" />
+        <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+            <DataAnnotationsValidator />
+            <h2>Login Required</h2>
+            <ValidationSummary class="text-danger" role="alert" />
+            <span class="sf-thead">Email</span>
+            <div class="e-input-group e-control-container e-control-wrapper e-float-input" style="padding-top:0px !important;">
+                <InputText @bind-Value="Input.Email" class="e-control e-textbox e-lib" autocomplete="username" aria-required="true" placeholder="email" />
+                <ValidationMessage For="() => Input.Email" class="text-danger" />
+            </div>
+            <div style="height:20px;"></div>
+            <span class="sf-thead">Password</span>
+            <div class="e-input-group e-control-container e-control-wrapper e-float-input valid" style="padding-top:0px !important;">
+                <InputText type="password" @bind-Value="Input.Password" class="e-control e-textbox e-lib" autocomplete="current-password" aria-required="true" placeholder="password" />
+                <ValidationMessage For="() => Input.Password" class="text-danger" />
+            </div>
+            <div style="height:10px;"></div>
+            <div class="checkbox mb-3" style="font-size:12px;">
+                <label class="form-label">
+                    <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
+                    Remember me
+                </label>
+            </div>
+            <div style="height:10px;"></div>
+            <div>
+                <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" class="w-100 btn btn-lg btn-primary">Log in</FluentButton>
+            </div>
+            @* <div>
+            <p>
+            <a href="Account/ForgotPassword">Forgot your password?</a>
+            </p>
+            <p>
+            <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
+            </p>
+            <p>
+            <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
+            </p>
+            </div> *@
+        </EditForm>
+    </section>
 </div>
-
+<style>
+    :root .e-float-input {
+                padding-top: 0px !important;
+                margin-top: 0px !important;
+    }
+    </style>
 @code {
     private string? errorMessage;
 

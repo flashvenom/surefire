@@ -5,16 +5,16 @@ Surefire: an insurance agency management system for independant P&C brokers desi
 
 ## Features
 
-- Track Clients, Contacts, Addresses and Policies. (Screencap: https://flashvenom.com/images/surefire/clientscreen.gif)
-![Surefire's client browser](https://flashvenom.com/images/surefire/clientscreen.gif)
+- Track Clients, Contacts, Addresses and Policies. (Video: https://flashvenom.com/images/surefire/clientscreen.gif)
+![Using the client screen and UI](https://flashvenom.com/images/surefire/clientscreen.gif)
 - Designed to be intuitive and keep you moving through your day quickly 
 ![Surefire's client browser](https://flashvenom.com/images/surefire/clients.jpg)
 - Includes a renewal manager for employees to stay on top of thier marketing and submissions work-flow manager. (Screencap: https://flashvenom.com/images/surefire/renewals.gif)
 ![Simple renewal tracking system](https://flashvenom.com/images/surefire/renewals.gif)
 - Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
-![Surefire's client browser](https://flashvenom.com/images/surefire/renewals.jpg)
+![Tasks and submissions](https://flashvenom.com/images/surefire/renewals.jpg)
 - The homepage tells you what tasks you have to complete for upcoming renewals and when they're due.
-![Surefire's client browser](https://flashvenom.com/images/surefire/homepage.jpg)
+![Surefire homepage](https://flashvenom.com/images/surefire/homepage.jpg)
 
 
 ## Technologies Used
@@ -22,9 +22,8 @@ Surefire: an insurance agency management system for independant P&C brokers desi
 - **ASP.NET Core 8**
 - **Entity Framework Core**
 - **Blazor**
-- **SyncFusion Components (DataGrid)**
-- **Newtonsoft.Json**
-- **SQL Server**
+- **SyncFusion Components (DataGrid mostly)**
+- **Microsoft FluentUI**
 
  
 ## Installation
@@ -71,8 +70,8 @@ Surefire: an insurance agency management system for independant P&C brokers desi
 - Much more...
 
 ### Roadmap / Wishlist
-- **Connect to voip system - bring up toast/card showing who is calling based on callerID**
-- **Add settings page with gear icon upper left**
+- **Get a basic master search going using the top search bar**
+- **Add settings page with gear icon upper right**
 - **Add picture for people**
 - **Add Google Map link to address"**
 - **Integrate OpenAI side panel**
@@ -80,13 +79,13 @@ Surefire: an insurance agency management system for independant P&C brokers desi
 - **Applications section will store basic data commonly used on apps like # of employees, gross sales, etc.**
 - **Client portal with no sign-in required - a one time use key is emailed, they can update annual check-ups, see policies, etc**
 - **Notes Areas - "Permanent Notes (for "personal touch" to store things in common / small talk and then a "Recent Events" field in which the notes get smaller lighter as weeks go by**
+- - **Connect to voip system - bring up toast/card showing who is calling based on callerID**
 - **Add logo of business - grab first google image result of "business name + logo"**
 - **Outlook Interop: Use email address of client to pull latest email chains and use OpenAI to summarize**
 - **(IVANS Api?) Add more carrier data to cross check against clients/policies - Not just what lines they quote, but what lines they are good at, what SIC codes and industries they specialize in, 5 star rating AMBest rating, etc**
 - **Use the JSON fields to add Targeted Lines of Buisness and Industries**
 - **CLIENT PAGE: renewals section, menu section switches: Glance | Policies | Attachments | Claims | Applications**
-- **Get a basic master search going using the top search bar**
-- **Create dummy database with fake client data**
-- DONE | Submission tab in renewal center
 - **Duplicate renewal center for 'Leads' and new business**
 - **SMART BREAD CRUMS: When you open a policy, certificate, etc - it adds it to the BreadCrum trail, and it stays there until you click the X or leave the client entirely - so you can switch between policies / other screens**
+- DONE | Create dummy database with fake client data**
+- DONE | Submission tab in renewal center

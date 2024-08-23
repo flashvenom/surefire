@@ -1,0 +1,13 @@
+﻿.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.5em;
+    padding-top: 5px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    background-color: #5e5e5e;
+    color: #b6b6b6;
+    text-align: center;
+}
+.completed-task {
+    opacity:.5;
+}

@@ -1,0 +1,41 @@
+﻿@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@inject TaskService TaskService
+@rendermode InteractiveServer
+
+
+<div class="sectiontitletab">Incomplete Tasks</div>
+<div class="incomplete-container">
+    @if (incompletetasks == null)
+    {
+        <p>Loading tasks...</p>
+    }
+    else if (!incompletetasks.Any())
+    {
+        <p>No tasks available.</p>
+    }
+    else
+    {
+        <table id="incomplete-table" cellspacing="0">
+            <tbody>
+                @foreach (var task in incompletetasks)
+                {
+                    <tr class="trow2">
+                        <td><span class="hprod2">@task.PolicyProduct</span><span class="hexp2">@task.RenewalDate.ToString("MM/dd")</span></td>
+                        <td class="ttname2"><a href="Renewals/@task.RenewalId">@task.TaskName</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<HomePageTasksViewModel> incompletetasks { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+    }
+}

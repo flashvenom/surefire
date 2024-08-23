@@ -1,5 +1,7 @@
 using Mantis.Data;
 using Mantis.Domain.Renewals.ViewModels;
+using Mantis.Domain.Shared;
+using Mantis.Domain.Shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -151,6 +153,34 @@ namespace Mantis.Domain.Renewals.Services
 
             return result;
         }
+
+
+        public async Task<List<DailyTask>> GetDailyTasksAsync()
+        {
+            var tasks = await _context.DailyTasks
+                .Where(task => !task.Completed)
+                .ToListAsync();
+            return tasks;
+        }
+
+        public async Task<List<DailyTask>> UpdateDailyTaskAsync(DailyTask task)
+        {
+            _context.DailyTasks.Update(task);
+
+            await _context.SaveChangesAsync();
+
+            return await GetDailyTasksAsync();
+        }
+
+        public async Task<List<DailyTask>> AddNewDailyTaskAsync(DailyTask task)
+        {
+            _context.DailyTasks.Add(task);
+
+            await _context.SaveChangesAsync();
+
+            return await GetDailyTasksAsync();
+        }
+
 
     }
 }

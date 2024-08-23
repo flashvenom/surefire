@@ -1,0 +1,50 @@
+﻿@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@inject TaskService TaskService
+@rendermode InteractiveServer
+
+<div class="sectiontitletab">Renewal Task Items</div>
+<div class="home-box">
+    @if (tasks == null)
+    {
+        <p>Loading tasks...</p>
+    }
+    else if (!tasks.Any())
+    {
+        <p>No tasks available.</p>
+    }
+    else
+    {
+        <table id="tasktable" cellspacing="0" class="ttable">
+            <thead class="tbg">
+                <tr>
+                    <th>Client</th>
+                    <th>Policy</th>
+                    <th>Task</th>
+                    <th>Priority</th>
+                </tr>
+            </thead>
+            <tbody class="tbody">
+                @foreach (var task in tasks)
+                {
+                    <tr class="trow @(task.Highlighted ? "highlighted" : "")">
+                        <td class="tcname">@task.ClientName </td>
+                        <td><span class="hprod">@task.PolicyProduct</span><span class="hexp">@task.RenewalDate.ToString("MM/dd")</span></td>
+                        <td class="ttname"><a href="Renewals/@task.RenewalId">@task.TaskName</a></td>
+                        <td class="ttpri">@((MarkupString)task.Priority)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<HomePageTasksViewModel> tasks { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+    }
+}

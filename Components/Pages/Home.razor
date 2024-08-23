@@ -1,9 +1,12 @@
 ﻿@page "/"
 @using Mantis.Components.Shared
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Shared
 @inject TaskService TaskService
+@inject PolicyService PolicyService
 @rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
@@ -19,11 +22,7 @@
         </div>
         <div style="width:500px;">
             <DailyTaskList DailyTasks="@dailyTasks" />
-            <div style="height:50px;"></div>
-            <div class="sectiontitletab">Upcoming Renewals</div>
-            <div class="home-box">
-                <h3>Coming Soon</h3>
-            </div>
+            <UpcomingRenewals upcomingRenewals="@upcomingRenewals" />
         </div>
     </div>
 </div>
@@ -37,12 +36,14 @@
     private List<HomePageTasksViewModel> tasks;
     private List<HomePageTasksViewModel> incompleteTasks;
     private List<DailyTask> dailyTasks;
+    private List<Policy> upcomingRenewals;
 
     protected override async Task OnInitializedAsync()
     {
         tasks = await TaskService.GetHomePageTasksAsync();
         incompleteTasks = await TaskService.GetIncompleteTasksForCurrentUserAsync();
         dailyTasks = await TaskService.GetDailyTasksAsync();
+        upcomingRenewals = await PolicyService.GetUpcomingRenewalsAsync();
     }
 
     protected override void OnInitialized()

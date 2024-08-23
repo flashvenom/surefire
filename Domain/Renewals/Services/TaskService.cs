@@ -157,14 +157,21 @@ namespace Mantis.Domain.Renewals.Services
 
         public async Task<List<DailyTask>> GetDailyTasksAsync()
         {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
             var tasks = await _context.DailyTasks
                 .Where(task => !task.Completed)
+                .Where(t => t.AssignedTo == currentUser)
                 .ToListAsync();
             return tasks;
         }
 
         public async Task<List<DailyTask>> UpdateDailyTaskAsync(DailyTask task)
         {
+            if(task.Completed)
+            {
+                task.CompletedDate = DateTime.Now;
+            }
             _context.DailyTasks.Update(task);
 
             await _context.SaveChangesAsync();
@@ -174,6 +181,10 @@ namespace Mantis.Domain.Renewals.Services
 
         public async Task<List<DailyTask>> AddNewDailyTaskAsync(DailyTask task)
         {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            task.AssignedTo = currentUser;
+            task.DateCreated = DateTime.Now;
+
             _context.DailyTasks.Add(task);
 
             await _context.SaveChangesAsync();

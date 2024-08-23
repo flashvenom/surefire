@@ -1,0 +1,40 @@
+﻿@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Shared
+@using Microsoft.FluentUI.AspNetCore.Components
+@rendermode InteractiveServer
+
+<div class="sectiontitletab">Expiring This Week</div>
+<div class="dailytask-box">
+    @if (upcomingRenewals == null)
+    {
+        <p>Loading renewals...</p>
+    }
+    else if (!upcomingRenewals.Any())
+    {
+        <p>No renewals available.</p>
+    }
+    else
+    {
+        <table class="upcomingTable2">
+         
+                @foreach (var policy in upcomingRenewals)
+                {
+                    <tr>
+                        <td>
+                            <span class="hprod3">@policy.Product.LineCode</span>
+                            <span class="hexp3">@policy.ExpirationDate.ToString("MM/dd")</span>
+                        </td>
+                        <td><span class="hclient3">@policy.Client?.Name</span></td>
+                    </tr>
+                }
+         
+        </table>
+    }
+</div>
+<div class="sectiontitlecloser"></div>
+@code {
+    [Parameter]
+    public List<Policy> upcomingRenewals { get; set; } = new List<Policy>();
+
+}

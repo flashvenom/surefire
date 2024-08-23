@@ -11,3 +11,12 @@
 .completed-task {
     opacity:.5;
 }
+.daily-task {
+    font-weight: 600;
+    font-family: "montserrat", sans-serif;
+    width: 100%;
+    font-size: .85em;
+}
+.dailytask-box {
+    border:1px solid #5e5e5e;
+}

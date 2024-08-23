@@ -7,7 +7,7 @@
 
 <div class="sectiontitletab">Daily Tasks</div>
 <div class="dailytask-box">
-    <FluentTextField Id="newTaskInput" Placeholder="Add a new task..." @bind-Value="newTaskName" @onkeypress="OnKeyPress">
+    <FluentTextField Id="newTaskInput" Placeholder="Add a new task..." @bind-Value="newTaskName" @onkeypress="OnKeyPress" Style="width:100% !important;">
         <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="end" Color="Color.Neutral" @onclick="async () => await AddNewTaskWithDelay()" />
     </FluentTextField>
     @if (DailyTasks == null)
@@ -20,27 +20,35 @@
     }
     else
     {
-        <FluentGrid Justify="JustifyContent.FlexStart" Spacing="3">
-            <FluentGridItem xs="12" sm="6">
-                <FluentSortableList Id="sortableList" Items="DailyTasks" OnUpdate="@SortList">
-                    <ItemTemplate>
-                        <div style="display: flex; align-items: center;" class="@GetTaskCssClass(context)">
-                            <FluentCheckbox @bind-Checked="context.Completed" @onchange="async (e) => await CompleteTask(context)" />
-                            <span style="margin-left: 10px;">@context.TaskName</span>
-                        </div>
-                    </ItemTemplate>
-                </FluentSortableList>
-            </FluentGridItem>
-        </FluentGrid>
+        <FluentSortableList Id="sortableList" Items="DailyTasks" OnUpdate="@SortList" Style="--fluent-sortable-list-item-height: 25px;">
+            <ItemTemplate>
+                <div style="display: flex; align-items: center; height:10px;" class="@GetTaskCssClass(context)" @key="context.Id">
+                    <FluentCheckbox Checked="@context.Completed" @onchange="async (e) => await CompleteTask(context)" />
+                    <span style="margin-left: 10px;">@context.TaskName</span>
+                </div>
+            </ItemTemplate>
+        </FluentSortableList>
+
     }
 </div>
+
+<style>
+    .completed-task {
+        opacity: 0.5;
+    }
+
+    :root {
+        --fluent-sortable-list-item-height: 10px;
+    }
+
+</style>
 
 @code {
     [Parameter]
     public List<DailyTask> DailyTasks { get; set; } = new List<DailyTask>();
 
     private string newTaskName = "";
-   
+
     protected override void OnParametersSet()
     {
         if (DailyTasks != null)
@@ -50,6 +58,11 @@
                 .OrderBy(t => t.Completed)
                 .ToList();
         }
+    }
+
+    private string GetTaskCssClass(DailyTask task)
+    {
+        return task.Completed ? "daily-task completed-task" : "daily-task";
     }
 
     private void SortList(FluentSortableListEventArgs args)
@@ -78,22 +91,22 @@
 
         StateHasChanged(); // Ensure the UI updates correctly
     }
+
     private async Task OnKeyPress(KeyboardEventArgs e)
     {
-        Console.WriteLine("KEY::::::::::::::::::::" + e.Key);
         if (e.Key == "Enter")
         {
             await Task.Delay(10);
             await AddNewTask();
         }
     }
+
     private async Task AddNewTaskWithDelay()
     {
-        Console.WriteLine("delay");
-        StateHasChanged();
         await Task.Delay(50);
         await AddNewTask();
     }
+
     private async Task AddNewTask()
     {
         if (!string.IsNullOrWhiteSpace(newTaskName))
@@ -111,6 +124,7 @@
             newTaskName = "";
         }
     }
+
     private async Task CompleteTask(DailyTask task)
     {
         task.Completed = true;
@@ -121,11 +135,6 @@
             .OrderBy(t => t.Completed)
             .ToList();
 
-        // Force the component to re-render after updating the list
-        StateHasChanged();
-    }
-    private string GetTaskCssClass(DailyTask task)
-    {
-        return task.Completed ? "completed-task" : string.Empty;
+        StateHasChanged(); // Ensure the UI updates correctly
     }
 }

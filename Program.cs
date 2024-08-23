@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Syncfusion.Blazor;
+using Microsoft.FluentUI.AspNetCore.Components.Components.Tooltip;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,21 +28,18 @@ builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+})
     .AddIdentityCookies();
 
 //builder.Services.AddAuthorization();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
-
 builder.Services.AddQuickGridEntityFrameworkAdapter();
-
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
@@ -57,6 +55,8 @@ builder.Services.AddScoped<PolicyService>();
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<SharedService>();
 builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<SearchService>();
+builder.Services.AddScoped<ITooltipService, TooltipService>();
 builder.Services.AddSingleton<NavigationService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddSingleton<BreadcrumbService>();
@@ -89,7 +89,7 @@ else
 {
     app.UseExceptionHandler("/Home/Error"); // Custom error page
 }
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("1234567890");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzQwNzc3NUAzMjM2MmUzMDJlMzBuMkJzRGlPajJxTEIraGFiNDZ1NThtOG9CTkxocmFvWXozNVR3TUZLUjN3PQ==");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

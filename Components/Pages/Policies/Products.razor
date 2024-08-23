@@ -13,10 +13,10 @@
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true"
             Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
         <GridEvents OnActionFailure="@ActionFailure" TValue="Product"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Product"
-                       InsertUrl="https://localhost:7074/api/Product/Insert"
-                       UpdateUrl="https://localhost:7074/api/Product/Update"
-                       RemoveUrl="https://localhost:7074/api/Product/Delete"
+        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Product"
+                       InsertUrl="https://mantismetro.azurewebsites.net/api/Product/Insert"
+                       UpdateUrl="https://mantismetro.azurewebsites.net/api/Product/Update"
+                       RemoveUrl="https://mantismetro.azurewebsites.net/api/Product/Delete"
                        Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="20"></GridPageSettings>

@@ -25,6 +25,7 @@ namespace Mantis.Domain.Carriers.Models
         public string? ServicingWebsite { get; set; }
         public string? NewSubmissionEmail { get; set; }
         public string? ServicingEmail { get; set; }
+        public string? LossRunsEmail { get; set; }
         public bool IssuingCarrier { get; set; }
         public bool Wholesaler { get; set; } = false;
         public string? AppetiteJson { get; set; }

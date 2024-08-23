@@ -13,7 +13,7 @@
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="Carrier"></GridEvents>
-        <SfDataManager  Url="https://localhost:7074/api/Carrier" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager  Url="https://mantismetro.azurewebsites.net/api/Carrier" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>

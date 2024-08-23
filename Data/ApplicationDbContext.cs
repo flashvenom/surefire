@@ -7,6 +7,7 @@ using Mantis.Domain.Renewals.Models;
 using Mantis.Domain.Shared;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Mantis.Domain.Renewals.Models;
+using Mantis.Domain.Shared.Models;
 
 namespace Mantis.Data
 {
@@ -32,6 +33,7 @@ namespace Mantis.Data
         public DbSet<Address> Address { get; set; }
         public DbSet<TaskMaster> TaskMasters { get; set; }
         public DbSet<TrackTask> TrackTasks { get; set; }
+        public DbSet<DailyTask> DailyTasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -228,6 +230,12 @@ namespace Mantis.Data
                 .WithMany()
                 .HasForeignKey("AssignedToId")
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DailyTask>()
+                .HasOne(d => d.AssignedTo)
+                .WithMany()
+                .HasForeignKey("AssignedToId")
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

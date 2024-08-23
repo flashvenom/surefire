@@ -88,6 +88,7 @@ main {
     border-radius: 5px;
     box-shadow: 0px 0px 5px #ccc;
 }
+
 /*--------------------------Side and Top Bars----------------------------*/
 .sidebar {
     padding-top: 20px;
@@ -140,7 +141,7 @@ main {
 .toolbar-text {
     -webkit-text-decoration: inherit;
     text-decoration: inherit;
-    font-family: 'Segoe UI';
+    font-family: "montserrat", sans-serif;
     position: relative;
     top: -7px;
     left: -2px;
@@ -160,6 +161,73 @@ main {
     .sf-useremail:hover {
         opacity: .9;
     }
+
+.search-popper {
+    font-family: "montserrat", sans-serif;
+    position: absolute;
+    top: -10px;
+    left: -54px;
+    width: 300px;
+    box-shadow: 0px 0px 10px #000;
+    background-color: #ffffffe7;
+    z-index: -1;
+    border-top:50px solid #593293;
+    padding-left: 12px;
+    padding-bottom: 12px;
+    word-wrap: normal;
+    white-space: nowrap;
+    color: #000;
+    overflow: hidden;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    transition: all 0.5s ease-in-out;
+}
+.search-category {
+    font-size: .65em;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #036ac4;
+    text-transform: uppercase;
+    padding-top: 6px;
+    margin-top:6px;
+    padding-bottom:2px;
+    border-top:1px solid #d3d3d3;
+}
+.search-item {
+    font-weight: 400;
+    font-size: .85em;
+    padding-left: 0px;
+    opacity:.7;
+}
+.search-item:hover {
+    opacity: 1;
+    cursor:pointer;
+    background-color:#036ac431;
+}
+.search-item-parent {
+    font-size: .6em;
+    font-weight: 600;
+    color: #6b6b6b;
+    padding-left: 25px;
+    opacity: .7;
+}
+.fsearch-hide {
+    display: none;
+}
+.fsearch-show {
+    display: block;
+}
+.fsearch-on {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-in-out;
+}
+
+.fsearch-off {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease-in-out;
+}
 /*--------------------------Main Layout Items----------------------------*/
 .app-logo {
     opacity: 0.7;
@@ -169,10 +237,20 @@ main {
     display: flex;
     align-items: center;
 }
+.fsearch-bar {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    z-index: 100 !important;
+}
 .search-bar {
     flex-grow: 1;
     display: flex;
     justify-content: center;
+    z-index:100 !important;
+}
+.fsearch-container {
+    position:relative;
 }
 
 .search-input {
@@ -183,7 +261,7 @@ main {
     border-radius: 4px;
 }
 .sf-search-input {
-    font-family: 'Segoe UI Variable Text';
+    font-family: "montserrat", sans-serif;
     font-size: 15px;
     padding: 4px 8px;
     padding-left: 30px;
@@ -511,12 +589,14 @@ a, .btn-link {
     font-weight:bold;
 }
 .sf-td-mono {
-    font-family: 'Cascadia Mono';
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
     color: #909090 !important;
 }
 .sf-thead {
     font-size: 12px;
-    font-family: 'Segoe UI';
+    font-family: "montserrat", sans-serif;
     font-weight: 600;
     text-align: left;
     color: #7a7a7a;

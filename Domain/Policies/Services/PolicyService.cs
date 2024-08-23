@@ -47,5 +47,19 @@ namespace Mantis.Domain.Policies.Services
 
             return await query.ToListAsync();
         }
+
+        public async Task<List<Policy>> GetUpcomingRenewalsAsync()
+        {
+            var currentDate = DateTime.UtcNow;
+            var upcomingDate = currentDate.AddDays(14);
+
+            var upcomingRenewals = await _context.Policies
+                .Include(p => p.Product)
+                .Include(p => p.Client)
+                .Where(p => p.ExpirationDate >= currentDate && p.ExpirationDate <= upcomingDate)
+                .ToListAsync();
+
+            return upcomingRenewals;
+        }
     }
 }

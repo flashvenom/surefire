@@ -1,0 +1,140 @@
+﻿@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Shared
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject TaskService TaskService
+@rendermode InteractiveServer
+
+<div class="sectiontitletab">Daily Tasks</div>
+<div class="dailytask-box">
+    <FluentTextField Id="newTaskInput" Placeholder="Add a new task..." @bind-Value="newTaskName" @onkeypress="OnKeyPress" Style="width:100% !important;">
+        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="end" Color="Color.Neutral" @onclick="async () => await AddNewTaskWithDelay()" />
+    </FluentTextField>
+    @if (DailyTasks == null)
+    {
+        <p>Loading tasks...</p>
+    }
+    else if (!DailyTasks.Any())
+    {
+        <p>No tasks available.</p>
+    }
+    else
+    {
+        <FluentSortableList Id="sortableList" Items="DailyTasks" OnUpdate="@SortList" Style="--fluent-sortable-list-item-height: 25px;">
+            <ItemTemplate>
+                <div style="display: flex; align-items: center; height:10px;" class="@GetTaskCssClass(context)" @key="context.Id">
+                    <FluentCheckbox Checked="@context.Completed" @onchange="async (e) => await CompleteTask(context)" />
+                    <span style="margin-left: 10px;">@context.TaskName</span>
+                </div>
+            </ItemTemplate>
+        </FluentSortableList>
+
+    }
+</div>
+
+<style>
+    .completed-task {
+        opacity: 0.5;
+    }
+
+    :root {
+        --fluent-sortable-list-item-height: 10px;
+    }
+
+</style>
+
+@code {
+    [Parameter]
+    public List<DailyTask> DailyTasks { get; set; } = new List<DailyTask>();
+
+    private string newTaskName = "";
+
+    protected override void OnParametersSet()
+    {
+        if (DailyTasks != null)
+        {
+            // Ensure completed tasks are always at the bottom
+            DailyTasks = DailyTasks
+                .OrderBy(t => t.Completed)
+                .ToList();
+        }
+    }
+
+    private string GetTaskCssClass(DailyTask task)
+    {
+        return task.Completed ? "daily-task completed-task" : "daily-task";
+    }
+
+    private void SortList(FluentSortableListEventArgs args)
+    {
+        if (args is null || args.OldIndex == args.NewIndex)
+        {
+            return;
+        }
+
+        var itemToMove = DailyTasks[args.OldIndex];
+        DailyTasks.RemoveAt(args.OldIndex);
+
+        if (args.NewIndex < DailyTasks.Count)
+        {
+            DailyTasks.Insert(args.NewIndex, itemToMove);
+        }
+        else
+        {
+            DailyTasks.Add(itemToMove);
+        }
+
+        // Re-sort tasks after manual sorting
+        DailyTasks = DailyTasks
+            .OrderBy(t => t.Completed)
+            .ToList();
+
+        StateHasChanged(); // Ensure the UI updates correctly
+    }
+
+    private async Task OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Task.Delay(10);
+            await AddNewTask();
+        }
+    }
+
+    private async Task AddNewTaskWithDelay()
+    {
+        await Task.Delay(50);
+        await AddNewTask();
+    }
+
+    private async Task AddNewTask()
+    {
+        if (!string.IsNullOrWhiteSpace(newTaskName))
+        {
+            var newTask = new DailyTask { TaskName = newTaskName, Completed = false };
+            await TaskService.AddNewDailyTaskAsync(newTask);
+
+            DailyTasks.Add(newTask);
+
+            // Re-sort tasks after adding a new one
+            DailyTasks = DailyTasks
+                .OrderBy(t => t.Completed)
+                .ToList();
+
+            newTaskName = "";
+        }
+    }
+
+    private async Task CompleteTask(DailyTask task)
+    {
+        task.Completed = true;
+        await TaskService.UpdateDailyTaskAsync(task);
+
+        // Re-sort tasks after completing one
+        DailyTasks = DailyTasks
+            .OrderBy(t => t.Completed)
+            .ToList();
+
+        StateHasChanged(); // Ensure the UI updates correctly
+    }
+}

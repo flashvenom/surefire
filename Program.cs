@@ -68,7 +68,7 @@ builder.Services.AddControllers();
 builder.Services.Configure<CrmApiOptions>(builder.Configuration.GetSection("CrmApi"));
 builder.Services.AddHttpClient<CrmApiService>(client =>
 {
-    client.BaseAddress = new Uri("https://api.***REMOVED***/");
+    client.BaseAddress = new Uri("https://api.api.com/");
 }).ConfigureHttpClient((sp, client) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();

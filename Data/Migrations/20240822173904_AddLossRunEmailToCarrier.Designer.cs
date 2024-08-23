@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240822173904_AddLossRunEmailToCarrier")]
+    partial class AddLossRunEmailToCarrier
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -189,7 +192,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Carriers", (string)null);
+                    b.ToTable("Carriers");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Clients.Models.Client", b =>
@@ -257,7 +260,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("ProducerId");
 
-                    b.ToTable("Clients", (string)null);
+                    b.ToTable("Clients");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Clients.Models.Location", b =>
@@ -292,7 +295,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("Locations", (string)null);
+                    b.ToTable("Locations");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Contacts.Models.Contact", b =>
@@ -372,7 +375,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("Contacts", (string)null);
+                    b.ToTable("Contacts");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Application", b =>
@@ -388,7 +391,7 @@ namespace Mantis.Migrations
 
                     b.HasKey("ApplicationId");
 
-                    b.ToTable("Application", (string)null);
+                    b.ToTable("Application");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Claim", b =>
@@ -416,7 +419,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("Claims", (string)null);
+                    b.ToTable("Claims");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Policy", b =>
@@ -506,7 +509,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("WholesalerId");
 
-                    b.ToTable("Policies", (string)null);
+                    b.ToTable("Policies");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.Renewal", b =>
@@ -540,6 +543,7 @@ namespace Mantis.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Notes")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PolicyId")
@@ -568,7 +572,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("WholesalerId");
 
-                    b.ToTable("Renewals", (string)null);
+                    b.ToTable("Renewals");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.Submission", b =>
@@ -625,7 +629,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("WholesalerId");
 
-                    b.ToTable("Submissions", (string)null);
+                    b.ToTable("Submissions");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.TaskMaster", b =>
@@ -662,7 +666,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("ParentTaskId");
 
-                    b.ToTable("TaskMasters", (string)null);
+                    b.ToTable("TaskMasters");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.TrackTask", b =>
@@ -720,7 +724,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("RenewalId");
 
-                    b.ToTable("TrackTasks", (string)null);
+                    b.ToTable("TrackTasks");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Address", b =>
@@ -751,7 +755,7 @@ namespace Mantis.Migrations
 
                     b.HasKey("AddressId");
 
-                    b.ToTable("Address", (string)null);
+                    b.ToTable("Address");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Attachment", b =>
@@ -800,7 +804,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("RenewalId");
 
-                    b.ToTable("Attachments", (string)null);
+                    b.ToTable("Attachments");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Driver", b =>
@@ -839,41 +843,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("Drivers", (string)null);
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Shared.Models.DailyTask", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AssignedToId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("Completed")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("Highlighted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("TaskName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedToId");
-
-                    b.ToTable("DailyTasks", (string)null);
+                    b.ToTable("Drivers");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Product", b =>
@@ -906,7 +876,7 @@ namespace Mantis.Migrations
 
                     b.HasKey("ProductId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Vehicle", b =>
@@ -951,7 +921,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("Vehicles", (string)null);
+                    b.ToTable("Vehicles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1378,16 +1348,6 @@ namespace Mantis.Migrations
                     b.HasOne("Mantis.Domain.Policies.Models.Policy", null)
                         .WithMany("Drivers")
                         .HasForeignKey("PolicyId");
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Shared.Models.DailyTask", b =>
-                {
-                    b.HasOne("Mantis.Data.ApplicationUser", "AssignedTo")
-                        .WithMany()
-                        .HasForeignKey("AssignedToId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("AssignedTo");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Vehicle", b =>

@@ -89,7 +89,7 @@ else
 {
     app.UseExceptionHandler("/Home/Error"); // Custom error page
 }
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzQwNzc3NUAzMjM2MmUzMDJlMzBuMkJzRGlPajJxTEIraGFiNDZ1NThtOG9CTkxocmFvWXozNVR3TUZLUjN3PQ==");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("1234567890");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

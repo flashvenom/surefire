@@ -44,5 +44,20 @@ namespace Mantis.Domain.Shared.Services
                 })
                 .ToListAsync();
         }
+
+        public ApplicationUser GetApplicationUserById(string userId)
+        {
+            var user = _userManager.FindByIdAsync(userId).GetAwaiter().GetResult();
+
+            if (user == null)
+            {
+                // Handle the case where the user is not found
+                return null;
+            }
+            else
+            {
+                return user;
+            }
+        }
     }
 }

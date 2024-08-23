@@ -161,6 +161,73 @@ main {
     .sf-useremail:hover {
         opacity: .9;
     }
+
+.search-popper {
+    font-family: "montserrat", sans-serif;
+    position: absolute;
+    top: -10px;
+    left: -54px;
+    width: 300px;
+    box-shadow: 0px 0px 10px #000;
+    background-color: #ffffffe7;
+    z-index: -1;
+    border-top:50px solid #593293;
+    padding-left: 12px;
+    padding-bottom: 12px;
+    word-wrap: normal;
+    white-space: nowrap;
+    color: #000;
+    overflow: hidden;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    transition: all 0.5s ease-in-out;
+}
+.search-category {
+    font-size: .65em;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #036ac4;
+    text-transform: uppercase;
+    padding-top: 6px;
+    margin-top:6px;
+    padding-bottom:2px;
+    border-top:1px solid #d3d3d3;
+}
+.search-item {
+    font-weight: 400;
+    font-size: .85em;
+    padding-left: 0px;
+    opacity:.7;
+}
+.search-item:hover {
+    opacity: 1;
+    cursor:pointer;
+    background-color:#036ac431;
+}
+.search-item-parent {
+    font-size: .6em;
+    font-weight: 600;
+    color: #6b6b6b;
+    padding-left: 25px;
+    opacity: .7;
+}
+.fsearch-hide {
+    display: none;
+}
+.fsearch-show {
+    display: block;
+}
+.fsearch-on {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-in-out;
+}
+
+.fsearch-off {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease-in-out;
+}
 /*--------------------------Main Layout Items----------------------------*/
 .app-logo {
     opacity: 0.7;
@@ -170,10 +237,20 @@ main {
     display: flex;
     align-items: center;
 }
+.fsearch-bar {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    z-index: 100 !important;
+}
 .search-bar {
     flex-grow: 1;
     display: flex;
     justify-content: center;
+    z-index:100 !important;
+}
+.fsearch-container {
+    position:relative;
 }
 
 .search-input {

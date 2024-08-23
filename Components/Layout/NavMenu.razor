@@ -25,7 +25,7 @@
 
 <div class="sfnav @(GetNavItemClass("Clients"))">
     <div class="nb-blueline@(GetNavItemClass("Clients"))"></div>
-    <NavLink class="nav-link" href="@NavigationService.GetLastClientPage()" Match="NavLinkMatch.Prefix" title="Clients">
+    <NavLink Id="btnClients" class="nav-link" href="@NavigationService.GetLastClientPage()" Match="NavLinkMatch.Prefix" title="Clients">
         @if (GetNavItemClass("Clients") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.Briefcase())" Class="active-icon" />
@@ -35,12 +35,13 @@
             <FluentIcon Value="@(new Icons.Regular.Size24.Briefcase())" Class="inactive-icon" />
         }
     </NavLink>
+    <FluentTooltip Anchor="btnClients" HideTooltipOnCursorLeave="true" Position=TooltipPosition.End Delay="0" class="ttclass">Clients</FluentTooltip>
 </div>
 <br />
 
 <div class="sfnav @(GetNavItemClass("Renewals"))">
     <div class="nb-blueline@(GetNavItemClass("Renewals"))"></div>
-    <NavLink class="nav-link" href="Renewals" Match="NavLinkMatch.Prefix" title="Renewals">
+    <NavLink Id="btnRenewals" class="nav-link" href="Renewals" Match="NavLinkMatch.Prefix" title="Renewals">
         @if (GetNavItemClass("Renewals") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.ApprovalsApp())" Class="active-icon" />
@@ -50,13 +51,14 @@
             <FluentIcon Value="@(new Icons.Regular.Size24.ApprovalsApp())" Class="inactive-icon" />
         }
     </NavLink>
+    <FluentTooltip Anchor="btnRenewals" HideTooltipOnCursorLeave="true" Position=TooltipPosition.End Delay="0" class="ttclass">Renewals</FluentTooltip>
 </div>
 <br />
 <hr>
 <br />
 <div class="sfnav @(GetNavItemClass("Carriers"))">
     <div class="nb-blueline@(GetNavItemClass("Carriers"))"></div>
-    <NavLink class="nav-link" href="Carriers" Match="NavLinkMatch.Prefix" title="Carriers">
+    <NavLink Id="btnCarriers" class="nav-link" href="Carriers" Match="NavLinkMatch.Prefix" title="Carriers">
         @if (GetNavItemClass("Carriers") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.BuildingRetailShield())" Class="active-icon" />
@@ -66,12 +68,14 @@
             <FluentIcon Value="@(new Icons.Regular.Size24.BuildingRetailShield())" Class="inactive-icon" />
         }
     </NavLink>
+    <FluentTooltip Anchor="btnCarriers" HideTooltipOnCursorLeave="true" Position=TooltipPosition.End Delay="0" class="ttclass">Carriers</FluentTooltip>
+
 </div>
 <br />
 
 <div class="sfnav @(GetNavItemClass("Contacts"))">
     <div class="nb-blueline@(GetNavItemClass("Contacts"))"></div>
-    <NavLink class="nav-link" href="Contacts" Match="NavLinkMatch.Prefix" title="Contacts">
+    <NavLink Id="btnContacts" class="nav-link" href="Contacts" Match="NavLinkMatch.Prefix" title="Contacts">
         @if (GetNavItemClass("Contacts") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.People())" Class="active-icon" />
@@ -81,12 +85,15 @@
             <FluentIcon Value="@(new Icons.Regular.Size24.People())" Class="inactive-icon" />
         }
     </NavLink>
+    <FluentTooltip Anchor="btnContacts" HideTooltipOnCursorLeave="true" Position=TooltipPosition.End Delay="0" class="ttclass">Contacts</FluentTooltip>
+
+
 </div>
 <br />
 
 <div class="sfnav @(GetNavItemClass("Locations"))">
     <div class="nb-blueline@(GetNavItemClass("Locations"))"></div>
-    <NavLink class="nav-link" href="Locations" Match="NavLinkMatch.Prefix" title="Locations">
+    <NavLink Id="btnLocations" class="nav-link" href="Locations" Match="NavLinkMatch.Prefix" title="Locations">
         @if (GetNavItemClass("Locations") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.Location())" Class="active-icon" />
@@ -96,6 +103,8 @@
             <FluentIcon Value="@(new Icons.Regular.Size24.Location())" Class="inactive-icon" />
         }
     </NavLink>
+    <FluentTooltip Anchor="btnLocations" HideTooltipOnCursorLeave="true" Position=TooltipPosition.End Delay="0" class="ttclass">Locations</FluentTooltip>
+
 </div>
 <br />
 
@@ -103,7 +112,7 @@
 
 <div class="sfnav @(GetNavItemClass("Policies"))">
     <div class="nb-blueline@(GetNavItemClass("Policies"))"></div>
-    <NavLink class="nav-link" href="Policies" Match="NavLinkMatch.Prefix" title="Policies">
+    <NavLink Id="btnPolicies" class="nav-link" href="Policies" Match="NavLinkMatch.Prefix" title="Policies">
         @if (GetNavItemClass("Policies") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.DocumentMultiple())" Class="active-icon" />
@@ -113,6 +122,8 @@
             <FluentIcon Value="@(new Icons.Regular.Size24.DocumentMultiple())" Class="inactive-icon" />
         }
     </NavLink>
+    <FluentTooltip Anchor="btnPolicies" HideTooltipOnCursorLeave="true" Position=TooltipPosition.End Delay="0" class="ttclass">Policies</FluentTooltip>
+
 </div>
 <br />
 

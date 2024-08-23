@@ -55,7 +55,7 @@ builder.Services.AddScoped<PolicyService>();
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<SharedService>();
 builder.Services.AddScoped<TaskService>();
-
+builder.Services.AddScoped<SearchService>();
 builder.Services.AddScoped<ITooltipService, TooltipService>();
 builder.Services.AddSingleton<NavigationService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();

@@ -11,7 +11,7 @@ namespace Mantis.Domain.Renewals.Models
     {
         public int RenewalId { get; set; }
         public DateTime RenewalDate { get; set; }
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
         public string? ExpiringPolicyNumber { get; set; }
         public decimal? ExpiringPremium { get; set; }
         public DateTime? DateCreated { get; set; } = DateTime.UtcNow;

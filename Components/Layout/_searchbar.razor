@@ -1,0 +1,113 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Shared.Models
+@inject SearchService SearchService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<div class="fsearch-container">
+    <div class="fsearch-bar">
+        <FluentTextField Id="fSearcher" @bind-Value="mainSearchString" @oninput="OnInputChanged" @onfocusout="OnBlur" Placeholder="Search everything..." Class="fsearch-quick" @onblur="OnBlur">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
+        </FluentTextField>
+    </div>
+
+
+    <div class="search-popper @( _visibleL ? "fsearch-on" : "fsearch-off") @( _hidder ? "fsearch-show" : "fsearch-hide")">
+            @{
+                string dataType = "";
+            }
+            @if (searchResults != null){
+                @foreach (var item in searchResults)
+                {
+                    if (item.DataType != dataType)
+                    {
+                        dataType = item.DataType;
+                        <div class="search-category">@item.DataType</div>
+                    }
+                    <div class="search-item" @onclick="() => GoLink(item)">@item.Primary</div>
+                    @if(item.Parent?.Length != null)
+                    {
+                        <div class="search-item-parent">@item.Parent</div>
+                    }
+                }
+            }
+        </div>
+    
+</div>
+@code {
+    bool _visibleL, _hidder;
+    string mainSearchString { get; set; } = "";
+    private List<FireSearchResultViewModel> searchResults;
+    private System.Timers.Timer debounceTimer;
+    private System.Timers.Timer debounceTimerHide;
+
+    protected override async Task OnInitializedAsync()
+    {
+        debounceTimer = new System.Timers.Timer(500);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += (sender, args) => UpdateSearch();
+
+        debounceTimerHide = new System.Timers.Timer(500);
+        debounceTimerHide.AutoReset = false;
+        debounceTimerHide.Elapsed += (sender, args) => HidePopper();
+    }
+    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        mainSearchString = e.Value.ToString();
+        debounceTimer.Stop();
+        debounceTimer.Start();
+    }
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+        debounceTimerHide?.Dispose();
+    }
+    private void OnBlur()
+    {
+        debounceTimerHide.Stop();
+        debounceTimerHide.Start();
+        _visibleL = false;
+    }
+    private void HidePopper()
+    {
+        Console.WriteLine("HidePopper--------------------------------");
+        _hidder = false;
+        InvokeAsync(StateHasChanged);
+    }
+    private async void UpdateSearch()
+    {
+        //searchResults = await SearchService.FireSearchClients(mainSearchString);
+        searchResults = await SearchService.SearchAllAsync(mainSearchString);
+        Console.WriteLine(":");
+        _visibleL = true;
+        _hidder = true;
+        InvokeAsync(StateHasChanged);
+    }
+    public void GoLink(FireSearchResultViewModel item)
+    {
+        if(item.DataType == "Client")
+        {
+            NavigationManager.NavigateTo($"/Clients/List/{item.Id}");
+        }
+        if (item.DataType == "Carrier")
+        {
+            NavigationManager.NavigateTo($"/Carriers/Details/{item.Id}");
+        }
+        if (item.DataType == "Contact")
+        {
+            NavigationManager.NavigateTo($"/Contacts/Details/{item.Id}");
+        }
+        if (item.DataType == "Address")
+        {
+            NavigationManager.NavigateTo($"/Clients/List/{item.Id}");
+        }
+        if (item.DataType == "Policy")
+        {
+            NavigationManager.NavigateTo($"/Clients/List/{item.Id}");
+        }
+        Console.WriteLine("GoLink" + item.DataType + ":" + item.Id);
+    }
+}

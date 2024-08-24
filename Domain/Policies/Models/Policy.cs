@@ -36,11 +36,16 @@ namespace Mantis.Domain.Policies.Models
         public ICollection<Driver> Drivers { get; set; } = new List<Driver>();
         public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
         public ICollection<Renewal> Renewals { get; set; } = new List<Renewal>();
+        public ICollection<Loss> Losses { get; set; } = new List<Loss>();
+        public ICollection<RatingBasis> RatingBases { get; set; } = new List<RatingBasis>();
 
         // Foreign keys
         public int ClientId { get; set; }
         [JsonIgnore]
         public Client Client { get; set; }
+        public GeneralLiabilityCoverage? GeneralLiabilityCoverage { get; set; }
+        public WorkCompCoverage? WorkCompCoverage { get; set; }
+        public AutoCoverage? AutoCoverage { get; set; }
         public ApplicationUser? Producer { get; set; }
         public string? CSRId { get; set; }
         public ApplicationUser? CSR { get; set; }

@@ -25,6 +25,7 @@ namespace Mantis.Domain.Policies.Models
         //Dependencies
         public ApplicationUser? UserModified { get; set; }
         public Policy? Policy { get; set; }
+        public int? PolicyId { get; set; }
         public Product? Product { get; set; }
         public Location? Location { get; set; }
 

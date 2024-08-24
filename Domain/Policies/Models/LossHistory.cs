@@ -2,9 +2,9 @@
 
 namespace Mantis.Domain.Policies.Models
 {
-    public class LossHistory
+    public class Loss
     {
-        public int LossHistoryId { get; set; }
+        public int LossId { get; set; }
         public DateTime? DateOccurred { get; set; }
         public string? ShortDescription { get; set; }
         public string? LongDescription { get; set; }
@@ -17,6 +17,7 @@ namespace Mantis.Domain.Policies.Models
         //FKs
         public ApplicationUser? UserModified { get; set; }
         public Policy? Policy { get; set; }
+        public int? PolicyId { get; set; }
     }
 
 }

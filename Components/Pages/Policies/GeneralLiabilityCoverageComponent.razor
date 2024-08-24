@@ -1,0 +1,32 @@
+﻿@* @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+<div>
+    <p>Each Occurrence: 
+        <SfInPlaceEditor Mode="Inline" Value="@GeneralLiabilityCoverage.EachOccurrence" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateCoverageField(args, "EachOccurrence"))">
+            <InPlaceEditorNumericTextBox Value="@GeneralLiabilityCoverage.EachOccurrence"></InPlaceEditorNumericTextBox>
+        </SfInPlaceEditor>
+    </p>
+    <p>Damage to Premises: 
+        <SfInPlaceEditor Mode="Inline" Value="@GeneralLiabilityCoverage.DamageToPremises" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateCoverageField(args, "DamageToPremises"))">
+            <InPlaceEditorNumericTextBox Value="@GeneralLiabilityCoverage.DamageToPremises"></InPlaceEditorNumericTextBox>
+        </SfInPlaceEditor>
+    </p>
+    <!-- Repeat for other fields -->
+</div>
+
+@code {
+    [Parameter]
+    public GeneralLiabilityCoverage GeneralLiabilityCoverage { get; set; }
+
+    private async Task UpdateCoverageField(InPlaceEditorActionBeginEventArgs args, string fieldName)
+    {
+        // Logic to update the GeneralLiabilityCoverage model in the database
+        await PolicyService.UpdateGeneralLiabilityCoverageFieldAsync(GeneralLiabilityCoverage.GeneralLiabilityCoverageId, fieldName, args.Value);
+    }
+}
+ *@

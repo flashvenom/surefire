@@ -1,0 +1,48 @@
+﻿@* @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+<div>
+    @foreach (var ratingBasis in RatingBases)
+    {
+        <div>
+            <SfInPlaceEditor Mode="Inline" Value="@ratingBasis.ClassCode" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateRatingBasisField(args, ratingBasis.RatingBasisId, "ClassCode"))">
+                <InPlaceEditorTextBox Value="@ratingBasis.ClassCode"></InPlaceEditorTextBox>
+            </SfInPlaceEditor>
+            <SfInPlaceEditor Mode="Inline" Value="@ratingBasis.BaseRate" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateRatingBasisField(args, ratingBasis.RatingBasisId, "BaseRate"))">
+                <InPlaceEditorNumericTextBox Value="@ratingBasis.BaseRate"></InPlaceEditorNumericTextBox>
+            </SfInPlaceEditor>
+            <!-- Add more fields as necessary -->
+            <button @onclick="() => DeleteRatingBasis(ratingBasis.RatingBasisId)">Delete</button>
+        </div>
+    }
+
+    <button @onclick="AddRatingBasis">Add New Rating Basis</button>
+</div>
+
+@code {
+    [Parameter]
+    public ICollection<RatingBasis> RatingBases { get; set; }
+
+    private async Task UpdateRatingBasisField(InPlaceEditorActionBeginEventArgs args, int ratingBasisId, string fieldName)
+    {
+        await RatingBasisService.UpdateFieldAsync(ratingBasisId, fieldName, args.Value);
+    }
+
+    private async Task AddRatingBasis()
+    {
+        // Logic to add a new RatingBasis
+        var newRatingBasis = await RatingBasisService.CreateAsync(new RatingBasis { PolicyId = ... });
+        RatingBases.Add(newRatingBasis);
+    }
+
+    private async Task DeleteRatingBasis(int ratingBasisId)
+    {
+        await RatingBasisService.DeleteAsync(ratingBasisId);
+        RatingBases.Remove(RatingBases.First(rb => rb.RatingBasisId == ratingBasisId));
+    }
+}
+ *@

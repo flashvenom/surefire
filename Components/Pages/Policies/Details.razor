@@ -1,0 +1,173 @@
+﻿@page "/Policies/Details/{PolicyId:int}"
+@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.InPlaceEditor
+@using Syncfusion.Blazor.Calendars
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+<h3>Policy Details</h3>
+
+@if (Policy is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="page-content">
+       
+        <FluentGrid>
+            <FluentGridItem xs="1">
+                Policy Number
+            </FluentGridItem>
+            <FluentGridItem xs="2">
+                <SfInPlaceEditor @bind-Value="@Policy.PolicyNumber" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" PrimaryKey="@Policy.PolicyNumber" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                    <EditorComponent>
+                        <SfTextBox @bind-Value="@Policy.PolicyNumber" Placeholder="Policy Number" FloatLabelType="FloatLabelType.Never"></SfTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionSuccess="@OnSuccess" OnActionFailure="@OnActionFailureHandler" OnActionBegin="@(args => UpdatePolicyField(args, "PolicyNumber"))" TValue="string"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </FluentGridItem>
+            <FluentGridItem xs="1">
+                Premium
+            </FluentGridItem>
+            <FluentGridItem xs="2">
+                <SfInPlaceEditor @bind-Value="@Policy.Premium" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c2" @bind-Value="@Policy.Premium"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionSuccess="@(args => OnSuccess2(args, Policy))" OnActionFailure="@(args => OnActionFailureHandler2(args, Policy))" OnActionBegin="@(args => UpdatePolicyField2(args, Policy))" TValue="decimal"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </FluentGridItem>
+        </FluentGrid>
+
+        <FluentGrid>
+            <FluentGridItem xs="1">
+                Effective Date
+            </FluentGridItem>
+            <FluentGridItem xs="2">
+                <SfInPlaceEditor @bind-Value="@Policy.EffectiveDate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Date" TValue="DateTime" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                    <EditorComponent>
+                        <SfDatePicker @bind-Value="@Policy.EffectiveDate"></SfDatePicker>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdatePolicyNow(Policy))" TValue="DateTime"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </FluentGridItem>
+            <FluentGridItem xs="1">
+                Expiration Date
+            </FluentGridItem>
+            <FluentGridItem xs="2">
+                <SfInPlaceEditor @bind-Value="@Policy.ExpirationDate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Date" TValue="DateTime" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                    <EditorComponent>
+                        <SfDatePicker @bind-Value="@Policy.ExpirationDate"></SfDatePicker>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdatePolicyNow(Policy))" TValue="DateTime"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </FluentGridItem>
+        </FluentGrid>
+        
+
+        
+
+        <p>Effective Date: @Policy.EffectiveDate.ToShortDateString()</p>
+        <p>Expiration Date: @Policy.ExpirationDate.ToShortDateString()</p>
+
+        
+
+        <p>Premium: @Policy.Premium.ToString("C")</p>
+        
+    </div>
+
+    <div>
+        <h4>General Liability Coverage</h4>
+        @* <GeneralLiabilityCoverageComponent GeneralLiabilityCoverage="@Policy.GeneralLiabilityCoverage" /> *@
+    </div>
+}
+<!-- Rating Basis Section -->
+@* <div>
+    <h4>Rating Basis</h4>
+    <RatingBasisComponent RatingBases="@Policy.RatingBases" />
+</div>
+
+<!-- Loss History Section -->
+<div>
+    <h4>Loss History</h4>
+    <LossHistoryComponent Losses="@Policy.Losses" />
+ </div>*@
+ <style>
+     .sf-ti {
+         width:200px;
+
+     }
+     .e-inplaceeditor .e-editable-value-wrapper .e-editable-value {
+    border-bottom: 2px dotted green;
+    color: red;
+    font-size: 12px;
+    font-family: Segoe UI;
+}
+
+    .e-inplaceeditor .e-editable-value-container {
+        width:190px !important;
+        position:relative;
+        top:4px;
+        left:1px;
+    }
+    </style>
+@code {
+    [Parameter]
+    public int PolicyId { get; set; }
+
+    private Policy Policy { get; set; }
+
+    public SfInPlaceEditor<string> inline1 { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Policy = await PolicyService.GetPolicyByIdAsync(PolicyId);
+    }
+
+    public void OnActionBeginHandler(ActionBeginEventArgs<string> args)
+    {
+        // Custom logic here
+        var myargs = args;
+    }
+
+    //String
+    private async Task UpdatePolicyField(ActionBeginEventArgs<string> args, string fieldName)
+    {
+        await PolicyService.UpdatePolicyContextAsync(Policy, fieldName, args.Data.Value);
+    }
+    public void OnActionFailureHandler(Syncfusion.Blazor.InPlaceEditor.ActionEventArgs<string> args)
+    {
+        Console.WriteLine("Event is triggered");
+    }
+
+    public void OnSuccess(Syncfusion.Blazor.InPlaceEditor.ActionEventArgs<string> args)
+    {
+        Console.WriteLine("Event is triggered");
+    }
+
+    //Decimal
+    private async Task UpdatePolicyField2(ActionBeginEventArgs<decimal> args, Policy Policy)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+    public void OnActionFailureHandler2(Syncfusion.Blazor.InPlaceEditor.ActionEventArgs<decimal> args, Policy Policy)
+    {
+        Console.WriteLine("Event is triggered");
+    }
+    public void OnSuccess2(Syncfusion.Blazor.InPlaceEditor.ActionEventArgs<decimal> args, Policy Policy)
+    {
+        Console.WriteLine("Event is triggered");
+    }
+
+    //Decimal
+    private async Task UpdatePolicyNow(Policy Policy)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+}

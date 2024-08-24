@@ -65,6 +65,7 @@
     <PackageReference Include="Syncfusion.Blazor.Calendars" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Grid" Version="26.2.9" />
+    <PackageReference Include="Syncfusion.Blazor.InPlaceEditor" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.RichTextEditor" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.SfPdfViewer" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Spinner" Version="26.2.9" />

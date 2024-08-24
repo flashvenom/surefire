@@ -137,5 +137,24 @@ namespace Mantis.Domain.Policies.Services
             return new { result = DataSource, count = TotalRecordsCount };
         }
 
+
+        [HttpPost("saveinline")]
+        public async Task<IActionResult> Save([FromBody] Policy policy)
+        {
+            var existingPolicy = await _context.Policies.FindAsync(policy.PolicyId);
+            if (existingPolicy == null)
+            {
+                return NotFound();
+            }
+
+            existingPolicy.PolicyNumber = policy.PolicyNumber;
+            // Update other fields as necessary
+
+            _context.Policies.Update(existingPolicy);
+            await _context.SaveChangesAsync();
+
+            return Ok(existingPolicy);
+        }
     }
+
 }

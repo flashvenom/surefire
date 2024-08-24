@@ -2,8 +2,10 @@
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SfPdfViewer
 @inject NavigationManager NavigationManager
+@inject IWebHostEnvironment Environment
 
 @rendermode InteractiveServer
+
 <SfButton OnClick="@ExportAsStream">Export JSON</SfButton>
 <SfButton OnClick="@ImportFromStream">Import JSON</SfButton>
 
@@ -15,23 +17,38 @@
     private string DocumentPath { get; set; } = "";
     private string JsonPath { get; set; } = "";
     private SfPdfViewer2 pdfViewer;
-    Stream stream;
-
+    private Stream stream;
 
     protected override void OnInitialized()
     {
         DocumentPath = "wwwroot/forms/a025-2016-03.pdf";
-        JsonPath = "wwwroot/forms/a025-2016-03.json";
+        JsonPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03.json");
     }
 
     public async void ExportAsStream()
     {
+        // Export form field data as JSON and save it to a stream
         stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        // Optionally, save the stream to a file for later use
+        using (var fileStream = new FileStream(JsonPath, FileMode.Create, FileAccess.Write))
+        {
+            await stream.CopyToAsync(fileStream);
+        }
     }
 
     // Event triggers on Import JSON button click.
     public async void ImportFromStream()
     {
-        await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
+        // Read the JSON file into a stream
+        using (var fileStream = new FileStream(JsonPath, FileMode.Open, FileAccess.Read))
+        {
+            stream = new MemoryStream();
+            await fileStream.CopyToAsync(stream);
+            stream.Position = 0; // Reset stream position to the beginning
+
+            // Import the form field data from the stream into the PDF viewer
+            await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
+        }
     }
 }

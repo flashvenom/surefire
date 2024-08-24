@@ -1,0 +1,37 @@
+﻿@page "/Forms/Certificate"
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.SfPdfViewer
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+<SfButton OnClick="@ExportAsStream">Export JSON</SfButton>
+<SfButton OnClick="@ImportFromStream">Import JSON</SfButton>
+
+<div class="control-section">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="640px" Width="100%"></SfPdfViewer2>
+</div>
+
+@code {
+    private string DocumentPath { get; set; } = "";
+    private string JsonPath { get; set; } = "";
+    private SfPdfViewer2 pdfViewer;
+    Stream stream;
+
+
+    protected override void OnInitialized()
+    {
+        DocumentPath = "wwwroot/forms/a025-2016-03.pdf";
+        JsonPath = "wwwroot/forms/a025-2016-03.json";
+    }
+
+    public async void ExportAsStream()
+    {
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+    }
+
+    // Event triggers on Import JSON button click.
+    public async void ImportFromStream()
+    {
+        await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
+    }
+}

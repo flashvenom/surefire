@@ -8,12 +8,16 @@ using Mantis.Domain.Renewals.Services;
 using Mantis.Domain.Contacts.Services;
 using Mantis.Domain.Shared.Services;
 using Mantis.Domain.Users.Services;
+using Mantis.Domain.Voip;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Syncfusion.Blazor;
 using Microsoft.FluentUI.AspNetCore.Components.Components.Tooltip;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.SignalR.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +67,20 @@ builder.Services.AddSingleton<BreadcrumbService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
+
+//RingCentral API Service
+builder.Services.AddSignalR();
+builder.Services.AddScoped<CallAlertService>();
+builder.Services.Configure<RingCentralOptions>(builder.Configuration.GetSection("RingCentralApi"));
+builder.Services.AddHttpClient<RingCentralService>();
+builder.Services.AddScoped<HubConnection>(sp =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    return new HubConnectionBuilder()
+        .WithUrl(navigationManager.ToAbsoluteUri("/callAlertHub"))
+        .WithAutomaticReconnect()
+        .Build();
+});
 
 //CrmApiService
 builder.Services.Configure<CrmApiOptions>(builder.Configuration.GetSection("CrmApi"));
@@ -115,5 +133,6 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapControllers();
 app.MapAdditionalIdentityEndpoints();
+app.MapHub<CallAlertHub>("/callAlertHub");
 
 app.Run();

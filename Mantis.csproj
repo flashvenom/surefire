@@ -31,6 +31,7 @@
     <None Remove="Components\Pages\Clients\Businesses - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses.razor.css" />
     <None Remove="Components\Pages\Clients\IndexOld.razor.css" />
+    <None Remove="Components\Pages\Home - Copy.razor.css" />
     <None Remove="Components\Pages\Home.razor.css" />
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
     <None Remove="Components\Pages\Renewals\Home - Copy.razor.css" />
@@ -50,6 +51,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
@@ -72,6 +74,7 @@
 
   <ItemGroup>
     <Folder Include="Domain\Shared\ViewModels\" />
+    <Folder Include="wwwroot\forms\" />
   </ItemGroup>
 
 </Project>

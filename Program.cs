@@ -76,6 +76,14 @@ builder.Services.AddHttpContextAccessor();
 
 
 
+//My API Services
+builder.Services.AddHttpClient("CertificateApi", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7074/"); // Base address of your Blazor app
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+
 //RingCentral API Service ---//
 builder.Services.AddSignalR();
 builder.Services.AddScoped<CallAlertService>();

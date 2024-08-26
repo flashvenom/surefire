@@ -3,11 +3,11 @@
 @using Syncfusion.Blazor.SfPdfViewer
 @inject NavigationManager NavigationManager
 @inject IWebHostEnvironment Environment
+@inject IHttpClientFactory _http
 
 @rendermode InteractiveServer
 
-<SfButton OnClick="@ExportAsStream">Export JSON</SfButton>
-<SfButton OnClick="@ImportFromStream">Import JSON</SfButton>
+<_toolbar OnDownloadJSON="HandleDownloadJSON" OnUploadJSON="HandleUploadJSON" OnLoadEverything="HandleLoadEverything" />
 
 <div class="control-section">
     <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="640px" Width="100%"></SfPdfViewer2>
@@ -28,30 +28,40 @@
         JsonPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03.json");
     }
 
-    public async void ExportAsStream()
+        public async void HandleDownloadJSON()
     {
-        // Export form field data as JSON and save it to a stream
         stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
 
-        // Optionally, save the stream to a file for later use
         using (var fileStream = new FileStream(JsonPath, FileMode.Create, FileAccess.Write))
         {
             await stream.CopyToAsync(fileStream);
         }
     }
 
-    // Event triggers on Import JSON button click.
-    public async void ImportFromStream()
+    public async void HandleUploadJSON()
     {
-        // Read the JSON file into a stream
         using (var fileStream = new FileStream(JsonPath, FileMode.Open, FileAccess.Read))
         {
             stream = new MemoryStream();
             await fileStream.CopyToAsync(stream);
-            stream.Position = 0; // Reset stream position to the beginning
+            stream.Position = 0;
 
-            // Import the form field data from the stream into the PDF viewer
             await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
         }
     }
+
+
+    public async void HandleLoadEverything()
+    {
+        var httpClient = _http.CreateClient("CertificateApi");
+
+        var jsonResponse = await httpClient.GetStringAsync($"/api/Certificate/Load/{CertificateId}");
+
+        // Convert the JSON response to a stream
+        var jsonBytes = System.Text.Encoding.UTF8.GetBytes(jsonResponse);
+        stream = new MemoryStream(jsonBytes);
+
+        await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
+    }
+
 }

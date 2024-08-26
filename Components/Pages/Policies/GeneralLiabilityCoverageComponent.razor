@@ -1,32 +1,200 @@
-﻿@* @using Mantis.Domain.Policies.Models
+﻿@using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
 @using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.InPlaceEditor
 @inject PolicyService PolicyService
 @rendermode InteractiveServer
 
-<div>
-    <p>Each Occurrence: 
-        <SfInPlaceEditor Mode="Inline" Value="@GeneralLiabilityCoverage.EachOccurrence" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateCoverageField(args, "EachOccurrence"))">
-            <InPlaceEditorNumericTextBox Value="@GeneralLiabilityCoverage.EachOccurrence"></InPlaceEditorNumericTextBox>
-        </SfInPlaceEditor>
-    </p>
-    <p>Damage to Premises: 
-        <SfInPlaceEditor Mode="Inline" Value="@GeneralLiabilityCoverage.DamageToPremises" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateCoverageField(args, "DamageToPremises"))">
-            <InPlaceEditorNumericTextBox Value="@GeneralLiabilityCoverage.DamageToPremises"></InPlaceEditorNumericTextBox>
-        </SfInPlaceEditor>
-    </p>
-    <!-- Repeat for other fields -->
-</div>
+@if (Policy is null || Policy.GeneralLiabilityCoverage is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <FluentGrid>
+        <FluentGridItem xs="3">
+            <span class="pol-section-title">policy limits</span><br />
+            <span class="pol-name">Each Occurrence</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.EachOccurrence" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.EachOccurrence"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
 
+
+            <span class="pol-name">Damage to Premises</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.DamageToPremises" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.DamageToPremises"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+
+
+            <span class="pol-name">Medical Expenses</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.MedicalExpenses" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.MedicalExpenses"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+
+            <span class="pol-name">Personal Injury</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.PersonalInjury" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.PersonalInjury"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+
+            <span class="pol-name">General Aggregate</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.GeneralAggregate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.GeneralAggregate"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+
+            <span class="pol-name">Products Aggregate</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.GeneralAggregate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.GeneralAggregate"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+
+            <span class="pol-name">Custom Name</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.AdditionalCoverageName" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfTextBox @bind-Value="@GeneralLiabilityCoverage.AdditionalCoverageName"></SfTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="string"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+
+            <span class="pol-name">Custom Limit</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.AdditionalCoverageLimit" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.AdditionalCoverageLimit"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+        </FluentGridItem>
+        <FluentGridItem xs="3">
+            <span class="pol-section-title">Coverage Type</span><br />
+            <span class="pol-name">Claims Made</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@GeneralLiabilityCoverage.ClaimsMade" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Per Occurrence</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@GeneralLiabilityCoverage.Occurence" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Aggregate Per</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.AggregateAppliesPer" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.AggregateAppliesPer"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span>
+        </FluentGridItem>
+        <FluentGridItem xs="3">
+
+            <span class="pol-section-title">Blanket Additional Insured</span><br />
+
+            <span class="pol-name">Included</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@GeneralLiabilityCoverage.ClaimsMade" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Form Number</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.AdditionalInsuredFormNumber" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfTextBox @bind-Value="@GeneralLiabilityCoverage.AdditionalInsuredFormNumber"></SfTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="string"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+            <span class="pol-name">Attachment File</span>
+            <span class="pol-value drop-area-wrap">
+                <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
+                    <UploaderAsyncSettings SaveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Save" RemoveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Remove"></UploaderAsyncSettings>
+                    <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect"></UploaderEvents>
+                </SfUploader>
+            </span><br />
+
+
+
+            <div style="width:100%; height:1px; background-color:#ccc; margin-top:10px; margin-bottom:10px;"></div>
+
+            <span class="pol-section-title">Waiver of Subrogration</span><br />
+
+            <span class="pol-name">Included</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@GeneralLiabilityCoverage.WaiverOfSub" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Attachment File</span>
+            <span class="pol-value drop-area-wrap">
+                <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
+                    <UploaderAsyncSettings SaveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Save" RemoveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Remove"></UploaderAsyncSettings>
+                    <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect"></UploaderEvents>
+                </SfUploader>
+            </span><br />
+        </FluentGridItem>
+    </FluentGrid>
+
+}
 @code {
+    [Parameter]
+    public Policy Policy { get; set; }
+
     [Parameter]
     public GeneralLiabilityCoverage GeneralLiabilityCoverage { get; set; }
 
-    private async Task UpdateCoverageField(InPlaceEditorActionBeginEventArgs args, string fieldName)
+    private async Task UpdateCoverageNow(GeneralLiabilityCoverage glcoverage)
     {
-        // Logic to update the GeneralLiabilityCoverage model in the database
-        await PolicyService.UpdateGeneralLiabilityCoverageFieldAsync(GeneralLiabilityCoverage.GeneralLiabilityCoverageId, fieldName, args.Value);
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+    private async Task UpdateCoverageBool(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args)
+    {
+        // Optionally, you can use 'args.Value' here if needed.
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+    private string ExtensionAllowed { get; set; } = ".pdf, .txt, .png";
+    private void AfterSelect(SelectedEventArgs args)
+    {
+        string[] Extension = { "pdf", "txt", "png" };
+        if (Extension.ToList().IndexOf(args.FilesData[0].Type) < 0)
+        {
+            args.Cancel = true;
+        }
+    }
+    private void OnFileRemove(RemovingEventArgs args)
+    {
+        args.PostRawFile = false;
     }
 }
- *@

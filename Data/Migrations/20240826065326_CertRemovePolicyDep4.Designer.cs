@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240826065326_CertRemovePolicyDep4")]
+    partial class CertRemovePolicyDep4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -357,7 +360,7 @@ namespace Mantis.Migrations
                     b.Property<bool?>("AttachWOS")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ClientId")
+                    b.Property<int?>("ClientId")
                         .HasColumnType("int");
 
                     b.Property<string>("CreatedById")
@@ -1627,11 +1630,9 @@ namespace Mantis.Migrations
 
             modelBuilder.Entity("Mantis.Domain.Forms.Models.Certificate", b =>
                 {
-                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", null)
                         .WithMany("Certificates")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ClientId");
 
                     b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
@@ -1642,8 +1643,6 @@ namespace Mantis.Migrations
                         .WithMany()
                         .HasForeignKey("ModifiedById")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Client");
 
                     b.Navigation("CreatedBy");
 

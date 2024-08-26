@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240826060813_CertificatesStart")]
+    partial class CertificatesStart
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -357,7 +360,7 @@ namespace Mantis.Migrations
                     b.Property<bool?>("AttachWOS")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ClientId")
+                    b.Property<int?>("ClientId")
                         .HasColumnType("int");
 
                     b.Property<string>("CreatedById")
@@ -378,6 +381,9 @@ namespace Mantis.Migrations
                     b.Property<string>("ModifiedById")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ProjectName")
                         .HasColumnType("nvarchar(max)");
 
@@ -388,6 +394,8 @@ namespace Mantis.Migrations
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("ModifiedById");
+
+                    b.HasIndex("PolicyId");
 
                     b.ToTable("Certificates");
                 });
@@ -1628,10 +1636,9 @@ namespace Mantis.Migrations
             modelBuilder.Entity("Mantis.Domain.Forms.Models.Certificate", b =>
                 {
                     b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
-                        .WithMany("Certificates")
+                        .WithMany()
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
@@ -1643,11 +1650,18 @@ namespace Mantis.Migrations
                         .HasForeignKey("ModifiedById")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithMany()
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Client");
 
                     b.Navigation("CreatedBy");
 
                     b.Navigation("ModifiedBy");
+
+                    b.Navigation("Policy");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.AutoCoverage", b =>
@@ -2122,8 +2136,6 @@ namespace Mantis.Migrations
             modelBuilder.Entity("Mantis.Domain.Clients.Models.Client", b =>
                 {
                     b.Navigation("Attachments");
-
-                    b.Navigation("Certificates");
 
                     b.Navigation("Contacts");
 

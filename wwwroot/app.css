@@ -497,6 +497,60 @@ main {
         padding: 10px;
         border-radius: inherit;
     }
+
+/*--------------------------Policy Screen----------------------------*/
+:root .rating-basis-table tbody tr {
+    border-bottom: 1px solid #ccc !important;
+}
+.pr-td {
+    border-bottom: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+}
+.pol-name {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .8em;
+    width: 130px;
+    display: inline-block;
+    font-weight: bold;
+    color: #484848;
+    height: 30px;
+    text-align: right;
+    position: relative;
+    top: 4px;
+}
+
+.pol-value {
+    width: 200px;
+    display: inline-block;
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    color: #000;
+    height: 30px;
+}
+.pol-rate-title {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .7em;
+    font-weight: bold;
+    color: #484848;
+    text-align: center;
+    text-transform: uppercase;
+}
+.pol-static {
+    position: relative;
+    top: 4px;
+    left: 5px;
+}
+
+.pol-section-title {
+    font-family: "montserrat", sans-serif;
+    font-size: 1em;
+    font-weight:400;
+    color:#6b6b6b;
+    text-transform: uppercase;
+    letter-spacing:2px;
+}
+
+
 /*--------------------------Other Styles----------------------------*/
 
 .main-content {
@@ -504,7 +558,33 @@ main {
     padding: 20px;
     overflow: auto;
 }
+.sf-header {
+    display: flex;
+    justify-content: normal;
+    flex-direction: row;
+    background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(234,234,234,1) 100%);
+    padding-top: 12px;
+    padding-bottom: 8px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
 
+.default-header {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 2.5em;
+    line-height: 30px;
+}
+.default-subheader {
+    font-family: "montserrat", sans-serif;
+    font-weight: 600;
+    font-style: normal;
+    font-size: .6em;
+    color:#a3a3a3;
+}
 .e-toolbar-spacer {
     flex-grow: 1;
 }

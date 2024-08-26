@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240825230257_AddAIOptions")]
+    partial class AddAIOptions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -338,58 +341,6 @@ namespace Mantis.Migrations
                     b.HasIndex("ClientId");
 
                     b.ToTable("Contacts");
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Forms.Models.Certificate", b =>
-                {
-                    b.Property<int>("CertificateId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CertificateId"));
-
-                    b.Property<bool?>("AttachAI")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("AttachPNC")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("AttachWOS")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CreatedById")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("HolderName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("JSONData")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ModifiedById")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProjectName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("CertificateId");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("ModifiedById");
-
-                    b.ToTable("Certificates");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Application", b =>
@@ -1625,31 +1576,6 @@ namespace Mantis.Migrations
                     b.Navigation("Client");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Forms.Models.Certificate", b =>
-                {
-                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
-                        .WithMany("Certificates")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
-                        .WithMany()
-                        .HasForeignKey("ModifiedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Client");
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("ModifiedBy");
-                });
-
             modelBuilder.Entity("Mantis.Domain.Policies.Models.AutoCoverage", b =>
                 {
                     b.HasOne("Mantis.Domain.Shared.Attachment", "AdditionalAttachmentsAttachment")
@@ -2122,8 +2048,6 @@ namespace Mantis.Migrations
             modelBuilder.Entity("Mantis.Domain.Clients.Models.Client", b =>
                 {
                     b.Navigation("Attachments");
-
-                    b.Navigation("Certificates");
 
                     b.Navigation("Contacts");
 

@@ -83,7 +83,7 @@
                                             <div>@policy.Premium.ToString("C")</div>
                                         </div>
                                         <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
-                                            <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
+                                            <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
                                             <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Fill" />Edit Policy</a>
                                             <a class="smalltool" href="#" @onclick="@((e) => CreateRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Create Renewal</a>
                                         </div>
@@ -159,7 +159,8 @@
                     Coming soon.
                 </FluentTab>
                 <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
-                    Coming soon.
+                    aa
+                    <_Certificates client="selectedClient" />
                 </FluentTab>
                 <FluentTab Id="tab-5" Label="Claims" Class="sf-tab">
                     Coming soon.

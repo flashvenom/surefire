@@ -1,0 +1,151 @@
+﻿@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+@if (Policy is not null || AutoCoverage is not null)
+{
+<FluentGrid>
+    <FluentGridItem xs="3">
+        <span class="pol-section-title">policy limits</span><br />
+        <span class="pol-name">Combined Single Limit</span>
+        <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@AutoCoverage.CombinedLimit" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@AutoCoverage.CombinedLimit"></SfNumericTextBox>
+                </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(AutoCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+
+
+        <span class="pol-name">BI Per Person</span>
+        <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@AutoCoverage.BodilyInjuryPerPerson" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@AutoCoverage.BodilyInjuryPerPerson"></SfNumericTextBox>
+                </EditorComponent>
+                <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(AutoCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+
+
+            <span class="pol-name">BI Per Accident</span>
+        <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@AutoCoverage.BodilyInjuryPerAccident" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@AutoCoverage.BodilyInjuryPerAccident"></SfNumericTextBox>
+                </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(AutoCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+
+            <span class="pol-name">Property Damage</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@AutoCoverage.PropertyDamage" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@AutoCoverage.PropertyDamage"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(AutoCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+        <span class="pol-section-title">LIMITS APPLY TO</span><br />
+        <span class="pol-name">Any</span>
+        <span class="pol-value">
+                <SfCheckBox @bind-Checked="@AutoCoverage.ForAny" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+
+        <span class="pol-name">Owned</span>
+        <span class="pol-value">
+                <SfCheckBox @bind-Checked="@AutoCoverage.ForOwned" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+
+        <span class="pol-name">Scheduled</span>
+        <span class="pol-value">
+                <SfCheckBox @bind-Checked="@AutoCoverage.ForScheduled" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+
+        <span class="pol-name">Hired</span>
+        <span class="pol-value">
+            <SfCheckBox @bind-Checked="@AutoCoverage.ForHired" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+
+        <span class="pol-name">Non-Owned</span>
+        <span class="pol-value">
+            <SfCheckBox @bind-Checked="@AutoCoverage.ForNonOwned" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+        <span class="pol-section-title">Additional Insured</span><br />
+
+        <span class="pol-name">Included</span>
+        <span class="pol-value">
+                <SfCheckBox @bind-Checked="@AutoCoverage.AdditionalInsured" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+
+        <span class="pol-name">Attachment File</span>
+        <span class="pol-value drop-area-wrap">
+            <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
+                <UploaderAsyncSettings SaveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Save" RemoveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Remove"></UploaderAsyncSettings>
+                <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect"></UploaderEvents>
+            </SfUploader>
+        </span><br />
+
+        <span class="pol-section-title">Waiver of Subrogration</span><br />
+
+        <span class="pol-name">Included</span>
+        <span class="pol-value">
+                <SfCheckBox @bind-Checked="@AutoCoverage.WaiverOfSub" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+
+        <span class="pol-name">Attachment File</span>
+        <span class="pol-value drop-area-wrap">
+            <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
+                <UploaderAsyncSettings SaveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Save" RemoveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Remove"></UploaderAsyncSettings>
+                <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect"></UploaderEvents>
+            </SfUploader>
+        </span><br />
+
+
+
+    </FluentGridItem>
+</FluentGrid>
+
+}
+@code {
+    [Parameter]
+    public Policy Policy { get; set; }
+
+    [Parameter]
+    public AutoCoverage AutoCoverage { get; set; }
+
+    private async Task UpdateCoverageNow(AutoCoverage autocoverage)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+    private async Task UpdateCoverageBool(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args)
+    {
+        // Optionally, you can use 'args.Value' here if needed.
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+    private string ExtensionAllowed { get; set; } = ".pdf, .txt, .png";
+    private void AfterSelect(SelectedEventArgs args)
+    {
+        string[] Extension = { "pdf", "txt", "png" };
+        if (Extension.ToList().IndexOf(args.FilesData[0].Type) < 0)
+        {
+            args.Cancel = true;
+        }
+    }
+    private void OnFileRemove(RemovingEventArgs args)
+    {
+        args.PostRawFile = false;
+    }
+}

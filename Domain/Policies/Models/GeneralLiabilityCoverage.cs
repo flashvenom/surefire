@@ -29,7 +29,9 @@ namespace Mantis.Domain.Policies.Models
 
         //Attachments
         public bool? AdditionalInsured { get; set; }
+        public string? AdditionalInsuredFormNumber { get; set; }
         public Attachment? AdditionalInsuredAttachment { get; set; }
+        public bool? PrimaryWording { get; set; }
         public bool? WaiverOfSub { get; set; }
         public Attachment? WaiverOfSubAttachment { get; set; }
         public bool? AdditionalAttachments { get; set; }

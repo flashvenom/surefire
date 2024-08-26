@@ -66,10 +66,59 @@ namespace Mantis.Domain.Policies.Services
         // 1. Get Policy by ID including related GeneralLiabilityCoverage
         public async Task<Policy> GetPolicyByIdAsync(int policyId)
         {
-            return await _context.Policies
+            // Load the policy with related data
+            var policy = await _context.Policies
                 .Include(p => p.GeneralLiabilityCoverage)
+                .Include(p => p.WorkCompCoverage)
+                .Include(p => p.AutoCoverage)
+                .Include(p => p.Product)
+                .Include(p => p.Client)
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.RatingBases)
                 .FirstOrDefaultAsync(p => p.PolicyId == policyId);
+
+            if (policy == null) return null;
+
+            // Check for WorkCompCoverage when ProductId = 2
+            if (policy.Product.ProductId == 2 && policy.WorkCompCoverage == null)
+            {
+                var workCompCoverage = new WorkCompCoverage
+                {
+                    PolicyId = policy.PolicyId,
+                };
+                _context.WorkCompCoverages.Add(workCompCoverage);
+                policy.WorkCompCoverage = workCompCoverage; //
+            }
+
+            // Check for GeneralLiabilityCoverage when ProductId = 3
+            if (policy.Product.ProductId == 3 && policy.GeneralLiabilityCoverage == null)
+            {
+                var generalLiabilityCoverage = new GeneralLiabilityCoverage
+                {
+                    PolicyId = policy.PolicyId,
+                };
+                _context.GeneralLiabilityCoverages.Add(generalLiabilityCoverage);
+                policy.GeneralLiabilityCoverage = generalLiabilityCoverage;
+            }
+
+            // Check for AutoCoverage when ProductId = 4
+            if (policy.Product.ProductId == 4 && policy.AutoCoverage == null)
+            {
+                var autoCoverage = new AutoCoverage
+                {
+                    PolicyId = policy.PolicyId,
+                };
+                _context.AutoCoverages.Add(autoCoverage);
+                policy.AutoCoverage = autoCoverage;
+            }
+
+            // Save changes if any new coverages were added
+            await _context.SaveChangesAsync();
+
+            return policy;
         }
+
 
         // 2. Update a specific field in the Policy model
         public async Task UpdatePolicyFieldAsync(int policyId, string fieldName, object value)
@@ -100,6 +149,13 @@ namespace Mantis.Domain.Policies.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateGLCoverageAsync(Policy policy)
+        {
+            _context.Entry(policy).State = EntityState.Modified;
+
+            await _context.SaveChangesAsync();
+        }
+
         // 3. Update a specific field in the GeneralLiabilityCoverage model
         public async Task UpdateGeneralLiabilityCoverageFieldAsync(int generalLiabilityCoverageId, string fieldName, object value)
         {
@@ -115,5 +171,27 @@ namespace Mantis.Domain.Policies.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<RatingBasis> AddBlankRatingBasisAsync(int policyId)
+        {
+            var newRatingBasis = new RatingBasis
+            {
+                PolicyId = policyId,
+                // Initialize other fields as needed, or leave blank
+            };
+
+            _context.RatingBases.Add(newRatingBasis);
+            await _context.SaveChangesAsync();
+
+            return newRatingBasis;
+        }
+
+        public async Task DeleteRatingBasisAsync(int ratingBasisId)
+        {
+            var ratingBasis = await _context.RatingBases.FindAsync(ratingBasisId);
+            if (ratingBasis == null) throw new KeyNotFoundException("Rating Basis not found");
+
+            _context.RatingBases.Remove(ratingBasis);
+            await _context.SaveChangesAsync();
+        }
     }
 }

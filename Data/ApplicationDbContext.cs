@@ -4,6 +4,7 @@ using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Renewals.Models;
+using Mantis.Domain.Forms.Models;
 using Mantis.Domain.Shared;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Mantis.Domain.Shared.Models;
@@ -27,6 +28,7 @@ namespace Mantis.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Address> Address { get; set; }
+        public DbSet<Certificate> Certificates { get; set; }
 
         // Renewals and Tasks
         public DbSet<TaskMaster> TaskMasters { get; set; }
@@ -393,6 +395,21 @@ namespace Mantis.Data
 
             modelBuilder.Entity<WorkCompCoverage>()
                 .HasOne(w => w.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Certificate
+            
+
+            modelBuilder.Entity<Certificate>()
+                .HasOne(c => c.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Certificate>()
+                .HasOne(c => c.ModifiedBy)
                 .WithMany()
                 .HasForeignKey("ModifiedById")
                 .OnDelete(DeleteBehavior.Restrict);

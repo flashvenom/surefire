@@ -52,6 +52,7 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Address)
                 .Include(c => c.PrimaryContact)
                 .Include(c => c.Locations)
+                .Include(c => c.Certificates)
                 .Include(c => c.Contacts)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Carrier)

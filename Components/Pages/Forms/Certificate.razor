@@ -1,4 +1,4 @@
-﻿@page "/Forms/Certificate"
+﻿@page "/Forms/Certificate/{CertificateId:int}"
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SfPdfViewer
 @inject NavigationManager NavigationManager
@@ -14,6 +14,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public int CertificateId { get; set; }
+
     private string DocumentPath { get; set; } = "";
     private string JsonPath { get; set; } = "";
     private SfPdfViewer2 pdfViewer;

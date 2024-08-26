@@ -1,0 +1,27 @@
+﻿@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Clients.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+@if (client is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    foreach(var item in client.Certificates)
+    {
+        <div>
+            <a href="/Forms/Certificate/@item.CertificateId">@item.CertificateId : @item.HolderName</a> <span>[X]</span>
+        </div>
+    }
+}
+@code {
+    [Parameter]
+    public Client client { get; set; }
+
+}

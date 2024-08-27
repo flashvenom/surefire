@@ -20,17 +20,18 @@
                     <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(PropertyCoverage))" TValue="int?"></InPlaceEditorEvents>
             </SfInPlaceEditor>
         </span><br />
+        <span class="pol-name">Equipment</span>
+        <span class="pol-value">
+            <SfInPlaceEditor @bind-Value="@PropertyCoverage.Equipment" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                    <SfNumericTextBox Format="c0" @bind-Value="@PropertyCoverage.Equipment"></SfNumericTextBox>
+                </EditorComponent>
+                <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(PropertyCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
     </FluentGridItem>
     <FluentGridItem xs="3">
-            <span class="pol-name">BI Per Person</span>
-            <span class="pol-value">
-                <SfInPlaceEditor @bind-Value="@PropertyCoverage.Equipment" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
-                    <EditorComponent>
-                        <SfNumericTextBox Format="c0" @bind-Value="@PropertyCoverage.Equipment"></SfNumericTextBox>
-                    </EditorComponent>
-                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(PropertyCoverage))" TValue="int?"></InPlaceEditorEvents>
-                </SfInPlaceEditor>
-            </span><br />
+            
     </FluentGridItem>
     <FluentGridItem xs="3">
     </FluentGridItem>

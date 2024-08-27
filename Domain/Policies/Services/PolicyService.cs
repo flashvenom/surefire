@@ -59,7 +59,9 @@ namespace Mantis.Domain.Policies.Services
                 .Include(p => p.Wholesaler)
                 .Include(p => p.Product)
                 .Include(p => p.GeneralLiabilityCoverage)
+                .Include(p => p.UmbrellaCoverage)
                 .Include(p => p.WorkCompCoverage)
+                .Include(p => p.PropertyCoverage)
                 .Include(p => p.AutoCoverage)
                 .Where(p => p.ClientId == clientId && p.EffectiveDate <= today && p.ExpirationDate >= today)
                 .ToListAsync();
@@ -87,6 +89,8 @@ namespace Mantis.Domain.Policies.Services
                 .Include(p => p.GeneralLiabilityCoverage)
                 .Include(p => p.WorkCompCoverage)
                 .Include(p => p.AutoCoverage)
+                .Include(p => p.PropertyCoverage)
+                .Include(p => p.UmbrellaCoverage)
                 .Include(p => p.Product)
                 .Include(p => p.Client)
                 .Include(p => p.Carrier)
@@ -140,7 +144,7 @@ namespace Mantis.Domain.Policies.Services
                 policy.PropertyCoverage = propertyCoverage;
             }
 
-            //Add Property Coverage to BOP
+            //Add Property Coverage to Property
             if (policy.Product.ProductId == 14 && policy.PropertyCoverage == null)
             {
                 var propertyCoverage = new PropertyCoverage
@@ -160,6 +164,17 @@ namespace Mantis.Domain.Policies.Services
                 };
                 _context.AutoCoverages.Add(autoCoverage);
                 policy.AutoCoverage = autoCoverage;
+            }
+
+            //Add Umbrella Coverage to Umbrella
+            if (policy.Product.ProductId == 7 && policy.UmbrellaCoverage == null)
+            {
+                var umbrellaCoverage = new UmbrellaCoverage
+                {
+                    PolicyId = policy.PolicyId,
+                };
+                _context.UmbrellaCoverage.Add(umbrellaCoverage);
+                policy.UmbrellaCoverage = umbrellaCoverage;
             }
 
             await _context.SaveChangesAsync();

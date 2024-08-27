@@ -140,8 +140,8 @@ else
             <span class="pol-name">Attachment File</span>
             <span class="pol-value drop-area-wrap">
                 <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
-                    <UploaderAsyncSettings SaveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Save" RemoveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Remove"></UploaderAsyncSettings>
-                    <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect"></UploaderEvents>
+                    <UploaderAsyncSettings SaveUrl="https://localhost:7074/api/FileUploader/Save" RemoveUrl="https://localhost:7074/api/FileUploader/Remove"></UploaderAsyncSettings>
+                    <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect" OnFailure="@OnFailureHandler" OnActionComplete="@OnActionCompleteHandler"></UploaderEvents>
                 </SfUploader>
             </span><br />
 
@@ -165,7 +165,8 @@ else
             </span><br />
         </FluentGridItem>
     </FluentGrid>
-
+    <div style="border:1px solid #f00">@DebugWording</div>
+        
 }
 @code {
     [Parameter]
@@ -173,6 +174,8 @@ else
 
     [Parameter]
     public GeneralLiabilityCoverage GeneralLiabilityCoverage { get; set; }
+
+    public string DebugWording { get; set; } = "Load";
 
     private async Task UpdateCoverageNow(GeneralLiabilityCoverage glcoverage)
     {
@@ -196,5 +199,24 @@ else
     private void OnFileRemove(RemovingEventArgs args)
     {
         args.PostRawFile = false;
+    }
+    private void OnFailureHandler(Syncfusion.Blazor.Inputs.FailureEventArgs args)
+    {
+        Console.WriteLine("UPLOAD FAILURE");
+        DebugWording+= "UPLOAD FAILURE";
+        DebugWording += "-------";
+        DebugWording += args.ToString();
+        Console.WriteLine(args.ToString());
+    }
+
+    private void OnActionCompleteHandler(Syncfusion.Blazor.Inputs.ActionCompleteEventArgs args)
+    {
+        Console.WriteLine("UPLOAD COMPLETE");
+        DebugWording += "UPLOAD COMPLETE.";
+        DebugWording += args.ToString();
+        Console.WriteLine(args.ToString());
+        Console.WriteLine(args.FileData.ToString());
+
+        //Save file name
     }
 }

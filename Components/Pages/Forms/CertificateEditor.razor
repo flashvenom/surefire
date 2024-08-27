@@ -292,7 +292,7 @@
                 savedJsonObject[property.Name] = property.Value;
             }
         }
-        
+
         Console.WriteLine();
         return savedJsonObject;
     }
@@ -325,7 +325,7 @@
 
         if(loadPolicies == true)
         {
-            string currentletter = "A";
+            string[] letterArray = { "A", "B", "C", "D", "E" };
             int currentposition = 1;
 
             //General Liability
@@ -335,7 +335,7 @@
                 jsonObject["GeneralLiability_CoverageIndicator"] = "1";
 
                 //Set Carrier Assignments
-                jsonObject["GeneralLiability_InsurerLetterCode"] = currentletter;
+                jsonObject["GeneralLiability_InsurerLetterCode"] = letterArray[currentposition-1];
                 if (!string.IsNullOrEmpty(glpolicy.Carrier.CarrierName))
                 {
                     if(currentposition == 1)
@@ -355,7 +355,6 @@
                         jsonObject["Insurer_FullName_E[0]"] = glpolicy.Carrier.CarrierName;
                     }
                 }
-                currentletter = "B";
                 currentposition++;
 
 
@@ -406,9 +405,9 @@
             var autopolicy = selectedpolicies.Where(p => p.ProductId == 4).FirstOrDefault();
             if (autopolicy is not null)
             {
-                
+
                 //Set Carrier Assignments
-                jsonObject["Vehicle_InsurerLetterCode"] = currentletter;
+                jsonObject["Vehicle_InsurerLetterCode"] = letterArray[currentposition-1];;
                 if (!string.IsNullOrEmpty(autopolicy.Carrier.CarrierName))
                 {
                     if (currentposition == 1)
@@ -432,7 +431,6 @@
                         jsonObject["Insurer_FullName_E[0]"] = autopolicy.Carrier.CarrierName;
                     }
                 }
-                currentletter = "C";
                 currentposition++;
 
 
@@ -473,6 +471,75 @@
                     jsonObject["Vehicle_NonOwnedAutosIndicator"] = "On";
             }
 
+            //Umbrella
+            var umbrellapolicy = selectedpolicies.Where(p => p.ProductId == 7).FirstOrDefault();
+            if (umbrellapolicy is not null)
+            {
+
+                //Set Carrier Assignments
+                jsonObject["ExcessUmbrella_InsurerLetterCode"] = letterArray[currentposition-1];;
+                if (!string.IsNullOrEmpty(umbrellapolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                }
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(umbrellapolicy.PolicyNumber))
+                    jsonObject["Policy_ExcessLiability_PolicyNumberIdentifier"] = umbrellapolicy.PolicyNumber;
+
+                if (umbrellapolicy.EffectiveDate != null)
+                    jsonObject["Policy_ExcessLiability_EffectiveDate"] = umbrellapolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (umbrellapolicy.ExpirationDate != null)
+                    jsonObject["Policy_ExcessLiability_ExpirationDate"] = umbrellapolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (umbrellapolicy.UmbrellaCoverage?.DeductibleRetentionAmount != null)
+                    jsonObject["ExcessUmbrella_Umbrella_DeductibleOrRetentionAmount"] = umbrellapolicy.UmbrellaCoverage.DeductibleRetentionAmount.Value.ToString("N0");
+
+                if (umbrellapolicy.UmbrellaCoverage?.EachOccurrence != null)
+                    jsonObject["ExcessUmbrella_Umbrella_EachOccurrenceAmount"] = umbrellapolicy.UmbrellaCoverage.EachOccurrence.Value.ToString("N0");
+
+                if (umbrellapolicy.UmbrellaCoverage?.GeneralAggregate != null)
+                    jsonObject["ExcessUmbrella_Umbrella_AggregateAmount"] = umbrellapolicy.UmbrellaCoverage.GeneralAggregate.Value.ToString("N0");
+
+                if (umbrellapolicy.UmbrellaCoverage?.IsUmbrella is not null)
+                    jsonObject["Policy_PolicyType_UmbrellaIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.IsExcess is not null)
+                    jsonObject["Policy_PolicyType_ExcessIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.HasDeductible is not null)
+                    jsonObject["ExcessUmbrella_DeductibleIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.HasRetention is not null)
+                    jsonObject["ExcessUmbrella_RetentionIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.ClaimsMade is not null)
+                    jsonObject["ExcessUmbrella_ClaimsMadeIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.Occurrence is not null)
+                    jsonObject["ExcessUmbrella_OccurrenceIndicator"] = "On";
+            }
 
 
             //Work Comp
@@ -481,7 +548,7 @@
             {
 
                 //Set Carrier Assignments
-                jsonObject["WorkersCompensationEmployersLiability_InsurerLetterCode"] = currentletter;
+                jsonObject["WorkersCompensationEmployersLiability_InsurerLetterCode"] = letterArray[currentposition-1];;
                 if (!string.IsNullOrEmpty(wcpolicy.Carrier.CarrierName))
                 {
                     if (currentposition == 1)
@@ -505,7 +572,6 @@
                         jsonObject["Insurer_FullName_E[0]"] = wcpolicy.Carrier.CarrierName;
                     }
                 }
-                currentletter = "D";
                 currentposition++;
 
 
@@ -527,6 +593,66 @@
                 if (wcpolicy.WorkCompCoverage?.DiseasePolicyLimit != null)
                     jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_DiseasePolicyLimitAmount"] = wcpolicy.WorkCompCoverage.DiseasePolicyLimit.Value.ToString("N0");
             }
+
+
+            //Property
+            var propertypolicy = selectedpolicies.Where(p => p.ProductId == 14).FirstOrDefault();
+            if (propertypolicy is not null)
+            {
+
+                //Set Carrier Assignments
+                jsonObject["OtherPolicy_InsurerLetterCode"] = letterArray[currentposition-1];;
+                jsonObject["OtherPolicy_OtherPolicyDescription"] = "PROPERTY";
+
+                if (!string.IsNullOrEmpty(propertypolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                }
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(propertypolicy.PolicyNumber))
+                    jsonObject["OtherPolicy_PolicyNumberIdentifier"] = propertypolicy.PolicyNumber;
+
+                if (propertypolicy.EffectiveDate != null)
+                    jsonObject["OtherPolicy_PolicyEffectiveDate"] = propertypolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (propertypolicy.ExpirationDate != null)
+                    jsonObject["OtherPolicy_PolicyExpirationDate"] = propertypolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (propertypolicy.PropertyCoverage?.Equipment != null)
+                {
+                    jsonObject["OtherPolicy_CoverageCode_B[0]"] = "Equipment";
+                    jsonObject["OtherPolicy_CoverageLimitAmount_B[0]"] = propertypolicy.PropertyCoverage.Equipment.Value.ToString("N0");
+                }
+
+                if (propertypolicy.PropertyCoverage?.BusinessPersonalProperty != null)
+                {
+                    jsonObject["OtherPolicy_CoverageCode_B[0]"] = "BUS. PER. PROP.";
+                    jsonObject["OtherPolicy_CoverageLimitAmount_B[0]"] = propertypolicy.PropertyCoverage.BusinessPersonalProperty.Value.ToString("N0");
+                }
+            }
+
+
             
         }
 

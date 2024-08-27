@@ -1,0 +1,541 @@
+﻿@page "/Forms/Certificate/{CertificateId:int}"
+@using Newtonsoft.Json
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.SfPdfViewer
+@using Newtonsoft.Json.Linq
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Clients.Services
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Forms.Services
+@using Mantis.Domain.Forms.Models
+@using Mantis.Domain.Policies.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.IO
+@inject ClientService ClientService
+@inject PolicyService PolicyService
+@inject FormService FormService
+@inject NavigationManager NavigationManager
+@inject IWebHostEnvironment Environment
+@inject IJSRuntime JS
+@inject IHttpClientFactory _http
+
+@rendermode InteractiveServer
+@* 
+<_toolbar ClientId="clientId" OnDownloadJSON="HandleDownloadJSON" OnUploadJSON="HandleUploadJSON" OnLoadEverything="() => HandleLoadEverything(true, true, false, false)" />
+ *@
+
+ 
+<div class="page-toolbar">
+    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Certificate</SfButton>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" @onclick="() => HandleLoadEverything(true, false, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Client</span>
+    </a>
+
+    <FluentButton class="toolbar-link" id="myPopoverButtonr" @onclick="() => _policiesVisible = !_policiesVisible">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Policies</span>
+    </FluentButton>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myPopoverButtonr" @bind-Open="_policiesVisible">
+        <Header>Select Policies</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                @foreach (var policy in policies)
+                {
+                    <FluentCheckbox Checked="@IsPolicySelected(policy)" @onchange="(e) => TogglePolicySelection(e, policy)">
+                        @policy.PolicyNumber (@policy.Product.LineNickname)
+                    </FluentCheckbox>
+                }
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => HandleLoadEverything(true, true, true, true)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    <a class="toolbar-link" @onclick="() => HandleLoadEverything(false, false, true, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Holders</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" @onclick="ResetForm">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eraser())" />
+        <span class="toolbar-text">Reset</span>
+    </a>
+
+    <a class="toolbar-link">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentCopy())" />
+        <span class="toolbar-text">Duplicate</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Mail())" />
+        <span class="toolbar-text">Email</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="DebugMe">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
+        <span class="toolbar-text">Save</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="FlattenForm">
+        
+        <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
+        <span class="toolbar-text">Print</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" @onclick="() => SaveToDatabase(false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ArrowSync())" />
+        <span class="toolbar-text">Sync</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => SaveToDatabase(true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Checkmark())" />
+        <span class="toolbar-text">Approve</span>
+    </a>
+
+    <NavLink class="toolbar-link" href="@($"/Clients/List/{clientId}")">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
+        <span class="toolbar-text">Cancel</span>
+    </NavLink>
+
+   
+</div>
+
+<div class="control-section" style="height:784px;">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="784px" Width="100%">
+        <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+    </SfPdfViewer2>
+</div>
+
+@code {
+    [Parameter]
+    public int CertificateId { get; set; }
+
+    private string DocumentPath { get; set; } = "";
+    private string ClearPoliciesPath { get; set; } = "";
+    private string JsonPath { get; set; } = "";
+    private SfPdfViewer2 pdfViewer;
+    private Stream stream;
+    public int clientId { get; set; } = 0;
+    public Client client { get; set; } =  new Client();
+    public Certificate certificate { get; set; } = new Certificate();
+    public List<Policy> policies { get; set; } = new List<Policy>();
+    private bool _policiesVisible = false;
+    private List<Policy> selectedpolicies = new List<Policy>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        DocumentPath = "wwwroot/forms/a025-2016-03-v2.pdf";
+        JsonPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2.json");
+        ClearPoliciesPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2-clearpolicies.json");
+        client = await ClientService.GetClientByCertificateId(CertificateId);
+        certificate = await FormService.GetCertificateByIdAsync(CertificateId);
+        policies = await PolicyService.GetCurrentPoliciesByClientIdAsync(client.ClientId);
+        clientId = client.ClientId;
+    }
+
+    private async Task DebugMe()
+    {
+        Console.Clear();
+    }
+
+    private async Task LoadJsonDataIntoPdfAsync()
+    {
+        Console.WriteLine("Loading DATABASE JSON data into PDF viewer");
+        if (certificate != null && !string.IsNullOrEmpty(certificate.JSONData))
+        {
+            // Convert JSONData to a Stream
+            var jsonDataStream = new MemoryStream();
+            using (var writer = new StreamWriter(jsonDataStream, leaveOpen: true))
+            {
+                await writer.WriteAsync(certificate.JSONData);
+                await writer.FlushAsync();
+                jsonDataStream.Position = 0;
+            }
+
+            // Load the JSON data into the PDF viewer
+            await pdfViewer.ImportFormFieldsAsync(jsonDataStream, FormFieldDataFormat.Json);
+        }
+    }
+
+    //Policy Pop-Up
+    private bool IsPolicySelected(Policy policy)
+    {
+        Console.WriteLine("----------------------------------------------");
+        Console.WriteLine("ISIS: Policy " + policy.PolicyNumber + "selected is " + selectedpolicies.Contains(policy));
+        return selectedpolicies.Contains(policy);
+    }
+    private void TogglePolicySelection(Microsoft.AspNetCore.Components.ChangeEventArgs e, Policy policy)
+    {
+        //string status = e.Value.ToString();
+        Console.WriteLine("----------------------------------------------");
+        //Console.WriteLine("STATUS: Checkbox is " + status);
+        Console.WriteLine("CHECK: Policy " + policy.PolicyNumber + "selected is " + selectedpolicies.Contains(policy));
+        if (!selectedpolicies.Contains(policy))
+        {
+            selectedpolicies.Add(policy);
+        }
+        else
+        {
+            selectedpolicies.Remove(policy);
+        }
+    }
+
+    private async Task TogglePolicy(int? policyid)
+    {
+        var getpolicy = policies.Where(p => p.PolicyId == policyid).FirstOrDefault();
+    }
+
+    private async Task ResetForm()
+    {
+        await HandleLoadEverything(true, false, false, false);
+    }
+
+    private async Task DownloadFile(bool print)
+    {
+        await pdfViewer.DownloadAsync();
+    }
+
+    public async void FlattenForm()
+    {
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        byte[] flattenedPdfBytes = FormService.FlattenPdf(data);
+        string base64Pdf = Convert.ToBase64String(flattenedPdfBytes);
+        await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+    }
+
+    public async void StoreTempData()
+    {
+        Console.WriteLine("Storing Temp Data");
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        stream.Position = 0;
+        using (var reader = new StreamReader(stream))
+        {
+            string jsonData = await reader.ReadToEndAsync();
+            var jsonObject = JObject.Parse(jsonData);
+            certificate.JSONDataTemp = jsonData;
+        }
+    }
+
+    public async void SaveToDatabase(bool? exit)
+    {
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        stream.Position = 0;
+        using (var reader = new StreamReader(stream))
+        {
+            string jsonData = await reader.ReadToEndAsync();
+            var jsonObject = JObject.Parse(jsonData);
+
+            string holderName = jsonObject["CertificateHolder_FullName"]?.ToString();
+
+            if (!string.IsNullOrEmpty(holderName))
+            {
+                certificate.HolderName = holderName;
+            }
+
+            // Save the JSON data to the certificate's JSONData field
+            certificate.JSONData = jsonData;
+
+            // Update the certificate in the database
+            await FormService.UpdateCertificate(certificate);
+        }
+
+        if(exit == true)
+        {
+            NavigationManager.NavigateTo($"/Clients/List/{clientId}");
+        }
+    }
+
+    public async Task<JObject> GetViewerJSON()
+    {
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        stream.Position = 0;
+        using (var reader = new StreamReader(stream))
+        {
+            string jsonData = await reader.ReadToEndAsync();
+            var jsonObject = JObject.Parse(jsonData);
+            return jsonObject;
+        }
+    }
+
+    public async Task<JObject> ClearPoliciesJSON()
+    {
+        var savedJsonObject = await GetViewerJSON();
+
+        JObject clearPoliciesJsonObject;
+        using (var fileStream = new FileStream(ClearPoliciesPath, FileMode.Open, FileAccess.Read))
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            using (var jsonReader = new JsonTextReader(streamReader))
+            {
+                clearPoliciesJsonObject = await JObject.LoadAsync(jsonReader);
+            }
+        }
+
+        foreach (var property in clearPoliciesJsonObject.Properties())
+        {
+            if (savedJsonObject.ContainsKey(property.Name))
+            {
+                savedJsonObject[property.Name] = property.Value;
+            }
+        }
+        
+        Console.WriteLine();
+        return savedJsonObject;
+    }
+
+
+
+    public async Task HandleLoadEverything(bool? loadClient = null, bool? loadPolicies = null, bool? loadHolder = null, bool? loadDescription = null)
+    {
+        var jsonObject = await ClearPoliciesJSON();
+
+        jsonObject["Form_CompletionDate"] = DateTime.UtcNow.ToString("MM/dd/yyyy");
+        jsonObject["CertificateOfInsurance_CertificateNumberIdentifier"] = "MSF-24-" + CertificateId;
+
+
+        if(loadClient == true)
+        {
+            jsonObject["NamedInsured_FullName"] = client.Name;
+            jsonObject["NamedInsured_MailingAddress_LineOne"] = client.Address.AddressLine1;
+            if (client.Address.AddressLine2 is not null){
+                jsonObject["NamedInsured_MailingAddress_LineTwo"] = client.Address.AddressLine2;
+                jsonObject["NamedInsured_MailingAddress_CityName"] = client.Address.City + ", " + client.Address.State + " " + client.Address.PostalCode;
+            }
+            else
+            {
+                jsonObject["NamedInsured_MailingAddress_LineTwo"] = client.Address.City + ", " + client.Address.State + " " + client.Address.PostalCode;
+            }
+        }
+
+
+
+        if(loadPolicies == true)
+        {
+            string currentletter = "A";
+            int currentposition = 1;
+
+            //General Liability
+            var glpolicy = selectedpolicies.Where(p => p.ProductId == 3).FirstOrDefault();
+            if (glpolicy is not null)
+            {
+                jsonObject["GeneralLiability_CoverageIndicator"] = "1";
+
+                //Set Carrier Assignments
+                jsonObject["GeneralLiability_InsurerLetterCode"] = currentletter;
+                if (!string.IsNullOrEmpty(glpolicy.Carrier.CarrierName))
+                {
+                    if(currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = glpolicy.Carrier.CarrierName;
+                    }else if(currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = glpolicy.Carrier.CarrierName;
+                    }else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = glpolicy.Carrier.CarrierName;
+                    }else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = glpolicy.Carrier.CarrierName;
+                    }else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = glpolicy.Carrier.CarrierName;
+                    }
+                }
+                currentletter = "B";
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(glpolicy.PolicyNumber))
+                    jsonObject["Policy_GeneralLiability_PolicyNumberIdentifier"] = glpolicy.PolicyNumber;
+
+                if (glpolicy.EffectiveDate != null)
+                    jsonObject["Policy_GeneralLiability_EffectiveDate"] = glpolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (glpolicy.ExpirationDate != null)
+                    jsonObject["Policy_GeneralLiability_ExpirationDate"] = glpolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (glpolicy.GeneralLiabilityCoverage?.EachOccurrence != null)
+                    jsonObject["GeneralLiability_EachOccurrence_LimitAmount"] = glpolicy.GeneralLiabilityCoverage.EachOccurrence.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.DamageToPremises != null)
+                    jsonObject["GeneralLiability_FireDamageRentedPremises_EachOccurrenceLimitAmount"] = glpolicy.GeneralLiabilityCoverage.DamageToPremises.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.MedicalExpenses != null)
+                    jsonObject["GeneralLiability_MedicalExpense_EachPersonLimitAmount"] = glpolicy.GeneralLiabilityCoverage.MedicalExpenses.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.PersonalInjury != null)
+                    jsonObject["GeneralLiability_PersonalAndAdvertisingInjury_LimitAmount"] = glpolicy.GeneralLiabilityCoverage.PersonalInjury.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.GeneralAggregate != null)
+                    jsonObject["GeneralLiability_GeneralAggregate_LimitAmount"] = glpolicy.GeneralLiabilityCoverage.GeneralAggregate.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.ProductsAggregate != null)
+                    jsonObject["GeneralLiability_ProductsAndCompletedOperations_AggregateLimitAmount"] = glpolicy.GeneralLiabilityCoverage.ProductsAggregate.Value.ToString("N0");
+
+                if (!string.IsNullOrEmpty(glpolicy.GeneralLiabilityCoverage?.AdditionalCoverageName))
+                    jsonObject["GeneralLiability_OtherCoverageLimitDescription"] = glpolicy.GeneralLiabilityCoverage.AdditionalCoverageName;
+
+                if (glpolicy.GeneralLiabilityCoverage?.AdditionalCoverageLimit != null)
+                    jsonObject["GeneralLiability_OtherCoverageLimitDescription"] = glpolicy.GeneralLiabilityCoverage.AdditionalCoverageLimit.Value.ToString("N0");
+
+
+
+                if (glpolicy.GeneralLiabilityCoverage?.ClaimsMade is not null)
+                    jsonObject["GeneralLiability_ClaimsMadeIndicator"] = "On";
+
+                if (glpolicy.GeneralLiabilityCoverage?.Occurence is not null)
+                    jsonObject["GeneralLiability_OccurrenceIndicator"] = "On";
+            }
+
+
+            //Auto
+            var autopolicy = selectedpolicies.Where(p => p.ProductId == 4).FirstOrDefault();
+            if (autopolicy is not null)
+            {
+                
+                //Set Carrier Assignments
+                jsonObject["Vehicle_InsurerLetterCode"] = currentletter;
+                if (!string.IsNullOrEmpty(autopolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                }
+                currentletter = "C";
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(autopolicy.PolicyNumber))
+                    jsonObject["Policy_AutomobileLiability_PolicyNumberIdentifier"] = autopolicy.PolicyNumber;
+
+                if (autopolicy.EffectiveDate != null)
+                    jsonObject["Policy_AutomobileLiability_EffectiveDate"] = autopolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (autopolicy.ExpirationDate != null)
+                    jsonObject["Policy_AutomobileLiability_ExpirationDate"] = autopolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (autopolicy.AutoCoverage?.CombinedLimit != null)
+                    jsonObject["Vehicle_CombinedSingleLimit_EachAccidentAmount"] = autopolicy.AutoCoverage.CombinedLimit.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.BodilyInjuryPerPerson != null)
+                    jsonObject["Vehicle_BodilyInjury_PerPersonLimitAmount"] = autopolicy.AutoCoverage.BodilyInjuryPerPerson.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.BodilyInjuryPerAccident != null)
+                    jsonObject["Vehicle_BodilyInjury_PerAccidentLimitAmount"] = autopolicy.AutoCoverage.BodilyInjuryPerAccident.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.PropertyDamage != null)
+                    jsonObject["Vehicle_PropertyDamage_PerAccidentLimitAmount"] = autopolicy.AutoCoverage.PropertyDamage.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.ForAny is not null)
+                    jsonObject["Vehicle_AnyAutoIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForOwned is not null)
+                    jsonObject["Vehicle_AllOwnedAutosIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForHired is not null)
+                    jsonObject["Vehicle_HiredAutosIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForScheduled is not null)
+                    jsonObject["Vehicle_ScheduledAutosIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForNonOwned is not null)
+                    jsonObject["Vehicle_NonOwnedAutosIndicator"] = "On";
+            }
+
+
+
+            //Work Comp
+            var wcpolicy = selectedpolicies.Where(p => p.ProductId == 2).FirstOrDefault();
+            if (wcpolicy is not null)
+            {
+
+                //Set Carrier Assignments
+                jsonObject["WorkersCompensationEmployersLiability_InsurerLetterCode"] = currentletter;
+                if (!string.IsNullOrEmpty(wcpolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                }
+                currentletter = "D";
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(wcpolicy.PolicyNumber))
+                    jsonObject["Policy_WorkersCompensationAndEmployersLiability_PolicyNumberIdentifier"] = wcpolicy.PolicyNumber;
+
+                if (wcpolicy.EffectiveDate != null)
+                    jsonObject["Policy_WorkersCompensationAndEmployersLiability_EffectiveDate"] = wcpolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (wcpolicy.ExpirationDate != null)
+                    jsonObject["Policy_WorkersCompensationAndEmployersLiability_ExpirationDate"] = wcpolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (wcpolicy.WorkCompCoverage?.EachAccident != null)
+                    jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_EachAccidentLimitAmount"] = wcpolicy.WorkCompCoverage.EachAccident.Value.ToString("N0");
+
+                if (wcpolicy.WorkCompCoverage?.DiseaseEachEmployee != null)
+                    jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_DiseaseEachEmployeeLimitAmount"] = wcpolicy.WorkCompCoverage.DiseaseEachEmployee.Value.ToString("N0");
+
+                if (wcpolicy.WorkCompCoverage?.DiseasePolicyLimit != null)
+                    jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_DiseasePolicyLimitAmount"] = wcpolicy.WorkCompCoverage.DiseasePolicyLimit.Value.ToString("N0");
+            }
+            
+        }
+
+        string updatedJsonContent = jsonObject.ToString();
+        var jsonBytes = System.Text.Encoding.UTF8.GetBytes(updatedJsonContent);
+        stream = new MemoryStream(jsonBytes);
+
+        await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
+    }
+
+
+}

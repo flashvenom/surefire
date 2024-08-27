@@ -5,6 +5,7 @@ using Mantis.Domain.Policies.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace Mantis.Domain.Policies.Services
 {
     public class PolicyService
@@ -49,6 +50,23 @@ namespace Mantis.Domain.Policies.Services
             return await query.ToListAsync();
         }
 
+        public async Task<List<Policy>> GetCurrentPoliciesByClientIdAsync(int clientId)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            var policies = await _context.Policies
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Product)
+                .Include(p => p.GeneralLiabilityCoverage)
+                .Include(p => p.WorkCompCoverage)
+                .Include(p => p.AutoCoverage)
+                .Where(p => p.ClientId == clientId && p.EffectiveDate <= today && p.ExpirationDate >= today)
+                .ToListAsync();
+
+            return policies;
+        }
+        //
         public async Task<List<Policy>> GetUpcomingRenewalsAsync()
         {
             var currentDate = DateTime.UtcNow;
@@ -63,10 +81,8 @@ namespace Mantis.Domain.Policies.Services
             return upcomingRenewals;
         }
 
-        // 1. Get Policy by ID including related GeneralLiabilityCoverage
         public async Task<Policy> GetPolicyByIdAsync(int policyId)
         {
-            // Load the policy with related data
             var policy = await _context.Policies
                 .Include(p => p.GeneralLiabilityCoverage)
                 .Include(p => p.WorkCompCoverage)
@@ -80,7 +96,7 @@ namespace Mantis.Domain.Policies.Services
 
             if (policy == null) return null;
 
-            // Check for WorkCompCoverage when ProductId = 2
+            //Add WorkComp to WC
             if (policy.Product.ProductId == 2 && policy.WorkCompCoverage == null)
             {
                 var workCompCoverage = new WorkCompCoverage
@@ -91,7 +107,7 @@ namespace Mantis.Domain.Policies.Services
                 policy.WorkCompCoverage = workCompCoverage; //
             }
 
-            // Check for GeneralLiabilityCoverage when ProductId = 3
+            //Add Liability to GL
             if (policy.Product.ProductId == 3 && policy.GeneralLiabilityCoverage == null)
             {
                 var generalLiabilityCoverage = new GeneralLiabilityCoverage
@@ -102,7 +118,40 @@ namespace Mantis.Domain.Policies.Services
                 policy.GeneralLiabilityCoverage = generalLiabilityCoverage;
             }
 
-            // Check for AutoCoverage when ProductId = 4
+            //Add Liability Coverage to BOP
+            if (policy.Product.ProductId == 6 && policy.GeneralLiabilityCoverage == null)
+            {
+                var generalLiabilityCoverage = new GeneralLiabilityCoverage
+                {
+                    PolicyId = policy.PolicyId,
+                };
+                _context.GeneralLiabilityCoverages.Add(generalLiabilityCoverage);
+                policy.GeneralLiabilityCoverage = generalLiabilityCoverage;
+            }
+
+            //Add Property Coverage to BOP
+            if (policy.Product.ProductId == 6 && policy.PropertyCoverage == null)
+            {
+                var propertyCoverage = new PropertyCoverage
+                {
+                    PolicyId = policy.PolicyId,
+                };
+                _context.PropertyCoverage.Add(propertyCoverage);
+                policy.PropertyCoverage = propertyCoverage;
+            }
+
+            //Add Property Coverage to BOP
+            if (policy.Product.ProductId == 14 && policy.PropertyCoverage == null)
+            {
+                var propertyCoverage = new PropertyCoverage
+                {
+                    PolicyId = policy.PolicyId,
+                };
+                _context.PropertyCoverage.Add(propertyCoverage);
+                policy.PropertyCoverage = propertyCoverage;
+            }
+
+            //Add Auto COverage to Auto
             if (policy.Product.ProductId == 4 && policy.AutoCoverage == null)
             {
                 var autoCoverage = new AutoCoverage
@@ -113,14 +162,11 @@ namespace Mantis.Domain.Policies.Services
                 policy.AutoCoverage = autoCoverage;
             }
 
-            // Save changes if any new coverages were added
             await _context.SaveChangesAsync();
 
             return policy;
         }
 
-
-        // 2. Update a specific field in the Policy model
         public async Task UpdatePolicyFieldAsync(int policyId, string fieldName, object value)
         {
             var policy = await _context.Policies.FindAsync(policyId);
@@ -156,7 +202,6 @@ namespace Mantis.Domain.Policies.Services
             await _context.SaveChangesAsync();
         }
 
-        // 3. Update a specific field in the GeneralLiabilityCoverage model
         public async Task UpdateGeneralLiabilityCoverageFieldAsync(int generalLiabilityCoverageId, string fieldName, object value)
         {
             var generalLiabilityCoverage = await _context.GeneralLiabilityCoverages.FindAsync(generalLiabilityCoverageId);
@@ -176,7 +221,6 @@ namespace Mantis.Domain.Policies.Services
             var newRatingBasis = new RatingBasis
             {
                 PolicyId = policyId,
-                // Initialize other fields as needed, or leave blank
             };
 
             _context.RatingBases.Add(newRatingBasis);

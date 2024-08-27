@@ -69,9 +69,9 @@ else
 
             <span class="pol-name">Products Aggregate</span>
             <span class="pol-value">
-                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.GeneralAggregate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <SfInPlaceEditor @bind-Value="@GeneralLiabilityCoverage.ProductsAggregate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
                     <EditorComponent>
-                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.GeneralAggregate"></SfNumericTextBox>
+                        <SfNumericTextBox Format="c0" @bind-Value="@GeneralLiabilityCoverage.ProductsAggregate"></SfNumericTextBox>
                     </EditorComponent>
                     <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="int?"></InPlaceEditorEvents>
                 </SfInPlaceEditor>

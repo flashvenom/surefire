@@ -42,6 +42,8 @@ namespace Mantis.Data
         public DbSet<GeneralLiabilityCoverage> GeneralLiabilityCoverages { get; set; }
         public DbSet<AutoCoverage> AutoCoverages { get; set; }
         public DbSet<WorkCompCoverage> WorkCompCoverages { get; set; }
+        public DbSet<UmbrellaCoverage> UmbrellaCoverage { get; set; }
+        public DbSet<PropertyCoverage> PropertyCoverage { get; set; }
         public DbSet<RatingBasis> RatingBases { get; set; }
         public DbSet<Loss> Losses { get; set; }
         public DbSet<Claim> Claims { get; set; }
@@ -399,8 +401,58 @@ namespace Mantis.Data
                 .HasForeignKey("ModifiedById")
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Umbrella configuration
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.Policy)
+                .WithOne(p => p.UmbrellaCoverage)
+                .HasForeignKey<UmbrellaCoverage>(w => w.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.Client)
+                .WithMany()
+                .HasForeignKey(w => w.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Property configuration
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.Policy)
+                .WithOne(p => p.PropertyCoverage)
+                .HasForeignKey<PropertyCoverage>(w => w.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.Client)
+                .WithMany()
+                .HasForeignKey(w => w.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
             //Certificate
-            
+
 
             modelBuilder.Entity<Certificate>()
                 .HasOne(c => c.CreatedBy)

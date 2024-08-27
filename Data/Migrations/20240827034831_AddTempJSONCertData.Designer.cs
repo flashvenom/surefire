@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240827034831_AddTempJSONCertData")]
+    partial class AddTempJSONCertData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -781,53 +784,6 @@ namespace Mantis.Migrations
                     b.ToTable("Policies");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Policies.Models.PropertyCoverage", b =>
-                {
-                    b.Property<int>("PropertyCoverageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PropertyCoverageId"));
-
-                    b.Property<int?>("BusinessPersonalProperty")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CreatedById")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("Equipment")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ModifiedById")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int?>("PolicyId")
-                        .HasColumnType("int");
-
-                    b.HasKey("PropertyCoverageId");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("ModifiedById");
-
-                    b.HasIndex("PolicyId")
-                        .IsUnique()
-                        .HasFilter("[PolicyId] IS NOT NULL");
-
-                    b.ToTable("PropertyCoverage");
-                });
-
             modelBuilder.Entity("Mantis.Domain.Policies.Models.RatingBasis", b =>
                 {
                     b.Property<int>("RatingBasisId")
@@ -889,74 +845,6 @@ namespace Mantis.Migrations
                     b.HasIndex("UserModifiedId");
 
                     b.ToTable("RatingBases");
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Policies.Models.UmbrellaCoverage", b =>
-                {
-                    b.Property<int>("UmbrellaCoverageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UmbrellaCoverageId"));
-
-                    b.Property<bool?>("ClaimsMade")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CreatedById")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("DeductibleRetentionAmount")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("EachOccurrence")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("GeneralAggregate")
-                        .HasColumnType("int");
-
-                    b.Property<bool?>("HasDeductible")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("HasRetention")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("IsExcess")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("IsUmbrella")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ModifiedById")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool?>("Occurrence")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("PolicyId")
-                        .HasColumnType("int");
-
-                    b.HasKey("UmbrellaCoverageId");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("ModifiedById");
-
-                    b.HasIndex("PolicyId")
-                        .IsUnique()
-                        .HasFilter("[PolicyId] IS NOT NULL");
-
-                    b.ToTable("UmbrellaCoverage");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.WorkCompCoverage", b =>
@@ -1949,37 +1837,6 @@ namespace Mantis.Migrations
                     b.Navigation("Wholesaler");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Policies.Models.PropertyCoverage", b =>
-                {
-                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
-                        .WithMany()
-                        .HasForeignKey("ModifiedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
-                        .WithOne("PropertyCoverage")
-                        .HasForeignKey("Mantis.Domain.Policies.Models.PropertyCoverage", "PolicyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Client");
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("ModifiedBy");
-
-                    b.Navigation("Policy");
-                });
-
             modelBuilder.Entity("Mantis.Domain.Policies.Models.RatingBasis", b =>
                 {
                     b.HasOne("Mantis.Domain.Shared.Location", "Location")
@@ -2009,37 +1866,6 @@ namespace Mantis.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("UserModified");
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Policies.Models.UmbrellaCoverage", b =>
-                {
-                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
-                        .WithMany()
-                        .HasForeignKey("ModifiedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
-                        .WithOne("UmbrellaCoverage")
-                        .HasForeignKey("Mantis.Domain.Policies.Models.UmbrellaCoverage", "PolicyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Client");
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("ModifiedBy");
-
-                    b.Navigation("Policy");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.WorkCompCoverage", b =>
@@ -2331,13 +2157,9 @@ namespace Mantis.Migrations
 
                     b.Navigation("Losses");
 
-                    b.Navigation("PropertyCoverage");
-
                     b.Navigation("RatingBases");
 
                     b.Navigation("Renewals");
-
-                    b.Navigation("UmbrellaCoverage");
 
                     b.Navigation("Vehicles");
 

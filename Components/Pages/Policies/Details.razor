@@ -100,6 +100,16 @@ else
         {
             <AutoCoverageComponent AutoCoverage="@Policy.AutoCoverage" Policy="@Policy" />
         }
+
+        @if (Policy.PropertyCoverage is not null)
+        {
+            <AutoCoverageComponent PropertyCoverage="@Policy.PropertyCoverage" Policy="@Policy" />
+        }
+
+        @if (Policy.UmbrellaCoverage is not null)
+        {
+            <UmbrellaCoverageComponent UmbrellaCoverage="@Policy.UmbrellaCoverage" Policy="@Policy" />
+        }
         
         
 

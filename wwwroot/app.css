@@ -134,6 +134,7 @@ main {
 }
 .toolbar-link:hover {
     opacity:.9;
+    cursor:pointer;
 }
 .toolbar-link svg {
     fill: #000 !important;

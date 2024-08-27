@@ -8,6 +8,7 @@ namespace Mantis.Domain.Forms.Models
     {
         public int CertificateId { get; set; }
         public string? JSONData { get; set; }
+        public string? JSONDataTemp { get; set; }
         public string? HolderName { get; set; }
         public string? ProjectName { get; set; }
         public bool? AttachAI { get; set; }

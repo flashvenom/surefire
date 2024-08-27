@@ -46,6 +46,8 @@ namespace Mantis.Domain.Policies.Models
         public GeneralLiabilityCoverage? GeneralLiabilityCoverage { get; set; }
         public WorkCompCoverage? WorkCompCoverage { get; set; }
         public AutoCoverage? AutoCoverage { get; set; }
+        public PropertyCoverage? PropertyCoverage { get; set; }
+        public UmbrellaCoverage? UmbrellaCoverage { get; set; }
         public ApplicationUser? Producer { get; set; }
         public string? CSRId { get; set; }
         public ApplicationUser? CSR { get; set; }

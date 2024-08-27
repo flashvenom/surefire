@@ -143,6 +143,7 @@
                             <div>@policy.Wholesaler?.LookupCode</div>
                             <div class="sf-da">@policy.EffectiveDate.ToShortDateString()</div>
                             <div class="sf-da">@policy.ExpirationDate.ToShortDateString()</div>
+                            <div><a href="/Policies/Edit/@policy.PolicyId">Edit</a> <a href="/Policies/Details/@policy.PolicyId">View</a> </div>
                         </div>
                     }
                     @if (clientPolicies != null)

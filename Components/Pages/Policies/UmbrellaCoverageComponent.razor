@@ -1,0 +1,99 @@
+﻿@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+@if (Policy is not null || UmbrellaCoverage is not null)
+{
+<FluentGrid>
+    <FluentGridItem xs="3">
+        <span class="pol-section-title">UMBRELLA LIMITS</span><br />
+        <span class="pol-name">Each Occurrence</span>
+        <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@UmbrellaCoverage.EachOccurrence" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@UmbrellaCoverage.EachOccurrence"></SfNumericTextBox>
+                </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(UmbrellaCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+
+            <span class="pol-name">General Aggregate</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@UmbrellaCoverage.GeneralAggregate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@UmbrellaCoverage.GeneralAggregate"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(UmbrellaCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+            <span class="pol-section-title">UMBRELLA DETAILS</span><br />
+            <span class="pol-name">Is Excess</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@UmbrellaCoverage.IsExcess" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Is Umbrella</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@UmbrellaCoverage.IsUmbrella" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Occurrence</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@UmbrellaCoverage.Occurrence" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Claims Made</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@UmbrellaCoverage.ClaimsMade" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+            <span class="pol-section-title">DEDUCTIBLE</span><br />
+            <span class="pol-name">Flat Deductible</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@UmbrellaCoverage.HasDeductible" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Retention</span>
+            <span class="pol-value">
+                <SfCheckBox @bind-Checked="@UmbrellaCoverage.HasRetention" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+            </span><br />
+
+            <span class="pol-name">Amount</span>
+            <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@UmbrellaCoverage.DeductibleRetentionAmount" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                    <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@UmbrellaCoverage.DeductibleRetentionAmount"></SfNumericTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(UmbrellaCoverage))" TValue="int?"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+            </span><br />
+    </FluentGridItem>
+</FluentGrid>
+
+}
+@code {
+    [Parameter]
+    public Policy Policy { get; set; }
+
+    [Parameter]
+    public UmbrellaCoverage UmbrellaCoverage { get; set; }
+
+    private async Task UpdateCoverageNow(UmbrellaCoverage umbrellaCoverage)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+    private async Task UpdateCoverageBool(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args)
+    {
+        // Optionally, you can use 'args.Value' here if needed.
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+}

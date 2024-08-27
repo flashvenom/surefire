@@ -11,7 +11,7 @@
     
     <span class="sf-verthr"></span>
 
-    <NavLink class="toolbar-link" href="@NavigationService.GetLastClientPage()" Match="NavLinkMatch.Prefix">
+    <NavLink class="toolbar-link" href="@($"/Clients/List/{ClientId}")">
         <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
         <span class="toolbar-text">Client</span>
     </NavLink>
@@ -30,9 +30,29 @@
 
     <span class="sf-verthr2"></span>
 
-    <a class="toolbar-link" @onclick="LoadEverything">
-        <FluentIcon Value="@(new Icons.Regular.Size24.ArrowDownload())" />
-        <span class="toolbar-text">Download JSON</span>
+    <a class="toolbar-link" @onclick="() => LoadEverything(true, true, true, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Everything</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(true, false, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Client</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(false, true, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Policies</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(false, false, true, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Holder</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(false, false, false, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Description</span>
     </a>
 
    
@@ -49,7 +69,7 @@
     public EventCallback OnUploadJSON { get; set; }
 
     [Parameter]
-    public EventCallback OnLoadEverything { get; set; }
+    public EventCallback<(bool? loadClient, bool? loadPolicies, bool? loadHolder, bool? loadDescription)> OnLoadEverything { get; set; }
 
     private void NavigateToRenewalCreate()
     {
@@ -72,11 +92,24 @@
         }
     }
 
-    private async Task LoadEverything()
+    private async Task LoadEverything2()
     {
         if (OnLoadEverything.HasDelegate)
         {
             await OnLoadEverything.InvokeAsync();
+        }
+    }
+
+    private async Task TriggerLoadEverything()
+    {
+        await OnLoadEverything.InvokeAsync((true, true, true, true)); // You can customize the parameters here
+    }
+
+    private async Task LoadEverything(bool loadClient, bool loadPolicies, bool loadHolder, bool loadDescription)
+    {
+        if (OnLoadEverything.HasDelegate)
+        {
+            await OnLoadEverything.InvokeAsync((loadClient, loadPolicies, loadHolder, loadDescription));
         }
     }
 }

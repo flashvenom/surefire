@@ -63,6 +63,54 @@ namespace Mantis.Domain.Clients.Services
             return client;
         }
 
+
+
+        public async Task<Client> GetClientByCertificateId(int certificateId)
+        {
+            var client = await _context.Certificates
+                .Where(cert => cert.CertificateId == certificateId)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.Address)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.PrimaryContact)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.Locations)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.Contacts)
+                .Select(cert => cert.Client)
+                .FirstOrDefaultAsync();
+
+            return client;
+        }
+
+        public async Task<Client> GetClientWithCurrentPoliciesByCertificateIdAsync(int certificateId)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            var client = await _context.Certificates
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Address)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.PrimaryContact)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.Carrier)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.GeneralLiabilityCoverage)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.WorkCompCoverage)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.AutoCoverage)
+                .Where(cert => cert.CertificateId == certificateId)
+                .Select(cert => cert.Client)
+                .FirstOrDefaultAsync();
+
+            return client;
+        }
+
         public async Task UpdateClientAsync(Client client)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);

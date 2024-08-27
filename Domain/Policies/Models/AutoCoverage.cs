@@ -1,6 +1,7 @@
 ﻿using Mantis.Domain.Shared;
 using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Attachment.Models;
 using Mantis.Domain.Renewals.Models;
 using System.Text.Json.Serialization;
 using Mantis.Data;

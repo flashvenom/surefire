@@ -27,7 +27,8 @@ namespace Mantis.Domain.Shared.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public string uploads = ".\\uploads";
+        public string uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
 
         [HttpPost("[action]")]
         public async Task<IActionResult> Save(IFormFile UploadFiles) // Save the uploaded file here

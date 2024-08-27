@@ -2,10 +2,9 @@ using Mantis.Domain.Shared;
 using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Renewals.Models;
-
 using System.Net;
 
-namespace Mantis.Domain.Shared
+namespace Mantis.Domain.Attachment.Models
 {
     public class Attachment
     {

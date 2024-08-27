@@ -1,9 +1,11 @@
 ﻿@using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Attachment.Services
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.InPlaceEditor
 @inject PolicyService PolicyService
+@inject AttachmentService AttachmentService
 @rendermode InteractiveServer
 
 @if (Policy is null || Policy.GeneralLiabilityCoverage is null)
@@ -140,7 +142,7 @@ else
             <span class="pol-name">Attachment File</span>
             <span class="pol-value drop-area-wrap">
                 <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
-                    <UploaderAsyncSettings SaveUrl="https://localhost:7074/api/FileUploader/Save" RemoveUrl="https://localhost:7074/api/FileUploader/Remove"></UploaderAsyncSettings>
+                    <UploaderAsyncSettings SaveUrl="https://mantismetro.azurewebsites.net/api/FileUploader/Save" RemoveUrl="https://mantismetro.azurewebsites.net/api/FileUploader/Remove"></UploaderAsyncSettings>
                     <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect" OnFailure="@OnFailureHandler" OnActionComplete="@OnActionCompleteHandler"></UploaderEvents>
                 </SfUploader>
             </span><br />
@@ -158,9 +160,8 @@ else
 
             <span class="pol-name">Attachment File</span>
             <span class="pol-value drop-area-wrap">
-                <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
-                    <UploaderAsyncSettings SaveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Save" RemoveUrl="https://blazor.syncfusion.com/services/production/api/FileUploader/Remove"></UploaderAsyncSettings>
-                    <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect"></UploaderEvents>
+                <SfUploader AutoUpload="true" AllowedExtensions=".pdf, .txt">
+                    <UploaderEvents ValueChange="@OnChange"></UploaderEvents>
                 </SfUploader>
             </span><br />
         </FluentGridItem>
@@ -180,6 +181,34 @@ else
     private async Task UpdateCoverageNow(GeneralLiabilityCoverage glcoverage)
     {
         await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+    private async Task OnChange(UploadChangeEventArgs args)
+    {
+        string myfilename;
+        try
+        {
+            foreach (var file in args.Files)
+            {
+                var path = @"wwwroot/uploads/" + file.FileInfo.Name;
+                myfilename = file.FileInfo.Name;
+                FileStream filestream = new FileStream(path, FileMode.Create, FileAccess.Write);
+                await file.File.OpenReadStream(long.MaxValue).CopyToAsync(filestream);
+                filestream.Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally 
+        {
+            var filename = myfilename;
+            if (!string.IsNullOrEmpty(filename))
+            {
+                await AttachmentService.AddPolicyAttachment(filename, GeneralLiabilityCoverage.GeneralLiabilityCoverageId, "GLWaiverOfSub");
+            }
+        }
     }
 
     private async Task UpdateCoverageBool(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args)

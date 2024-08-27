@@ -58,10 +58,25 @@
         </Footer>
     </FluentPopover>
 
-    <FluentButton class="toolbar-link" id="myPopoverButtonr" OnClick="() => AttachPages(true)">
-        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+
+    <FluentButton class="toolbar-link" id="myAttachButtonr" @onclick="() => _attachmentsVisible = !_attachmentsVisible">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Attach())" />
         <span class="toolbar-text">Attachments</span>
     </FluentButton>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myAttachButtonr" @bind-Open="_attachmentsVisible">
+        <Header>Attachment Options</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                Use the checkboxes in the certificate to attach a policy's AI/WoS/P&NC endorsements to this certificate. If you don't want to attach anything, check below...<br><br>
+                    <FluentCheckbox Checked="@certificate.BlockAttachments" @onchange="(e) => ToggleBlockAttachments(e, certificate)"> Block Attachments</FluentCheckbox>
+                
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => SaveToDatabase(false)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
 
 
     <span class="sf-verthr2"></span>
@@ -88,8 +103,7 @@
         <span class="toolbar-text">Save</span>
     </a>
 
-    <a class="toolbar-link" @onclick="FlattenForm">
-        
+    <a class="toolbar-link" OnClick="() => AttachPages(true)">
         <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
         <span class="toolbar-text">Print</span>
     </a>
@@ -133,6 +147,7 @@
     public Certificate certificate { get; set; } = new Certificate();
     public List<Policy> policies { get; set; } = new List<Policy>();
     private bool _policiesVisible = false;
+    private bool _attachmentsVisible = false;
     private List<Policy> selectedpolicies = new List<Policy>();
 
     protected override async Task OnInitializedAsync()
@@ -193,9 +208,17 @@
         }
     }
 
-    private async Task TogglePolicy(int? policyid)
+    private async void ToggleBlockAttachments(Microsoft.AspNetCore.Components.ChangeEventArgs e, Certificate certificate)
     {
-        var getpolicy = policies.Where(p => p.PolicyId == policyid).FirstOrDefault();
+        if (certificate.BlockAttachments == false)
+        {
+            certificate.BlockAttachments = true;
+        }
+        else
+        {
+            certificate.BlockAttachments = false;
+        }
+        await FormService.UpdateCertificate(certificate);
     }
 
     private async Task ResetForm()
@@ -208,6 +231,66 @@
         await pdfViewer.DownloadAsync();
     }
 
+
+    public async Task ExportCertificate(bool? openNewWindow, bool? printNow, bool? attachToEmail, bool? saveToDisk)
+    {
+        await SaveToDatabase(false);
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        data = FormService.FlattenPdf(data);
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+            if (certificate.AttachGLAI == true && certificate.AttachGLAIfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLAIfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachGLWOS == true && certificate.AttachGLWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachWCWOS == true && certificate.AttachWCWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachWCWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+
+            using (MemoryStream combinedPdfStream = new MemoryStream())
+            {
+                originalDocument.Save(combinedPdfStream);
+
+                byte[] combinedPdfBytes = combinedPdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
+
+                @if (openNewWindow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+            }
+            originalDocument.Close(true);
+        }
+    }
 
     public async Task AttachPages(bool? addAttachments)
     {
@@ -251,7 +334,7 @@
                     attachmentDocument.Close(true);
                 }
             }
-            
+
 
             using (MemoryStream combinedPdfStream = new MemoryStream())
             {
@@ -289,6 +372,8 @@
 
     public async Task SaveToDatabase(bool? exit)
     {
+        _attachmentsVisible = false;
+        _policiesVisible = false;
         stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
 
         stream.Position = 0;
@@ -301,6 +386,12 @@
             if (!string.IsNullOrEmpty(holderName))
             {
                 certificate.HolderName = holderName;
+            }
+
+            string holderdescription = jsonObject["CertificateOfLiabilityInsurance_ACORDForm_RemarkText"]?.ToString();
+            if (!string.IsNullOrEmpty(holderdescription))
+            {
+                certificate.ProjectName = holderName;
             }
 
             string attachGLAI = jsonObject["GeneralLiability_AdditionalInsuredIndicator"]?.ToString();
@@ -368,9 +459,10 @@
     }
 
 
-
     public async Task HandleLoadEverything(bool? loadClient = null, bool? loadPolicies = null, bool? loadHolder = null, bool? loadDescription = null)
     {
+        _attachmentsVisible = false;
+        _policiesVisible = false;
         var jsonObject = await ClearPoliciesJSON();
 
         jsonObject["Form_CompletionDate"] = DateTime.UtcNow.ToString("MM/dd/yyyy");

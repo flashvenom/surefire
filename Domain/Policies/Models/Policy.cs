@@ -1,4 +1,5 @@
 ﻿using Mantis.Domain.Shared;
+using Mantis.Domain.Shared.Models;
 using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Renewals.Models;

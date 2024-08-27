@@ -4,11 +4,10 @@ using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Renewals.Models;
-using Mantis.Domain.Attachment.Models;
+using Mantis.Domain.Shared.Models;
 using Mantis.Domain.Forms.Models;
 using Mantis.Domain.Shared;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Mantis.Domain.Shared.Models;
 
 namespace Mantis.Data
 {

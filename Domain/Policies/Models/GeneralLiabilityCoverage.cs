@@ -1,8 +1,5 @@
-﻿using Mantis.Domain.Shared;
-using Mantis.Domain.Carriers.Models;
-using Mantis.Domain.Clients.Models;
-using Mantis.Domain.Renewals.Models;
-using System.Text.Json.Serialization;
+﻿using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Shared.Models;
 using Mantis.Data;
 
 namespace Mantis.Domain.Policies.Models

@@ -59,8 +59,12 @@ namespace Mantis.Domain.Policies.Services
                 .Include(p => p.Wholesaler)
                 .Include(p => p.Product)
                 .Include(p => p.GeneralLiabilityCoverage)
+                    .ThenInclude(glc => glc.AdditionalInsuredAttachment)
+                .Include(p => p.GeneralLiabilityCoverage)
+                    .ThenInclude(glc => glc.WaiverOfSubAttachment)
                 .Include(p => p.UmbrellaCoverage)
                 .Include(p => p.WorkCompCoverage)
+                    .ThenInclude(glc => glc.WaiverOfSubAttachment)
                 .Include(p => p.PropertyCoverage)
                 .Include(p => p.AutoCoverage)
                 .Where(p => p.ClientId == clientId && p.EffectiveDate <= today && p.ExpirationDate >= today)
@@ -87,6 +91,9 @@ namespace Mantis.Domain.Policies.Services
         {
             var policy = await _context.Policies
                 .Include(p => p.GeneralLiabilityCoverage)
+                    .ThenInclude(glc => glc.AdditionalInsuredAttachment)
+                .Include(p => p.GeneralLiabilityCoverage)
+                    .ThenInclude(glc => glc.WaiverOfSubAttachment)
                 .Include(p => p.WorkCompCoverage)
                 .Include(p => p.AutoCoverage)
                 .Include(p => p.PropertyCoverage)

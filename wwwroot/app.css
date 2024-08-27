@@ -550,10 +550,25 @@ main {
     text-transform: uppercase;
     letter-spacing:2px;
 }
-
-
+.pol-exist {
+    font-family: "montserrat", sans-serif;
+    font-size: .8em;
+    font-weight: 400;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background-color:#fff;
+    width:auto;
+    height:80px;
+    border:1px dashed #ccc;
+    position:relative;
+    left:8px;
+    clear:both;
+}
+.pdf-icon {
+    width:60px;
+}
 /*--------------------------Other Styles----------------------------*/
-
 .main-content {
     flex-grow: 1;
     padding: 20px;

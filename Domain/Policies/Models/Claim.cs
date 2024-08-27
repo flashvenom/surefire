@@ -1,5 +1,4 @@
-﻿using Mantis.Domain.Shared;
-using System.Collections.Generic;
+﻿using Mantis.Domain.Shared.Models;
 
 namespace Mantis.Domain.Policies.Models
 {

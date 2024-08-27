@@ -11,9 +11,14 @@ namespace Mantis.Domain.Forms.Models
         public string? JSONDataTemp { get; set; }
         public string? HolderName { get; set; }
         public string? ProjectName { get; set; }
-        public bool? AttachAI { get; set; }
-        public bool? AttachWOS { get; set; }
+        public bool? AttachGLAI { get; set; }
+        public string? AttachGLAIfilename { get; set; }
+        public bool? AttachGLWOS { get; set; }
+        public string? AttachGLWOSfilename { get; set; }
+        public bool? AttachWCWOS { get; set; }
+        public string? AttachWCWOSfilename { get; set; }
         public bool? AttachPNC { get; set; }
+        public bool? BlockAttachments { get; set; }
 
         //Record Info
         public int ClientId { get; set; }

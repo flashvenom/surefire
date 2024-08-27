@@ -1,6 +1,7 @@
 ﻿@using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
-@using Mantis.Domain.Attachment.Services
+@using Mantis.Domain.Shared.Services
+@using Mantis.Domain.Shared.Models
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.InPlaceEditor
@@ -122,13 +123,32 @@ else
             </span>
         </FluentGridItem>
         <FluentGridItem xs="3">
-
             <span class="pol-section-title">Blanket Additional Insured</span><br />
-
-            <span class="pol-name">Included</span>
+            <span class="pol-name">Attachment File</span>
             <span class="pol-value">
-                <SfCheckBox @bind-Checked="@GeneralLiabilityCoverage.ClaimsMade" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
-            </span><br />
+                @if (GeneralLiabilityCoverage.AdditionalInsuredAttachment != null)
+                {
+                    <div class="pol-exist">
+                        <table width="100%">
+                            <tr>
+                                <td><a href="/uploads/@GeneralLiabilityCoverage.AdditionalInsuredAttachment.FileName" target="_blank"><img src="/img/pdficon.png" class="pdf-icon"></a></td>
+                                <td valign="middle">
+                                    @GeneralLiabilityCoverage.AdditionalInsuredAttachment?.FileName
+                                    <FluentButton Appearance="Appearance.Lightweight" OnClick="@(async () => await RemoveFile(GeneralLiabilityCoverage.GeneralLiabilityCoverageId, GeneralLiabilityCoverage.AdditionalInsuredAttachment.AttachmentId, "gl-ai"))">Remove</FluentButton>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <span class="pol-value drop-area-wrap">
+                        <SfUploader AutoUpload="true" AllowedExtensions=".pdf, .txt" AllowMultiple=false>
+                            <UploaderEvents ValueChange="@OnChangeAI"></UploaderEvents>
+                        </SfUploader>
+                    </span>
+                }
+            </span><div style="height:40px;"></div>
 
             <span class="pol-name">Form Number</span>
             <span class="pol-value">
@@ -139,34 +159,40 @@ else
                     <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(GeneralLiabilityCoverage))" TValue="string"></InPlaceEditorEvents>
                 </SfInPlaceEditor>
             </span><br />
-            <span class="pol-name">Attachment File</span>
-            <span class="pol-value drop-area-wrap">
-                <SfUploader DropArea=".drop-area-wrap" AllowedExtensions="@ExtensionAllowed">
-                    <UploaderAsyncSettings SaveUrl="https://mantismetro.azurewebsites.net/api/FileUploader/Save" RemoveUrl="https://mantismetro.azurewebsites.net/api/FileUploader/Remove"></UploaderAsyncSettings>
-                    <UploaderEvents OnRemove="@OnFileRemove" FileSelected="@AfterSelect" OnFailure="@OnFailureHandler" OnActionComplete="@OnActionCompleteHandler"></UploaderEvents>
-                </SfUploader>
-            </span><br />
+
+            
+            <div style="width:100%; height:1px; background-color:#ccc; margin-top:10px; margin-bottom:10px; clear:both;"></div>
 
 
-
-            <div style="width:100%; height:1px; background-color:#ccc; margin-top:10px; margin-bottom:10px;"></div>
-
+            @* //--------------- Waiver -----------------// *@
             <span class="pol-section-title">Waiver of Subrogration</span><br />
-
-            <span class="pol-name">Included</span>
-            <span class="pol-value">
-                <SfCheckBox @bind-Checked="@GeneralLiabilityCoverage.WaiverOfSub" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
-            </span><br />
-
             <span class="pol-name">Attachment File</span>
-            <span class="pol-value drop-area-wrap">
-                <SfUploader AutoUpload="true" AllowedExtensions=".pdf, .txt">
-                    <UploaderEvents ValueChange="@OnChange"></UploaderEvents>
-                </SfUploader>
-            </span><br />
+            <span class="pol-value">
+            @if (GeneralLiabilityCoverage.WaiverOfSubAttachment != null)
+                {
+                    <div class="pol-exist">
+                        <table width="100%">
+                            <tr>
+                                <td><a href="/uploads/@GeneralLiabilityCoverage.WaiverOfSubAttachment.FileName" target="_blank"><img src="/img/pdficon.png" class="pdf-icon"></a></td>
+                                <td valign="middle">
+                                    @GeneralLiabilityCoverage.WaiverOfSubAttachment?.FileName
+                                    <FluentButton Appearance="Appearance.Lightweight" OnClick="@(async () => await RemoveFile(GeneralLiabilityCoverage.GeneralLiabilityCoverageId, GeneralLiabilityCoverage.WaiverOfSubAttachment.AttachmentId, "gl-wos"))">Remove</FluentButton>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <span class="pol-value drop-area-wrap">
+                        <SfUploader AutoUpload="true" AllowedExtensions=".pdf, .txt" AllowMultiple=false>
+                            <UploaderEvents ValueChange="@OnChangeWOS"></UploaderEvents>
+                        </SfUploader>
+                    </span>
+                }
+            </span><div style="height:40px;"></div>
         </FluentGridItem>
     </FluentGrid>
-    <div style="border:1px solid #f00">@DebugWording</div>
         
 }
 @code {
@@ -178,36 +204,96 @@ else
 
     public string DebugWording { get; set; } = "Load";
 
+    string myfilename;
+
     private async Task UpdateCoverageNow(GeneralLiabilityCoverage glcoverage)
     {
         await PolicyService.UpdatePolicyContextModelAsync(Policy);
     }
 
-    private async Task OnChange(UploadChangeEventArgs args)
+    private async Task OnChangeAI(UploadChangeEventArgs args)
     {
-        string myfilename;
         try
         {
             foreach (var file in args.Files)
             {
-                var path = @"wwwroot/uploads/" + file.FileInfo.Name;
-                myfilename = file.FileInfo.Name;
-                FileStream filestream = new FileStream(path, FileMode.Create, FileAccess.Write);
-                await file.File.OpenReadStream(long.MaxValue).CopyToAsync(filestream);
-                filestream.Close();
+                var path = $"wwwroot/uploads/{file.FileInfo.Name}";
+                var fileName = file.FileInfo.Name;
+
+                using (var filestream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                {
+                    await file.File.OpenReadStream(long.MaxValue).CopyToAsync(filestream);
+                }
+
+                // Create and assign the attachment to AdditionalInsuredAttachment
+                var attachment = await AttachmentService.AddPolicyAttachmentAsync(fileName, GeneralLiabilityCoverage.GeneralLiabilityCoverageId, "ai");
+
+                if (attachment != null)
+                {
+                    GeneralLiabilityCoverage.AdditionalInsuredAttachment = attachment;
+                    await PolicyService.UpdatePolicyContextModelAsync(Policy); // Save changes to the policy
+                    StateHasChanged(); // Refresh the UI
+                }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Console.WriteLine($"Error uploading file: {ex.Message}");
         }
-        finally 
+    }
+
+    private async Task OnChangeWOS(UploadChangeEventArgs args)
+    {
+        try
         {
-            var filename = myfilename;
-            if (!string.IsNullOrEmpty(filename))
+            foreach (var file in args.Files)
             {
-                await AttachmentService.AddPolicyAttachment(filename, GeneralLiabilityCoverage.GeneralLiabilityCoverageId, "GLWaiverOfSub");
+                var path = $"wwwroot/uploads/{file.FileInfo.Name}";
+                var fileName = file.FileInfo.Name;
+
+                using (var filestream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                {
+                    await file.File.OpenReadStream(long.MaxValue).CopyToAsync(filestream);
+                }
+
+                // Create and assign the attachment to WaiverOfSubAttachment
+                var attachment = await AttachmentService.AddPolicyAttachmentAsync(fileName, GeneralLiabilityCoverage.GeneralLiabilityCoverageId, "wos");
+
+                if (attachment != null)
+                {
+                    GeneralLiabilityCoverage.WaiverOfSubAttachment = attachment;
+                    await PolicyService.UpdatePolicyContextModelAsync(Policy); // Save changes to the policy
+                    StateHasChanged(); // Refresh the UI
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveFile(int coverageId, int attachmentId, string attachmentType)
+    {
+        try
+        {
+            switch (attachmentType.ToLower())
+            {
+                case "gl-ai":
+                    await AttachmentService.RemovePolicyAttachmentAsync(coverageId, "gl-ai");
+                    Policy.GeneralLiabilityCoverage.AdditionalInsuredAttachment = null;
+                    StateHasChanged();
+                    break;
+                case "gl-wos":
+                    await AttachmentService.RemovePolicyAttachmentAsync(coverageId, "gl-wos");
+                    Policy.GeneralLiabilityCoverage.WaiverOfSubAttachment = null;
+                    StateHasChanged();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing file: {ex.Message}");
         }
     }
 

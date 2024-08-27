@@ -37,7 +37,7 @@ namespace Mantis.Domain.Shared.Services
 
     public class NavigationService
     {
-        private string _lastClientPage = "/Clients/List/91";
+        private string _lastClientPage = "/Clients/List/211";
 
         public void SetLastClientPage(string url)
         {

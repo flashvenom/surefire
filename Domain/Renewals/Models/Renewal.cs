@@ -3,6 +3,7 @@ using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Shared;
+using Mantis.Domain.Shared.Models;
 using System.Collections.Generic;
 
 namespace Mantis.Domain.Renewals.Models

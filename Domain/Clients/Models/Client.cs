@@ -3,7 +3,7 @@ using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Forms.Models;
 using Mantis.Domain.Shared;
-using System.Text.Json.Serialization;
+using Mantis.Domain.Shared.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Mantis.Domain.Clients.Models

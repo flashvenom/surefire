@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240827165734_AttachmentNullablesAndDescription")]
+    partial class AttachmentNullablesAndDescription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -348,28 +351,13 @@ namespace Mantis.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CertificateId"));
 
-                    b.Property<bool?>("AttachGLAI")
+                    b.Property<bool?>("AttachAI")
                         .HasColumnType("bit");
-
-                    b.Property<string>("AttachGLAIfilename")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("AttachGLWOS")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("AttachGLWOSfilename")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("AttachPNC")
                         .HasColumnType("bit");
 
-                    b.Property<bool?>("AttachWCWOS")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("AttachWCWOSfilename")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("BlockAttachments")
+                    b.Property<bool?>("AttachWOS")
                         .HasColumnType("bit");
 
                     b.Property<int>("ClientId")

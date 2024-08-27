@@ -11,6 +11,8 @@
 @using Mantis.Domain.Policies.Models
 @using Microsoft.FluentUI.AspNetCore.Components
 @using System.IO
+@using Syncfusion.Pdf
+@using Syncfusion.Pdf.Parsing
 @inject ClientService ClientService
 @inject PolicyService PolicyService
 @inject FormService FormService
@@ -56,10 +58,11 @@
         </Footer>
     </FluentPopover>
 
-    <a class="toolbar-link" @onclick="() => HandleLoadEverything(false, false, true, false)">
+    <FluentButton class="toolbar-link" id="myPopoverButtonr" OnClick="() => AttachPages(true)">
         <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
-        <span class="toolbar-text">Holders</span>
-    </a>
+        <span class="toolbar-text">Attachments</span>
+    </FluentButton>
+
 
     <span class="sf-verthr2"></span>
 
@@ -107,12 +110,11 @@
         <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
         <span class="toolbar-text">Cancel</span>
     </NavLink>
-
    
 </div>
 
 <div class="control-section" style="height:784px;">
-    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="784px" Width="100%">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="784px" Width="90%">
         <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
     </SfPdfViewer2>
 </div>
@@ -206,6 +208,63 @@
         await pdfViewer.DownloadAsync();
     }
 
+
+    public async Task AttachPages(bool? addAttachments)
+    {
+        await SaveToDatabase(false);
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        data = FormService.FlattenPdf(data);
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+            if (certificate.AttachGLAI == true && certificate.AttachGLAIfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLAIfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachGLWOS == true && certificate.AttachGLWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachWCWOS == true && certificate.AttachWCWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachWCWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+            
+
+            using (MemoryStream combinedPdfStream = new MemoryStream())
+            {
+                originalDocument.Save(combinedPdfStream);
+
+                byte[] combinedPdfBytes = combinedPdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
+                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+            }
+            originalDocument.Close(true);
+        }
+    }
+
     public async void FlattenForm()
     {
         byte[] data = await pdfViewer.GetDocumentAsync();
@@ -228,7 +287,7 @@
         }
     }
 
-    public async void SaveToDatabase(bool? exit)
+    public async Task SaveToDatabase(bool? exit)
     {
         stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
 
@@ -239,11 +298,22 @@
             var jsonObject = JObject.Parse(jsonData);
 
             string holderName = jsonObject["CertificateHolder_FullName"]?.ToString();
-
             if (!string.IsNullOrEmpty(holderName))
             {
                 certificate.HolderName = holderName;
             }
+
+            string attachGLAI = jsonObject["GeneralLiability_AdditionalInsuredIndicator"]?.ToString();
+            if (!string.IsNullOrEmpty(attachGLAI)) 
+            { 
+                certificate.AttachGLAI = true;
+            }
+
+            string attachGlWOS = jsonObject["GeneralLiability_WaiverOfSubrogationIndicator"]?.ToString();
+            if (!string.IsNullOrEmpty(attachGlWOS)) { certificate.AttachGLWOS = true; }
+
+            string attachWCWOS = jsonObject["WorkersCompensationAndEmployersLiability_WaiverOfSubrogationIndicator"]?.ToString();
+            if (!string.IsNullOrEmpty(attachWCWOS)) { certificate.AttachWCWOS = true; }
 
             // Save the JSON data to the certificate's JSONData field
             certificate.JSONData = jsonData;
@@ -398,6 +468,20 @@
 
                 if (glpolicy.GeneralLiabilityCoverage?.Occurence is not null)
                     jsonObject["GeneralLiability_OccurrenceIndicator"] = "On";
+                
+                //Add filename to certificate for when/if we export/combine PDFs
+                if (glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment != null)
+                {
+                    certificate.AttachGLAIfilename = glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment.FileName;
+
+                }
+
+                //Add filename to certificate for when/if we export/combine PDFs
+                if (glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment != null)
+                {
+                    certificate.AttachGLWOSfilename = glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment.FileName;
+                }
+                
             }
 
 
@@ -592,6 +676,13 @@
 
                 if (wcpolicy.WorkCompCoverage?.DiseasePolicyLimit != null)
                     jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_DiseasePolicyLimitAmount"] = wcpolicy.WorkCompCoverage.DiseasePolicyLimit.Value.ToString("N0");
+
+
+                //Add filename to certificate for when/if we export/combine PDFs
+                if (wcpolicy.WorkCompCoverage.WaiverOfSubAttachment != null)
+                {
+                    certificate.AttachWCWOSfilename = wcpolicy.WorkCompCoverage.WaiverOfSubAttachment.FileName;
+                }
             }
 
 

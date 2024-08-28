@@ -189,7 +189,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Carriers");
+                    b.ToTable("Carriers", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Clients.Models.Client", b =>
@@ -257,7 +257,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("ProducerId");
 
-                    b.ToTable("Clients");
+                    b.ToTable("Clients", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Contacts.Models.Contact", b =>
@@ -337,7 +337,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("Contacts");
+                    b.ToTable("Contacts", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Forms.Models.Certificate", b =>
@@ -423,7 +423,7 @@ namespace Mantis.Migrations
 
                     b.HasKey("ApplicationId");
 
-                    b.ToTable("Application");
+                    b.ToTable("Application", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.AutoCoverage", b =>
@@ -549,7 +549,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("Claims");
+                    b.ToTable("Claims", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.GeneralLiabilityCoverage", b =>
@@ -793,7 +793,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("WholesalerId");
 
-                    b.ToTable("Policies");
+                    b.ToTable("Policies", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.PropertyCoverage", b =>
@@ -1100,7 +1100,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("WholesalerId");
 
-                    b.ToTable("Renewals");
+                    b.ToTable("Renewals", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.Submission", b =>
@@ -1157,7 +1157,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("WholesalerId");
 
-                    b.ToTable("Submissions");
+                    b.ToTable("Submissions", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.TaskMaster", b =>
@@ -1194,7 +1194,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("ParentTaskId");
 
-                    b.ToTable("TaskMasters");
+                    b.ToTable("TaskMasters", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.TrackTask", b =>
@@ -1252,7 +1252,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("RenewalId");
 
-                    b.ToTable("TrackTasks");
+                    b.ToTable("TrackTasks", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Address", b =>
@@ -1283,7 +1283,7 @@ namespace Mantis.Migrations
 
                     b.HasKey("AddressId");
 
-                    b.ToTable("Address");
+                    b.ToTable("Address", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.DailyTask", b =>
@@ -1356,7 +1356,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("Drivers");
+                    b.ToTable("Drivers", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Location", b =>
@@ -1497,7 +1497,7 @@ namespace Mantis.Migrations
 
                     b.HasKey("ProductId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Vehicle", b =>
@@ -1542,7 +1542,7 @@ namespace Mantis.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("Vehicles");
+                    b.ToTable("Vehicles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

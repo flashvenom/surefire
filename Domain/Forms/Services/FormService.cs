@@ -24,7 +24,6 @@ namespace Mantis.Domain.Forms.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        
         public async Task<Certificate> GetCertificateByIdAsync(int certid)
         {
             var certificate = await _context.Certificates.FirstOrDefaultAsync(p => p.CertificateId == certid);
@@ -33,20 +32,32 @@ namespace Mantis.Domain.Forms.Services
         }
         public async Task UpdateCertificate(Certificate certificate)
         {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             var existingCertificate = await _context.Certificates.FindAsync(certificate.CertificateId);
             if (existingCertificate != null)
             {
                 existingCertificate.HolderName = certificate.HolderName;
                 existingCertificate.JSONData = certificate.JSONData;
-
-                // Update other fields if needed
-
+                existingCertificate.ModifiedBy = currentUser;
+                existingCertificate.DateModified = DateTime.UtcNow;
                 _context.Certificates.Update(existingCertificate);
                 await _context.SaveChangesAsync();
             }
-            else
+        }
+
+        public byte[] FlattenPdf(byte[] pdfBytes)
+        {
+            using (MemoryStream stream = new MemoryStream(pdfBytes))
             {
-                // Handle the case where the certificate is not found, if necessary
+                PdfLoadedDocument loadedDocument = new PdfLoadedDocument(stream);
+                PdfLoadedForm loadedForm = loadedDocument.Form;
+                loadedForm.Flatten = true;
+                using (MemoryStream outputStream = new MemoryStream())
+                {
+                    loadedDocument.Save(outputStream);
+                    loadedDocument.Close(true);
+                    return outputStream.ToArray();
+                }
             }
         }
 
@@ -58,28 +69,35 @@ namespace Mantis.Domain.Forms.Services
             
         }
 
-        public byte[] FlattenPdf(byte[] pdfBytes)
+        public async Task<int> DuplicateCertificateAsync(Certificate originalCertificate)
         {
-            using (MemoryStream stream = new MemoryStream(pdfBytes))
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            
+
+            var duplicatedCertificate = new Certificate
             {
-                // Load the PDF document
-                PdfLoadedDocument loadedDocument = new PdfLoadedDocument(stream);
-                PdfLoadedForm loadedForm = loadedDocument.Form;
-                PdfLoadedFormFieldCollection fields = loadedForm.Fields;
-                // Flatten form fields
-                foreach (var item in fields)
-                {
-                    //item.Flatten = true;
-                }
-                loadedForm.Flatten = true;
-                // Save the flattened document to a memory stream
-                using (MemoryStream outputStream = new MemoryStream())
-                {
-                    loadedDocument.Save(outputStream);
-                    loadedDocument.Close(true);
-                    return outputStream.ToArray();
-                }
-            }
+                ClientId = originalCertificate.ClientId,
+                HolderName = originalCertificate.HolderName,
+                ProjectName = originalCertificate.ProjectName,
+                JSONData = originalCertificate.JSONData,
+                AttachGLAI = originalCertificate.AttachGLAI,
+                AttachGLAIfilename = originalCertificate.AttachGLAIfilename,
+                AttachGLWOS = originalCertificate.AttachGLWOS,
+                AttachGLWOSfilename = originalCertificate.AttachGLWOSfilename,
+                AttachWCWOS = originalCertificate.AttachWCWOS,
+                AttachWCWOSfilename = originalCertificate.AttachWCWOSfilename,
+                BlockAttachments = originalCertificate.BlockAttachments
+            };
+            duplicatedCertificate.CreatedBy = currentUser;
+            duplicatedCertificate.ModifiedBy = currentUser;
+            duplicatedCertificate.DateCreated = DateTime.UtcNow;
+            duplicatedCertificate.DateModified = DateTime.UtcNow;
+
+            _context.Certificates.Add(duplicatedCertificate);
+            await _context.SaveChangesAsync();
+
+            return duplicatedCertificate.CertificateId;
         }
+
     }
 }

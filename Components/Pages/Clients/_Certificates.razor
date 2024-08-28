@@ -14,12 +14,30 @@
 }
 else
 {
-    foreach(var item in client.Certificates)
-    {
-        <div>
-            <a href="/Forms/Certificate/@item.CertificateId">@item.CertificateId : @item.HolderName</a> <span>[X]</span>
-        </div>
-    }
+    <table class="table" width="100%">
+        <thead>
+            <tr style="text-align:left;">
+                <th>ID</th>
+                <th>Holder Name</th>
+                <th>Desc</th>
+                <th>Created</th>
+                <th>Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        @foreach(var item in client.Certificates)
+        {
+            <tr>
+                <td>@item.CertificateId</td>
+                <td><a href="/Forms/Certificate/@item.CertificateId">@item.HolderName</a></td>
+                    <td>@(item.ProjectName?.Length > 100 ? item.ProjectName.Substring(0, 100) : item.ProjectName)</td>
+                <td>@item.DateCreated?.ToString("MM/dd/yyyy") - @item.CreatedBy.FirstName</td>
+                <td>@item.DateModified?.ToString("MM/dd/yyyy") - @item.ModifiedBy.FirstName</td>
+            </tr>
+        }
+        </tbody>
+    </table>
 }
 @code {
     [Parameter]

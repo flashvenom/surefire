@@ -13,6 +13,7 @@
 @using System.IO
 @using Syncfusion.Pdf
 @using Syncfusion.Pdf.Parsing
+@using Mantis.Domain.Shared.Helpers
 @inject ClientService ClientService
 @inject PolicyService PolicyService
 @inject FormService FormService
@@ -22,25 +23,17 @@
 @inject IHttpClientFactory _http
 
 @rendermode InteractiveServer
-@* 
-<_toolbar ClientId="clientId" OnDownloadJSON="HandleDownloadJSON" OnUploadJSON="HandleUploadJSON" OnLoadEverything="() => HandleLoadEverything(true, true, false, false)" />
- *@
-
  
 <div class="page-toolbar">
     <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Certificate</SfButton>
 
     <span class="sf-verthr2"></span>
 
-    <a class="toolbar-link" @onclick="() => HandleLoadEverything(true, false, false, false)">
-        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
-        <span class="toolbar-text">Client</span>
-    </a>
-
-    <FluentButton class="toolbar-link" id="myPopoverButtonr" @onclick="() => _policiesVisible = !_policiesVisible">
-        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+    @* Policies *@
+    <a class="toolbar-link" id="myPopoverButtonr" @onclick="() => _policiesVisible = !_policiesVisible"> 
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentBulletList())" />
         <span class="toolbar-text">Policies</span>
-    </FluentButton>
+    </a>
     <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myPopoverButtonr" @bind-Open="_policiesVisible">
         <Header>Select Policies</Header>
         <Body>
@@ -58,11 +51,11 @@
         </Footer>
     </FluentPopover>
 
-
-    <FluentButton class="toolbar-link" id="myAttachButtonr" @onclick="() => _attachmentsVisible = !_attachmentsVisible">
+    @* Attachments *@
+    <a class="toolbar-link" id="myAttachButtonr" @onclick="() => _attachmentsVisible = !_attachmentsVisible">
         <FluentIcon Value="@(new Icons.Regular.Size24.Attach())" />
         <span class="toolbar-text">Attachments</span>
-    </FluentButton>
+    </a>
     <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myAttachButtonr" @bind-Open="_attachmentsVisible">
         <Header>Attachment Options</Header>
         <Body>
@@ -77,53 +70,51 @@
         </Footer>
     </FluentPopover>
 
-
-
     <span class="sf-verthr2"></span>
 
-    <a class="toolbar-link" @onclick="ResetForm">
+    <a id="Reset" class="toolbar-link" @onclick="ResetForm">
         <FluentIcon Value="@(new Icons.Regular.Size24.Eraser())" />
         <span class="toolbar-text">Reset</span>
     </a>
 
-    <a class="toolbar-link">
+    <a id="Duplicate" class="toolbar-link" @onclick="DuplicateCertificate">
         <FluentIcon Value="@(new Icons.Regular.Size24.DocumentCopy())" />
         <span class="toolbar-text">Duplicate</span>
     </a>
 
     <span class="sf-verthr2"></span>
 
-    <a class="toolbar-link">
-        <FluentIcon Value="@(new Icons.Regular.Size24.Mail())" />
-        <span class="toolbar-text">Email</span>
+    <a id="Email" class="toolbar-link" @onclick="() => ExportCertificate(true, false, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.OpenFolder())" />
+        <span class="toolbar-text">Open</span>
     </a>
 
-    <a class="toolbar-link" @onclick="DebugMe">
+    <a id="Save" class="toolbar-link" @onclick="() => ExportCertificate(false, false, false, true)">
         <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
         <span class="toolbar-text">Save</span>
     </a>
 
-    <a class="toolbar-link" OnClick="() => AttachPages(true)">
+    <a id="Print" class="toolbar-link" @onclick="() => ExportCertificate(false, true, false, false)">
         <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
         <span class="toolbar-text">Print</span>
     </a>
 
     <span class="sf-verthr2"></span>
 
-    <a class="toolbar-link" @onclick="() => SaveToDatabase(false)">
+    <a id="Sync" class="toolbar-link" @onclick="() => SaveToDatabase(false)">
         <FluentIcon Value="@(new Icons.Regular.Size24.ArrowSync())" />
         <span class="toolbar-text">Sync</span>
     </a>
 
-    <a class="toolbar-link" @onclick="() => SaveToDatabase(true)">
+    <a id="Approve" class="toolbar-link" @onclick="() => SaveToDatabase(true)">
         <FluentIcon Value="@(new Icons.Regular.Size24.Checkmark())" />
         <span class="toolbar-text">Approve</span>
     </a>
 
-    <NavLink class="toolbar-link" href="@($"/Clients/List/{clientId}")">
+    <a id="Cancel" class="toolbar-link" href="@($"/Clients/List/{clientId}")">
         <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
         <span class="toolbar-text">Cancel</span>
-    </NavLink>
+    </a>
    
 </div>
 
@@ -161,11 +152,6 @@
         clientId = client.ClientId;
     }
 
-    private async Task DebugMe()
-    {
-        Console.Clear();
-    }
-
     private async Task LoadJsonDataIntoPdfAsync()
     {
         Console.WriteLine("Loading DATABASE JSON data into PDF viewer");
@@ -185,19 +171,15 @@
         }
     }
 
-    //Policy Pop-Up
     private bool IsPolicySelected(Policy policy)
     {
         Console.WriteLine("----------------------------------------------");
         Console.WriteLine("ISIS: Policy " + policy.PolicyNumber + "selected is " + selectedpolicies.Contains(policy));
         return selectedpolicies.Contains(policy);
     }
+
     private void TogglePolicySelection(Microsoft.AspNetCore.Components.ChangeEventArgs e, Policy policy)
     {
-        //string status = e.Value.ToString();
-        Console.WriteLine("----------------------------------------------");
-        //Console.WriteLine("STATUS: Checkbox is " + status);
-        Console.WriteLine("CHECK: Policy " + policy.PolicyNumber + "selected is " + selectedpolicies.Contains(policy));
         if (!selectedpolicies.Contains(policy))
         {
             selectedpolicies.Add(policy);
@@ -231,8 +213,7 @@
         await pdfViewer.DownloadAsync();
     }
 
-
-    public async Task ExportCertificate(bool? openNewWindow, bool? printNow, bool? attachToEmail, bool? saveToDisk)
+    public async Task<string> ExportCertificate(bool? openNewWindow, bool? printNow, bool? attachToEmail, bool? saveToDisk)
     {
         await SaveToDatabase(false);
 
@@ -283,6 +264,19 @@
                 byte[] combinedPdfBytes = combinedPdfStream.ToArray();
                 string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
 
+
+                
+                if (printNow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+
+                if (saveToDisk == true)
+                {
+                    string certname = DateHelper.GenerateCertificateName(client.Name, certificate.HolderName);
+                    await JS.InvokeVoidAsync("downloadPdf", base64Pdf, certname);
+                }
+
                 @if (openNewWindow == true)
                 {
                     await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
@@ -290,6 +284,7 @@
             }
             originalDocument.Close(true);
         }
+        return string.Empty;
     }
 
     public async Task AttachPages(bool? addAttachments)
@@ -419,6 +414,13 @@
         }
     }
 
+    public async Task DuplicateCertificate()
+    {
+        int newcertid = await FormService.DuplicateCertificateAsync(certificate);
+        NavigationManager.NavigateTo($"/Forms/Certificate/{newcertid}");
+
+    }
+
     public async Task<JObject> GetViewerJSON()
     {
         stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
@@ -457,7 +459,6 @@
         Console.WriteLine();
         return savedJsonObject;
     }
-
 
     public async Task HandleLoadEverything(bool? loadClient = null, bool? loadPolicies = null, bool? loadHolder = null, bool? loadDescription = null)
     {
@@ -845,6 +846,4 @@
 
         await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
     }
-
-
 }

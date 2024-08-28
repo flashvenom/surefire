@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.AspNetCore.Identity;
 using Mantis.Data;
 using Mantis.Domain.Shared;
+using System.Text.RegularExpressions;
 
 
 namespace Mantis.Domain.Shared.Helpers
@@ -68,6 +69,27 @@ namespace Mantis.Domain.Shared.Helpers
 
             // If the digits string is not exactly 10 digits, return the original phone number
             return originalPhoneNumber;
+        }
+
+        public static string GenerateCertificateName(string clientName, string holderName)
+        {
+            // Step 1: Take the first 10 characters
+            string shortClientName = clientName.Length > 10 ? clientName.Substring(0, 10) : clientName;
+            string shortHolderName = holderName.Length > 10 ? holderName.Substring(0, 10) : holderName;
+
+            // Step 2: Remove spaces and special characters
+            shortClientName = RemoveSpecialCharacters(shortClientName);
+            shortHolderName = RemoveSpecialCharacters(shortHolderName);
+
+            // Step 3: Concatenate and append ".pdf"
+            string certName = $"{shortClientName}{shortHolderName}.pdf";
+            return certName;
+        }
+
+        private static string RemoveSpecialCharacters(string input)
+        {
+            // This will remove all characters except letters and digits
+            return Regex.Replace(input, @"[^a-zA-Z0-9]", string.Empty);
         }
 
     }

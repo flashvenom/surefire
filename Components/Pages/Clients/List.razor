@@ -26,6 +26,15 @@
 @rendermode InteractiveServer
 
 <div @onmouseleave="() => ExpandDetails(true)">
+
+    <SfBreadcrumb>
+        <BreadcrumbItems>
+            <BreadcrumbItem Text="Clients" Url="/Clients" />
+            <BreadcrumbItem Text="List" />
+            <BreadcrumbItem Text="View" />
+        </BreadcrumbItems>
+    </SfBreadcrumb>
+
     @if (selectedClient != null)
     {
         <_toolbar ClientId="selectedClient.ClientId" OnNewPolicy="@SetShowCreatePolicy" />
@@ -290,20 +299,28 @@
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += (sender, args) => FilterClients();
 
-        currentPolicies.Clear();
-        pastPolicies.Clear();
-        clientPolicies.Clear();
         selectedClient = await ClientService.GetClientById(ClientId);
         SortAndSeparatePolicies();
 
         clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
         filteredClients = new List<Client>(clients);
 
+        Console.WriteLine("INITIALIZED------------------------------------------------------");
+    }
+
+    //Update Breakcrcum
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Console.WriteLine("bc------------=======================----------");
+
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Clients" }
+            new BreadcrumbItem { Text = "ClientList" }
         });
+
+
     }
 
     private void SetShowCreatePolicy()

@@ -124,13 +124,23 @@
         allUsers = await UserService.GetAllUsers();
         GetFilteredList();
 
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Renewals" }
-        });
+        
     }
 
+    //Update Breakcrcum
+    
+    protected void OnParametersSet()
+    {
+        Console.WriteLine("bc------------=======================----------");
+       
+            BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem { Text = "Home", Url = "/" },
+            new BreadcrumbItem { Text = "Renewals!" }
+        });
+
+            
+    }
 
     private void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {

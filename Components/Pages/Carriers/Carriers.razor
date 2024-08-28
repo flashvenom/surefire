@@ -7,6 +7,12 @@
 @using Syncfusion.Blazor
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Carriers" Url="/Carriers" />
+        <BreadcrumbItem Text="Database"  />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar CarrierId="@CarrierId" />
 

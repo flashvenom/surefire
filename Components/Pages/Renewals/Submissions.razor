@@ -1,5 +1,4 @@
 ﻿@page "/Renewals/Submisssions/{RenewalId:int}"
-
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.DropDowns
@@ -11,10 +10,15 @@
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Carriers.Services
 @using Mantis.Domain.Carriers.Models
-
 @inject RenewalService RenewalService
-
 @rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="Submissions" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 @if(renewal != null) {
     @foreach (var item in renewal.Submissions)

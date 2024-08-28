@@ -9,6 +9,13 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Policies" Url="/Policies" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <_toolbar PolicyId="@PolicyId" />
 
 <div class="page-content">
@@ -42,17 +49,6 @@
     string statusMy = "Loading";
     public List<PolicyDto> PolicyData { get; set; }
     public int PolicyId { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        statusMy = "Loading...";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Policies" }
-        });
-        InvokeAsync(StateHasChanged);
-    }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {

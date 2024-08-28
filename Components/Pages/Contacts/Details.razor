@@ -5,9 +5,15 @@
 @using Mantis.Domain.Carriers.Models
 @inject NavigationManager NavigationManager
 @inject ContactService ContactService
-
 @rendermode InteractiveServer
+
 <PageTitle>Contact Details</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Contacts" Url="/Contacts" />
+        <BreadcrumbItem Text="Details" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar ContactId="ContactId" />
 

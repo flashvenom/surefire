@@ -1,5 +1,4 @@
 ﻿@page "/Policies/Create/{ClientId:int}"
-
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Shared.Services
@@ -15,10 +14,15 @@
 @inject NavigationManager NavigationManager
 @inject SharedService SharedService
 @inject CarrierService CarrierService
-
 @rendermode InteractiveServer
 
 <PageTitle>Create Policy</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Policies" Url="/Policies" />
+        <BreadcrumbItem Text="Create" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar />
 
@@ -104,13 +108,6 @@
         Products = await SharedService.GetAllProductsAsync();
         Carriers = await CarrierService.GetAllCarriersAsync();
         Wholesalers = await CarrierService.GetAllWholesalersAsync();
-
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Policies", Url = "/Policies" },
-            new BreadcrumbItem { Text = "Create" }
-        });
     }
 
     private async Task CreatePolicy()

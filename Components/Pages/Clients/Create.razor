@@ -1,5 +1,4 @@
 ﻿@page "/Clients/Create"
-
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Contacts.Models
@@ -11,10 +10,16 @@
 @using Syncfusion.Blazor.Buttons
 @inject ClientService ClientService
 @inject NavigationManager NavigationManager
-
 @rendermode InteractiveServer
 
 <PageTitle>Create Client</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Clients" Url="/Clients" />
+        <BreadcrumbItem Text="Create" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <div class="page-content">
     <div class="mh1">Create New Client</div>
 

@@ -10,6 +10,13 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Policies" Url="/Policies" />
+        <BreadcrumbItem Text="Details" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 @if (Policy is null || Policy.Product is null)
 {
     <p><em>Loading...</em></p>

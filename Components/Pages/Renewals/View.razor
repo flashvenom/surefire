@@ -1,5 +1,4 @@
 ﻿@page "/Renewals/{RenewalId:int}"
-
 @using Microsoft.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SplitButtons
@@ -10,12 +9,17 @@
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
-
 @using System.Timers
 @inject RenewalService RenewalService
 @inject CarrierService CarrierService
-
 @rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="Details" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar RenewalId="@RenewalId" />
 
@@ -209,13 +213,7 @@
         Tasks = await RenewalService.GetTasksForRenewalAsync(RenewalId);
         AllCarriers = await CarrierService.GetAllCarriersAsync();
         AllWholesalers = await CarrierService.GetAllWholesalersAsync();
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
-            new BreadcrumbItem { Text = "View #" + RenewalId }
-        });
-        InvokeAsync(StateHasChanged);
+        //InvokeAsync(StateHasChanged);
     }
 
 

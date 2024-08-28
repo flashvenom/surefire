@@ -1,5 +1,4 @@
 ﻿@page "/Policies/Edit/{PolicyId:int}"
-
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Shared.Services
@@ -15,10 +14,15 @@
 @inject NavigationManager NavigationManager
 @inject SharedService SharedService
 @inject CarrierService CarrierService
-
 @rendermode InteractiveServer
 
 <PageTitle>Edit Policy</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Policies" Url="/Policies" />
+        <BreadcrumbItem Text="Edit" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar PolicyId="@PolicyId" />
 

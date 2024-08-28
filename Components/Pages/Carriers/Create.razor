@@ -1,12 +1,10 @@
 ﻿@page "/Carriers/Create"
-
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Carriers.Models
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @inject ApplicationDbContext _db
 @inject NavigationManager NavigationManager
-
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -96,20 +94,13 @@
 
     protected override void OnInitialized()
     {
-        // Ensure the model is properly initialized before passing it to the EditContext
         if (Carrier == null)
         {
             Carrier = new Carrier();
         }
         editContext = new EditContext(Carrier);
 
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Carriers", Url = "/Carriers" },
-            new BreadcrumbItem { Text = "Create" }
-        });
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     public async Task AddCarrier()

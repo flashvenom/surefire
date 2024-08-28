@@ -11,15 +11,19 @@
     <Compile Remove="Domain\Attachments\**" />
     <Compile Remove="Domain\Carriers\ViewModels\**" />
     <Compile Remove="Domain\Shared\Services\Layout\**" />
+    <Compile Remove="Domain\Shared\ViewModels\**" />
     <Content Remove="Domain\Attachments\**" />
     <Content Remove="Domain\Carriers\ViewModels\**" />
     <Content Remove="Domain\Shared\Services\Layout\**" />
+    <Content Remove="Domain\Shared\ViewModels\**" />
     <EmbeddedResource Remove="Domain\Attachments\**" />
     <EmbeddedResource Remove="Domain\Carriers\ViewModels\**" />
     <EmbeddedResource Remove="Domain\Shared\Services\Layout\**" />
+    <EmbeddedResource Remove="Domain\Shared\ViewModels\**" />
     <None Remove="Domain\Attachments\**" />
     <None Remove="Domain\Carriers\ViewModels\**" />
     <None Remove="Domain\Shared\Services\Layout\**" />
+    <None Remove="Domain\Shared\ViewModels\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -84,14 +88,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Shared\ViewModels\" />
     <Folder Include="wwwroot\uploads\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="Components\Pages\Debug2.razor">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
   </ItemGroup>
 
 </Project>

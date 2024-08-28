@@ -9,8 +9,14 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager NavigationManager
 @inject ContactService ContactService
-
 @rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Contacts" Url="/Contacts" />
+        <BreadcrumbItem Text="Create" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar />
 

@@ -63,17 +63,11 @@
     protected override async Task OnInitializedAsync()
     {
         statusMy = "Loading...";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Carriers" }
-        });
-        InvokeAsync(StateHasChanged);
+        //InvokeAsync(StateHasChanged);
     }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {
-        string dhjdhjd = "423432";
         StateHasChanged();
     }
 
@@ -89,7 +83,7 @@
         { 
             if(Args.Action == "Add") 
             { 
-                var t = Args.Data; //gets here - do I need to call the CRUD methods myself?
+                var t = Args.Data;
             } 
         } 
         statusMy = "Clicked...";

@@ -7,12 +7,17 @@
 @using Microsoft.AspNetCore.WebUtilities;
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.FluentUI.AspNetCore.Components
-
 @inject RenewalService RenewalService
 @inject UserService UserService
 @inject NavigationManager NavigationManager
-
 @rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="List" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar />
 

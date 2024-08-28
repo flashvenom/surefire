@@ -8,6 +8,13 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Contacts" Url="/Contacts" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <_toolbar ContactId="@ContactId" />
 
 <div class="page-content">
@@ -37,16 +44,6 @@
     SfDataManager DataManager { get; set; }
     public List<ContactDto> ContactData { get; set; }
     public int ContactId { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Contacts" }
-        });
-        InvokeAsync(StateHasChanged);
-    }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {

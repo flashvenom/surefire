@@ -7,6 +7,13 @@
 @using Syncfusion.Blazor
 @rendermode InteractiveServer
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Policies" Url="/Policies" />
+        <BreadcrumbItem Text="Products" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <_toolbar />
 
 <div class="page-content">
@@ -30,29 +37,14 @@
         </GridColumns>
     </SfGrid>
 </div>
-@statusMy
 
 @code {
     SfGrid<Product> Grid { get; set; }
     SfDataManager DataManager { get; set; }
-    string statusMy = "Loading";
     public List<Product> GridData { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        statusMy = "Loaded!";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Policies", Url = "/Policies" },
-            new BreadcrumbItem { Text = "Products & Lines" }
-        });
-    }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {
-        statusMy = "ERROR ON GRID!<br>";
-        statusMy += args.Error.ToString();
         StateHasChanged();
     }
 }

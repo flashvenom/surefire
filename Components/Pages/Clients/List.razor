@@ -25,6 +25,7 @@
 @inject IJSRuntime jsRuntime
 @rendermode InteractiveServer
 
+
 <div @onmouseleave="() => ExpandDetails(true)">
 
     <SfBreadcrumb>
@@ -304,8 +305,6 @@
 
         clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
         filteredClients = new List<Client>(clients);
-
-        Console.WriteLine("INITIALIZED------------------------------------------------------");
     }
 
     //Update Breakcrcum

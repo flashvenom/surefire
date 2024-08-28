@@ -11,6 +11,13 @@
 @rendermode InteractiveServer
 <PageTitle>Details</PageTitle>
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Carriers" Url="/Carriers" />
+        <BreadcrumbItem Text="Details" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <_toolbar CarrierId="@CarrierId" />
 
 @if (carrier is null)
@@ -125,20 +132,11 @@ else {
 
     protected override async Task OnInitializedAsync()
     {
-       
         carrier = await CarrierService.GetCarrierByIdAsync(CarrierId);
 
         if (carrier is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
-
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Carriers", Url = "/Carriers" },
-            new BreadcrumbItem { Text = "Details" }
-        });
-        await InvokeAsync(StateHasChanged);
     }
 }

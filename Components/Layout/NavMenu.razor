@@ -10,7 +10,7 @@
 <div class="sfnav @(GetNavItemClass("Home"))">
     <div class="nb-blueline@(GetNavItemClass("Home"))"></div>
     <NavLink Id="btnHome" class="nav-link" href="/" Match="NavLinkMatch.Prefix" OnMou>
-        @if(GetNavItemClass("Home") == "nb-active")
+        @if (GetNavItemClass("Home") == "nb-active")
         {
             <FluentIcon Value="@(new Icons.Filled.Size24.Home())" Class="active-icon" />
         }
@@ -129,43 +129,45 @@
 
 
 <style>
-:root fluent-tooltip {
-    background-color: #036ac4 !important;
-}
-:root .nb-bluelinenb-active {
-    transition: all 0.5s ease;
-    width: 2px;
-    height: 37px;
-    float: left;
-    position: relative;
-    top: -6px;
-    left: 4px;
-    background-color: #036ac4 !important;
-    transform-origin: center; /* Set the origin to the center */
-    transform: scaleY(1); /* Full height */
-}
+    :root fluent-tooltip {
+        background-color: #036ac4 !important;
+    }
 
-:root .nb-bluelinenb-inactive {
+    :root .nb-bluelinenb-active {
         transition: all 0.5s ease;
-    width: 2px;
+        width: 2px;
         height: 37px;
-    float: left;
-    position: relative;
-    top: -6px;
-    left: 4px;
-    background-color: #5e5e5e00 !important;
-    transform-origin: center; /* Set the origin to the center */
-    transform: scaleY(0.1); /* Full height */
-}
-:root .inactive-icon {
-        fill: #808080 !important;
-}
+        float: left;
+        position: relative;
+        top: -6px;
+        left: 4px;
+        background-color: #036ac4 !important;
+        transform-origin: center; /* Set the origin to the center */
+        transform: scaleY(1); /* Full height */
+    }
 
-:root .nav-link {
-    padding: 0px !important;
-    margin-left: 11px;
-    margin-bottom:2px;
-}
+    :root .nb-bluelinenb-inactive {
+        transition: all 0.5s ease;
+        width: 2px;
+        height: 37px;
+        float: left;
+        position: relative;
+        top: -6px;
+        left: 4px;
+        background-color: #5e5e5e00 !important;
+        transform-origin: center; /* Set the origin to the center */
+        transform: scaleY(0.1); /* Full height */
+    }
+
+    :root .inactive-icon {
+        fill: #808080 !important;
+    }
+
+    :root .nav-link {
+        padding: 0px !important;
+        margin-left: 11px;
+        margin-bottom: 2px;
+    }
 </style>
 @code {
     private string? currentUrl;
@@ -241,6 +243,7 @@
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
+
 
 
 }

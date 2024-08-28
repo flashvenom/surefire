@@ -1,14 +1,23 @@
 ﻿@namespace Mantis.Components.Pages.Clients
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.SplitButtons
 @using Microsoft.AspNetCore.Components.Routing
 @using Mantis.Domain.Shared
 @inject NavigationService NavigationService
 @inject NavigationManager NavigationManager
 
 <div class="page-toolbar">
-    <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Client</SfButton>
-    
+@*     <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Client</SfButton>
+    *@  
+    <FluentMenuButton Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="0078D4">Client</FluentMenuItem>
+        <FluentMenuItem Id="464EB8">Contact</FluentMenuItem>
+        <FluentMenuItem Id="8661C5">Certificate</FluentMenuItem>
+        <FluentMenuItem Id="0066FF">Policy</FluentMenuItem>
+
+    </FluentMenuButton>
+
     <span class="sf-verthr"></span>
 
     <NavLink class="toolbar-link" href="@NavigationService.GetLastClientPage()" Match="NavLinkMatch.Prefix">
@@ -40,5 +49,9 @@
     private void NavigateToRenewalCreate()
     {
         NavigationManager.NavigateTo("/Clients/Create");
+    }
+    private void HandleOnMenuChanged(MenuChangeEventArgs args)
+    {
+        string oksss = "what";
     }
 }

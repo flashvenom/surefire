@@ -44,7 +44,7 @@
     @if (selectedClient != null)
     {
         <div class="sf-selected" style="position:relative;">
-            <div class="tinyexpander" @onclick="ExpandDetails"><img src="/img/tinyexpand.png" /></div>
+            <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
             <div class="sf-header">
                 <div class="client-header">
                     @selectedClient.Name <br />
@@ -89,7 +89,7 @@
                                         </div>
                                     </div>
                                 }
-                        
+
                             </div>
                         </div>@* sf-col-1 *@
 
@@ -174,7 +174,7 @@
 <style>
     :root .smallbutton {
         font-size: .6em !important;
-        padding:0px 0px !important;
+        padding: 0px 0px !important;
         margin: 0px 0px !important;
         width: 50px;
     }
@@ -184,11 +184,11 @@
         border-radius: 5px;
         line-height: 1.1;
     }
+
     :root .smallicon {
         position: relative !important;
         top: 3px !important;
         left: -2px !important;
-       
     }
 
     .page-content {
@@ -260,7 +260,7 @@
     private string crmClientId = string.Empty;
     private string isLoadingWhat = "Initializing";
     private string dynamicClass = "sf-quicklist";
-    private Client selectedClient  { get; set; }
+    private Client selectedClient { get; set; }
 
     SfTextBox SearchBox { get; set; }
 
@@ -285,18 +285,29 @@
             new BreadcrumbItem { Text = "Clients" }
         });
     }
-
-    public void ExpandDetails()
+    public void ExpandDetails(bool? forceOpen = null)
     {
-        if (dynamicClass == "sf-quicklist")
+        if (forceOpen.HasValue)
         {
-            dynamicClass = "sf-quicklist-close";
+            dynamicClass = forceOpen.Value ? "sf-quicklist" : "sf-quicklist-close";
         }
         else
         {
-            dynamicClass = "sf-quicklist";
+            dynamicClass = dynamicClass == "sf-quicklist" ? "sf-quicklist-close" : "sf-quicklist";
         }
     }
+
+    // public void ExpandDetails()
+    // {
+    //     if (dynamicClass == "sf-quicklist")
+    //     {
+    //         dynamicClass = "sf-quicklist-close";
+    //     }
+    //     else
+    //     {
+    //         dynamicClass = "sf-quicklist";
+    //     }
+    // }
 
     private async void EditPolicy(int policyid)
     {
@@ -334,11 +345,13 @@
             isLoadingWhat += ".:";
             await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
         }
-            
+
         // Separate and sort policies
+
         NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
+        ExpandDetails(false);
         SortAndSeparatePolicies();
-        
+
     }
 
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
@@ -459,6 +472,7 @@
     public void Dispose()
     {
         debounceTimer?.Dispose();
+
     }
 
     // Policy Expansion Methods
@@ -483,4 +497,5 @@
     {
         return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
     }
+
 }

@@ -77,8 +77,6 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddSingleton<BreadcrumbService>();
 builder.Services.AddHttpContextAccessor();
 
-
-
 //My API Services
 builder.Services.AddHttpClient("CertificateApi", client =>
 {

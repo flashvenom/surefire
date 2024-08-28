@@ -28,11 +28,24 @@
             <span class="toolbar-text">Edit</span>
         </NavLink>
     }
+
+    @if (EditMode == true)
+    {
+        <span class="sf-verthr2"></span>
+
+        <NavLink class="toolbar-link" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.ArrowSyncCircle())" />
+            <span class="toolbar-text">Sync</span>
+        </NavLink>
+    }
 </div>
 
 @code {
     [Parameter]
     public int PolicyId { get; set; }
+
+    [Parameter]
+    public bool EditMode { get; set; } = false;
 
     private void NavigateToRenewalCreate()
     {

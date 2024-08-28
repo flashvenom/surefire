@@ -1,0 +1,110 @@
+﻿@page "/Contacts/Details/{ContactId:int}"
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Contacts.Services
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Carriers.Models
+@inject NavigationManager NavigationManager
+@inject ContactService ContactService
+@rendermode InteractiveServer
+
+<PageTitle>Contact Details</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Contacts" Url="/Contacts" />
+        <BreadcrumbItem Text="Details" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
+<_toolbar ContactId="ContactId" />
+
+@if (Contact != null)
+{
+    <div class="sf-header">
+        <div class="client-header">
+            <div class="client-name">@Contact.FirstName @Contact.LastName</div>
+            <div class="client-title">@Contact.Title</div>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div class="mf-flex mf-row">
+            <div class="mf-item-sm">
+
+                    <div class="contact-key">Email</div>
+                    <div class="contact-value">@Contact.Email</div>
+                    <div class="contact-key">Phone</div>
+                    <div class="contact-value">@Contact.Phone</div>
+                    <div class="contact-key">Mobile</div>
+                    <div class="contact-value">@Contact.Mobile</div>
+                    <div class="contact-key">Notes</div>
+                    <div class="contact-value">@Contact.Notes</div>
+                    
+                    @if (ConfirmedParentType == "Carrier")
+                    {
+                        <div class="m-h3">Carrier Roles</div>
+                        <dl class="row">
+                            <dt class="col-sm-2">Underwriter</dt>
+                            <dd class="col-sm-10">@(Contact.Underwriter ? "Yes" : "No")</dd>
+                            <dt class="col-sm-2">Service</dt>
+                            <dd class="col-sm-10">@(Contact.Service ? "Yes" : "No")</dd>
+                            <dt class="col-sm-2">Billing</dt>
+                            <dd class="col-sm-10">@(Contact.Billing ? "Yes" : "No")</dd>
+                            <dt class="col-sm-2">Account Rep</dt>
+                            <dd class="col-sm-10">@(Contact.Representative ? "Yes" : "No")</dd>
+                        </dl>
+                    }
+            </div>
+            <div class="mf-item-sm mf-pad-left">
+                <div class="contact-key">Related Clients</div>
+                <ul>
+                    @if (RelatedClients != null && RelatedClients.Any())
+                    {
+                        @foreach (var client in RelatedClients)
+                        {
+                            <li><a href="@($"/Clients/List/{client.ClientId}")">@client.Name</a></li>
+                        }
+                    }
+                    else
+                    {
+                        <li>No related clients found.</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code {
+    [Parameter] public int ContactId { get; set; }
+    private Contact Contact { get; set; } = new Contact();
+    public string ConfirmedParentType { get; set; }
+    private List<Client> RelatedClients { get; set; } = new List<Client>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load the contact by ID
+        Contact = await ContactService.GetContactByIdAsync(ContactId);
+        if (Contact == null)
+        {
+            // Handle case where contact is not found
+            NavigationManager.NavigateTo("/Contacts");
+            return;
+        }
+
+        // Determine parent type (Carrier or Client)
+        if (Contact.CarrierId.HasValue)
+        {
+            ConfirmedParentType = "Carrier";
+        }
+        else if (Contact.ClientId.HasValue)
+        {
+            ConfirmedParentType = "Client";
+        }
+        // Load related clients
+        RelatedClients = await ContactService.GetContactRelatedClients(ContactId);
+    }
+}

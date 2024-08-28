@@ -6,6 +6,7 @@
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Components
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Components.Shared
 @using Microsoft.FluentUI.AspNetCore.Components
@@ -14,6 +15,7 @@
 @using Syncfusion.Blazor.Lists
 @using Mantis.Data
 @using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Shared.Helpers
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject NavigationService NavigationService
@@ -23,157 +25,178 @@
 @inject IJSRuntime jsRuntime
 @rendermode InteractiveServer
 
-@if (selectedClient != null)
-{
-    <_toolbar ClientId="selectedClient.ClientId" />
-}
 
-<div class="page-content">
-    <div style="display:flex; flex-direction:row;">
-        <div class="@dynamicClass">
-            <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick">
-                <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
-            </FluentTextField>
-            <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
-                <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
-                <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
-            </SfListView>
-        </div>
-    </div>
+<div @onmouseleave="() => ExpandDetails(true)">
+
+    <SfBreadcrumb>
+        <BreadcrumbItems>
+            <BreadcrumbItem Text="Clients" Url="/Clients" />
+            <BreadcrumbItem Text="List" />
+            <BreadcrumbItem Text="View" />
+        </BreadcrumbItems>
+    </SfBreadcrumb>
 
     @if (selectedClient != null)
     {
-        <div class="sf-selected" style="position:relative;">
-            <div class="tinyexpander" @onclick="ExpandDetails"><img src="/img/tinyexpand.png" /></div>
-            <div class="sf-header">
-                <div class="client-header">
-                    @selectedClient.Name <br />
-                    <span class="client-address">
-                        @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
-                    </span>
-                </div>
+        <_toolbar ClientId="selectedClient.ClientId" OnNewPolicy="@SetShowCreatePolicy" />
+    }
 
-                <div class="client-header-2">
-                </div>
-
-                <div class="client-header-3">
-                    <span class="client-phone">@selectedClient.PhoneNumber</span><br />
-                    <span class="client-email">@selectedClient.Email</span>
-                </div>
+    <div class="page-content" >
+        <div class="mf-flexrow">
+            <div class="@dynamicClass">
+                <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
+                </FluentTextField>
+                <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
+                    <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
+                    <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
+                </SfListView>
             </div>
-            <FluentTabs Size="TabSize.Large">
-                <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
-                    <div class="sf-col-container">
-                        <div class="sf-col sf-col-1">
-                            <h3>Current Policies</h3>
-                            <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
-                            <div class="policy-container">
-                                @foreach (var policy in currentPolicies)
-                                {
-                                    <div class="@GetPolicyClass(policy.PolicyId)" @onclick="() => ToggleExpand(policy.PolicyId)">
-                                        <div class="policy-header">
-                                            <div>@policy.eType <span style="font-size:7px;">@policy.PolicyId</span></div>
-                                            <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
+        </div>
+
+        @if (selectedClient != null)
+        {
+            <div class="sf-selected">
+                <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
+                <div class="sf-header">
+                    <div class="client-header">
+                        @selectedClient.Name <br />
+                        <span class="client-address">
+                            <span class="map-icon"><FluentIcon Value="@(new Icons.Regular.Size20.Location())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>
+                            @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+                        </span>
+                    </div>
+
+                    <div class="client-header-2">
+                    </div>
+
+                    <div class="client-header-3">
+                        <span class="client-phone">@*<span class="phone-icon"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>  *@ @DateHelper.FormatPhoneNumber(selectedClient.PhoneNumber)</span><br />
+                        <span class="client-email"><span class="email-icon"><FluentIcon Value="@(new Icons.Regular.Size24.Mail())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span> @selectedClient.Email</span>
+                    </div>
+                </div>
+                <div class="clientlist-tabcontainer">
+                    <FluentTabs @ref="tabInterface" Size="TabSize.Large">
+                        <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
+                            <div class="sf-col-container">
+                                <div class="sf-col sf-col-1">
+                                    <div class="txt-section">Current Policies</div>
+                                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
+                                    <div class="policy-container">
+                                        @foreach (var policy in currentPolicies)
+                                        {
+                                            <div class="@GetPolicyClass(policy.PolicyId)" @onclick="() => ToggleExpand(policy.PolicyId)">
+                                                <div class="policy-header">
+                                                    <div>@policy.Product?.LineName <span style="font-size:7px;">@policy.PolicyId</span></div>
+                                                    <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
+                                                </div>
+                                                <div class="policy-details">
+                                                    <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
+                                                </div>
+                                                <div class="policy-details">
+                                                    <div>@policy.PolicyNumber</div>
+                                                    <div>@policy.Premium.ToString("C")</div>
+                                                </div>
+                                                <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
+                                                    <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
+                                                    <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Fill" />Edit Policy</a>
+                                                    <a class="smalltool" href="#" @onclick="@((e) => CreateRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Create Renewal</a>
+                                                </div>
+                                            </div>
+                                        }
+
+                                    </div>
+                                </div>@* sf-col-1 *@
+
+                                <div class="sf-col sf-col-2">
+                                    <div class="txt-section">Primary Contact</div>
+                                    <div class="mf-flexrow">
+                                        <div class="mf-sm">
+                                            <FluentPersona Initials="KS" ImageSize="55px" Class="pinitials" Style="font-size:1.5em; font-weight:100; font-family: montserrat, sans-serif;" />
                                         </div>
-                                        <div class="policy-details">
-                                            <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
-                                        </div>
-                                        <div class="policy-details">
-                                            <div>@policy.PolicyNumber</div>
-                                            <div>@policy.Premium.ToString("C")</div>
-                                        </div>
-                                        <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
-                                            <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
-                                            <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Fill" />Edit Policy</a>
-                                            <a class="smalltool" href="#" @onclick="@((e) => CreateRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Create Renewal</a>
+                                        <div class="mf-item-sm contactcard">
+                                            <span class="txt-bold-md">@selectedClient.PrimaryContact.FirstName  @selectedClient.PrimaryContact.LastName</span>
+                                            <a href="Contacts/Edit/@selectedClient.PrimaryContact.ContactId"><span class="e-btnhover e-icons e-pencil-icon"></span></a><br />
+                                            <span class="txt-p">@selectedClient.PrimaryContact.Phone</span><br />
+                                            <i class="txt-cursive-sm">@selectedClient.PrimaryContact.Email</i>
                                         </div>
                                     </div>
-                                }
-                        
+
+                                    <h4 class="sf-toppad">Additional Contacts</h4>
+                                    <ContactsListAll Contacts="@selectedClient.Contacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
+                                    <h4 class="sf-toppad">Additional Info</h4>
+                                    <FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size24.Globe())" Color="Color.Neutral" /> <a href="@("https://" + selectedClient.Website)" target="_blank" class="txt-bold-md">@selectedClient.Website</a>
+                                </div>@* sf-col-2 *@
+
+                                <div class="sf-col sf-col-3">
+
+                                    <div class="txt-section">Technical Stuff</div>
+                                    <div class="txt-bold-md">Client Code</div>
+                                    <div class="txt-p-lg">@selectedClient.LookupCode</div>
+                                    <br />
+                                    <div class="txt-bold-md">Client Id</div>
+                                    <div class="txt-p-lg">@selectedClient.ClientId</div>
+                                    <div class="txt-small">@selectedClient.eClientId</div>
+                                    <br />
+                                    <div class="txt-bold-md">Debug</div>
+                                        @if (isLoadingCrmId)
+                                        {
+                                            <span class="txt-small">@isLoadingCrmId.ToString()</span>
+                                            <span class="loading-spinner"></span>
+                                        }
+                                        else if (string.IsNullOrEmpty(crmClientId))
+                                        {
+                                            <span class="txt-small">Loading...</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="txt-small">@crmClientId </span>
+                                        <span class="txt-small">@isLoadingWhat</span>
+                                        }
+                                </div>@* sf-col-3 *@
+
                             </div>
-                        </div>@* sf-col-1 *@
-
-                        <div class="sf-col sf-col-2">
-                            <h3>Primary Contact</h3>
-                            <strong>@selectedClient.PrimaryContact.FirstName @selectedClient.PrimaryContact.LastName</strong> <br />
-                            @selectedClient.PrimaryContact.Phone<br />
-                            <i>@selectedClient.PrimaryContact.Email</i><br />
-
-                            <h4 class="sf-toppad">Additional Contacts</h4>
-                            <ContactsListAll Contacts="@selectedClient.Contacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
-                            <h4 class="sf-toppad">Additional Info</h4>
-                            @selectedClient.Website
-                        </div>@* sf-col-2 *@
-
-                        <div class="sf-col sf-col-3">
-                            <h3>Technical Stuff</h3>
-                            <p><strong>ID:</strong> @selectedClient.ClientId </p>
-                            <p><strong>LookupCode:</strong> @selectedClient.LookupCode</p>
-                            <p><strong>eClientId:</strong> @selectedClient.eClientId</p>
-                            <p>
-                                <strong>eClientId-New:</strong>
-                                @if (isLoadingCrmId)
-                                {
-                                    <span class="loading-spinner"></span> <!-- Add CSS for spinner -->
-                                }
-                                else if (string.IsNullOrEmpty(crmClientId))
-                                {
-                                    <span>Loading...</span>
+                        </FluentTab>
+                        <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
+                            <div class="tabcontents">
+                                @if (showCreatePolicy == true){
+                                    <CreatePolicyForClient ClientId="ClientId" OnCloseCreatePolicy="@SetHideCreatePolicy" />
                                 }
                                 else
                                 {
-                                    <span>@crmClientId</span>
+                                    <CurrentPoliciesList currentPolicies="currentPolicies" />
+                                    <div style="height:25px;"></div>
+                                    <PastPoliciesList pastPolicies="pastPolicies" />
+                                    @if (clientPolicies != null) { <span>Fetched @(clientPolicies.Count) policies from external source!</span> }
                                 }
-                            </p>
-                            <p><strong>Loading:</strong> @isLoadingCrmId.ToString()</p>
-                            <p><strong>Server Status:</strong> @isLoadingWhat</p>
-                        </div>@* sf-col-3 *@
 
-                    </div>
-                </FluentTab>
-                <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
-                    <h4>Past Policies</h4>
+                                
+                            </div>
+                        </FluentTab>
+                        <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
+                            <div class="tabcontents">
+                                <div class="txt-section">Attachments</div>
+                                <div class="txt-p">Check back later.</div>
+                            </div>
+                        </FluentTab>
+                        <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
+                            <div class="tabcontents">
+                                <div class="txt-section">Certificates</div>
+                                <_Certificates client="selectedClient" />
+                            </div>
+                        </FluentTab>
+                    </FluentTabs>
                     <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
-                    @foreach (var policy in pastPolicies)
-                    {
-                        <div class="past-policy">
-                            <div class="sf-pp">@policy.eType</div>
-                            <div>@policy.PolicyNumber</div>
-                            <div>@policy.Carrier?.LookupCode</div>
-                            <div>@policy.Wholesaler?.LookupCode</div>
-                            <div class="sf-da">@policy.EffectiveDate.ToShortDateString()</div>
-                            <div class="sf-da">@policy.ExpirationDate.ToShortDateString()</div>
-                        </div>
-                    }
-                    @if (clientPolicies != null)
-                    {
-                        <ul>
-                            @foreach (var policy in clientPolicies)
-                            {
-                                <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
-                            }
-                        </ul>
-                    }
-                </FluentTab>
-                <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
-                    Coming soon.
-                </FluentTab>
-                <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
-                    Coming soon.
-                </FluentTab>
-                <FluentTab Id="tab-5" Label="Claims" Class="sf-tab">
-                    Coming soon.
-                </FluentTab>
-            </FluentTabs>
-        </div>
-    }
-    <div style="clear:both;"></div>
+                </div>
+            </div>
+        }
+        <div style="clear:both;"></div>
+    </div>
 </div>
-
 <style>
     :root .smallbutton {
         font-size: .6em !important;
-        padding:0px 0px !important;
+        padding: 0px 0px !important;
         margin: 0px 0px !important;
         width: 50px;
     }
@@ -183,11 +206,11 @@
         border-radius: 5px;
         line-height: 1.1;
     }
+
     :root .smallicon {
         position: relative !important;
         top: 3px !important;
         left: -2px !important;
-       
     }
 
     .page-content {
@@ -247,6 +270,14 @@
     public int ClientId { get; set; } = 91;
     private HashSet<int> expandedPolicies = new HashSet<int>();
 
+    [Parameter]
+    public bool showCreatePolicy { get; set; } = false;
+
+    private int activeTabIndex = 0; // Default to the first tab
+
+
+
+    private FluentTabs tabInterface { get; set; }
     private string searchTerm = string.Empty;
     private List<Client> clients = new();
     private List<Client> filteredClients = new();
@@ -259,7 +290,7 @@
     private string crmClientId = string.Empty;
     private string isLoadingWhat = "Initializing";
     private string dynamicClass = "sf-quicklist";
-    private Client selectedClient  { get; set; }
+    private Client selectedClient { get; set; }
 
     SfTextBox SearchBox { get; set; }
 
@@ -269,43 +300,72 @@
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += (sender, args) => FilterClients();
 
-        currentPolicies.Clear();
-        pastPolicies.Clear();
-        clientPolicies.Clear();
         selectedClient = await ClientService.GetClientById(ClientId);
         SortAndSeparatePolicies();
 
-        clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
+        clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
         filteredClients = new List<Client>(clients);
+    }
+
+    //Update Breakcrcum
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Console.WriteLine("bc------------=======================----------");
 
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Clients" }
+            new BreadcrumbItem { Text = "ClientList" }
         });
+
+
     }
 
-    public void ExpandDetails()
+    private void SetShowCreatePolicy()
     {
-        if (dynamicClass == "sf-quicklist")
-        {
-            dynamicClass = "sf-quicklist-close";
-        }
-        else
-        {
-            dynamicClass = "sf-quicklist";
-        }
+        Console.WriteLine("set tab");
+        
+        tabInterface.GoToTabAsync("tab-2");
+        showCreatePolicy = true;
+    }
+    private void SetHideCreatePolicy()
+    {
+        showCreatePolicy = false;
+    }
+    private void ShowCreatePolicy()
+    {
+        showCreatePolicy = true;
+    }
+    private void HideCreatePolicy()
+    {
+        showCreatePolicy = true;
     }
 
     private async void EditPolicy(int policyid)
     {
-        Console.WriteLine("editing policy " + policyid);
         Navigation.NavigateTo($"/Policy/Edit/{policyid}");
+    }
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+
+    }
+
+    public void ExpandDetails(bool? forceOpen = null)
+    {
+        if (forceOpen.HasValue)
+        {
+            dynamicClass = forceOpen.Value ? "sf-quicklist" : "sf-quicklist-close";
+        }
+        else
+        {
+            dynamicClass = dynamicClass == "sf-quicklist" ? "sf-quicklist-close" : "sf-quicklist";
+        }
     }
 
     private async Task CreateRenewal(int policyid)
     {
-        Console.WriteLine("create renewal for " + policyid);
         var renewal = await RenewalService.CreateRenewalFromPolicy(policyid);
         int renewalid = renewal.RenewalId;
         Navigation.NavigateTo($"/Renewals/{renewalid}");
@@ -333,11 +393,12 @@
             isLoadingWhat += ".:";
             await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
         }
-            
+
         // Separate and sort policies
         NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
+        ExpandDetails(false);
         SortAndSeparatePolicies();
-        
+        //NavigationManager.NavigateTo($"/Clients/List/{ClientId}", forceLoad: false);
     }
 
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
@@ -455,10 +516,7 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
-    {
-        debounceTimer?.Dispose();
-    }
+    
 
     // Policy Expansion Methods
     private void ToggleExpand(int policyId)
@@ -482,4 +540,5 @@
     {
         return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
     }
+
 }

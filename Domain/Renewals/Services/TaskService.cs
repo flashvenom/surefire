@@ -1,5 +1,7 @@
 using Mantis.Data;
 using Mantis.Domain.Renewals.ViewModels;
+using Mantis.Domain.Shared;
+using Mantis.Domain.Shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -151,6 +153,45 @@ namespace Mantis.Domain.Renewals.Services
 
             return result;
         }
+
+
+        public async Task<List<DailyTask>> GetDailyTasksAsync()
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
+            var tasks = await _context.DailyTasks
+                .Where(task => !task.Completed)
+                .Where(t => t.AssignedTo == currentUser)
+                .ToListAsync();
+            return tasks;
+        }
+
+        public async Task<List<DailyTask>> UpdateDailyTaskAsync(DailyTask task)
+        {
+            if(task.Completed)
+            {
+                task.CompletedDate = DateTime.Now;
+            }
+            _context.DailyTasks.Update(task);
+
+            await _context.SaveChangesAsync();
+
+            return await GetDailyTasksAsync();
+        }
+
+        public async Task<List<DailyTask>> AddNewDailyTaskAsync(DailyTask task)
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            task.AssignedTo = currentUser;
+            task.DateCreated = DateTime.Now;
+
+            _context.DailyTasks.Add(task);
+
+            await _context.SaveChangesAsync();
+
+            return await GetDailyTasksAsync();
+        }
+
 
     }
 }

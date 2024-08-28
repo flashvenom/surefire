@@ -1,0 +1,170 @@
+﻿@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Shared.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@inject AttachmentService AttachmentService
+@rendermode InteractiveServer
+
+@if (Policy is not null || WorkCompCoverage is not null)
+{
+<FluentGrid>
+    <FluentGridItem xs="3">
+        <span class="pol-section-title">policy limits</span><br />
+        <span class="pol-name">Each Accident</span>
+        <span class="pol-value">
+                <SfInPlaceEditor @bind-Value="@WorkCompCoverage.EachAccident" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@WorkCompCoverage.EachAccident"></SfNumericTextBox>
+                </EditorComponent>
+                <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(WorkCompCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+
+
+        <span class="pol-name">Disease (Policy)</span>
+        <span class="pol-value">
+            <SfInPlaceEditor @bind-Value="@WorkCompCoverage.DiseasePolicyLimit" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@WorkCompCoverage.DiseasePolicyLimit"></SfNumericTextBox>
+                </EditorComponent>
+                <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(WorkCompCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+
+
+            <span class="pol-name">Disease (Employee)</span>
+        <span class="pol-value">
+            <SfInPlaceEditor @bind-Value="@WorkCompCoverage.DiseaseEachEmployee" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@WorkCompCoverage.DiseaseEachEmployee"></SfNumericTextBox>
+                </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(WorkCompCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+        <span class="pol-section-title">Coverage Details</span><br />
+        <span class="pol-name">Owners Excluded</span>
+        <span class="pol-value">
+                <SfCheckBox @bind-Checked="@WorkCompCoverage.OwnersOfficersExcluded" ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await UpdateCoverageBool(args))"></SfCheckBox>
+        </span><br />
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+
+        <span class="pol-section-title">Waiver of Subrogration</span><br />
+        <span class="pol-section-title">Waiver of Subrogration</span><br />
+        <span class="pol-name">Attachment File</span>
+        <span class="pol-value">
+            @if (WorkCompCoverage.WaiverOfSubAttachment != null)
+            {
+                <div class="pol-exist">
+                    <table width="100%">
+                        <tr>
+                                <td><a href="/uploads/@WorkCompCoverage.WaiverOfSubAttachment.FileName" target="_blank"><img src="/img/pdficon.png" class="pdf-icon"></a></td>
+                            <td valign="middle">
+                                    @WorkCompCoverage.WaiverOfSubAttachment?.FileName
+                                    <FluentButton Appearance="Appearance.Lightweight" OnClick="@(async () => await RemoveFile(WorkCompCoverage.WorkCompCoverageId, WorkCompCoverage.WaiverOfSubAttachment.AttachmentId, "wc-wos"))">Remove</FluentButton>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <span class="pol-value drop-area-wrap">
+                    <SfUploader AutoUpload="true" AllowedExtensions=".pdf, .txt" AllowMultiple=false>
+                        <UploaderEvents ValueChange="@OnChange"></UploaderEvents>
+                    </SfUploader>
+                </span>
+            }
+        </span><div style="height:40px;"></div>
+
+    </FluentGridItem>
+</FluentGrid>
+
+}
+@code {
+    [Parameter]
+    public Policy Policy { get; set; }
+
+    [Parameter]
+    public WorkCompCoverage WorkCompCoverage { get; set; }
+
+    private async Task UpdateCoverageNow(WorkCompCoverage wxcoverage)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+    private async Task OnChange(UploadChangeEventArgs args)
+    {
+        try
+        {
+            foreach (var file in args.Files)
+            {
+                var path = $"wwwroot/uploads/{file.FileInfo.Name}";
+                var fileName = file.FileInfo.Name;
+
+                using (var filestream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                {
+                    await file.File.OpenReadStream(long.MaxValue).CopyToAsync(filestream);
+                }
+
+                // Create and assign the attachment to WaiverOfSubAttachment
+                var attachment = await AttachmentService.AddPolicyAttachmentAsync(fileName, WorkCompCoverage.WorkCompCoverageId, "wc-wos");
+
+                if (attachment != null)
+                {
+                    WorkCompCoverage.WaiverOfSubAttachment = attachment;
+                    await PolicyService.UpdatePolicyContextModelAsync(Policy); // Save changes to the policy
+                    StateHasChanged(); // Refresh the UI
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveFile(int coverageId, int attachmentId, string attachmentType)
+    {
+        try
+        {
+            switch (attachmentType.ToLower())
+            {
+                case "wc-wos":
+                    await AttachmentService.RemovePolicyAttachmentAsync(coverageId, "wc-ai");
+                    Policy.WorkCompCoverage.WaiverOfSubAttachment = null;
+                    StateHasChanged();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing file: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateCoverageBool(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args)
+    {
+        // Optionally, you can use 'args.Value' here if needed.
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+    private string ExtensionAllowed { get; set; } = ".pdf, .txt, .png";
+    private void AfterSelect(SelectedEventArgs args)
+    {
+        string[] Extension = { "pdf", "txt", "png" };
+        if (Extension.ToList().IndexOf(args.FilesData[0].Type) < 0)
+        {
+            args.Cancel = true;
+        }
+    }
+    private void OnFileRemove(RemovingEventArgs args)
+    {
+        args.PostRawFile = false;
+    }
+}

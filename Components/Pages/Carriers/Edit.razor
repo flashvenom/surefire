@@ -13,6 +13,13 @@
 
 <PageTitle>Edit</PageTitle>
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Carriers" Url="/Carriers" />
+        <BreadcrumbItem Text="Edit" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <_toolbar CarrierId="@CarrierId" />
 
 @if (carrier is null)
@@ -130,13 +137,6 @@ else
         {
             NavigationManager.NavigateTo("notfound");
         }
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Carriers", Url = "/Carriers" },
-            new BreadcrumbItem { Text = "Edit" }
-        });
-        await InvokeAsync(StateHasChanged);
     }
 
     public void cancelSubmit()

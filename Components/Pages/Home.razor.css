@@ -19,7 +19,7 @@ i {
 .img-fluid {
     width:100%;
 }
-.ttable {
+/*.ttable {
     text-align: left;
     display: block !important;
     width: 100%;
@@ -30,8 +30,8 @@ i {
 }
 .ttable th {
     
-}
-#tasktable {
+}*/
+/*#tasktable {
     padding-top: 10px;
     text-align: left;
     display: block !important;
@@ -39,32 +39,32 @@ i {
     margin: 0;
     padding: 0;
     border-collapse: collapse;
-}
-tr .trow {
+}*/
+/*tr .trow {
     display: block;
     margin-top:5px !important;
     padding:20px;
-}
-.ttname {
+}*/
+/*.ttname {
     height: 10px;
     font-size: .9em;
     font-weight:bold;
-}
-.tcname {
+}*/
+/*.tcname {
     width: 200px;
     height: 10px;
     font-size: .9em;
-}
+}*/
 .pasdu {
     color: #ff0000 !important;
 }
 .ttnote {
 }
-.ttpri {
+/*.ttpri {
     height: 10px;
     font-size: .7em;
-}
-.hprod {
+}*/
+/*.hprod {
     background-color: #646464;
     color: #fff;
     padding: 2px 5px;
@@ -73,8 +73,10 @@ tr .trow {
     font-size: .9em;
     font-weight: bold;
     min-width: 90px;
-    font-family: Consolas;
-}
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
+}*/
 .hexp {
     background-color: #ffffffa7;
     color: #424242;
@@ -82,7 +84,9 @@ tr .trow {
     border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
     font-size: .9em;
-    font-family: Consolas;
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
 }
 .sectiontitle {
     font-family: "montserrat", sans-serif;
@@ -96,7 +100,7 @@ tr .trow {
     padding-left: 7px;
     border-bottom: 1px solid #ccc;
 }
-.sectiontitletab {
+/*.sectiontitletab {
     font-family: "montserrat", sans-serif;
     font-size: 1.5em;
     padding-top:5px;
@@ -105,4 +109,4 @@ tr .trow {
     background: linear-gradient(to right, #6858c7 0%,#593293 19%,#4e1359 47%,#ac283a 77%,#e55249 100%);
     color: #fff;
     text-align: center;
-}
+}*/

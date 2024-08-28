@@ -1,5 +1,4 @@
 ﻿@page "/Clients"
-
 @using Mantis.Domain.Clients.Models
 @using Mantis.Components.Layout
 @using Syncfusion.Blazor.Grids
@@ -8,16 +7,22 @@
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
 @using Microsoft.FluentUI.AspNetCore.Components
-
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Clients" Url="/Clients" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar />
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@ClientData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" TValue="Client"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Client" InsertUrl="https://localhost:7074/api/Client/Insert" UpdateUrl="https://localhost:7074/api/Client/Update" RemoveUrl="https://localhost:7074/api/Client/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Client" InsertUrl="https://mantismetro.azurewebsites.net/api/Client/Insert" UpdateUrl="https://mantismetro.azurewebsites.net/api/Client/Update" RemoveUrl="https://mantismetro.azurewebsites.net/api/Client/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
@@ -33,16 +38,6 @@
     SfGrid<Client> Grid { get; set; }
     SfDataManager DataManager { get; set; }
     public List<Client> ClientData { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        string testthis = "test";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Clients" }
-        });
-    }
 
     private void OnBeginHandler(ActionEventArgs<Client> Args)
     {

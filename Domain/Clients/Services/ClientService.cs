@@ -52,12 +52,63 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Address)
                 .Include(c => c.PrimaryContact)
                 .Include(c => c.Locations)
+                .Include(c => c.Certificates)
                 .Include(c => c.Contacts)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Carrier)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Wholesaler)
+                .Include(c => c.Policies)
+                    .ThenInclude(p => p.Product)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
+
+            return client;
+        }
+
+
+
+        public async Task<Client> GetClientByCertificateId(int certificateId)
+        {
+            var client = await _context.Certificates
+                .Where(cert => cert.CertificateId == certificateId)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.Address)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.PrimaryContact)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.Locations)
+                .Include(cert => cert.Client)
+                    .ThenInclude(client => client.Contacts)
+                .Select(cert => cert.Client)
+                .FirstOrDefaultAsync();
+
+            return client;
+        }
+
+        public async Task<Client> GetClientWithCurrentPoliciesByCertificateIdAsync(int certificateId)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            var client = await _context.Certificates
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Address)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.PrimaryContact)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.Carrier)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.GeneralLiabilityCoverage)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.WorkCompCoverage)
+                .Include(cert => cert.Client)
+                    .ThenInclude(c => c.Policies.Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today))
+                        .ThenInclude(p => p.AutoCoverage)
+                .Where(cert => cert.CertificateId == certificateId)
+                .Select(cert => cert.Client)
+                .FirstOrDefaultAsync();
 
             return client;
         }
@@ -100,13 +151,14 @@ namespace Mantis.Domain.Clients.Services
         }
 
         // Create a new client
-        public async Task CreateClientAsync(Client client)
+        public async Task<int> CreateClientAsync(Client client)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             client.CreatedBy = currentUser;
             client.eClientId = Guid.NewGuid().ToString();
             _context.Clients.Add(client);
             await _context.SaveChangesAsync();
+            return client.ClientId;
         }
 
         public async Task UpdateClientId(int clientId, string eClientId)

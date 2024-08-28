@@ -8,12 +8,19 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Contacts" Url="/Contacts" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <_toolbar ContactId="@ContactId" />
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@ContactData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="ContactDto"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Contacts/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Contacts/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
@@ -37,16 +44,6 @@
     SfDataManager DataManager { get; set; }
     public List<ContactDto> ContactData { get; set; }
     public int ContactId { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Contacts" }
-        });
-        InvokeAsync(StateHasChanged);
-    }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {

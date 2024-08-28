@@ -4,9 +4,10 @@ using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Renewals.Models;
+using Mantis.Domain.Shared.Models;
+using Mantis.Domain.Forms.Models;
 using Mantis.Domain.Shared;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Mantis.Domain.Renewals.Models;
 
 namespace Mantis.Data
 {
@@ -17,26 +18,78 @@ namespace Mantis.Data
         {
         }
 
+        // Primary entities
         public DbSet<Client> Clients { get; set; }
         public DbSet<Carrier> Carriers { get; set; }
         public DbSet<Contact> Contacts { get; set; }
-        public DbSet<Policy> Policies { get; set; }
-        public DbSet<Claim> Claims { get; set; }
-        public DbSet<Renewal> Renewals { get; set; }
-        public DbSet<Submission> Submissions { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<Attachment> Attachments { get; set; }
         public DbSet<Driver> Drivers { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Address> Address { get; set; }
+        public DbSet<Certificate> Certificates { get; set; }
+
+        // Renewals and Tasks
         public DbSet<TaskMaster> TaskMasters { get; set; }
         public DbSet<TrackTask> TrackTasks { get; set; }
+        public DbSet<DailyTask> DailyTasks { get; set; }
+        public DbSet<Renewal> Renewals { get; set; }
+        public DbSet<Submission> Submissions { get; set; }
+
+        // Policies
+        public DbSet<Policy> Policies { get; set; }
+        public DbSet<GeneralLiabilityCoverage> GeneralLiabilityCoverages { get; set; }
+        public DbSet<AutoCoverage> AutoCoverages { get; set; }
+        public DbSet<WorkCompCoverage> WorkCompCoverages { get; set; }
+        public DbSet<UmbrellaCoverage> UmbrellaCoverage { get; set; }
+        public DbSet<PropertyCoverage> PropertyCoverage { get; set; }
+        public DbSet<RatingBasis> RatingBases { get; set; }
+        public DbSet<Loss> Losses { get; set; }
+        public DbSet<Claim> Claims { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configure decimal precision for specific entities
+            modelBuilder.Entity<GeneralLiabilityCoverage>()
+                .Property(g => g.Premium)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Loss>()
+                .Property(l => l.AmountPaid)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Loss>()
+                .Property(l => l.AmountReserved)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<RatingBasis>()
+                .Property(r => r.BaseRate)
+                .HasColumnType("decimal(7,4)");
+
+            modelBuilder.Entity<RatingBasis>()
+                .Property(r => r.NetRate)
+                .HasColumnType("decimal(7,4)");
+
+            modelBuilder.Entity<RatingBasis>()
+                .Property(r => r.Payroll)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<RatingBasis>()
+                .Property(r => r.Premium)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Location>()
+                .Property(l => l.GrossSales)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Claim>()
+                .Property(c => c.AmountPaid)
+                .HasColumnType("decimal(18,2)");
+
+            //Relationships
             modelBuilder.Entity<Client>()
                 .HasOne(c => c.Address)
                 .WithMany()
@@ -139,10 +192,6 @@ namespace Mantis.Data
                 .Property(p => p.Premium)
                 .HasColumnType("decimal(18,2)");
 
-            modelBuilder.Entity<Claim>()
-                .Property(c => c.AmountPaid)
-                .HasColumnType("decimal(18,2)");
-
             modelBuilder.Entity<Renewal>()
                 .HasOne(r => r.Carrier)
                 .WithMany()
@@ -174,8 +223,8 @@ namespace Mantis.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Renewal>()
-              .Property(c => c.ExpiringPremium)
-              .HasColumnType("decimal(18,2)");
+                .Property(c => c.ExpiringPremium)
+                .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Submission>()
                 .HasOne(s => s.Product)
@@ -194,6 +243,7 @@ namespace Mantis.Data
                 .WithMany()
                 .HasForeignKey("WholesalerId")
                 .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Submission>()
                 .HasOne(s => s.Renewal)
                 .WithMany(r => r.Submissions)
@@ -204,6 +254,10 @@ namespace Mantis.Data
                 .HasOne(l => l.Address)
                 .WithMany()
                 .HasForeignKey("AddressId");
+
+            modelBuilder.Entity<Location>()
+                .Property(l => l.GrossSales)
+                .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<TaskMaster>()
                 .HasKey(t => t.Id);
@@ -227,6 +281,189 @@ namespace Mantis.Data
                 .HasOne(t => t.AssignedTo)
                 .WithMany()
                 .HasForeignKey("AssignedToId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DailyTask>()
+                .HasOne(d => d.AssignedTo)
+                .WithMany()
+                .HasForeignKey("AssignedToId")
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Policy>()
+                .HasOne(p => p.GeneralLiabilityCoverage)
+                .WithOne(g => g.Policy)
+                .HasForeignKey<GeneralLiabilityCoverage>(g => g.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GeneralLiabilityCoverage>()
+                .HasOne(g => g.Client)
+                .WithMany()
+                .HasForeignKey(g => g.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GeneralLiabilityCoverage>()
+                .HasOne(g => g.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GeneralLiabilityCoverage>()
+                .HasOne(g => g.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // RatingBasis configuration
+            modelBuilder.Entity<RatingBasis>()
+                .HasOne(r => r.Policy)
+                .WithMany(p => p.RatingBases)
+                .HasForeignKey(r => r.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RatingBasis>()
+                .HasOne(r => r.UserModified)
+                .WithMany()
+                .HasForeignKey("UserModifiedId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RatingBasis>()
+                .HasOne(r => r.Product)
+                .WithMany()
+                .HasForeignKey("ProductId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RatingBasis>()
+                .HasOne(r => r.Location)
+                .WithMany()
+                .HasForeignKey("LocationId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Loss configuration
+            modelBuilder.Entity<Loss>()
+                .HasOne(l => l.Policy)
+                .WithMany(p => p.Losses)
+                .HasForeignKey(l => l.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Loss>()
+                .HasOne(l => l.UserModified)
+                .WithMany()
+                .HasForeignKey("UserModifiedId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AutoCoverage configuration
+            modelBuilder.Entity<AutoCoverage>()
+                .HasOne(a => a.Policy)
+                .WithOne(p => p.AutoCoverage)
+                .HasForeignKey<AutoCoverage>(a => a.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AutoCoverage>()
+                .HasOne(a => a.Client)
+                .WithMany()
+                .HasForeignKey(a => a.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AutoCoverage>()
+                .HasOne(a => a.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AutoCoverage>()
+                .HasOne(a => a.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // WorkCompCoverage configuration
+            modelBuilder.Entity<WorkCompCoverage>()
+                .HasOne(w => w.Policy)
+                .WithOne(p => p.WorkCompCoverage)
+                .HasForeignKey<WorkCompCoverage>(w => w.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WorkCompCoverage>()
+                .HasOne(w => w.Client)
+                .WithMany()
+                .HasForeignKey(w => w.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WorkCompCoverage>()
+                .HasOne(w => w.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WorkCompCoverage>()
+                .HasOne(w => w.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Umbrella configuration
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.Policy)
+                .WithOne(p => p.UmbrellaCoverage)
+                .HasForeignKey<UmbrellaCoverage>(w => w.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.Client)
+                .WithMany()
+                .HasForeignKey(w => w.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UmbrellaCoverage>()
+                .HasOne(w => w.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Property configuration
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.Policy)
+                .WithOne(p => p.PropertyCoverage)
+                .HasForeignKey<PropertyCoverage>(w => w.PolicyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.Client)
+                .WithMany()
+                .HasForeignKey(w => w.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PropertyCoverage>()
+                .HasOne(w => w.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Certificate
+
+
+            modelBuilder.Entity<Certificate>()
+                .HasOne(c => c.CreatedBy)
+                .WithMany()
+                .HasForeignKey("CreatedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Certificate>()
+                .HasOne(c => c.ModifiedBy)
+                .WithMany()
+                .HasForeignKey("ModifiedById")
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

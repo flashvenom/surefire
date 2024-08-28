@@ -88,6 +88,7 @@ main {
     border-radius: 5px;
     box-shadow: 0px 0px 5px #ccc;
 }
+
 /*--------------------------Side and Top Bars----------------------------*/
 .sidebar {
     padding-top: 20px;
@@ -133,6 +134,7 @@ main {
 }
 .toolbar-link:hover {
     opacity:.9;
+    cursor:pointer;
 }
 .toolbar-link svg {
     fill: #000 !important;
@@ -140,7 +142,7 @@ main {
 .toolbar-text {
     -webkit-text-decoration: inherit;
     text-decoration: inherit;
-    font-family: 'Segoe UI';
+    font-family: "montserrat", sans-serif;
     position: relative;
     top: -7px;
     left: -2px;
@@ -160,6 +162,73 @@ main {
     .sf-useremail:hover {
         opacity: .9;
     }
+
+.search-popper {
+    font-family: "montserrat", sans-serif;
+    position: absolute;
+    top: -10px;
+    left: -54px;
+    width: 300px;
+    box-shadow: 0px 0px 10px #000;
+    background-color: #ffffffe7;
+    z-index: -1;
+    border-top:50px solid #593293;
+    padding-left: 12px;
+    padding-bottom: 12px;
+    word-wrap: normal;
+    white-space: nowrap;
+    color: #000;
+    overflow: hidden;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    transition: all 0.5s ease-in-out;
+}
+.search-category {
+    font-size: .65em;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #036ac4;
+    text-transform: uppercase;
+    padding-top: 6px;
+    margin-top:6px;
+    padding-bottom:2px;
+    border-top:1px solid #d3d3d3;
+}
+.search-item {
+    font-weight: 400;
+    font-size: .85em;
+    padding-left: 0px;
+    opacity:.7;
+}
+.search-item:hover {
+    opacity: 1;
+    cursor:pointer;
+    background-color:#036ac431;
+}
+.search-item-parent {
+    font-size: .6em;
+    font-weight: 600;
+    color: #6b6b6b;
+    padding-left: 25px;
+    opacity: .7;
+}
+.fsearch-hide {
+    display: none;
+}
+.fsearch-show {
+    display: block;
+}
+.fsearch-on {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-in-out;
+}
+
+.fsearch-off {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease-in-out;
+}
 /*--------------------------Main Layout Items----------------------------*/
 .app-logo {
     opacity: 0.7;
@@ -169,12 +238,26 @@ main {
     display: flex;
     align-items: center;
 }
+.fsearch-bar {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    z-index: 100 !important;
+}
 .search-bar {
     flex-grow: 1;
     display: flex;
     justify-content: center;
+    z-index:100 !important;
 }
-
+.fsearch-container {
+    position:relative;
+}
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow: auto;
+}
 .search-input {
     width: 100%;
     max-width: 400px;
@@ -183,7 +266,7 @@ main {
     border-radius: 4px;
 }
 .sf-search-input {
-    font-family: 'Segoe UI Variable Text';
+    font-family: "montserrat", sans-serif;
     font-size: 15px;
     padding: 4px 8px;
     padding-left: 30px;
@@ -230,6 +313,7 @@ main {
 }
 
 /*--------------------------Global Icons----------------------------*/
+
 :root .e-btn .e-btn-icon.e-icon-left {
     width: 1.5em !important;
 }
@@ -259,7 +343,6 @@ main {
 :root .e-signature-icon::before {
     content: '\e897';
 }
-
 :root .e-icon-btn {
     background-color: transparent;
     border: none;
@@ -283,12 +366,11 @@ main {
 .e-icon-btn .e-icons {
     color: white;
 }
-
 /*--------------------------Contacts----------------------------*/
 .m-contact {
     padding: 5px;
     border: 1px solid #e4e4e4;
-    border-left:5px solid #ccc;
+    border-left: 5px solid #ccc;
     border-radius: 3px;
     max-width: 300px;
     margin-bottom: 11px;
@@ -314,6 +396,10 @@ main {
 .mf-flex {
     display:flex;
 }
+.mf-flexrow {
+    display: flex;
+    flex-direction: row;
+}
 .mf-row {
     -ms-flex-direction: row;
     -webkit-flex-direction: row;
@@ -326,6 +412,9 @@ main {
     -webkit-flex-direction: row;
     flex-direction: row;
     justify-content: flex-start;
+}
+.mf-sm {
+    flex: 0 1 auto;
 }
 .mf-item-xs {
     flex-basis: 10%
@@ -419,14 +508,167 @@ main {
         padding: 10px;
         border-radius: inherit;
     }
-/*--------------------------Other Styles----------------------------*/
 
-.main-content {
-    flex-grow: 1;
-    padding: 20px;
-    overflow: auto;
+/*--------------------------Policy Screen----------------------------*/
+:root .rating-basis-table tbody tr {
+    border-bottom: 1px solid #ccc !important;
+}
+.sf-da {
+    width: 50px;
+}
+.sf-pp {
+    width: 130px;
+    overflow: hidden;
+}
+.pr-td {
+    border-bottom: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+}
+.pol-name {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .8em;
+    width: 130px;
+    display: inline-block;
+    font-weight: bold;
+    color: #484848;
+    height: 30px;
+    text-align: right;
+    position: relative;
+    top: 4px;
 }
 
+.pol-value {
+    width: 200px;
+    display: inline-block;
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    color: #000;
+    height: 30px;
+}
+.pol-rate-title {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .7em;
+    font-weight: bold;
+    color: #484848;
+    text-align: center;
+    text-transform: uppercase;
+}
+.pol-static {
+    position: relative;
+    top: 4px;
+    left: 5px;
+}
+
+.pol-section-title {
+    font-family: "montserrat", sans-serif;
+    font-size: 1em;
+    font-weight:400;
+    color:#6b6b6b;
+    text-transform: uppercase;
+    letter-spacing:2px;
+}
+.pol-exist {
+    font-family: "montserrat", sans-serif;
+    font-size: .8em;
+    font-weight: 400;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background-color:#fff;
+    width:auto;
+    height:80px;
+    border:1px dashed #ccc;
+    position:relative;
+    left:8px;
+    clear:both;
+}
+.pdf-icon {
+    width:60px;
+}
+/*--------------------------Primary Text Styles----------------------------*/
+.txt-small {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .7em;
+    font-weight: bold;
+    color: #484848;
+    text-transform: uppercase;
+    text-align:left;
+}
+.txt-cursive {
+    font-family: montserrat, sans-serif;
+    font-size: .7em;
+    color: #484848;
+    font-weight: 400;
+    font-style: italic;
+}
+.txt-cursive-sm {
+    font-family: montserrat, sans-serif;
+    font-size: .6em;
+    color: #484848;
+    font-weight: 400;
+    font-style: italic;
+}
+.txt-p {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    color: #000;
+}
+.txt-p-md {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 1.5rem;
+    color: #000;
+}
+.txt-bold {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .8em;
+    font-weight: bold;
+    color: #484848;
+}
+.txt-bold-md {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 1em;
+    font-weight: bold;
+    color: #484848;
+}
+.txt-section {
+    font-family: "montserrat", sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom:7px;
+    margin-top:3px;
+}
+
+/*--------------------------Other Styles----------------------------*/
+.sf-header {
+    display: flex;
+    justify-content: normal;
+    flex-direction: row;
+    background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(234,234,234,1) 100%);
+    padding-top: 12px;
+    padding-bottom: 8px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.default-header {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 2.5em;
+    line-height: 30px;
+}
+.default-subheader {
+    font-family: "montserrat", sans-serif;
+    font-weight: 600;
+    font-style: normal;
+    font-size: .6em;
+    color:#a3a3a3;
+}
 .e-toolbar-spacer {
     flex-grow: 1;
 }
@@ -442,6 +684,7 @@ main {
 }
 :root .e-btnhover {
     opacity:.5;
+    text-decoration:none;
 }
 :root .e-btnhover:hover {
     opacity:1;
@@ -511,12 +754,14 @@ a, .btn-link {
     font-weight:bold;
 }
 .sf-td-mono {
-    font-family: 'Cascadia Mono';
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
     color: #909090 !important;
 }
 .sf-thead {
     font-size: 12px;
-    font-family: 'Segoe UI';
+    font-family: "montserrat", sans-serif;
     font-weight: 600;
     text-align: left;
     color: #7a7a7a;

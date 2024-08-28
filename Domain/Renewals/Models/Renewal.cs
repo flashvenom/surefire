@@ -3,6 +3,7 @@ using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Clients.Models;
 using Mantis.Domain.Shared;
+using Mantis.Domain.Shared.Models;
 using System.Collections.Generic;
 
 namespace Mantis.Domain.Renewals.Models
@@ -11,7 +12,7 @@ namespace Mantis.Domain.Renewals.Models
     {
         public int RenewalId { get; set; }
         public DateTime RenewalDate { get; set; }
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
         public string? ExpiringPolicyNumber { get; set; }
         public decimal? ExpiringPremium { get; set; }
         public DateTime? DateCreated { get; set; } = DateTime.UtcNow;

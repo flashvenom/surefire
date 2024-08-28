@@ -1,0 +1,855 @@
+﻿@page "/Forms/Certificate/{CertificateId:int}"
+@using Newtonsoft.Json
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.SfPdfViewer
+@using Newtonsoft.Json.Linq
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Clients.Services
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Forms.Services
+@using Mantis.Domain.Forms.Models
+@using Mantis.Domain.Policies.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.IO
+@using Syncfusion.Pdf
+@using Syncfusion.Pdf.Parsing
+@using Mantis.Domain.Shared.Helpers
+@inject ClientService ClientService
+@inject PolicyService PolicyService
+@inject FormService FormService
+@inject NavigationManager NavigationManager
+@inject IWebHostEnvironment Environment
+@inject IJSRuntime JS
+@inject IHttpClientFactory _http
+@rendermode InteractiveServer
+ 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Forms" Url="/Forms/Certificates" />
+        <BreadcrumbItem Text="Certificate Editor" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
+<div class="page-toolbar">
+    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Certificate</SfButton>
+
+    <span class="sf-verthr2"></span>
+
+    @* Policies *@
+    <a class="toolbar-link" id="myPopoverButtonr" @onclick="() => _policiesVisible = !_policiesVisible"> 
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentBulletList())" />
+        <span class="toolbar-text">Policies</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myPopoverButtonr" @bind-Open="_policiesVisible">
+        <Header>Select Policies</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                @foreach (var policy in policies)
+                {
+                    <FluentCheckbox Checked="@IsPolicySelected(policy)" @onchange="(e) => TogglePolicySelection(e, policy)">
+                        @policy.PolicyNumber (@policy.Product.LineNickname)
+                    </FluentCheckbox>
+                }
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => HandleLoadEverything(true, true, true, true)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    @* Attachments *@
+    <a class="toolbar-link" id="myAttachButtonr" @onclick="() => _attachmentsVisible = !_attachmentsVisible">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Attach())" />
+        <span class="toolbar-text">Attachments</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myAttachButtonr" @bind-Open="_attachmentsVisible">
+        <Header>Attachment Options</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                Use the checkboxes in the certificate to attach a policy's AI/WoS/P&NC endorsements to this certificate. If you don't want to attach anything, check below...<br><br>
+                    <FluentCheckbox Checked="@certificate.BlockAttachments" @onchange="(e) => ToggleBlockAttachments(e, certificate)"> Block Attachments</FluentCheckbox>
+                
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => SaveToDatabase(false)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Reset" class="toolbar-link" @onclick="ResetForm">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eraser())" />
+        <span class="toolbar-text">Reset</span>
+    </a>
+
+    <a id="Duplicate" class="toolbar-link" @onclick="DuplicateCertificate">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentCopy())" />
+        <span class="toolbar-text">Duplicate</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Email" class="toolbar-link" @onclick="() => ExportCertificate(true, false, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.OpenFolder())" />
+        <span class="toolbar-text">Open</span>
+    </a>
+
+    <a id="Save" class="toolbar-link" @onclick="() => ExportCertificate(false, false, false, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
+        <span class="toolbar-text">Save</span>
+    </a>
+
+    <a id="Print" class="toolbar-link" @onclick="() => ExportCertificate(false, true, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
+        <span class="toolbar-text">Print</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Sync" class="toolbar-link" @onclick="() => SaveToDatabase(false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ArrowSync())" />
+        <span class="toolbar-text">Sync</span>
+    </a>
+
+    <a id="Approve" class="toolbar-link" @onclick="() => SaveToDatabase(true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Checkmark())" />
+        <span class="toolbar-text">Approve</span>
+    </a>
+
+    <a id="Cancel" class="toolbar-link" href="@($"/Clients/List/{clientId}")">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
+        <span class="toolbar-text">Cancel</span>
+    </a>
+   
+</div>
+
+<div class="control-section" style="height:784px;">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="784px" Width="90%">
+        <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+    </SfPdfViewer2>
+</div>
+
+@code {
+    [Parameter]
+    public int CertificateId { get; set; }
+
+    private string DocumentPath { get; set; } = "";
+    private string ClearPoliciesPath { get; set; } = "";
+    private string JsonPath { get; set; } = "";
+    private SfPdfViewer2 pdfViewer;
+    private Stream stream;
+    public int clientId { get; set; } = 0;
+    public Client client { get; set; } =  new Client();
+    public Certificate certificate { get; set; } = new Certificate();
+    public List<Policy> policies { get; set; } = new List<Policy>();
+    private bool _policiesVisible = false;
+    private bool _attachmentsVisible = false;
+    private List<Policy> selectedpolicies = new List<Policy>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        DocumentPath = "wwwroot/forms/a025-2016-03-v2.pdf";
+        JsonPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2.json");
+        ClearPoliciesPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2-clearpolicies.json");
+        client = await ClientService.GetClientByCertificateId(CertificateId);
+        certificate = await FormService.GetCertificateByIdAsync(CertificateId);
+        policies = await PolicyService.GetCurrentPoliciesByClientIdAsync(client.ClientId);
+        clientId = client.ClientId;
+    }
+
+    private async Task LoadJsonDataIntoPdfAsync()
+    {
+        Console.WriteLine("Loading DATABASE JSON data into PDF viewer");
+        if (certificate != null && !string.IsNullOrEmpty(certificate.JSONData))
+        {
+            // Convert JSONData to a Stream
+            var jsonDataStream = new MemoryStream();
+            using (var writer = new StreamWriter(jsonDataStream, leaveOpen: true))
+            {
+                await writer.WriteAsync(certificate.JSONData);
+                await writer.FlushAsync();
+                jsonDataStream.Position = 0;
+            }
+
+            // Load the JSON data into the PDF viewer
+            await pdfViewer.ImportFormFieldsAsync(jsonDataStream, FormFieldDataFormat.Json);
+        }
+    }
+
+    private bool IsPolicySelected(Policy policy)
+    {
+        Console.WriteLine("----------------------------------------------");
+        Console.WriteLine("ISIS: Policy " + policy.PolicyNumber + "selected is " + selectedpolicies.Contains(policy));
+        return selectedpolicies.Contains(policy);
+    }
+
+    private void TogglePolicySelection(Microsoft.AspNetCore.Components.ChangeEventArgs e, Policy policy)
+    {
+        if (!selectedpolicies.Contains(policy))
+        {
+            selectedpolicies.Add(policy);
+        }
+        else
+        {
+            selectedpolicies.Remove(policy);
+        }
+    }
+
+    private async void ToggleBlockAttachments(Microsoft.AspNetCore.Components.ChangeEventArgs e, Certificate certificate)
+    {
+        if (certificate.BlockAttachments == false)
+        {
+            certificate.BlockAttachments = true;
+        }
+        else
+        {
+            certificate.BlockAttachments = false;
+        }
+        await FormService.UpdateCertificate(certificate);
+    }
+
+    private async Task ResetForm()
+    {
+        await HandleLoadEverything(true, false, false, false);
+    }
+
+    private async Task DownloadFile(bool print)
+    {
+        await pdfViewer.DownloadAsync();
+    }
+
+    public async Task<string> ExportCertificate(bool? openNewWindow, bool? printNow, bool? attachToEmail, bool? saveToDisk)
+    {
+        await SaveToDatabase(false);
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        data = FormService.FlattenPdf(data);
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+            if (certificate.AttachGLAI == true && certificate.AttachGLAIfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLAIfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachGLWOS == true && certificate.AttachGLWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachWCWOS == true && certificate.AttachWCWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachWCWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+
+            using (MemoryStream combinedPdfStream = new MemoryStream())
+            {
+                originalDocument.Save(combinedPdfStream);
+
+                byte[] combinedPdfBytes = combinedPdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
+
+
+                
+                if (printNow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+
+                if (saveToDisk == true)
+                {
+                    string certname = DateHelper.GenerateCertificateName(client.Name, certificate.HolderName);
+                    await JS.InvokeVoidAsync("downloadPdf", base64Pdf, certname);
+                }
+
+                @if (openNewWindow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+            }
+            originalDocument.Close(true);
+        }
+        return string.Empty;
+    }
+
+    public async Task AttachPages(bool? addAttachments)
+    {
+        await SaveToDatabase(false);
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        data = FormService.FlattenPdf(data);
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+            if (certificate.AttachGLAI == true && certificate.AttachGLAIfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLAIfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachGLWOS == true && certificate.AttachGLWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+            if (certificate.AttachWCWOS == true && certificate.AttachWCWOSfilename != null)
+            {
+                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachWCWOSfilename);
+                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+                {
+                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                    attachmentDocument.Close(true);
+                }
+            }
+
+
+            using (MemoryStream combinedPdfStream = new MemoryStream())
+            {
+                originalDocument.Save(combinedPdfStream);
+
+                byte[] combinedPdfBytes = combinedPdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
+                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+            }
+            originalDocument.Close(true);
+        }
+    }
+
+    public async void FlattenForm()
+    {
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        byte[] flattenedPdfBytes = FormService.FlattenPdf(data);
+        string base64Pdf = Convert.ToBase64String(flattenedPdfBytes);
+        await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+    }
+
+    public async void StoreTempData()
+    {
+        Console.WriteLine("Storing Temp Data");
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        stream.Position = 0;
+        using (var reader = new StreamReader(stream))
+        {
+            string jsonData = await reader.ReadToEndAsync();
+            var jsonObject = JObject.Parse(jsonData);
+            certificate.JSONDataTemp = jsonData;
+        }
+    }
+
+    public async Task SaveToDatabase(bool? exit)
+    {
+        _attachmentsVisible = false;
+        _policiesVisible = false;
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        stream.Position = 0;
+        using (var reader = new StreamReader(stream))
+        {
+            string jsonData = await reader.ReadToEndAsync();
+            var jsonObject = JObject.Parse(jsonData);
+
+            string holderName = jsonObject["CertificateHolder_FullName"]?.ToString();
+            if (!string.IsNullOrEmpty(holderName))
+            {
+                certificate.HolderName = holderName;
+            }
+
+            string holderdescription = jsonObject["CertificateOfLiabilityInsurance_ACORDForm_RemarkText"]?.ToString();
+            if (!string.IsNullOrEmpty(holderdescription))
+            {
+                certificate.ProjectName = holderName;
+            }
+
+            string attachGLAI = jsonObject["GeneralLiability_AdditionalInsuredIndicator"]?.ToString();
+            if (!string.IsNullOrEmpty(attachGLAI)) 
+            { 
+                certificate.AttachGLAI = true;
+            }
+
+            string attachGlWOS = jsonObject["GeneralLiability_WaiverOfSubrogationIndicator"]?.ToString();
+            if (!string.IsNullOrEmpty(attachGlWOS)) { certificate.AttachGLWOS = true; }
+
+            string attachWCWOS = jsonObject["WorkersCompensationAndEmployersLiability_WaiverOfSubrogationIndicator"]?.ToString();
+            if (!string.IsNullOrEmpty(attachWCWOS)) { certificate.AttachWCWOS = true; }
+
+            // Save the JSON data to the certificate's JSONData field
+            certificate.JSONData = jsonData;
+
+            // Update the certificate in the database
+            await FormService.UpdateCertificate(certificate);
+        }
+
+        if(exit == true)
+        {
+            NavigationManager.NavigateTo($"/Clients/List/{clientId}");
+        }
+    }
+
+    public async Task DuplicateCertificate()
+    {
+        int newcertid = await FormService.DuplicateCertificateAsync(certificate);
+        NavigationManager.NavigateTo($"/Forms/Certificate/{newcertid}");
+
+    }
+
+    public async Task<JObject> GetViewerJSON()
+    {
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        stream.Position = 0;
+        using (var reader = new StreamReader(stream))
+        {
+            string jsonData = await reader.ReadToEndAsync();
+            var jsonObject = JObject.Parse(jsonData);
+            return jsonObject;
+        }
+    }
+
+    public async Task<JObject> ClearPoliciesJSON()
+    {
+        var savedJsonObject = await GetViewerJSON();
+
+        JObject clearPoliciesJsonObject;
+        using (var fileStream = new FileStream(ClearPoliciesPath, FileMode.Open, FileAccess.Read))
+        {
+            using (var streamReader = new StreamReader(fileStream))
+            using (var jsonReader = new JsonTextReader(streamReader))
+            {
+                clearPoliciesJsonObject = await JObject.LoadAsync(jsonReader);
+            }
+        }
+
+        foreach (var property in clearPoliciesJsonObject.Properties())
+        {
+            if (savedJsonObject.ContainsKey(property.Name))
+            {
+                savedJsonObject[property.Name] = property.Value;
+            }
+        }
+
+        Console.WriteLine();
+        return savedJsonObject;
+    }
+
+    public async Task HandleLoadEverything(bool? loadClient = null, bool? loadPolicies = null, bool? loadHolder = null, bool? loadDescription = null)
+    {
+        _attachmentsVisible = false;
+        _policiesVisible = false;
+        var jsonObject = await ClearPoliciesJSON();
+
+        jsonObject["Form_CompletionDate"] = DateTime.UtcNow.ToString("MM/dd/yyyy");
+        jsonObject["CertificateOfInsurance_CertificateNumberIdentifier"] = "MSF-24-" + CertificateId;
+
+
+        if(loadClient == true)
+        {
+            jsonObject["NamedInsured_FullName"] = client.Name;
+            jsonObject["NamedInsured_MailingAddress_LineOne"] = client.Address.AddressLine1;
+            if (client.Address.AddressLine2 is not null){
+                jsonObject["NamedInsured_MailingAddress_LineTwo"] = client.Address.AddressLine2;
+                jsonObject["NamedInsured_MailingAddress_CityName"] = client.Address.City + ", " + client.Address.State + " " + client.Address.PostalCode;
+            }
+            else
+            {
+                jsonObject["NamedInsured_MailingAddress_LineTwo"] = client.Address.City + ", " + client.Address.State + " " + client.Address.PostalCode;
+            }
+        }
+
+
+
+        if(loadPolicies == true)
+        {
+            string[] letterArray = { "A", "B", "C", "D", "E" };
+            int currentposition = 1;
+
+            //General Liability
+            var glpolicy = selectedpolicies.Where(p => p.ProductId == 3).FirstOrDefault();
+            if (glpolicy is not null)
+            {
+                jsonObject["GeneralLiability_CoverageIndicator"] = "1";
+
+                //Set Carrier Assignments
+                jsonObject["GeneralLiability_InsurerLetterCode"] = letterArray[currentposition-1];
+                if (!string.IsNullOrEmpty(glpolicy.Carrier.CarrierName))
+                {
+                    if(currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = glpolicy.Carrier.CarrierName;
+                    }else if(currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = glpolicy.Carrier.CarrierName;
+                    }else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = glpolicy.Carrier.CarrierName;
+                    }else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = glpolicy.Carrier.CarrierName;
+                    }else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = glpolicy.Carrier.CarrierName;
+                    }
+                }
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(glpolicy.PolicyNumber))
+                    jsonObject["Policy_GeneralLiability_PolicyNumberIdentifier"] = glpolicy.PolicyNumber;
+
+                if (glpolicy.EffectiveDate != null)
+                    jsonObject["Policy_GeneralLiability_EffectiveDate"] = glpolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (glpolicy.ExpirationDate != null)
+                    jsonObject["Policy_GeneralLiability_ExpirationDate"] = glpolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (glpolicy.GeneralLiabilityCoverage?.EachOccurrence != null)
+                    jsonObject["GeneralLiability_EachOccurrence_LimitAmount"] = glpolicy.GeneralLiabilityCoverage.EachOccurrence.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.DamageToPremises != null)
+                    jsonObject["GeneralLiability_FireDamageRentedPremises_EachOccurrenceLimitAmount"] = glpolicy.GeneralLiabilityCoverage.DamageToPremises.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.MedicalExpenses != null)
+                    jsonObject["GeneralLiability_MedicalExpense_EachPersonLimitAmount"] = glpolicy.GeneralLiabilityCoverage.MedicalExpenses.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.PersonalInjury != null)
+                    jsonObject["GeneralLiability_PersonalAndAdvertisingInjury_LimitAmount"] = glpolicy.GeneralLiabilityCoverage.PersonalInjury.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.GeneralAggregate != null)
+                    jsonObject["GeneralLiability_GeneralAggregate_LimitAmount"] = glpolicy.GeneralLiabilityCoverage.GeneralAggregate.Value.ToString("N0");
+
+                if (glpolicy.GeneralLiabilityCoverage?.ProductsAggregate != null)
+                    jsonObject["GeneralLiability_ProductsAndCompletedOperations_AggregateLimitAmount"] = glpolicy.GeneralLiabilityCoverage.ProductsAggregate.Value.ToString("N0");
+
+                if (!string.IsNullOrEmpty(glpolicy.GeneralLiabilityCoverage?.AdditionalCoverageName))
+                    jsonObject["GeneralLiability_OtherCoverageLimitDescription"] = glpolicy.GeneralLiabilityCoverage.AdditionalCoverageName;
+
+                if (glpolicy.GeneralLiabilityCoverage?.AdditionalCoverageLimit != null)
+                    jsonObject["GeneralLiability_OtherCoverageLimitDescription"] = glpolicy.GeneralLiabilityCoverage.AdditionalCoverageLimit.Value.ToString("N0");
+
+
+
+                if (glpolicy.GeneralLiabilityCoverage?.ClaimsMade is not null)
+                    jsonObject["GeneralLiability_ClaimsMadeIndicator"] = "On";
+
+                if (glpolicy.GeneralLiabilityCoverage?.Occurence is not null)
+                    jsonObject["GeneralLiability_OccurrenceIndicator"] = "On";
+                
+                //Add filename to certificate for when/if we export/combine PDFs
+                if (glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment != null)
+                {
+                    certificate.AttachGLAIfilename = glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment.FileName;
+
+                }
+
+                //Add filename to certificate for when/if we export/combine PDFs
+                if (glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment != null)
+                {
+                    certificate.AttachGLWOSfilename = glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment.FileName;
+                }
+                
+            }
+
+
+            //Auto
+            var autopolicy = selectedpolicies.Where(p => p.ProductId == 4).FirstOrDefault();
+            if (autopolicy is not null)
+            {
+
+                //Set Carrier Assignments
+                jsonObject["Vehicle_InsurerLetterCode"] = letterArray[currentposition-1];;
+                if (!string.IsNullOrEmpty(autopolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = autopolicy.Carrier.CarrierName;
+                    }
+                }
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(autopolicy.PolicyNumber))
+                    jsonObject["Policy_AutomobileLiability_PolicyNumberIdentifier"] = autopolicy.PolicyNumber;
+
+                if (autopolicy.EffectiveDate != null)
+                    jsonObject["Policy_AutomobileLiability_EffectiveDate"] = autopolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (autopolicy.ExpirationDate != null)
+                    jsonObject["Policy_AutomobileLiability_ExpirationDate"] = autopolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (autopolicy.AutoCoverage?.CombinedLimit != null)
+                    jsonObject["Vehicle_CombinedSingleLimit_EachAccidentAmount"] = autopolicy.AutoCoverage.CombinedLimit.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.BodilyInjuryPerPerson != null)
+                    jsonObject["Vehicle_BodilyInjury_PerPersonLimitAmount"] = autopolicy.AutoCoverage.BodilyInjuryPerPerson.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.BodilyInjuryPerAccident != null)
+                    jsonObject["Vehicle_BodilyInjury_PerAccidentLimitAmount"] = autopolicy.AutoCoverage.BodilyInjuryPerAccident.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.PropertyDamage != null)
+                    jsonObject["Vehicle_PropertyDamage_PerAccidentLimitAmount"] = autopolicy.AutoCoverage.PropertyDamage.Value.ToString("N0");
+
+                if (autopolicy.AutoCoverage?.ForAny is not null)
+                    jsonObject["Vehicle_AnyAutoIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForOwned is not null)
+                    jsonObject["Vehicle_AllOwnedAutosIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForHired is not null)
+                    jsonObject["Vehicle_HiredAutosIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForScheduled is not null)
+                    jsonObject["Vehicle_ScheduledAutosIndicator"] = "On";
+
+                if (autopolicy.AutoCoverage?.ForNonOwned is not null)
+                    jsonObject["Vehicle_NonOwnedAutosIndicator"] = "On";
+            }
+
+            //Umbrella
+            var umbrellapolicy = selectedpolicies.Where(p => p.ProductId == 7).FirstOrDefault();
+            if (umbrellapolicy is not null)
+            {
+
+                //Set Carrier Assignments
+                jsonObject["ExcessUmbrella_InsurerLetterCode"] = letterArray[currentposition-1];;
+                if (!string.IsNullOrEmpty(umbrellapolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = umbrellapolicy.Carrier.CarrierName;
+                    }
+                }
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(umbrellapolicy.PolicyNumber))
+                    jsonObject["Policy_ExcessLiability_PolicyNumberIdentifier"] = umbrellapolicy.PolicyNumber;
+
+                if (umbrellapolicy.EffectiveDate != null)
+                    jsonObject["Policy_ExcessLiability_EffectiveDate"] = umbrellapolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (umbrellapolicy.ExpirationDate != null)
+                    jsonObject["Policy_ExcessLiability_ExpirationDate"] = umbrellapolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (umbrellapolicy.UmbrellaCoverage?.DeductibleRetentionAmount != null)
+                    jsonObject["ExcessUmbrella_Umbrella_DeductibleOrRetentionAmount"] = umbrellapolicy.UmbrellaCoverage.DeductibleRetentionAmount.Value.ToString("N0");
+
+                if (umbrellapolicy.UmbrellaCoverage?.EachOccurrence != null)
+                    jsonObject["ExcessUmbrella_Umbrella_EachOccurrenceAmount"] = umbrellapolicy.UmbrellaCoverage.EachOccurrence.Value.ToString("N0");
+
+                if (umbrellapolicy.UmbrellaCoverage?.GeneralAggregate != null)
+                    jsonObject["ExcessUmbrella_Umbrella_AggregateAmount"] = umbrellapolicy.UmbrellaCoverage.GeneralAggregate.Value.ToString("N0");
+
+                if (umbrellapolicy.UmbrellaCoverage?.IsUmbrella is not null)
+                    jsonObject["Policy_PolicyType_UmbrellaIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.IsExcess is not null)
+                    jsonObject["Policy_PolicyType_ExcessIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.HasDeductible is not null)
+                    jsonObject["ExcessUmbrella_DeductibleIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.HasRetention is not null)
+                    jsonObject["ExcessUmbrella_RetentionIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.ClaimsMade is not null)
+                    jsonObject["ExcessUmbrella_ClaimsMadeIndicator"] = "On";
+
+                if (umbrellapolicy.UmbrellaCoverage?.Occurrence is not null)
+                    jsonObject["ExcessUmbrella_OccurrenceIndicator"] = "On";
+            }
+
+
+            //Work Comp
+            var wcpolicy = selectedpolicies.Where(p => p.ProductId == 2).FirstOrDefault();
+            if (wcpolicy is not null)
+            {
+
+                //Set Carrier Assignments
+                jsonObject["WorkersCompensationEmployersLiability_InsurerLetterCode"] = letterArray[currentposition-1];;
+                if (!string.IsNullOrEmpty(wcpolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = wcpolicy.Carrier.CarrierName;
+                    }
+                }
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(wcpolicy.PolicyNumber))
+                    jsonObject["Policy_WorkersCompensationAndEmployersLiability_PolicyNumberIdentifier"] = wcpolicy.PolicyNumber;
+
+                if (wcpolicy.EffectiveDate != null)
+                    jsonObject["Policy_WorkersCompensationAndEmployersLiability_EffectiveDate"] = wcpolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (wcpolicy.ExpirationDate != null)
+                    jsonObject["Policy_WorkersCompensationAndEmployersLiability_ExpirationDate"] = wcpolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (wcpolicy.WorkCompCoverage?.EachAccident != null)
+                    jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_EachAccidentLimitAmount"] = wcpolicy.WorkCompCoverage.EachAccident.Value.ToString("N0");
+
+                if (wcpolicy.WorkCompCoverage?.DiseaseEachEmployee != null)
+                    jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_DiseaseEachEmployeeLimitAmount"] = wcpolicy.WorkCompCoverage.DiseaseEachEmployee.Value.ToString("N0");
+
+                if (wcpolicy.WorkCompCoverage?.DiseasePolicyLimit != null)
+                    jsonObject["WorkersCompensationEmployersLiability_EmployersLiability_DiseasePolicyLimitAmount"] = wcpolicy.WorkCompCoverage.DiseasePolicyLimit.Value.ToString("N0");
+
+
+                //Add filename to certificate for when/if we export/combine PDFs
+                if (wcpolicy.WorkCompCoverage.WaiverOfSubAttachment != null)
+                {
+                    certificate.AttachWCWOSfilename = wcpolicy.WorkCompCoverage.WaiverOfSubAttachment.FileName;
+                }
+            }
+
+
+            //Property
+            var propertypolicy = selectedpolicies.Where(p => p.ProductId == 14).FirstOrDefault();
+            if (propertypolicy is not null)
+            {
+
+                //Set Carrier Assignments
+                jsonObject["OtherPolicy_InsurerLetterCode"] = letterArray[currentposition-1];;
+                jsonObject["OtherPolicy_OtherPolicyDescription"] = "PROPERTY";
+
+                if (!string.IsNullOrEmpty(propertypolicy.Carrier.CarrierName))
+                {
+                    if (currentposition == 1)
+                    {
+                        jsonObject["Insurer_FullName"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 2)
+                    {
+                        jsonObject["Insurer_FullName_B[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 3)
+                    {
+                        jsonObject["Insurer_FullName_C[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 4)
+                    {
+                        jsonObject["Insurer_FullName_D[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                    else if (currentposition == 5)
+                    {
+                        jsonObject["Insurer_FullName_E[0]"] = propertypolicy.Carrier.CarrierName;
+                    }
+                }
+                currentposition++;
+
+
+                if (!string.IsNullOrEmpty(propertypolicy.PolicyNumber))
+                    jsonObject["OtherPolicy_PolicyNumberIdentifier"] = propertypolicy.PolicyNumber;
+
+                if (propertypolicy.EffectiveDate != null)
+                    jsonObject["OtherPolicy_PolicyEffectiveDate"] = propertypolicy.EffectiveDate.ToString("MM/dd/yyyy");
+
+                if (propertypolicy.ExpirationDate != null)
+                    jsonObject["OtherPolicy_PolicyExpirationDate"] = propertypolicy.ExpirationDate.ToString("MM/dd/yyyy");
+
+                if (propertypolicy.PropertyCoverage?.Equipment != null)
+                {
+                    jsonObject["OtherPolicy_CoverageCode_B[0]"] = "Equipment";
+                    jsonObject["OtherPolicy_CoverageLimitAmount_B[0]"] = propertypolicy.PropertyCoverage.Equipment.Value.ToString("N0");
+                }
+
+                if (propertypolicy.PropertyCoverage?.BusinessPersonalProperty != null)
+                {
+                    jsonObject["OtherPolicy_CoverageCode_B[0]"] = "BUS. PER. PROP.";
+                    jsonObject["OtherPolicy_CoverageLimitAmount_B[0]"] = propertypolicy.PropertyCoverage.BusinessPersonalProperty.Value.ToString("N0");
+                }
+            }
+
+
+            
+        }
+
+        string updatedJsonContent = jsonObject.ToString();
+        var jsonBytes = System.Text.Encoding.UTF8.GetBytes(updatedJsonContent);
+        stream = new MemoryStream(jsonBytes);
+
+        await pdfViewer.ImportFormFieldsAsync(stream, FormFieldDataFormat.Json);
+    }
+}

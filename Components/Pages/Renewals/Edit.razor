@@ -1,5 +1,4 @@
 ﻿@page "/Renewals/Edit/{RenewalId:int}"
-
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Shared
@@ -17,10 +16,15 @@
 @inject SharedService SharedService
 @inject CarrierService CarrierService
 @inject UserService UserService
-
 @rendermode InteractiveServer
 
 <PageTitle>Edit Renewal</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="Edit" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar />
 
@@ -134,13 +138,6 @@
         {
             Renewal.AssignedToId = Renewal.AssignedTo.Id;
         }
-
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
-            new BreadcrumbItem { Text = "Edit" }
-        });
 
     }
 

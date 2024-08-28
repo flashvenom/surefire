@@ -8,10 +8,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Domain\Attachments\**" />
     <Compile Remove="Domain\Carriers\ViewModels\**" />
+    <Compile Remove="Domain\Shared\Services\Layout\**" />
+    <Compile Remove="Domain\Shared\ViewModels\**" />
+    <Content Remove="Domain\Attachments\**" />
     <Content Remove="Domain\Carriers\ViewModels\**" />
+    <Content Remove="Domain\Shared\Services\Layout\**" />
+    <Content Remove="Domain\Shared\ViewModels\**" />
+    <EmbeddedResource Remove="Domain\Attachments\**" />
     <EmbeddedResource Remove="Domain\Carriers\ViewModels\**" />
+    <EmbeddedResource Remove="Domain\Shared\Services\Layout\**" />
+    <EmbeddedResource Remove="Domain\Shared\ViewModels\**" />
+    <None Remove="Domain\Attachments\**" />
     <None Remove="Domain\Carriers\ViewModels\**" />
+    <None Remove="Domain\Shared\Services\Layout\**" />
+    <None Remove="Domain\Shared\ViewModels\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +43,7 @@
     <None Remove="Components\Pages\Clients\Businesses - Copy.razor.css" />
     <None Remove="Components\Pages\Clients\Businesses.razor.css" />
     <None Remove="Components\Pages\Clients\IndexOld.razor.css" />
+    <None Remove="Components\Pages\Home - Copy.razor.css" />
     <None Remove="Components\Pages\Home.razor.css" />
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
     <None Remove="Components\Pages\Renewals\Home - Copy.razor.css" />
@@ -50,6 +63,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
@@ -63,15 +77,18 @@
     <PackageReference Include="Syncfusion.Blazor.Calendars" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Grid" Version="26.2.9" />
+    <PackageReference Include="Syncfusion.Blazor.InPlaceEditor" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.RichTextEditor" Version="26.2.9" />
+    <PackageReference Include="Syncfusion.Blazor.SfPdfViewer" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Spinner" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.SplitButtons" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Themes" Version="26.2.9" />
+    <PackageReference Include="Syncfusion.Pdf.Net.Core" Version="26.2.9" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Shared\ViewModels\" />
+    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
 </Project>

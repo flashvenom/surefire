@@ -1,0 +1,115 @@
+﻿@namespace Mantis.Components.Pages.Forms
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@using Mantis.Domain.Shared
+@inject NavigationService NavigationService
+@inject NavigationManager NavigationManager
+
+<div class="page-toolbar">
+    <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Certificate</SfButton>
+    
+    <span class="sf-verthr"></span>
+
+    <NavLink class="toolbar-link" href="@($"/Clients/List/{ClientId}")">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Client</span>
+    </NavLink>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" @onclick="DownloadJSON">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ArrowDownload())" />
+        <span class="toolbar-text">Download JSON</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="UploadJSON">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ArrowUpload())" />
+        <span class="toolbar-text">Upload JSON</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(true, true, true, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Everything</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(true, false, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Client</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(false, true, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Policies</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(false, false, true, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Holder</span>
+    </a>
+
+    <a class="toolbar-link" @onclick="() => LoadEverything(false, false, false, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DrawerArrowDownload())" />
+        <span class="toolbar-text">Description</span>
+    </a>
+
+   
+</div>
+
+@code {
+    [Parameter]
+    public int ClientId { get; set; }
+
+    [Parameter]
+    public EventCallback OnDownloadJSON { get; set; }
+
+    [Parameter]
+    public EventCallback OnUploadJSON { get; set; }
+
+    [Parameter]
+    public EventCallback<(bool? loadClient, bool? loadPolicies, bool? loadHolder, bool? loadDescription)> OnLoadEverything { get; set; }
+
+    private void NavigateToRenewalCreate()
+    {
+        NavigationManager.NavigateTo("/Clients/Create");
+    }
+
+    private async Task DownloadJSON()
+    {
+        if (OnDownloadJSON.HasDelegate)
+        {
+            await OnDownloadJSON.InvokeAsync();
+        }
+    }
+
+    private async Task UploadJSON()
+    {
+        if (OnUploadJSON.HasDelegate)
+        {
+            await OnUploadJSON.InvokeAsync();
+        }
+    }
+
+    private async Task LoadEverything2()
+    {
+        if (OnLoadEverything.HasDelegate)
+        {
+            await OnLoadEverything.InvokeAsync();
+        }
+    }
+
+    private async Task TriggerLoadEverything()
+    {
+        await OnLoadEverything.InvokeAsync((true, true, true, true)); // You can customize the parameters here
+    }
+
+    private async Task LoadEverything(bool loadClient, bool loadPolicies, bool loadHolder, bool loadDescription)
+    {
+        if (OnLoadEverything.HasDelegate)
+        {
+            await OnLoadEverything.InvokeAsync((loadClient, loadPolicies, loadHolder, loadDescription));
+        }
+    }
+}

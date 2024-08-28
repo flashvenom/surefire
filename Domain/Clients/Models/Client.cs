@@ -1,8 +1,9 @@
 using Mantis.Data;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Contacts.Models;
+using Mantis.Domain.Forms.Models;
 using Mantis.Domain.Shared;
-using System.Text.Json.Serialization;
+using Mantis.Domain.Shared.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Mantis.Domain.Clients.Models
@@ -26,6 +27,7 @@ namespace Mantis.Domain.Clients.Models
         public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
         public ICollection<Location> Locations { get; set; } = new List<Location>();
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
+        public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
         public Address Address { get; set; }
         public Contact PrimaryContact { get; set; }

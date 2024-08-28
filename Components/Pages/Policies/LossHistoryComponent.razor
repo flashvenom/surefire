@@ -1,0 +1,48 @@
+﻿@* @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+<div>
+    @foreach (var loss in Losses)
+    {
+        <div>
+            <SfInPlaceEditor Mode="Inline" Value="@loss.ShortDescription" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateLossField(args, loss.LossId, "ShortDescription"))">
+                <InPlaceEditorTextBox Value="@loss.ShortDescription"></InPlaceEditorTextBox>
+            </SfInPlaceEditor>
+            <SfInPlaceEditor Mode="Inline" Value="@loss.AmountPaid" ActionOnBlur="Submit" OnActionBegin="@(args => UpdateLossField(args, loss.LossId, "AmountPaid"))">
+                <InPlaceEditorNumericTextBox Value="@loss.AmountPaid"></InPlaceEditorNumericTextBox>
+            </SfInPlaceEditor>
+            <!-- Add more fields as necessary -->
+            <button @onclick="() => DeleteLoss(loss.LossId)">Delete</button>
+        </div>
+    }
+
+    <button @onclick="AddLoss">Add New Loss</button>
+</div>
+
+@code {
+    [Parameter]
+    public ICollection<Loss> Losses { get; set; }
+
+    private async Task UpdateLossField(InPlaceEditorActionBeginEventArgs args, int lossId, string fieldName)
+    {
+        await PolicyService.UpdateLossesFieldAsync(lossId, fieldName, args.Value);
+    }
+
+    private async Task AddLoss()
+    {
+        // Logic to add a new Loss
+        var newLoss = await PolicyService.CreateLossesAsync(new Loss { PolicyId = ... });
+        Losses.Add(newLoss);
+    }
+
+    private async Task DeleteLoss(int lossId)
+    {
+        await PolicyService.DeleteLossesAsync(lossId);
+        Losses.Remove(Losses.First(l => l.LossId == lossId));
+    }
+}
+ *@

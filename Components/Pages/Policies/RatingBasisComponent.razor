@@ -1,0 +1,113 @@
+﻿@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+
+<span class="pol-section-title">Rating Basis</span><br />
+<table class="rating-basis-table">
+    <thead>
+        <tr class="pol-rate-title">
+            <th>Class Code</th>
+            <th>Description</th>
+            @if(Policy.Product.ProductId != 2){ <th>Basis</th> }
+            <th>@strExposure</th>
+            <th>Base Rate</th>
+            <th></th>
+            <!-- Add more fields as necessary -->
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in RatingBases)
+        {
+            <tr>
+                <td class="pr-td">
+                <SfInPlaceEditor @bind-Value="@item.ClassCode" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="(Empty)">
+                    <EditorComponent>
+                            <SfTextBox @bind-Value="@item.ClassCode"></SfTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(item))" TValue="string"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+                </td>
+                <td class="pr-td">
+                    <SfInPlaceEditor @bind-Value="@item.ClassDescription" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="(Empty)">
+                    <EditorComponent>
+                            <SfTextBox @bind-Value="@item.ClassDescription"></SfTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(item))" TValue="string"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+                </td>
+                @if(Policy.Product.ProductId != 2){
+                    <td class="pr-td">
+                        <SfInPlaceEditor @bind-Value="@item.Basis" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="(Empty)">
+                        <EditorComponent>
+                                <SfTextBox @bind-Value="@item.Basis"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(item))" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </td>
+                }
+                <td class="pr-td">
+                    <SfInPlaceEditor @bind-Value="@item.Exposure" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="(Empty)">
+                    <EditorComponent>
+                            <SfTextBox @bind-Value="@item.Exposure"></SfTextBox>
+                    </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(item))" TValue="string"></InPlaceEditorEvents>
+                </SfInPlaceEditor>
+                </td>
+                <td class="pr-td">
+                    <SfInPlaceEditor @bind-Value="@item.BaseRate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="(Empty)">
+                        <EditorComponent>
+                            <SfNumericTextBox @bind-Value="@item.BaseRate"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(item))" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </td>
+                <td>
+                    <button @onclick="() => DeleteRatingBasis(item)">Save</button>
+                    <button @onclick="() => DeleteRatingBasis(item)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<button @onclick="AddRatingBasis">Add New Rating Basis</button>
+
+
+@code {
+    [Parameter]
+    public Policy Policy { get; set; }
+
+    [Parameter]
+    public ICollection<RatingBasis> RatingBases { get; set; }
+
+    public string strExposure;
+
+    protected override async Task OnInitializedAsync()
+    {
+        strExposure = (Policy.Product?.ProductId == 2) ? "Payroll" : "Exposure";
+    }
+
+    private async Task UpdateCoverageNow(RatingBasis ratingBasis)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+    private async Task DeleteRatingBasis(RatingBasis ratingBasis)
+    {
+        await PolicyService.DeleteRatingBasisAsync(ratingBasis.RatingBasisId);
+        RatingBases.Remove(ratingBasis);
+    }
+
+    private async Task AddRatingBasis()
+    {
+        var newRatingBasis = await PolicyService.AddBlankRatingBasisAsync(Policy.PolicyId);
+        RatingBases.Add(newRatingBasis);
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,58 @@
+﻿@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+@rendermode InteractiveServer
+
+@if (Policy is not null || PropertyCoverage is not null)
+{
+<FluentGrid>
+    <FluentGridItem xs="3">
+        <span class="pol-section-title">property coverage</span><br />
+        <span class="pol-name">Business Property</span>
+        <span class="pol-value">
+            <SfInPlaceEditor @bind-Value="@PropertyCoverage.BusinessPersonalProperty" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                        <SfNumericTextBox Format="c0" @bind-Value="@PropertyCoverage.BusinessPersonalProperty"></SfNumericTextBox>
+                </EditorComponent>
+                    <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(PropertyCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+        <span class="pol-name">Equipment</span>
+        <span class="pol-value">
+            <SfInPlaceEditor @bind-Value="@PropertyCoverage.Equipment" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="No Coverage">
+                <EditorComponent>
+                    <SfNumericTextBox Format="c0" @bind-Value="@PropertyCoverage.Equipment"></SfNumericTextBox>
+                </EditorComponent>
+                <InPlaceEditorEvents OnActionBegin="@(args => UpdateCoverageNow(PropertyCoverage))" TValue="int?"></InPlaceEditorEvents>
+            </SfInPlaceEditor>
+        </span><br />
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+            
+    </FluentGridItem>
+    <FluentGridItem xs="3">
+    </FluentGridItem>
+</FluentGrid>
+
+}
+@code {
+    [Parameter]
+    public Policy Policy { get; set; }
+
+    [Parameter]
+    public PropertyCoverage PropertyCoverage { get; set; }
+
+    private async Task UpdateCoverageNow(PropertyCoverage propertyCoverage)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+    private async Task UpdateCoverageBool(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args)
+    {
+        // Optionally, you can use 'args.Value' here if needed.
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+}

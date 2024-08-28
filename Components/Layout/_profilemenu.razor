@@ -1,0 +1,56 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Routing
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Shared.Models
+@using Mantis.Domain.Shared.Services
+@using Mantis.Data
+@using System.Security.Claims;
+@inject SearchService SearchService
+@inject NavigationManager NavigationManager
+@inject SharedService SharedService
+@inject SignInManager<ApplicationUser> SignInManager
+
+
+@rendermode InteractiveServer
+
+
+<FluentStack HorizontalAlignment="@HorizontalAlignment.End" VerticalAlignment="@VerticalAlignment.Center" Style="height: 48px; position:relative; left:-20px;">
+        <FluentProfileMenu Image="@("/img/staff/" + AppUser.PictureUrl)"
+            Status="@PresenceStatus.Available"
+            HeaderLabel="Metro Insurance Services"
+            FullName="@(AppUser.FirstName + " " + AppUser.LastName)"
+            Initials="@(AppUser.FirstName[0].ToString().ToUpper() + " " + AppUser.LastName[0].ToString().ToUpper())"
+            EMail="@AppUser.Email"
+            PopoverStyle="min-width: 430px; padding-right:25px; position:relative; top:10px;"
+            OnFooterLinkClick="ManageAccount"
+            OnHeaderButtonClick="LogMeOut" />
+</FluentStack>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; }
+
+    private ApplicationUser AppUser { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AppUser = SharedService.GetApplicationUserById(UserId);
+        if (AppUser == null)
+        {
+            // Handle the scenario where AppUser is null, potentially by redirecting to a login page
+            NavigationManager.NavigateTo("/Account/Login");
+        }
+    }
+
+    public async Task LogMeOut()
+    {
+        NavigationManager.NavigateTo("/Account/Logout", true); // force navigation to reload the page
+    }
+    public async Task ManageAccount()
+    {
+        NavigationManager.NavigateTo("/Account/Manage", true); // force navigation to reload the page
+    }
+}

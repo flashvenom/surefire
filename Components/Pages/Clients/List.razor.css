@@ -1,4 +1,8 @@
-﻿h3 {
+﻿.clientlist-tabcontainer {
+    /*background-color:#fcfcfc;*/
+    background-color:#fff;
+}
+h3 {
     font-family: "montserrat", sans-serif;
     font-weight: 600;
     font-style: normal;
@@ -111,17 +115,21 @@ h4 {
         text-align: left;
     }
 
-.sf-pp {
+/*.sf-pp {
     width: 130px;
     overflow: hidden;
-}
+}*/
 
-.sf-da {
+/*.sf-da {
     width: 50px;
+}*/
+.txt-cursive-sm {
+    position: relative;
+    top: -6px;
 }
-
 .sf-toppad {
     margin-top: 25px;
+    margin-bottom: 12px !important;
 }
 
 .past-policy-header {
@@ -203,10 +211,15 @@ h4 {
     background-color: #fff;
     /*border: 1px solid #ccc;*/
 }
-
+.contactcard {
+    margin-left: 10px;
+    font-size: 1rem;
+}
 .sf-col {
 }
-
+.tabcontents {
+    padding: 10px 20px;
+}
 .sf-col-1 {
     flex: 1;
     padding: 10px 20px 0px 15px;
@@ -216,6 +229,7 @@ h4 {
     font-family: "montserrat", sans-serif;
     flex: 1;
     padding: 10px 10px 0px 20px;
+    margin-left:20px;
 }
 
 .sf-col-3 {
@@ -229,6 +243,7 @@ h4 {
 .sf-selected {
     width: 100%;
     box-shadow: 0px 0px 6px #0000002b;
+    position: relative;
 }
 
 .sf-header {
@@ -286,3 +301,20 @@ h4 {
     .column p, .column ul {
         margin-bottom: 10px;
     }
+
+.phone-icon{
+    position:relative;
+    top:2px;
+    color:#8d8d8d;
+}
+
+.email-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+}
+.map-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+}

@@ -144,6 +144,9 @@ namespace Mantis.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("LossRunsEmail")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("NewSubmissionEmail")
                         .HasColumnType("nvarchar(max)");
 
@@ -257,41 +260,6 @@ namespace Mantis.Migrations
                     b.ToTable("Clients");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Clients.Models.Location", b =>
-                {
-                    b.Property<int>("LocationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LocationId"));
-
-                    b.Property<int>("AddressId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("BuildingName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SquareFootage")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("YearBuilt")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("LocationId");
-
-                    b.HasIndex("AddressId");
-
-                    b.HasIndex("ClientId");
-
-                    b.ToTable("Locations");
-                });
-
             modelBuilder.Entity("Mantis.Domain.Contacts.Models.Contact", b =>
                 {
                     b.Property<int>("ContactId")
@@ -372,6 +340,76 @@ namespace Mantis.Migrations
                     b.ToTable("Contacts");
                 });
 
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.Certificate", b =>
+                {
+                    b.Property<int>("CertificateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CertificateId"));
+
+                    b.Property<bool?>("AttachGLAI")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AttachGLAIfilename")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("AttachGLWOS")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AttachGLWOSfilename")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("AttachPNC")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("AttachWCWOS")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AttachWCWOSfilename")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("BlockAttachments")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HolderName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JSONData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JSONDataTemp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProjectName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("CertificateId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.ToTable("Certificates");
+                });
+
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Application", b =>
                 {
                     b.Property<int>("ApplicationId")
@@ -386,6 +424,104 @@ namespace Mantis.Migrations
                     b.HasKey("ApplicationId");
 
                     b.ToTable("Application");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.AutoCoverage", b =>
+                {
+                    b.Property<int>("AutoCoverageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AutoCoverageId"));
+
+                    b.Property<bool?>("AdditionalAttachments")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("AdditionalAttachmentsAttachmentAttachmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AdditionalCoverageLimit")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdditionalCoverageName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("AdditionalInsured")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("AdditionalInsuredAttachmentAttachmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BodilyInjuryPerAccident")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BodilyInjuryPerPerson")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CombinedLimit")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("ForAny")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("ForHired")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("ForNonOwned")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("ForOwned")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("ForScheduled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PropertyDamage")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("WaiverOfSub")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("WaiverOfSubAttachmentAttachmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AutoCoverageId");
+
+                    b.HasIndex("AdditionalAttachmentsAttachmentAttachmentId");
+
+                    b.HasIndex("AdditionalInsuredAttachmentAttachmentId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.HasIndex("PolicyId")
+                        .IsUnique()
+                        .HasFilter("[PolicyId] IS NOT NULL");
+
+                    b.HasIndex("WaiverOfSubAttachmentAttachmentId");
+
+                    b.ToTable("AutoCoverages");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Claim", b =>
@@ -414,6 +550,160 @@ namespace Mantis.Migrations
                     b.HasIndex("PolicyId");
 
                     b.ToTable("Claims");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.GeneralLiabilityCoverage", b =>
+                {
+                    b.Property<int>("GeneralLiabilityCoverageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GeneralLiabilityCoverageId"));
+
+                    b.Property<bool?>("AdditionalAttachments")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("AdditionalAttachmentsAttachmentAttachmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AdditionalCoverageLimit")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdditionalCoverageName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("AdditionalInsured")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("AdditionalInsuredAttachmentAttachmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdditionalInsuredFormNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("AggregateAppliesPer")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("ClaimsMade")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("DamageToPremises")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EachOccurrence")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("GeneralAggregate")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MedicalExpenses")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool?>("Occurence")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("PersonalInjury")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Premium")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool?>("PrimaryWording")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ProductsAggregate")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("WaiverOfSub")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("WaiverOfSubAttachmentAttachmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("GeneralLiabilityCoverageId");
+
+                    b.HasIndex("AdditionalAttachmentsAttachmentAttachmentId");
+
+                    b.HasIndex("AdditionalInsuredAttachmentAttachmentId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.HasIndex("PolicyId")
+                        .IsUnique()
+                        .HasFilter("[PolicyId] IS NOT NULL");
+
+                    b.HasIndex("WaiverOfSubAttachmentAttachmentId");
+
+                    b.ToTable("GeneralLiabilityCoverages");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.Loss", b =>
+                {
+                    b.Property<int>("LossId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LossId"));
+
+                    b.Property<decimal?>("AmountPaid")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AmountReserved")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("DateClaimSubmitted")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateOccurred")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LongDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("Open")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShortDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("Subgrogated")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserModifiedId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LossId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("UserModifiedId");
+
+                    b.ToTable("Losses");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Policy", b =>
@@ -506,6 +796,251 @@ namespace Mantis.Migrations
                     b.ToTable("Policies");
                 });
 
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.PropertyCoverage", b =>
+                {
+                    b.Property<int>("PropertyCoverageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PropertyCoverageId"));
+
+                    b.Property<int?>("BusinessPersonalProperty")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Equipment")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PropertyCoverageId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.HasIndex("PolicyId")
+                        .IsUnique()
+                        .HasFilter("[PolicyId] IS NOT NULL");
+
+                    b.ToTable("PropertyCoverage");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.RatingBasis", b =>
+                {
+                    b.Property<int>("RatingBasisId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RatingBasisId"));
+
+                    b.Property<decimal?>("BaseRate")
+                        .HasColumnType("decimal(7,4)");
+
+                    b.Property<string>("Basis")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClassCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClassDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Exposure")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("NetRate")
+                        .HasColumnType("decimal(7,4)");
+
+                    b.Property<decimal?>("Payroll")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Premium")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserModifiedId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("RatingBasisId");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserModifiedId");
+
+                    b.ToTable("RatingBases");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.UmbrellaCoverage", b =>
+                {
+                    b.Property<int>("UmbrellaCoverageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UmbrellaCoverageId"));
+
+                    b.Property<bool?>("ClaimsMade")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeductibleRetentionAmount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EachOccurrence")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("GeneralAggregate")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("HasDeductible")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("HasRetention")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsExcess")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsUmbrella")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool?>("Occurrence")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UmbrellaCoverageId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.HasIndex("PolicyId")
+                        .IsUnique()
+                        .HasFilter("[PolicyId] IS NOT NULL");
+
+                    b.ToTable("UmbrellaCoverage");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.WorkCompCoverage", b =>
+                {
+                    b.Property<int>("WorkCompCoverageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkCompCoverageId"));
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DiseaseEachEmployee")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DiseasePolicyLimit")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EachAccident")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool?>("OwnersOfficersExcluded")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("PerOther")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("PerStatute")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("WaiverOfSub")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("WaiverOfSubAttachmentAttachmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("WorkCompCoverageId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.HasIndex("PolicyId")
+                        .IsUnique()
+                        .HasFilter("[PolicyId] IS NOT NULL");
+
+                    b.HasIndex("WaiverOfSubAttachmentAttachmentId");
+
+                    b.ToTable("WorkCompCoverages");
+                });
+
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.Renewal", b =>
                 {
                     b.Property<int>("RenewalId")
@@ -537,7 +1072,6 @@ namespace Mantis.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Notes")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PolicyId")
@@ -752,53 +1286,38 @@ namespace Mantis.Migrations
                     b.ToTable("Address");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Shared.Attachment", b =>
+            modelBuilder.Entity("Mantis.Domain.Shared.DailyTask", b =>
                 {
-                    b.Property<int>("AttachmentId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttachmentId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ClaimId")
-                        .HasColumnType("int");
+                    b.Property<string>("AssignedToId")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
+                    b.Property<bool>("Completed")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("ContentType")
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Highlighted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TaskName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<byte[]>("FileData")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                    b.HasKey("Id");
 
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.HasIndex("AssignedToId");
 
-                    b.Property<int?>("PolicyId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("RenewalId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StoreType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AttachmentId");
-
-                    b.HasIndex("ClaimId");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("PolicyId");
-
-                    b.HasIndex("RenewalId");
-
-                    b.ToTable("Attachments");
+                    b.ToTable("DailyTasks");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Driver", b =>
@@ -838,6 +1357,114 @@ namespace Mantis.Migrations
                     b.HasIndex("PolicyId");
 
                     b.ToTable("Drivers");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Shared.Location", b =>
+                {
+                    b.Property<int>("LocationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LocationId"));
+
+                    b.Property<int>("AddressId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BuildingName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("BuildingTotalSquareFootage")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("GrossSales")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("NumFullTimeEmployees")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NumPartTimeEmployees")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NumStories")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OccupiedSquareFootage")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("Owner")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SquareFootage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("Tenant")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("YearBuilt")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("LocationId");
+
+                    b.HasIndex("AddressId");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("Locations");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Shared.Models.Attachment", b =>
+                {
+                    b.Property<int>("AttachmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttachmentId"));
+
+                    b.Property<int?>("ClaimId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("FileData")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RenewalId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StoreType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("AttachmentId");
+
+                    b.HasIndex("ClaimId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("PolicyId");
+
+                    b.HasIndex("RenewalId");
+
+                    b.ToTable("Attachments");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Product", b =>
@@ -1108,21 +1735,6 @@ namespace Mantis.Migrations
                     b.Navigation("Producer");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Clients.Models.Location", b =>
-                {
-                    b.HasOne("Mantis.Domain.Shared.Address", "Address")
-                        .WithMany()
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Mantis.Domain.Clients.Models.Client", null)
-                        .WithMany("Locations")
-                        .HasForeignKey("ClientId");
-
-                    b.Navigation("Address");
-                });
-
             modelBuilder.Entity("Mantis.Domain.Contacts.Models.Contact", b =>
                 {
                     b.HasOne("Mantis.Domain.Shared.Address", "Address")
@@ -1146,11 +1758,151 @@ namespace Mantis.Migrations
                     b.Navigation("Client");
                 });
 
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.Certificate", b =>
+                {
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                        .WithMany("Certificates")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ModifiedBy");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.AutoCoverage", b =>
+                {
+                    b.HasOne("Mantis.Domain.Shared.Models.Attachment", "AdditionalAttachmentsAttachment")
+                        .WithMany()
+                        .HasForeignKey("AdditionalAttachmentsAttachmentAttachmentId");
+
+                    b.HasOne("Mantis.Domain.Shared.Models.Attachment", "AdditionalInsuredAttachment")
+                        .WithMany()
+                        .HasForeignKey("AdditionalInsuredAttachmentAttachmentId");
+
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithOne("AutoCoverage")
+                        .HasForeignKey("Mantis.Domain.Policies.Models.AutoCoverage", "PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Shared.Models.Attachment", "WaiverOfSubAttachment")
+                        .WithMany()
+                        .HasForeignKey("WaiverOfSubAttachmentAttachmentId");
+
+                    b.Navigation("AdditionalAttachmentsAttachment");
+
+                    b.Navigation("AdditionalInsuredAttachment");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ModifiedBy");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("WaiverOfSubAttachment");
+                });
+
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Claim", b =>
                 {
                     b.HasOne("Mantis.Domain.Policies.Models.Policy", null)
                         .WithMany("Claims")
                         .HasForeignKey("PolicyId");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.GeneralLiabilityCoverage", b =>
+                {
+                    b.HasOne("Mantis.Domain.Shared.Models.Attachment", "AdditionalAttachmentsAttachment")
+                        .WithMany()
+                        .HasForeignKey("AdditionalAttachmentsAttachmentAttachmentId");
+
+                    b.HasOne("Mantis.Domain.Shared.Models.Attachment", "AdditionalInsuredAttachment")
+                        .WithMany()
+                        .HasForeignKey("AdditionalInsuredAttachmentAttachmentId");
+
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithOne("GeneralLiabilityCoverage")
+                        .HasForeignKey("Mantis.Domain.Policies.Models.GeneralLiabilityCoverage", "PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Shared.Models.Attachment", "WaiverOfSubAttachment")
+                        .WithMany()
+                        .HasForeignKey("WaiverOfSubAttachmentAttachmentId");
+
+                    b.Navigation("AdditionalAttachmentsAttachment");
+
+                    b.Navigation("AdditionalInsuredAttachment");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ModifiedBy");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("WaiverOfSubAttachment");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.Loss", b =>
+                {
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithMany("Losses")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "UserModified")
+                        .WithMany()
+                        .HasForeignKey("UserModifiedId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("UserModified");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Policy", b =>
@@ -1210,6 +1962,136 @@ namespace Mantis.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Wholesaler");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.PropertyCoverage", b =>
+                {
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithOne("PropertyCoverage")
+                        .HasForeignKey("Mantis.Domain.Policies.Models.PropertyCoverage", "PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ModifiedBy");
+
+                    b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.RatingBasis", b =>
+                {
+                    b.HasOne("Mantis.Domain.Shared.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithMany("RatingBases")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Shared.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "UserModified")
+                        .WithMany()
+                        .HasForeignKey("UserModifiedId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Location");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("UserModified");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.UmbrellaCoverage", b =>
+                {
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithOne("UmbrellaCoverage")
+                        .HasForeignKey("Mantis.Domain.Policies.Models.UmbrellaCoverage", "PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ModifiedBy");
+
+                    b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Policies.Models.WorkCompCoverage", b =>
+                {
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", "Policy")
+                        .WithOne("WorkCompCoverage")
+                        .HasForeignKey("Mantis.Domain.Policies.Models.WorkCompCoverage", "PolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Shared.Models.Attachment", "WaiverOfSubAttachment")
+                        .WithMany()
+                        .HasForeignKey("WaiverOfSubAttachmentAttachmentId");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ModifiedBy");
+
+                    b.Navigation("Policy");
+
+                    b.Navigation("WaiverOfSubAttachment");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.Renewal", b =>
@@ -1318,7 +2200,39 @@ namespace Mantis.Migrations
                     b.Navigation("Renewal");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Shared.Attachment", b =>
+            modelBuilder.Entity("Mantis.Domain.Shared.DailyTask", b =>
+                {
+                    b.HasOne("Mantis.Data.ApplicationUser", "AssignedTo")
+                        .WithMany()
+                        .HasForeignKey("AssignedToId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AssignedTo");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Shared.Driver", b =>
+                {
+                    b.HasOne("Mantis.Domain.Policies.Models.Policy", null)
+                        .WithMany("Drivers")
+                        .HasForeignKey("PolicyId");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Shared.Location", b =>
+                {
+                    b.HasOne("Mantis.Domain.Shared.Address", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", null)
+                        .WithMany("Locations")
+                        .HasForeignKey("ClientId");
+
+                    b.Navigation("Address");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Shared.Models.Attachment", b =>
                 {
                     b.HasOne("Mantis.Domain.Policies.Models.Claim", null)
                         .WithMany("Attachments")
@@ -1335,13 +2249,6 @@ namespace Mantis.Migrations
                     b.HasOne("Mantis.Domain.Renewals.Models.Renewal", null)
                         .WithMany("Attachments")
                         .HasForeignKey("RenewalId");
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Shared.Driver", b =>
-                {
-                    b.HasOne("Mantis.Domain.Policies.Models.Policy", null)
-                        .WithMany("Drivers")
-                        .HasForeignKey("PolicyId");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Shared.Vehicle", b =>
@@ -1411,6 +2318,8 @@ namespace Mantis.Migrations
                 {
                     b.Navigation("Attachments");
 
+                    b.Navigation("Certificates");
+
                     b.Navigation("Contacts");
 
                     b.Navigation("Locations");
@@ -1427,13 +2336,27 @@ namespace Mantis.Migrations
                 {
                     b.Navigation("Attachments");
 
+                    b.Navigation("AutoCoverage");
+
                     b.Navigation("Claims");
 
                     b.Navigation("Drivers");
 
+                    b.Navigation("GeneralLiabilityCoverage");
+
+                    b.Navigation("Losses");
+
+                    b.Navigation("PropertyCoverage");
+
+                    b.Navigation("RatingBases");
+
                     b.Navigation("Renewals");
 
+                    b.Navigation("UmbrellaCoverage");
+
                     b.Navigation("Vehicles");
+
+                    b.Navigation("WorkCompCoverage");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Renewals.Models.Renewal", b =>

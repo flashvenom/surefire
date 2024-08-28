@@ -1,5 +1,4 @@
 ﻿@page "/Policies/Edit/{PolicyId:int}"
-
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Shared.Services
@@ -15,10 +14,15 @@
 @inject NavigationManager NavigationManager
 @inject SharedService SharedService
 @inject CarrierService CarrierService
-
 @rendermode InteractiveServer
 
 <PageTitle>Edit Policy</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Policies" Url="/Policies" />
+        <BreadcrumbItem Text="Edit" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar PolicyId="@PolicyId" />
 
@@ -72,7 +76,7 @@
 
                     <div class="mb-3">
                         <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Carriers" Placeholder="Issuing Carrier" @bind-Value="Policy.CarrierId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
-                            @* <SfDataManager Url="https://localhost:7074/api/Carrier" Adaptor="Syncfusion.Blazor.Adaptors.WebApiAdaptor" /> *@
+                            @* <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Carrier" Adaptor="Syncfusion.Blazor.Adaptors.WebApiAdaptor" /> *@
                             <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
                         </SfDropDownList>
                     </div>
@@ -132,7 +136,7 @@
         try
         {
             await DbContext.SaveChangesAsync();
-            NavigationManager.NavigateTo("/policies");
+            NavigationManager.NavigateTo($"/Clients/List/{Policy?.ClientId}");
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -153,6 +157,6 @@
     }
     public void GoBack()
     {
-        NavigationManager.NavigateTo("/Policies");
+        NavigationManager.NavigateTo($"/Clients/List/{Policy?.ClientId}");
     }
 }

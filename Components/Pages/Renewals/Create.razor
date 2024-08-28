@@ -18,6 +18,13 @@
 @inject NavigationManager NavigationManager
 @inject UserService UserService
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="Create" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <_toolbar />
 
 <div class="page-content">
@@ -146,14 +153,8 @@
         products = await RenewalService.GetProductsAsync();
         clients = await RenewalService.GetClientsAsync();
         users = await UserService.GetAllUsers();
-
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
-            new BreadcrumbItem { Text = "Create" }
-        });
     }
+
     private void HandleValidationRequested(object? sender,
         ValidationRequestedEventArgs args)
     {

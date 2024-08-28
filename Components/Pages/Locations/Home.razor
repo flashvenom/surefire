@@ -8,6 +8,13 @@
 @using Syncfusion.Blazor
 @rendermode InteractiveServer
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Locations" Url="/Locations" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <div class="page-toolbar">
     <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Location</SfButton>
 </div>
@@ -15,7 +22,7 @@
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@AddressData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" TValue="Address"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Address" InsertUrl="https://localhost:7074/api/Address/Insert" UpdateUrl="https://localhost:7074/api/Address/Update" RemoveUrl="https://localhost:7074/api/Address/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Address" InsertUrl="https://mantismetro.azurewebsites.net/api/Address/Insert" UpdateUrl="https://mantismetro.azurewebsites.net/api/Address/Update" RemoveUrl="https://mantismetro.azurewebsites.net/api/Address/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
@@ -32,16 +39,6 @@
     SfGrid<Address> Grid { get; set; }
     SfDataManager DataManager { get; set; }
     public List<Address> AddressData { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        string testthis = "test";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Locations" }
-        });
-    }
 
     private void OnBeginHandler(ActionEventArgs<Address> Args)
     {

@@ -7,13 +7,19 @@
 @using Syncfusion.Blazor
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Carriers" Url="/Carriers" />
+        <BreadcrumbItem Text="Database"  />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar CarrierId="@CarrierId" />
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="Carrier"></GridEvents>
-        <SfDataManager  Url="https://localhost:7074/api/Carrier" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager  Url="https://mantismetro.azurewebsites.net/api/Carrier" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
@@ -57,17 +63,11 @@
     protected override async Task OnInitializedAsync()
     {
         statusMy = "Loading...";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Carriers" }
-        });
-        InvokeAsync(StateHasChanged);
+        //InvokeAsync(StateHasChanged);
     }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {
-        string dhjdhjd = "423432";
         StateHasChanged();
     }
 
@@ -83,7 +83,7 @@
         { 
             if(Args.Action == "Add") 
             { 
-                var t = Args.Data; //gets here - do I need to call the CRUD methods myself?
+                var t = Args.Data;
             } 
         } 
         statusMy = "Clicked...";

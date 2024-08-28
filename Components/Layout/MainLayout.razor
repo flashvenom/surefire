@@ -1,7 +1,4 @@
-﻿@using Syncfusion.Blazor
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Buttons
-@using Mantis.Domain.Shared.Services
+﻿@using Mantis.Domain.Shared.Services
 @using Mantis.Components.Layout
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
@@ -9,9 +6,7 @@
 @using System.Security.Claims;
 
 @inherits LayoutComponentBase
-@inject BreadcrumbService BreadcrumbService
 @inject UserManager<ApplicationUser> UserManager
-@inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager NavigationManager
 
 <div class="top-bar">
@@ -20,46 +15,35 @@
             <img src="/img/surefirelogo-full.png" alt="App Logo" class="app-logo" />
         </a>
     </div>
+    <_searchbar />
 
-    <div class="sf-search-bar">
-        <input type="text" placeholder="Start something..." class="sf-search-input" />
-        <span class="e-icons e-search sf-search-icon"></span>
-    </div>
-
-    <div class="right-icons" style="color:#fff;">
+    <div class="right-icons">
         @if (User.Identity.IsAuthenticated == true)
         {
-            <a class="sf-useremail" href="/Account/Manage">@User.Identity.Name</a>
+            <_profilemenu UserId="@UserId" />
         }
-        <a href="/Account/Manage" class="e-icon-btn e-icons">
-            <FluentIcon Value="@(new Icons.Regular.Size24.Person())" />
-        </a>
+        else
+        {
+            <a href="/Account/Manage" class="e-icon-btn e-icons">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Person())" />
+            </a>
+        }
     </div>
 </div>
 
-<div class="page">
+<div class="page" >
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
-        @if (!IsHomePage)
-        {
-            <div class="breadcrum">
-                <SfBreadcrumb>
-                    <BreadcrumbItems>
-                        @foreach (var item in BreadcrumbService.Items)
-                        {
-                            <BreadcrumbItem Text="@item.Text" Url="@item.Url" />
-                        }
-                    </BreadcrumbItems>
-                </SfBreadcrumb>
-            </div>
-        }
         <article>
             @Body
         </article>
+        <FluentToastProvider />
         <FluentDialogProvider />
+        <FluentTooltipProvider />
+        <FluentMessageBarProvider />
     </main>
 </div>
 
@@ -69,8 +53,12 @@
     <a class="dismiss">🗙</a>
 </div>
 
+
+
 @code {
     private ClaimsPrincipal User { get; set; }
+    public string UserId { get; set; }
+
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
 
@@ -79,5 +67,7 @@
     protected override async Task OnInitializedAsync()
     {
         User = (await authenticationStateTask).User;
+        UserId = UserManager.GetUserId(User);
     }
+
 }

@@ -1,0 +1,38 @@
+﻿@page "/Account/Logout"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using Mantis.Data
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Logout> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Logging out...</PageTitle>
+
+<div class="page-content">
+    <section style="width:300px; padding-left:40px;">
+        <h2>Logging out...</h2>
+    </section>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await SignInManager.SignOutAsync();
+            Logger.LogInformation("User logged out.");
+
+            NavigationManager.NavigateTo("/Account/Login");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error occurred during logout.");
+            // Optionally, you might want to display an error message or redirect to an error page.
+            NavigationManager.NavigateTo("/Error");
+        }
+    }
+}

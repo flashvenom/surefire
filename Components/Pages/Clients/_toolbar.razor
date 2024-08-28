@@ -4,8 +4,10 @@
 @using Syncfusion.Blazor.SplitButtons
 @using Microsoft.AspNetCore.Components.Routing
 @using Mantis.Domain.Shared
+@using Mantis.Domain.Forms.Services
 @inject NavigationService NavigationService
 @inject NavigationManager NavigationManager
+@inject FormService FormService
 
 <div class="page-toolbar">
 @*     <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Client</SfButton>
@@ -54,4 +56,22 @@
     {
         string oksss = "what";
     }
+
+    private void NewContact()
+    {
+        NavigationManager.NavigateTo($"/Contacts/Create?ParentType=Client&ParentId={ClientId}");
+    }
+
+    private void NewClient()
+    {
+        NavigationManager.NavigateTo($"/Client/Create");
+    }
+
+    private async Task NewCertificate()
+    {
+        int newcertid = await FormService.CreateCertificate(ClientId);
+        NavigationManager.NavigateTo($"/Forms/Certificate/{newcertid}");
+    }
+
+
 }

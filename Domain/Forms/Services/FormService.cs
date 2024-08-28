@@ -24,6 +24,25 @@ namespace Mantis.Domain.Forms.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<int> CreateCertificate(int clientid)
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            var newcert = new Certificate
+            {
+                ClientId = clientid,
+                HolderName = "New Certificate",
+                JSONData = "{}",
+                CreatedBy = currentUser,
+                ModifiedBy = currentUser,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow
+            };
+            _context.Certificates.Add(newcert);
+            await _context.SaveChangesAsync();
+
+            return newcert.CertificateId;
+        }
+
         public async Task<Certificate> GetCertificateByIdAsync(int certid)
         {
             var certificate = await _context.Certificates.FirstOrDefaultAsync(p => p.CertificateId == certid);

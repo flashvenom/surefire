@@ -8,12 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Domain\Attachments\**" />
     <Compile Remove="Domain\Carriers\ViewModels\**" />
     <Compile Remove="Domain\Shared\Services\Layout\**" />
+    <Content Remove="Domain\Attachments\**" />
     <Content Remove="Domain\Carriers\ViewModels\**" />
     <Content Remove="Domain\Shared\Services\Layout\**" />
+    <EmbeddedResource Remove="Domain\Attachments\**" />
     <EmbeddedResource Remove="Domain\Carriers\ViewModels\**" />
     <EmbeddedResource Remove="Domain\Shared\Services\Layout\**" />
+    <None Remove="Domain\Attachments\**" />
     <None Remove="Domain\Carriers\ViewModels\**" />
     <None Remove="Domain\Shared\Services\Layout\**" />
   </ItemGroup>
@@ -80,8 +84,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Attachments\Models\" />
-    <Folder Include="Domain\Attachments\Services\" />
     <Folder Include="Domain\Shared\ViewModels\" />
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>

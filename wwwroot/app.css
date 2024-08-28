@@ -253,7 +253,11 @@ main {
 .fsearch-container {
     position:relative;
 }
-
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow: auto;
+}
 .search-input {
     width: 100%;
     max-width: 400px;
@@ -392,6 +396,10 @@ main {
 .mf-flex {
     display:flex;
 }
+.mf-flexrow {
+    display: flex;
+    flex-direction: row;
+}
 .mf-row {
     -ms-flex-direction: row;
     -webkit-flex-direction: row;
@@ -404,6 +412,9 @@ main {
     -webkit-flex-direction: row;
     flex-direction: row;
     justify-content: flex-start;
+}
+.mf-sm {
+    flex: 0 1 auto;
 }
 .mf-item-xs {
     flex-basis: 10%
@@ -567,12 +578,63 @@ main {
 .pdf-icon {
     width:60px;
 }
-/*--------------------------Other Styles----------------------------*/
-.main-content {
-    flex-grow: 1;
-    padding: 20px;
-    overflow: auto;
+/*--------------------------Primary Text Styles----------------------------*/
+.txt-small {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .7em;
+    font-weight: bold;
+    color: #484848;
+    text-transform: uppercase;
+    text-align:left;
 }
+.txt-cursive {
+    font-family: montserrat, sans-serif;
+    font-size: .7em;
+    color: #484848;
+    font-weight: 400;
+    font-style: italic;
+}
+.txt-cursive-sm {
+    font-family: montserrat, sans-serif;
+    font-size: .6em;
+    color: #484848;
+    font-weight: 400;
+    font-style: italic;
+}
+.txt-p {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    color: #000;
+}
+.txt-p-md {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 1.5rem;
+    color: #000;
+}
+.txt-bold {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .8em;
+    font-weight: bold;
+    color: #484848;
+}
+.txt-bold-md {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 1em;
+    font-weight: bold;
+    color: #484848;
+}
+.txt-section {
+    font-family: "montserrat", sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom:7px;
+    margin-top:3px;
+}
+
+/*--------------------------Other Styles----------------------------*/
 .sf-header {
     display: flex;
     justify-content: normal;
@@ -615,6 +677,7 @@ main {
 }
 :root .e-btnhover {
     opacity:.5;
+    text-decoration:none;
 }
 :root .e-btnhover:hover {
     opacity:1;

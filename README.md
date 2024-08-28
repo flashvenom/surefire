@@ -3,20 +3,26 @@
 ## Overview
 Surefire: an insurance agency management system for independant P&C brokers designed with speed and efficiency in mind.
 
+**Video Update**
+https://youtu.be/4MuP97-Afqo
+
+**Demo Site**
+[Click here to login](https://flashvenomdesign-001-site6.atempurl.com/)
+
 ## Features
 
-- Track Clients, Contacts, Addresses and Policies. (Video: https://flashvenom.com/images/surefire/clientscreen.gif)
-![Using the client screen and UI](https://flashvenom.com/images/surefire/clientscreen.gif)
-- Designed to be intuitive and keep you moving through your day quickly 
-![Surefire's client browser](https://flashvenom.com/images/surefire/clients.jpg)
-- Includes a renewal manager for employees to stay on top of thier marketing and submissions work-flow manager. (Screencap: https://flashvenom.com/images/surefire/renewals.gif)
-![Simple renewal tracking system](https://flashvenom.com/images/surefire/renewals.gif)
+- Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
+- Simplify your renewal workflow by putting all your renewals, quotes, leads and submissions in one central place.
 - Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
-![Tasks and submissions](https://flashvenom.com/images/surefire/renewals.jpg)
-- The homepage tells you what tasks you have to complete for upcoming renewals and when they're due.
-![Surefire homepage](https://flashvenom.com/images/surefire/homepage.jpg)
-
-
+- Set goal dates and assign sub-tasks to other employees. The homepage tells you what tasks you have to complete next for upcoming renewals and when they're due.
+- Store basic policy data like limits, rates and coverages. Attach endorsements to be included in certificates.
+- Issue, store and manage certificates quickly and easily
+![Using the client screen and UI](https://flashvenom.com/surefire/surefire2.png)
+![Surefire's client browser](https://flashvenom.com/surefire/surefire3.png)
+![Simple renewal tracking system](https://flashvenom.com/surefire/surefire4.png)
+![Tasks and submissions](https://flashvenom.com/surefire/surefire5.png)
+![Surefire homepage](https://flashvenom.com/surefire/surefire6.png)
+ 
 ## Technologies Used
 
 - **ASP.NET Core 8**
@@ -24,6 +30,23 @@ Surefire: an insurance agency management system for independant P&C brokers desi
 - **Blazor**
 - **SyncFusion Components (DataGrid mostly)**
 - **Microsoft FluentUI**
+
+### Version History
+**.0.0.2 - 2021-08-28**
+- Enhanced client browsing
+- Policy coverage details screens for GL, WC and Auto
+- Certificate editor using SfPdfViewer2
+- Store endorsements as attachments and include them with certificates
+
+**.0.0.1 - 2021-08-20**
+- Initial Release
+- Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
+- Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
+- Uses Identity for user authentication and employee logins
+- Renewal Center with submission tracking
+- Master task editor to add tasks to be copied as workflow templates for renewals
+- Much more...
+
 
 ## Wishlist
 ### General
@@ -90,16 +113,6 @@ Surefire: an insurance agency management system for independant P&C brokers desi
     ```bash
     dotnet run
     ```
-
-### Version History
-**.0.0.1 - 2021-08-20**
-- Initial Release
-- Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
-- Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
-- Uses Identity for user authentication and employee logins
-- Renewal Center with submission tracking
-- Master task editor to add tasks to be copied as workflow templates for renewals
-- Much more...
 
 ### Roadmap / Wishlist
 - **Get a basic master search going using the top search bar**

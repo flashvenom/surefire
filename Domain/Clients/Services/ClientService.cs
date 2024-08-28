@@ -58,6 +58,8 @@ namespace Mantis.Domain.Clients.Services
                     .ThenInclude(p => p.Carrier)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Wholesaler)
+                .Include(c => c.Policies)
+                    .ThenInclude(p => p.Product)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
 
             return client;
@@ -149,13 +151,14 @@ namespace Mantis.Domain.Clients.Services
         }
 
         // Create a new client
-        public async Task CreateClientAsync(Client client)
+        public async Task<int> CreateClientAsync(Client client)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             client.CreatedBy = currentUser;
             client.eClientId = Guid.NewGuid().ToString();
             _context.Clients.Add(client);
             await _context.SaveChangesAsync();
+            return client.ClientId;
         }
 
         public async Task UpdateClientId(int clientId, string eClientId)

@@ -1,4 +1,4 @@
-﻿@page "/Policies/Edit/{PolicyId:int}"
+﻿@page "/Policies/Create/{ClientId:int}"
 
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Policies.Models
@@ -18,19 +18,19 @@
 
 @rendermode InteractiveServer
 
-<PageTitle>Edit Policy</PageTitle>
+<PageTitle>Create Policy</PageTitle>
 
-<_toolbar PolicyId="@PolicyId" />
+<_toolbar />
 
 <div class="page-content">
-    <div class="mh1">Edit Policy</div>
+    <div class="mh1">Create Policy</div>
     @if (Policy is null || Products is null || Carriers is null || Wholesalers is null)
     {
         <p><em>Loading...</em></p>
     }
     else
     {
-        <EditForm Model="Policy" OnValidSubmit="UpdatePolicy">
+        <EditForm Model="Policy" OnValidSubmit="CreatePolicy">
             <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="mf-flex mf-flex-row mf-row-container">
@@ -85,34 +85,22 @@
             </div>
             <br />
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
-            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Policy</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Create Policy</FluentButton>
         </EditForm>
     }
 </div>
 
 @code {
     [Parameter]
-    public int PolicyId { get; set; }
+    public int ClientId { get; set; }
 
-    private Policy? Policy { get; set; }
+    private Policy Policy { get; set; } = new Policy();
     private List<Product> Products { get; set; }
     private List<Carrier> Carriers { get; set; }
     private List<Carrier> Wholesalers { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        Policy = await DbContext.Policies
-            .Include(p => p.Carrier)
-            .Include(p => p.Wholesaler)
-            .Include(p => p.Product)
-            .FirstOrDefaultAsync(p => p.PolicyId == PolicyId);
-
-        if (Policy == null)
-        {
-            NavigationManager.NavigateTo("notfound");
-            return;
-        }
-
         Products = await SharedService.GetAllProductsAsync();
         Carriers = await CarrierService.GetAllCarriersAsync();
         Wholesalers = await CarrierService.GetAllWholesalersAsync();
@@ -121,36 +109,26 @@
         {
             new BreadcrumbItem { Text = "Home", Url = "/" },
             new BreadcrumbItem { Text = "Policies", Url = "/Policies" },
-            new BreadcrumbItem { Text = "Edit" }
+            new BreadcrumbItem { Text = "Create" }
         });
     }
 
-    private async Task UpdatePolicy()
+    private async Task CreatePolicy()
     {
-        DbContext.Attach(Policy!).State = EntityState.Modified;
+        DbContext.Policies.Add(Policy);
 
         try
         {
             await DbContext.SaveChangesAsync();
             NavigationManager.NavigateTo("/policies");
         }
-        catch (DbUpdateConcurrencyException)
+        catch (DbUpdateException)
         {
-            if (!PolicyExists(Policy!.PolicyId))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
+            // Handle any errors that may occur during the policy creation
+            throw;
         }
     }
 
-    private bool PolicyExists(int policyId)
-    {
-        return DbContext.Policies.Any(e => e.PolicyId == policyId);
-    }
     public void GoBack()
     {
         NavigationManager.NavigateTo("/Policies");

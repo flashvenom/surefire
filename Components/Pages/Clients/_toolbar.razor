@@ -48,29 +48,55 @@
     [Parameter]
     public int ClientId { get; set; }
 
-    private void NavigateToRenewalCreate()
+    [Parameter]
+    public EventCallback OnNewPolicy { get; set; }
+
+    private async Task HandleOnMenuChanged(MenuChangeEventArgs args)
     {
-        NavigationManager.NavigateTo("/Clients/Create");
-    }
-    private void HandleOnMenuChanged(MenuChangeEventArgs args)
-    {
-        string oksss = "what";
+        Console.WriteLine(args.Id);
+        Console.WriteLine("HEY ------------");
+        // Check which menu item was selected
+        switch (args.Id)
+        {
+            case "0078D4":
+                await NewClient();
+                break;
+            case "464EB8":
+                await NewContact();
+                break;
+            case "8661C5":
+                await NewCertificate();
+                break;
+            case "0066FF":
+                Console.WriteLine("GO");
+                await NewPolicy();
+            break;
+        }
     }
 
-    private void NewContact()
+    private async Task NewContact()
     {
         NavigationManager.NavigateTo($"/Contacts/Create?ParentType=Client&ParentId={ClientId}");
     }
 
-    private void NewClient()
+    private async Task NewClient()
     {
-        NavigationManager.NavigateTo($"/Client/Create");
+        NavigationManager.NavigateTo($"/Clients/Create");
     }
 
     private async Task NewCertificate()
     {
         int newcertid = await FormService.CreateCertificate(ClientId);
         NavigationManager.NavigateTo($"/Forms/Certificate/{newcertid}");
+    }
+
+    private async Task NewPolicy()
+    {
+        Console.WriteLine("Hello");
+        if (OnNewPolicy.HasDelegate)
+        {
+            await OnNewPolicy.InvokeAsync();
+        }
     }
 
 

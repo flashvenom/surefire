@@ -513,6 +513,13 @@ main {
 :root .rating-basis-table tbody tr {
     border-bottom: 1px solid #ccc !important;
 }
+.sf-da {
+    width: 50px;
+}
+.sf-pp {
+    width: 130px;
+    overflow: hidden;
+}
 .pr-td {
     border-bottom: 1px solid #ccc;
     border-left: 1px solid #ccc;

@@ -6,6 +6,7 @@
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Components
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Components.Shared
 @using Microsoft.FluentUI.AspNetCore.Components
@@ -27,7 +28,7 @@
 <div @onmouseleave="() => ExpandDetails(true)">
     @if (selectedClient != null)
     {
-        <_toolbar ClientId="selectedClient.ClientId" />
+        <_toolbar ClientId="selectedClient.ClientId" OnNewPolicy="@SetShowCreatePolicy" />
     }
 
     <div class="page-content" >
@@ -65,7 +66,7 @@
                     </div>
                 </div>
                 <div class="clientlist-tabcontainer">
-                    <FluentTabs Size="TabSize.Large">
+                    <FluentTabs @ref="tabInterface" Size="TabSize.Large">
                         <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
                             <div class="sf-col-container">
                                 <div class="sf-col sf-col-1">
@@ -76,7 +77,7 @@
                                         {
                                             <div class="@GetPolicyClass(policy.PolicyId)" @onclick="() => ToggleExpand(policy.PolicyId)">
                                                 <div class="policy-header">
-                                                    <div>@policy.eType <span style="font-size:7px;">@policy.PolicyId</span></div>
+                                                    <div>@policy.Product?.LineName <span style="font-size:7px;">@policy.PolicyId</span></div>
                                                     <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
                                                 </div>
                                                 <div class="policy-details">
@@ -114,7 +115,7 @@
                                     <h4 class="sf-toppad">Additional Contacts</h4>
                                     <ContactsListAll Contacts="@selectedClient.Contacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
                                     <h4 class="sf-toppad">Additional Info</h4>
-                                    <FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size24.Globe())" Color="Color.Neutral" /> <a href="@selectedClient.Website" target="_blank" class="txt-bold-md">@selectedClient.Website</a>
+                                    <FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size24.Globe())" Color="Color.Neutral" /> <a href="@("https://" + selectedClient.Website)" target="_blank" class="txt-bold-md">@selectedClient.Website</a>
                                 </div>@* sf-col-2 *@
 
                                 <div class="sf-col sf-col-3">
@@ -148,45 +149,18 @@
                         </FluentTab>
                         <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
                             <div class="tabcontents">
-                                <div class="txt-section">Past Policies</div>
-                                <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
-
-                                <table width="100%">
-                                    <thead>
-                                        <tr class="txt-small">
-                                            <th width="10%">Policy</th>
-                                            <th width="10%">Number</th>
-                                            <th width="10%">Carrier</th>
-                                            <th width="10%">Wholesaler</th>
-                                            <th width="10%">Effective Date</th>
-                                            <th width="10%">Expiration Date</th>
-                                            <th width="10%">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var policy in pastPolicies)
-                                        {
-                                            <tr>
-                                                <td class="sf-pp">@policy.eType</td>
-                                                <td>@policy.PolicyNumber</td>
-                                                <td>@policy.Carrier?.LookupCode</td>
-                                                <td>@policy.Wholesaler?.LookupCode</td>
-                                                <td class="sf-da">@policy.EffectiveDate.ToShortDateString()</td>
-                                                <td class="sf-da">@policy.ExpirationDate.ToShortDateString()</td>
-                                                <td><a href="/Policies/Edit/@policy.PolicyId">Edit</a> <a href="/Policies/Details/@policy.PolicyId">View</a></td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                                @if (clientPolicies != null)
-                                {
-                                    <ul>
-                                        @foreach (var policy in clientPolicies)
-                                        {
-                                            <li>@policy.PolicyNumber - @policy.eType - @policy.EffectiveDate - @policy.ExpirationDate</li>
-                                        }
-                                    </ul>
+                                @if (showCreatePolicy == true){
+                                    <CreatePolicyForClient ClientId="ClientId" OnCloseCreatePolicy="@SetHideCreatePolicy" />
                                 }
+                                else
+                                {
+                                    <CurrentPoliciesList currentPolicies="currentPolicies" />
+                                    <div style="height:25px;"></div>
+                                    <PastPoliciesList pastPolicies="pastPolicies" />
+                                    @if (clientPolicies != null) { <span>Fetched @(clientPolicies.Count) policies from external source!</span> }
+                                }
+
+                                
                             </div>
                         </FluentTab>
                         <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
@@ -202,6 +176,7 @@
                             </div>
                         </FluentTab>
                     </FluentTabs>
+                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                 </div>
             </div>
         }
@@ -285,6 +260,14 @@
     public int ClientId { get; set; } = 91;
     private HashSet<int> expandedPolicies = new HashSet<int>();
 
+    [Parameter]
+    public bool showCreatePolicy { get; set; } = false;
+
+    private int activeTabIndex = 0; // Default to the first tab
+
+
+
+    private FluentTabs tabInterface { get; set; }
     private string searchTerm = string.Empty;
     private List<Client> clients = new();
     private List<Client> filteredClients = new();
@@ -322,6 +305,37 @@
             new BreadcrumbItem { Text = "Clients" }
         });
     }
+
+    private void SetShowCreatePolicy()
+    {
+        Console.WriteLine("set tab");
+        
+        tabInterface.GoToTabAsync("tab-2");
+        showCreatePolicy = true;
+    }
+    private void SetHideCreatePolicy()
+    {
+        showCreatePolicy = false;
+    }
+    private void ShowCreatePolicy()
+    {
+        showCreatePolicy = true;
+    }
+    private void HideCreatePolicy()
+    {
+        showCreatePolicy = true;
+    }
+
+    private async void EditPolicy(int policyid)
+    {
+        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
+    }
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+
+    }
+
     public void ExpandDetails(bool? forceOpen = null)
     {
         if (forceOpen.HasValue)
@@ -332,11 +346,6 @@
         {
             dynamicClass = dynamicClass == "sf-quicklist" ? "sf-quicklist-close" : "sf-quicklist";
         }
-    }
-
-    private async void EditPolicy(int policyid)
-    {
-        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
     }
 
     private async Task CreateRenewal(int policyid)
@@ -373,7 +382,7 @@
         NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
         ExpandDetails(false);
         SortAndSeparatePolicies();
-        //Set Uri?
+        //NavigationManager.NavigateTo($"/Clients/List/{ClientId}", forceLoad: false);
     }
 
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
@@ -491,11 +500,7 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
-    {
-        debounceTimer?.Dispose();
-
-    }
+    
 
     // Policy Expansion Methods
     private void ToggleExpand(int policyId)

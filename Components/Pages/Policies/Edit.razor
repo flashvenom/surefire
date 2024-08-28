@@ -132,7 +132,7 @@
         try
         {
             await DbContext.SaveChangesAsync();
-            NavigationManager.NavigateTo("/policies");
+            NavigationManager.NavigateTo($"/Clients/List/{Policy?.ClientId}");
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -153,6 +153,6 @@
     }
     public void GoBack()
     {
-        NavigationManager.NavigateTo("/Policies");
+        NavigationManager.NavigateTo($"/Clients/List/{Policy?.ClientId}");
     }
 }

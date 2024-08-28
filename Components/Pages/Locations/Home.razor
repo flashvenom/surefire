@@ -22,7 +22,7 @@
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@AddressData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" TValue="Address"></GridEvents>
-        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Address" InsertUrl="https://mantismetro.azurewebsites.net/api/Address/Insert" UpdateUrl="https://mantismetro.azurewebsites.net/api/Address/Update" RemoveUrl="https://mantismetro.azurewebsites.net/api/Address/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="https://localhost:7074/api/Address" InsertUrl="https://localhost:7074/api/Address/Insert" UpdateUrl="https://localhost:7074/api/Address/Update" RemoveUrl="https://localhost:7074/api/Address/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>

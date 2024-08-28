@@ -8,9 +8,9 @@
 @inject PolicyService PolicyService
 @rendermode InteractiveServer
 
-@if (client is null)
+@if (client is null && client.Certificates is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>No Certificates Found...</em></p>
 }
 else
 {

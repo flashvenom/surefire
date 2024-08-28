@@ -53,7 +53,7 @@
     }
     private async Task LoadContacts()
     {
-        var response = await Http.GetAsync($"https://mantismetro.azurewebsites.net/api/Contacts/{ParentType}/{ParentId}");
+        var response = await Http.GetAsync($"https://localhost:7074/api/Contacts/{ParentType}/{ParentId}");
         if (response.IsSuccessStatusCode)
         {
             var json = await response.Content.ReadAsStringAsync();

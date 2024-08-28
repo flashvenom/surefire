@@ -149,7 +149,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        DocumentPath = "wwwroot/forms/a025-2016-03-v2.pdf";
+        DocumentPath = "wwwroot/forms/a025-2016-03-v3.pdf";
         JsonPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2.json");
         ClearPoliciesPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2-clearpolicies.json");
         client = await ClientService.GetClientByCertificateId(CertificateId);

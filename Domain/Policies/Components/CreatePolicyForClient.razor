@@ -69,7 +69,7 @@ else
 
                 <div class="mb-3">
                     <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Carriers" Placeholder="Issuing Carrier" @bind-Value="Policy.CarrierId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
-                        @* <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Carrier" Adaptor="Syncfusion.Blazor.Adaptors.WebApiAdaptor" /> *@
+                        @* <SfDataManager Url="https://localhost:7074/api/Carrier" Adaptor="Syncfusion.Blazor.Adaptors.WebApiAdaptor" /> *@
                         <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
                     </SfDropDownList>
                 </div>

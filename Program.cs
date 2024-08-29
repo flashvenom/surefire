@@ -31,7 +31,8 @@ bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedError
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddMemoryCache();
 builder.Services.AddFluentUIComponents();
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzQwNzc3NUAzMjM2MmUzMDJlMzBuMkJzRGlPajJxTEIraGFiNDZ1NThtOG9CTkxocmFvWXozNVR3TUZLUjN3PQ==");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXdceXVXRGNeWEJ2WEQ=");
+//Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzQwNzc3NUAzMjM2MmUzMDJlMzBuMkJzRGlPajJxTEIraGFiNDZ1NThtOG9CTkxocmFvWXozNVR3TUZLUjN3PQ==");
 
 //Identity and Authorization ---//
 builder.Services.AddCascadingAuthenticationState();

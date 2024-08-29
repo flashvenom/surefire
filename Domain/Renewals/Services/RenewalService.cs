@@ -256,8 +256,10 @@ namespace Mantis.Domain.Renewals.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Renewal> CreateRenewalFromPolicy(int policyid)
+        public async Task<Renewal> CreateRenewalFromPolicyOld(int policyid)
         {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
             var policy = await _context.Policies
                 .Include(p => p.Client)
                 .Include(p => p.Carrier)
@@ -320,6 +322,56 @@ namespace Mantis.Domain.Renewals.Services
                 renewal.Product = policy.Product;
             }
 
+            renewal.AssignedTo = currentUser;
+            _context.Renewals.Add(renewal);
+
+            var taskMasters = await _context.TaskMasters.ToListAsync();
+            foreach (var taskMaster in taskMasters)
+            {
+                var goalDate = taskMaster.DaysBeforeExpiration.HasValue
+                    ? renewal.RenewalDate.AddDays(-(taskMaster.DaysBeforeExpiration.Value))
+                    : (DateTime?)null;
+
+                var trackTask = new TrackTask
+                {
+                    Renewal = renewal,
+                    OrderNumber = taskMaster.OrderNumber,
+                    TaskName = taskMaster.TaskName,
+                    GoalDate = goalDate,
+                    Status = "Pending",
+                    Completed = false,
+                    Hidden = false,
+                    Notes = taskMaster.Description
+                };
+                _context.TrackTasks.Add(trackTask);
+            }
+            await _context.SaveChangesAsync();
+            return renewal;
+        }
+
+        public async Task<Renewal> CreateRenewalFromPolicy(int policyid)
+        {
+            var policy = await _context.Policies
+                .Include(p => p.Client)
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Product)
+                .FirstOrDefaultAsync(p => p.PolicyId == policyid);
+
+            if (policy == null) throw new Exception("Policy not found");
+
+            Renewal renewal = new Renewal
+            {
+                ExpiringPolicyNumber = policy.PolicyNumber,
+                Wholesaler = policy.Wholesaler,
+                Carrier = policy.Carrier,
+                Client = policy.Client,
+                ExpiringPremium = policy.Premium,
+                RenewalDate = policy.ExpirationDate,
+                Policy = policy,
+                Product = await GetProductForPolicyAsync(policy)
+            };
+
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             renewal.AssignedTo = currentUser;
 
@@ -347,6 +399,25 @@ namespace Mantis.Domain.Renewals.Services
             }
             await _context.SaveChangesAsync();
             return renewal;
+        }
+
+
+        private async Task<Product> GetProductForPolicyAsync(Policy policy)
+        {
+            if (policy.Product != null) return policy.Product;
+
+            return policy.eType.ToLower() switch
+            {
+                var e when e.Contains("professional") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 5),
+                var e when e.Contains("general") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 3),
+                var e when e.Contains("work") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 2),
+                var e when e.Contains("auto") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 4),
+                var e when e.Contains("business") || e.Contains("bop") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 6),
+                var e when e.Contains("umb") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 7),
+                var e when e.Contains("practice") || e.Contains("epli") || policy.eTypeCode.Contains("epli") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 8),
+                var e when e.Contains("med") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 9),
+                _ => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 10),
+            };
         }
 
         //Seperated Create and Editor pages

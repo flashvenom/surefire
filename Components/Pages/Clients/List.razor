@@ -342,6 +342,18 @@
         showCreatePolicy = true;
     }
 
+    // public void ExpandDetails()
+    // {
+    //     if (dynamicClass == "sf-quicklist")
+    //     {
+    //         dynamicClass = "sf-quicklist-close";
+    //     }
+    //     else
+    //     {
+    //         dynamicClass = "sf-quicklist";
+    //     }
+    // }
+
     private async void EditPolicy(int policyid)
     {
         Navigation.NavigateTo($"/Policy/Edit/{policyid}");
@@ -395,6 +407,7 @@
         }
 
         // Separate and sort policies
+
         NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
         ExpandDetails(false);
         SortAndSeparatePolicies();

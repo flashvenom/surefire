@@ -7,8 +7,14 @@
 @using Syncfusion.Blazor
 @rendermode InteractiveServer
 
-<_toolbar />
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="Master Tasks" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
+<_toolbar />
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" 
@@ -40,17 +46,6 @@
     SfDataManager DataManager { get; set; }
     string statusMy = "Loading";
     public List<TaskMaster> GridData { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        statusMy = "Loaded!";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Renewals", Url = "/Renewals" },
-            new BreadcrumbItem { Text = "Master Tasks" }
-        });
-    }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {

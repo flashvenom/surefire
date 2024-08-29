@@ -4,6 +4,7 @@ using Mantis.Data;
 using Mantis.Domain.Policies.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Mantis.Domain.Clients.Models;
 
 
 namespace Mantis.Domain.Policies.Services
@@ -19,6 +20,38 @@ namespace Mantis.Domain.Policies.Services
             _context = context;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+        }
+
+        // Create a new policy
+        public async Task<int> CreatePolicyAsync(Policy policy, int clientId)
+        {
+            var clientExists = await _context.Clients.AnyAsync(c => c.ClientId == clientId);
+            if (!clientExists)
+            {
+                throw new ArgumentException("Invalid ClientId. The specified client does not exist.");
+            }
+
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            Policy newPolicy = new Policy
+            {
+                ClientId = clientId,
+                CSR = currentUser,
+                CreatedBy = currentUser,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow,
+                ProductId = policy.ProductId,
+                PolicyNumber = policy.PolicyNumber,
+                Premium = policy.Premium,
+                Notes = policy.Notes,
+                Status = policy.Status,
+                EffectiveDate = policy.EffectiveDate,
+                ExpirationDate = policy.ExpirationDate,
+                CarrierId = policy.CarrierId,
+                WholesalerId = policy.CarrierId
+            };
+            _context.Policies.Add(newPolicy);
+            await _context.SaveChangesAsync();
+            return newPolicy.PolicyId;
         }
 
         public async Task<List<Policy>> GetAllPoliciesAsync()

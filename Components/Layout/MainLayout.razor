@@ -1,19 +1,13 @@
-﻿@using Syncfusion.Blazor
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Buttons
-@using Mantis.Domain.Shared.Services
+﻿@using Mantis.Domain.Shared.Services
 @using Mantis.Components.Layout
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Components.Routing
-@using Microsoft.FluentUI.AspNetCore.Components
 @using System.Security.Claims;
 
 @inherits LayoutComponentBase
-@inject BreadcrumbService BreadcrumbService
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
-
 
 <div class="top-bar">
     <div class="left-icons">
@@ -43,19 +37,6 @@
     </div>
 
     <main>
-        @if (!IsHomePage)
-        {
-            <div class="breadcrum">
-                <SfBreadcrumb>
-                    <BreadcrumbItems>
-                        @foreach (var item in BreadcrumbService.Items)
-                        {
-                            <BreadcrumbItem Text="@item.Text" Url="@item.Url" />
-                        }
-                    </BreadcrumbItems>
-                </SfBreadcrumb>
-            </div>
-        }
         <article>
             @Body
         </article>

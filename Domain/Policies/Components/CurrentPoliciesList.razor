@@ -1,0 +1,50 @@
+﻿@namespace Mantis.Domain.Policies.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Spinner
+@using Microsoft.AspNetCore.Components.Routing
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Shared.Helpers
+@inject NavigationManager NavigationManager
+
+@if(currentPolicies is null)
+{
+    <SfSpinner Visible="true"></SfSpinner>
+}
+else
+{
+    <div class="txt-section">Current Policies</div>
+    <table width="100%">
+        <thead>
+            <tr class="txt-small">
+                <th width="15%">Policy</th>
+                <th width="10%">Number</th>
+                <th width="10%">Carrier</th>
+                <th width="10%">Wholesaler</th>
+                <th width="10%">Effective Date</th>
+                <th width="10%">Expiration Date</th>
+                <th width="10%">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var policy in currentPolicies)
+            {
+                <tr style="font-size:1.1rem;">
+                    <td class="sf-pp">@policy.eType</td>
+                    <td>@policy.PolicyNumber</td>
+                    <td>@policy.Carrier?.LookupCode</td>
+                    <td>@policy.Wholesaler?.LookupCode</td>
+                    <td class="sf-da">@policy.EffectiveDate.ToShortDateString()</td>
+                    <td class="sf-da">@policy.ExpirationDate.ToShortDateString()</td>
+                    <td><a href="/Policies/Edit/@policy.PolicyId">Edit</a> <a href="/Policies/Details/@policy.PolicyId">View</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public List<Policy> currentPolicies { get; set; }
+}

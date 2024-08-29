@@ -1,5 +1,4 @@
 ﻿@page "/Clients"
-
 @using Mantis.Domain.Clients.Models
 @using Mantis.Components.Layout
 @using Syncfusion.Blazor.Grids
@@ -8,9 +7,15 @@
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
 @using Microsoft.FluentUI.AspNetCore.Components
-
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Clients" Url="/Clients" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar />
 
@@ -33,16 +38,6 @@
     SfGrid<Client> Grid { get; set; }
     SfDataManager DataManager { get; set; }
     public List<Client> ClientData { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        string testthis = "test";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Clients" }
-        });
-    }
 
     private void OnBeginHandler(ActionEventArgs<Client> Args)
     {

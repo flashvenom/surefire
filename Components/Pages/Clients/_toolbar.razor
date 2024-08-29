@@ -4,8 +4,10 @@
 @using Syncfusion.Blazor.SplitButtons
 @using Microsoft.AspNetCore.Components.Routing
 @using Mantis.Domain.Shared
+@using Mantis.Domain.Forms.Services
 @inject NavigationService NavigationService
 @inject NavigationManager NavigationManager
+@inject FormService FormService
 
 <div class="page-toolbar">
 @*     <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Client</SfButton>
@@ -46,12 +48,56 @@
     [Parameter]
     public int ClientId { get; set; }
 
-    private void NavigateToRenewalCreate()
+    [Parameter]
+    public EventCallback OnNewPolicy { get; set; }
+
+    private async Task HandleOnMenuChanged(MenuChangeEventArgs args)
     {
-        NavigationManager.NavigateTo("/Clients/Create");
+        Console.WriteLine(args.Id);
+        Console.WriteLine("HEY ------------");
+        // Check which menu item was selected
+        switch (args.Id)
+        {
+            case "0078D4":
+                await NewClient();
+                break;
+            case "464EB8":
+                await NewContact();
+                break;
+            case "8661C5":
+                await NewCertificate();
+                break;
+            case "0066FF":
+                Console.WriteLine("GO");
+                await NewPolicy();
+            break;
+        }
     }
-    private void HandleOnMenuChanged(MenuChangeEventArgs args)
+
+    private async Task NewContact()
     {
-        string oksss = "what";
+        NavigationManager.NavigateTo($"/Contacts/Create?ParentType=Client&ParentId={ClientId}");
     }
+
+    private async Task NewClient()
+    {
+        NavigationManager.NavigateTo($"/Clients/Create");
+    }
+
+    private async Task NewCertificate()
+    {
+        int newcertid = await FormService.CreateCertificate(ClientId);
+        NavigationManager.NavigateTo($"/Forms/Certificate/{newcertid}");
+    }
+
+    private async Task NewPolicy()
+    {
+        Console.WriteLine("Hello");
+        if (OnNewPolicy.HasDelegate)
+        {
+            await OnNewPolicy.InvokeAsync();
+        }
+    }
+
+
 }

@@ -21,9 +21,15 @@
 @inject IWebHostEnvironment Environment
 @inject IJSRuntime JS
 @inject IHttpClientFactory _http
-
 @rendermode InteractiveServer
  
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Forms" Url="/Forms/Certificates" />
+        <BreadcrumbItem Text="Certificate Editor" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <div class="page-toolbar">
     <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Certificate</SfButton>
 

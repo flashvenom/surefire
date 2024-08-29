@@ -7,8 +7,14 @@
 @using Syncfusion.Blazor.Inputs
 @inject NavigationManager NavigationManager
 @inject ContactService ContactService
-
 @rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Contacts" Url="/Contacts" />
+        <BreadcrumbItem Text="Edit" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <_toolbar />
 
@@ -99,18 +105,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Load the contact by ID
         Contact = await ContactService.GetContactByIdAsync(ContactId);
         if (Contact == null)
         {
-            // Handle case where contact is not found
             NavigationManager.NavigateTo("/Contacts");
             return;
         }
 
         editContext = new EditContext(Contact);
 
-        // Determine parent type (Carrier or Client)
         if (Contact.CarrierId.HasValue)
         {
             ConfirmedParentType = "Carrier";
@@ -123,7 +126,7 @@
 
     private async Task UpdateContact()
     {
-        if (editContext.Validate()) // Check if the form is valid
+        if (editContext.Validate())
         {
             await ContactService.UpdateContactAsync(Contact);
             GoBack();

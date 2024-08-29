@@ -23,3 +23,9 @@
     top:4px;
     left:5px;
 }
+.default-subheader {
+    color:#036ac4;
+}
+.default-subheader:hover {
+    cursor:pointer;
+}

@@ -9,8 +9,14 @@
 @using Mantis.Domain.Shared
 @rendermode InteractiveServer
 
-<_toolbar />
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
+<_toolbar />
 
 <div class="page-content">
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true"

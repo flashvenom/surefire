@@ -8,6 +8,13 @@
 @using Syncfusion.Blazor
 @rendermode InteractiveServer
 
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Locations" Url="/Locations" />
+        <BreadcrumbItem Text="Database" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
 <div class="page-toolbar">
     <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Location</SfButton>
 </div>
@@ -32,16 +39,6 @@
     SfGrid<Address> Grid { get; set; }
     SfDataManager DataManager { get; set; }
     public List<Address> AddressData { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        string testthis = "test";
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Locations" }
-        });
-    }
 
     private void OnBeginHandler(ActionEventArgs<Address> Args)
     {

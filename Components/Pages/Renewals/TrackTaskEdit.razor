@@ -1,5 +1,4 @@
 ﻿@page "/Renewals/EditTrackTask/{taskId:int}"
-
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Users.Services
@@ -11,10 +10,15 @@
 @inject RenewalService RenewalService
 @inject UserService UserService
 @inject NavigationManager Navigation
-
 @rendermode InteractiveServer
 
 <PageTitle>Edit Track Task</PageTitle>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="Edit Task" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
 <div class="page-content">
     <div class="mh1">Edit Task</div>

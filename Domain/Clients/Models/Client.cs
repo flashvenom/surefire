@@ -22,6 +22,7 @@ namespace Mantis.Domain.Clients.Models
         public string? Comments { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedDate { get; set; }
+        public DateTime DateOpened { get; set; } = DateTime.UtcNow;
 
         public ICollection<Policy> Policies { get; set; } = new List<Policy>();
         public ICollection<Contact> Contacts { get; set; } = new List<Contact>();

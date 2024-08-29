@@ -205,6 +205,29 @@ namespace Mantis.Domain.Renewals.Services
             return renewals;
         }
 
+        public async Task<List<Renewal>> GetFilteredRenewalListAsync(int? myMonth, int? myYear, string? myUserId)
+        {
+            int month = myMonth ?? DateTime.Now.Month;
+            int year = myYear ?? DateTime.Now.Year;
+
+            IQueryable<Renewal> renewalsQuery = _context.Renewals
+                .Where(r => r.RenewalDate.Month == month && r.RenewalDate.Year == year)
+                .Include(r => r.Product)
+                .Include(r => r.Client)
+                .Include(r => r.Carrier)
+                .Include(r => r.Wholesaler)
+                .Include(r => r.Policy)
+                .Include(r => r.AssignedTo);
+
+            if (myUserId != null && myUserId != "Everyone")
+            {
+                renewalsQuery = renewalsQuery.Where(r => r.AssignedToId == myUserId);
+            }
+
+            return await renewalsQuery.ToListAsync();
+        }
+
+
         //Methods for: Create.razor List.razor
         public async Task NewRenewalAsync(Renewal renewal)
         {

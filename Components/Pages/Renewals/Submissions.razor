@@ -13,13 +13,6 @@
 @inject RenewalService RenewalService
 @rendermode InteractiveServer
 
-<SfBreadcrumb>
-    <BreadcrumbItems>
-        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
-        <BreadcrumbItem Text="Submissions" />
-    </BreadcrumbItems>
-</SfBreadcrumb>
-
 @if(renewal != null) {
     @foreach (var item in renewal.Submissions)
     {
@@ -213,14 +206,9 @@ else
         await RenewalService.CreateNewSubmissionAsync(RenewalId, SelectedCarrierId, SelectedWholsalerId);
         await InvokeAsync(StateHasChanged);
     }
-    protected override async Task OnInitializedAsync()
-    {
-        await InvokeAsync(StateHasChanged);
-    }
     private async Task OnStepperValueChanged(StepperChangedEventArgs args, Submission submission)
     {
         submission.StatusInt = args.ActiveStep;
-        //await RenewalService.UpdateSubmissionStatusAsync(args.ActiveStep, submission);
     }
     private async Task SaveSubmissionItem(MouseEventArgs args, Submission submissionitem)
     {

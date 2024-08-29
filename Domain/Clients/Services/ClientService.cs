@@ -64,9 +64,15 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Product)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
-
+            if (client != null)
+            {
+                client.DateOpened = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
             return client;
         }
+
+
 
 
 

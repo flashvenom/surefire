@@ -1,0 +1,260 @@
+﻿@page "/Renewals"
+@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Users.Services
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject RenewalService RenewalService
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
+        <BreadcrumbItem Text="List" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
+
+<div class="page-toolbar">
+    <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Renewal</SfButton>
+
+    <span class="sf-verthr"></span>
+
+    <NavLink class="toolbar-link" @onclick="ShowResults" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.BookStar())" />
+        <span class="toolbar-text">Browse</span>
+    </NavLink>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="sf-chevron" @onclick="PrevMonth"><FluentIcon Value="@(new Icons.Filled.Size24.CaretLeft())" Color="Color.FillInverse" Slot="start" /></a>
+    <span class="monthholder">
+        <select @onchange="@FormChangeMonth" value="@htmlMonth" class="e-input e-dropdownlist sf-eformbld">
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+        </select>
+    </span>
+    <a class="sf-chevron" @onclick="NextMonth"><FluentIcon Value="@(new Icons.Filled.Size24.CaretRight())" Color="Color.FillInverse" Slot="start" /></a>
+    <span class="spcr"></span>
+
+    <span class="sf-verthr2"></span>
+    
+    <span class="monthholder">
+        <select @onchange="@FormChangeYear" value="@htmlYear" class="e-input e-dropdownlist">
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+        </select>
+    </span>
+    <span class="spcr"></span>
+
+    <span class="sf-verthr2"></span>
+
+    <select @onchange="@FormChangeUser" value="@htmlUser" class="e-input e-dropdownlist">
+        <option value="Everyone">Everyone</option>
+        @if (allUsers != null)
+        {
+            @foreach (var item in allUsers)
+            {
+                <option value="@item.Id">@item.FirstName @item.LastName</option>
+            }
+        }
+    </select>
+
+    <span class="spcr"></span>
+
+    <span class="sf-verthr2"></span>
+
+    <NavLink class="toolbar-link" href="Renewals/MasterTasks" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ShieldTask())" />
+        <span class="toolbar-text">Master Tasks</span>
+    </NavLink>
+
+    <NavLink class="toolbar-link" href="Renewals/List" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
+        <span class="toolbar-text">Data</span>
+    </NavLink>
+
+    @if (selectedRenewalId != 0 && selectedClass != "selected-off")
+    {
+        <span class="sf-verthr2"></span>
+
+        <NavLink class="toolbar-link" href="@("Renewals/Edit/" + selectedRenewalId)" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit Renewal</span>
+        </NavLink>
+    }
+</div>
+
+<div class="page-content">
+    <div id="filter-results" class="@resultsClass">
+        @if(RenewalList != null)
+        {
+            <div class="homelist">
+                <table class="sf-table">
+                    <thead class="sf-thead">
+                        <tr class="sf-rentable">
+                            <th>Renewal</th>
+                            <th>Line</th>
+                            <th><strong>Insured Name</strong></th>
+                            <th>Carrier</th>
+                            <th>MGA</th>
+                            <th>Policy #</th>
+                            <th>Id #</th>
+                            <th>Assigned To</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in RenewalList)
+                        {
+                            <tr>
+                                <td>@item.RenewalDate.ToString("MM/d")</td>
+                                <td class="sf-td-mono">@item.Product?.LineCode</td>
+                                <td class="sf-td-bold"><a class="renewalitemlink" @onclick="() => LoadRenewal(item.RenewalId)">@item.Client?.Name</a></td>
+                            
+                                <td class="sf-td-sm">@item.Carrier?.CarrierName</td>
+                                <td class="sf-td-sm2">@item.Wholesaler?.CarrierNickname</td>
+                                <td class="sf-td-sm">@item.Policy?.PolicyNumber</td>
+                                <td class="sf-td-mono">@item.Policy?.PolicyId</td>
+                                <td>
+                                    <img src="img/staff/@item.AssignedTo.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
+                                    @item.AssignedTo?.FirstName @item.AssignedTo?.LastName
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div id="renewal-view" class="@selectedClass">
+        <ManageRenewal selectedRenewalId="selectedRenewalId" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int htmlMonth { get; set; } = DateTime.Now.Month;
+
+    [Parameter]
+    public int htmlYear { get; set; } = DateTime.Now.Year;
+
+    [Parameter]
+    public string htmlUser { get; set; }
+
+    public int selectedRenewalId { get; set; } = 0;
+
+    private List<ApplicationUser> allUsers { get; set; }
+
+
+    List<Renewal> RenewalList { get; set; } = new List<Renewal>();
+    string resultsClass = "results-on";
+    string selectedClass = "selected-off";
+
+    protected override async Task OnInitializedAsync()
+    {
+        htmlUser = UserService.GetLoggedInUserId();
+        allUsers = await UserService.GetAllUsers();
+        RenewalList = await GetFilteredList();
+    }
+    private void NavigateToRenewalCreate()
+    {
+        NavigationManager.NavigateTo("/Renewals/Create");
+    }
+    private async void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        htmlMonth = Convert.ToInt16(args.Value);
+        RenewalList = await GetFilteredList();
+        StateHasChanged();
+    }
+    private async void FormChangeYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        htmlYear = Convert.ToInt16(args.Value.ToString());
+        RenewalList = await GetFilteredList();
+        StateHasChanged();
+    }
+    private async void FormChangeUser(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        htmlUser = args.Value.ToString();
+        RenewalList = await GetFilteredList();
+        StateHasChanged();
+    }
+    private async void PrevMonth()
+    {
+        if (htmlMonth > 1)
+        {
+            htmlMonth--;
+        }
+        else
+        {
+            htmlMonth = 12;
+            htmlYear--;
+        }
+        RenewalList = await GetFilteredList();
+        StateHasChanged();
+    }
+    private async void NextMonth()
+    {
+        if (htmlMonth < 12)
+        {
+            htmlMonth++;
+        }
+        else
+        {
+            htmlMonth = 1;
+            htmlYear++;
+        }
+        RenewalList = await GetFilteredList();
+        StateHasChanged();
+    }
+    private void HideResults()
+    {
+        resultsClass = resultsClass == "results-on" ? "results-off" : "results-on";
+    }
+
+    private void ShowResults()
+    {
+        resultsClass = "results-on";
+        selectedClass = "results-off";
+    }
+
+    private void ShowSelected()
+    {
+        resultsClass = "results-off";
+        selectedClass = "results-on";
+    }
+
+    public void LoadRenewal(int renewalid)
+    {
+        Console.WriteLine("LoadRenewal: " + renewalid);
+        ShowSelected();
+        selectedRenewalId = renewalid;
+    }
+
+    private async Task<List<Renewal>> GetFilteredList()
+    {
+        ShowResults();
+        RenewalList = await RenewalService.GetFilteredRenewalListAsync(htmlMonth, htmlYear, htmlUser);
+        return RenewalList;
+    }
+}

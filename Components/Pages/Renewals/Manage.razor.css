@@ -1,0 +1,106 @@
+﻿:root .e-dropdownlist {
+    font-size: 1em !important;
+}
+
+:root .e-input {
+    padding-left: 9px;
+    padding-right: 22px;
+    height: 30px;
+}
+
+:root .sf-eformbld {
+    font-weight: bold !important;
+}
+
+.filter-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#filter-results {
+    display: block;
+    transition: all 0.5s ease-in-out;
+    overflow: hidden;
+}
+.results-on {
+    height: 90%;
+    opacity:1;
+}
+.renewalitemlink:hover {
+        cursor: pointer;
+
+}
+.results-off {
+    height: 0%;
+    opacity: .5;
+}
+.spcr {
+    width:15px;
+}
+#renewal-view {
+    display: block;
+    transition: all 0.5s ease-in-out;
+    overflow: hidden;
+}
+
+.monthholder {
+    width:100px;
+    text-align:center;
+
+}
+.yearholder {
+    text-align: center;
+}
+.userholder {
+
+}
+.selected-on {
+    height: 90%;
+    opacity: 1;
+}
+
+.selected-off {
+    height: 0%;
+    opacity: .5;
+}
+
+.homelist {
+    background-color: #fff;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0px 0px 10px #ccc;
+}
+
+h1 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 2.9em;
+    margin-bottom: 0px;
+}
+
+:root .e-input {
+    padding-left: 9px;
+    border: 2px solid #f1f1f1;
+    padding-right: 22px;
+    height: 30px;
+    background-color: #f1f1f1;
+    color: #3c3c3c !important;
+}
+
+.sf-chevron {
+    position: relative;
+    top: 2px;
+}
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
+}
+
+    select::-ms-expand {
+        display: none;
+    }

@@ -33,11 +33,7 @@ namespace Mantis.Domain.Clients.Services
             _crmApiService = crmApiService;
         }
 
-        public async Task<List<Client>> GetCarriersAsync()
-        {
-            return await _context.Clients.ToListAsync();
-        }
-
+        
         public async Task NewClientQuick(Client client)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
@@ -78,6 +74,7 @@ namespace Mantis.Domain.Clients.Services
 
         public async Task<Client> GetClientByCertificateId(int certificateId)
         {
+            //Is this an old function we can remove?
             var client = await _context.Certificates
                 .Where(cert => cert.CertificateId == certificateId)
                 .Include(cert => cert.Client)
@@ -300,5 +297,12 @@ namespace Mantis.Domain.Clients.Services
                 throw new ArgumentException("Invalid clientId or eClientId");
             }
         }
+
+        //Cleanups
+        public async Task<List<Client>> GetCarriersAsync()
+        {
+            return await _context.Clients.ToListAsync();
+        }
+
     }
 }

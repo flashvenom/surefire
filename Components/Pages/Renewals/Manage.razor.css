@@ -20,28 +20,35 @@
 
 #filter-results {
     display: block;
-    transition: all 0.5s ease-in-out;
-    overflow: hidden;
+    transition: all 0.25s ease-in-out;
 }
 .results-on {
-    height: 90%;
-    opacity:1;
-}
-.renewalitemlink:hover {
-        cursor: pointer;
-
+    height: 100%;
+    opacity: 1;
 }
 .results-off {
     height: 0%;
+    overflow: hidden;
     opacity: .5;
+}
+.selected-on {
+    height: 100%;
+    opacity: 1;
+}
+.selected-off {
+    height: 0%;
+    overflow: hidden;
+    opacity: .5;
+}
+.renewalitemlink:hover {
+        cursor: pointer;
 }
 .spcr {
     width:15px;
 }
 #renewal-view {
     display: block;
-    transition: all 0.5s ease-in-out;
-    overflow: hidden;
+    transition: all 0.25s ease-in-out;
 }
 
 .monthholder {
@@ -55,15 +62,7 @@
 .userholder {
 
 }
-.selected-on {
-    height: 90%;
-    opacity: 1;
-}
 
-.selected-off {
-    height: 0%;
-    opacity: .5;
-}
 
 .homelist {
     background-color: #fff;

@@ -307,25 +307,8 @@
         filteredClients = new List<Client>(clients);
     }
 
-    //Update Breakcrcum
-
-    protected override async Task OnParametersSetAsync()
-    {
-        Console.WriteLine("bc------------=======================----------");
-
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "ClientList" }
-        });
-
-
-    }
-
     private void SetShowCreatePolicy()
     {
-        Console.WriteLine("set tab");
-        
         tabInterface.GoToTabAsync("tab-2");
         showCreatePolicy = true;
     }
@@ -341,29 +324,6 @@
     {
         showCreatePolicy = true;
     }
-
-    // public void ExpandDetails()
-    // {
-    //     if (dynamicClass == "sf-quicklist")
-    //     {
-    //         dynamicClass = "sf-quicklist-close";
-    //     }
-    //     else
-    //     {
-    //         dynamicClass = "sf-quicklist";
-    //     }
-    // }
-
-    private async void EditPolicy(int policyid)
-    {
-        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
-    }
-    public void Dispose()
-    {
-        debounceTimer?.Dispose();
-
-    }
-
     public void ExpandDetails(bool? forceOpen = null)
     {
         if (forceOpen.HasValue)
@@ -376,35 +336,40 @@
         }
     }
 
+    private async void EditPolicy(int policyid)
+    {
+        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
+    }
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+
+    }
+
+    
     private async Task CreateAndRedirectToRenewal(int policyid)
     {
-        try
+        // Get the existing renewal ID if it exists
+        var existingRenewalId = await RenewalService.GetExistingRenewalIdAsync(policyid);
+
+        if (existingRenewalId.HasValue)
         {
-            // Attempt to create the renewal
-            var renewal = await RenewalService.CreateRenewalFromPolicy(policyid);
-
-            // Ensure the renewal was successfully created
-            if (renewal == null || renewal.RenewalId == 0)
-            {
-                // Handle the case where the renewal wasn't created correctly
-                Console.WriteLine("Failed to create renewal.");
-                throw new Exception("Failed to create renewal.");
-            }
-
-            // Safely retrieve the ID
-            int renewalid = renewal.RenewalId;
-
-            // Navigate to the newly created renewal's page
-            Navigation.NavigateTo($"/Renewals/{renewalid}");
+            // If renewal exists, redirect to the existing renewal
+            Navigation.NavigateTo($"/Renewals/{existingRenewalId.Value}");
+            return;
         }
-        catch (Exception ex)
+
+        var renewal = await RenewalService.CreateRenewalFromPolicyAsync(policyid);
+
+        if (renewal == null || renewal.RenewalId == 0)
         {
-            // Log the error or show a user-friendly message
-            Console.WriteLine($"Error creating renewal: {ex.Message}");
-
-            // Optionally, show an error message to the user
-            // ErrorMessage = "There was a problem creating the renewal. Please try again.";
+            throw new Exception("Failed to create renewal.");
         }
+
+        int renewalid = renewal.RenewalId;
+
+        Navigation.NavigateTo($"/Renewals/{renewalid}");
+
     }
 
     private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
@@ -525,7 +490,11 @@
         var today = DateTime.Today;
 
         currentPolicies = selectedClient.Policies
-            .Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today)
+            .Where(p =>
+                // Active policies: where today's date falls within the effective and expiration date
+                (p.EffectiveDate <= today && p.ExpirationDate >= today) ||
+                // Future policies: where both the effective and expiration dates are in the future
+                (p.EffectiveDate > today && p.ExpirationDate > today))
             .OrderByDescending(p => p.EffectiveDate)
             .ToList();
 

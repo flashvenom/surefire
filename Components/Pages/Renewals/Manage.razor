@@ -1,4 +1,5 @@
 ﻿@page "/Renewals"
+@page "/Renewals/{jumpToRenewalId:int}"
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
 @using Mantis.Domain.Renewals.Models
@@ -203,7 +204,13 @@
     [Parameter]
     public string htmlUser { get; set; }
 
+    [Parameter]
+    public int jumpToRenewalId { get; set; } = 0;
+
     public int selectedRenewalId { get; set; } = 0;
+    public int alreadyJumped = 0;
+
+
 
     private List<ApplicationUser> allUsers { get; set; }
 
@@ -220,18 +227,14 @@
         RenewalList = await GetFilteredList();
     }
 
-    public async Task HandleParentRenewalUpdated(Renewal updatedRenewal)
+    protected override async Task OnParametersSetAsync()
     {
-        // Here lays 2 wasted hours of my life RIP
-        // StateHasChanged();
-        // Console.WriteLine("Done updating renewal--------------------------------------xxxxxxxxxxxxxxxxxx");
-        // await RenewalService.UpdateRenewal(updatedRenewal); // Using RenewalService to update the renewal
-        // Console.WriteLine("Done updating renewal--------------------------------------uuuuuuuuuuuuuuuuuuuuu");
-        // selectedRenewalId++;
-        // Console.WriteLine("HandleParentRenewalUpdated: " + updatedRenewal.RenewalId);
-        
+        // Check if jumpToRenewalId is passed in the URL and load the renewal if necessary
+        if (jumpToRenewalId != 0)
+        {
+            LoadRenewal(jumpToRenewalId);
+        }
     }
-
 
     private void NavigateToRenewalCreate()
     {

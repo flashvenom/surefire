@@ -42,7 +42,8 @@ namespace Mantis.Data
 
         public async Task<string> GetClientDetailsAsync(string lookupCode, string accessToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/crm/v1/clients?lookupCode={lookupCode}");
+            string encodedLookupCode = Uri.EscapeDataString(lookupCode);
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/crm/v1/clients?lookupCode={encodedLookupCode}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();

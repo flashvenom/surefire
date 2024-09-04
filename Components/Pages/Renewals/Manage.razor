@@ -1,5 +1,4 @@
 ﻿@page "/Renewals"
-@page "/Renewals/{jumpToRenewalId:int}"
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
 @using Mantis.Domain.Renewals.Models
@@ -8,12 +7,14 @@
 @using Mantis.Domain.Shared.Helpers
 @using Mantis.Components.Pages.Renewals
 @using Mantis.Components.Shared
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.AspNetCore.WebUtilities;
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.FluentUI.AspNetCore.Components
 @inject RenewalService RenewalService
 @inject UserService UserService
 @inject NavigationManager NavigationManager
+@inject ProtectedSessionStorage sessionStorage
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -107,6 +108,7 @@
             <span class="toolbar-text">Edit Renewal</span>
         </NavLink>
     }
+    -- @selectedRenewalId --
 </div>
 
 
@@ -198,8 +200,8 @@
     [Parameter]
     public int htmlMonth { get; set; } = DateTime.Now.Month;
 
-    [Parameter]
-    public int jumpMonth { get; set; } = 0;
+    // [Parameter]
+    // public int jumpMonth { get; set; } = 0;
 
     [Parameter]
     public int htmlYear { get; set; } = DateTime.Now.Year;
@@ -214,7 +216,9 @@
     public int alreadyJumped = 0;
     private int? lastJumpMonth;
     private int? lastJumpYear;
-
+    private int? openid;
+    private bool isInitialized = false;
+    private System.Timers.Timer debounceTimer;
 
 
     private List<ApplicationUser> allUsers { get; set; }
@@ -227,6 +231,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        debounceTimer = new System.Timers.Timer(100);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += (sender, args) => ResetSelectedId();
+
         htmlUser = UserService.GetLoggedInUserId();
         allUsers = await UserService.GetAllUsers();
         RenewalList = await GetFilteredList();
@@ -234,44 +242,86 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Parse query string for jumpMonth and jumpYear
+        Console.WriteLine(".................OnParametersSetAsync: " + selectedRenewalId);
         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         var queryParams = QueryHelpers.ParseQuery(uri.Query);
-
-        bool needsUpdate = false;
-
-        if (queryParams.TryGetValue("jumpMonth", out var jumpMonth))
+        if (queryParams.TryGetValue("openid", out var openid))
         {
-            int parsedMonth = Convert.ToInt32(jumpMonth);
-            if (htmlMonth != parsedMonth)
-            {
-                htmlMonth = parsedMonth;
-                needsUpdate = true;
-            }
-        }
 
-        if (queryParams.TryGetValue("jumpYear", out var jumpYear))
-        {
-            int parsedYear = Convert.ToInt32(jumpYear);
-            if (htmlYear != parsedYear)
-            {
-                htmlYear = parsedYear;
-                needsUpdate = true;
-            }
-        }
-
-        // Only update the filtered list if month or year changed
-        if (needsUpdate)
-        {
-            await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
-        }
-
-        // Check if jumpToRenewalId is passed in the URL and load the renewal if necessary
-        if (jumpToRenewalId != 0)
-        {
-            LoadRenewal(jumpToRenewalId);
+            int parsedopenid = Convert.ToInt32(openid);
+            Console.WriteLine("-=-=-=-=-=-=-=  -=- =- = -= -= -= -=   parsedopenid: " + parsedopenid);
+            LoadRenewal(parsedopenid);
         }
     }
+
+    // protected override async Task OnParametersSetAsync()
+    // {
+    //     // Parse query string for jumpMonth and jumpYear
+    //     var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+    //     var queryParams = QueryHelpers.ParseQuery(uri.Query);
+
+    //     bool needsUpdate = false;
+
+    //     if (queryParams.TryGetValue("jumpMonth", out var jumpMonth))
+    //     {
+    //         int parsedMonth = Convert.ToInt32(jumpMonth);
+    //         if (htmlMonth != parsedMonth)
+    //         {
+    //             htmlMonth = parsedMonth;
+    //             needsUpdate = true;
+    //         }
+    //     }
+
+    //     if (queryParams.TryGetValue("jumpYear", out var jumpYear))
+    //     {
+    //         int parsedYear = Convert.ToInt32(jumpYear);
+    //         if (htmlYear != parsedYear)
+    //         {
+    //             htmlYear = parsedYear;
+    //             needsUpdate = true;
+    //         }
+    //     }
+
+    //     if (needsUpdate)
+    //     {
+    //         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
+    //     }
+
+    //     if (jumpToRenewalId != 0)
+    //     {
+    //         LoadRenewal(jumpToRenewalId);
+    //     }
+    // }
+    private void ResetSelectedId()
+    {
+        selectedRenewalId = 0;
+        InvokeAsync(StateHasChanged);
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // if (jumpToRenewalId != 0)
+            // {
+            //     await sessionStorage.SetAsync("SelectedRenewalId", selectedRenewalId);
+            // }
+            Console.WriteLine("OnAfterRenderAsync: " + selectedRenewalId);
+            await LoadStateAsync();
+            isInitialized = true;
+            StateHasChanged();
+
+
+            // if (jumpToRenewalId != 0)
+            // {
+            //     LoadRenewal(jumpToRenewalId);
+            // }
+        }
+        else
+        {
+            Console.WriteLine("Not first render");
+        }
+    }
+
     private async Task ChangeMonthAndYearAsync(int month, int year)
     {
         htmlMonth = month;
@@ -294,25 +344,55 @@
         // Navigate to the updated URL without reloading the page
         NavigationManager.NavigateTo(newUri, forceLoad: false);
     }
+
+    private async Task SaveStateAsync()
+    {
+        await sessionStorage.SetAsync("htmlMonth", htmlMonth);
+        await sessionStorage.SetAsync("htmlYear", htmlYear);
+        await sessionStorage.SetAsync("htmlUser", htmlUser);
+        await sessionStorage.SetAsync("SelectedRenewalId", selectedRenewalId);
+    }
+    private async Task LoadStateAsync()
+    {
+        var monthResult = await sessionStorage.GetAsync<int>("htmlMonth");
+        htmlMonth = monthResult.Success ? monthResult.Value : DateTime.Now.Month;
+
+        var yearResult = await sessionStorage.GetAsync<int>("htmlYear");
+        htmlYear = yearResult.Success ? yearResult.Value : DateTime.Now.Year;
+
+        var userResult = await sessionStorage.GetAsync<string>("htmlUser");
+        htmlUser = userResult.Success ? userResult.Value : "Everyone";
+
+        var renewalIdResult = await sessionStorage.GetAsync<int>("SelectedRenewalId");
+        selectedRenewalId = renewalIdResult.Success ? renewalIdResult.Value : 0;
+        Console.WriteLine("-------------------------------------------LoadStateAsync: " + selectedRenewalId);
+    }
+
     private void NavigateToRenewalCreate()
     {
         NavigationManager.NavigateTo("/Renewals/Create");
     }
     private async void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
+        selectedRenewalId = 0;
         htmlMonth = Convert.ToInt16(args.Value);
-        UpdateUrlWithMonthAndYear();
+        await SaveStateAsync();
+        //UpdateUrlWithMonthAndYear();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
+        selectedRenewalId = 0;
         htmlYear = Convert.ToInt16(args.Value.ToString());
-        UpdateUrlWithMonthAndYear();
+        await SaveStateAsync();
+        //UpdateUrlWithMonthAndYear();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeUser(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
+        selectedRenewalId = 0;
         htmlUser = args.Value.ToString();
+        await SaveStateAsync();
         RenewalList = await GetFilteredList();
         StateHasChanged();
     }
@@ -327,7 +407,9 @@
             htmlMonth = 12;
             htmlYear--;
         }
-        UpdateUrlWithMonthAndYear();
+        selectedRenewalId = 0;
+        await SaveStateAsync();
+        //UpdateUrlWithMonthAndYear();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void NextMonth()
@@ -341,7 +423,9 @@
             htmlMonth = 1;
             htmlYear++;
         }
-        UpdateUrlWithMonthAndYear();
+        //UpdateUrlWithMonthAndYear();
+        selectedRenewalId = 0;
+        await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
         // RenewalList = await GetFilteredList();
         // StateHasChanged();
@@ -353,6 +437,8 @@
 
     private void ShowResults()
     {
+        debounceTimer.Stop();
+        debounceTimer.Start();
         resultsClass = "results-on";
         selectedClass = "results-off";
     }
@@ -361,6 +447,14 @@
     {
         resultsClass = "results-off";
         selectedClass = "results-on";
+    }
+
+    public async Task LoadRenewalAsync(int renewalid)
+    {
+        Console.WriteLine("======LoadRenewalAsync: " + renewalid);
+        ShowSelected();
+        selectedRenewalId = renewalid;
+        await SaveStateAsync();
     }
 
     public void LoadRenewal(int renewalid)

@@ -169,6 +169,15 @@ namespace Mantis.Domain.Renewals.Services
             await _context.SaveChangesAsync();
             return currentUser;
         }
+
+        public async Task<ApplicationUser> AssignToSub(int taskItemId)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            var subuser = await _userManager.FindByIdAsync("db0723c6-1702-4f55-8ff9-f7128ee68631");
+            task.AssignedTo = subuser;
+            await _context.SaveChangesAsync();
+            return subuser;
+        }
         
         public async Task UpdateTaskNotesAsync(int taskItemId, string newNotes)
         {

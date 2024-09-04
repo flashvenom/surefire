@@ -33,6 +33,8 @@
     <Content Remove="Components\Pages\Clients\IndexOld.razor" />
     <Content Remove="Components\Pages\Clients\Test.razor" />
     <Content Remove="Components\Pages\Counter.razor" />
+    <Content Remove="Components\Pages\Renewals\ManageEdit.razor" />
+    <Content Remove="Components\Pages\Renewals\Submissions.razor" />
     <Content Remove="Components\Pages\Renewals\ViewTasks.razor" />
     <Content Remove="Components\Pages\Weather.razor" />
     <Content Remove="wwwroot\mantis.css" />
@@ -48,6 +50,8 @@
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
     <None Remove="Components\Pages\Renewals\Home - Copy.razor.css" />
     <None Remove="Components\Pages\Renewals\Home.razor.css" />
+    <None Remove="Components\Pages\Renewals\ManageEdit.razor.css" />
+    <None Remove="Components\Pages\Renewals\Submissions.razor.css" />
     <None Remove="Components\Pages\Renewals\View.razor.css" />
     <None Remove="Components\Pages\Renewals\ViewTable.razor.css" />
   </ItemGroup>
@@ -93,7 +97,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Components\Pages\Renewals\ManageRenewal2.razor">
+    <Content Update="Components\Pages\Renewals\ManageRenewal.razor">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
   </ItemGroup>

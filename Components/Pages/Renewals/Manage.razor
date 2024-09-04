@@ -199,6 +199,9 @@
     public int htmlMonth { get; set; } = DateTime.Now.Month;
 
     [Parameter]
+    public int jumpMonth { get; set; } = 0;
+
+    [Parameter]
     public int htmlYear { get; set; } = DateTime.Now.Year;
 
     [Parameter]
@@ -209,6 +212,8 @@
 
     public int selectedRenewalId { get; set; } = 0;
     public int alreadyJumped = 0;
+    private int? lastJumpMonth;
+    private int? lastJumpYear;
 
 
 
@@ -229,13 +234,66 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        // Parse query string for jumpMonth and jumpYear
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+
+        bool needsUpdate = false;
+
+        if (queryParams.TryGetValue("jumpMonth", out var jumpMonth))
+        {
+            int parsedMonth = Convert.ToInt32(jumpMonth);
+            if (htmlMonth != parsedMonth)
+            {
+                htmlMonth = parsedMonth;
+                needsUpdate = true;
+            }
+        }
+
+        if (queryParams.TryGetValue("jumpYear", out var jumpYear))
+        {
+            int parsedYear = Convert.ToInt32(jumpYear);
+            if (htmlYear != parsedYear)
+            {
+                htmlYear = parsedYear;
+                needsUpdate = true;
+            }
+        }
+
+        // Only update the filtered list if month or year changed
+        if (needsUpdate)
+        {
+            await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
+        }
+
         // Check if jumpToRenewalId is passed in the URL and load the renewal if necessary
         if (jumpToRenewalId != 0)
         {
             LoadRenewal(jumpToRenewalId);
         }
     }
+    private async Task ChangeMonthAndYearAsync(int month, int year)
+    {
+        htmlMonth = month;
+        htmlYear = year;
+        RenewalList = await GetFilteredList();
+        StateHasChanged();
+    }
+    private void UpdateUrlWithMonthAndYear()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
+        // Create the updated URI with the new jumpMonth and jumpYear
+        var newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object>
+            {
+                ["jumpMonth"] = htmlMonth,
+                ["jumpYear"] = htmlYear
+            });
+
+        // Navigate to the updated URL without reloading the page
+        NavigationManager.NavigateTo(newUri, forceLoad: false);
+    }
     private void NavigateToRenewalCreate()
     {
         NavigationManager.NavigateTo("/Renewals/Create");
@@ -243,14 +301,14 @@
     private async void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
         htmlMonth = Convert.ToInt16(args.Value);
-        RenewalList = await GetFilteredList();
-        StateHasChanged();
+        UpdateUrlWithMonthAndYear();
+        await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
         htmlYear = Convert.ToInt16(args.Value.ToString());
-        RenewalList = await GetFilteredList();
-        StateHasChanged();
+        UpdateUrlWithMonthAndYear();
+        await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeUser(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
@@ -269,8 +327,8 @@
             htmlMonth = 12;
             htmlYear--;
         }
-        RenewalList = await GetFilteredList();
-        StateHasChanged();
+        UpdateUrlWithMonthAndYear();
+        await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void NextMonth()
     {
@@ -283,8 +341,10 @@
             htmlMonth = 1;
             htmlYear++;
         }
-        RenewalList = await GetFilteredList();
-        StateHasChanged();
+        UpdateUrlWithMonthAndYear();
+        await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
+        // RenewalList = await GetFilteredList();
+        // StateHasChanged();
     }
     private void HideResults()
     {

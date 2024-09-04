@@ -4,7 +4,9 @@
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Users.Services
+@using Mantis.Domain.Shared.Helpers
 @using Mantis.Components.Pages.Renewals
+@using Mantis.Components.Shared
 @using Microsoft.AspNetCore.WebUtilities;
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.FluentUI.AspNetCore.Components
@@ -118,6 +120,7 @@
                             <th>Renewal</th>
                             <th>Line</th>
                             <th><strong>Insured Name</strong></th>
+                            <th>%</th>
                             <th>Carrier</th>
                             <th>MGA</th>
                             <th>Policy #</th>
@@ -132,7 +135,7 @@
                                 <td style="text-align:center;">@item.RenewalDate.ToString("M/d")</td>
                                 <td class="sf-td-mono">@item.Product?.LineCode</td>
                                 <td class="sf-td-bold"><a class="renewalitemlink" @onclick="() => LoadRenewal(item.RenewalId)">@item.Client?.Name</a></td>
-
+                                <td><Battery PerComplete=@DataHelper.RenewalProgressPercent(item.TrackTasks) /></td>
                                 <td class="sf-td-sm">@item.Carrier?.CarrierName</td>
                                 <td class="sf-td-sm2">@item.Wholesaler?.CarrierNickname</td>
                                 <td class="sf-td-sm"><a href="/Clients/List/@item.ClientId">@item.Policy?.PolicyNumber</a></td>
@@ -183,7 +186,8 @@
     </div>
 
     <div id="renewal-view" class="@selectedClass">
-        <ManageRenewal selectedRenewalId="selectedRenewalId" />
+        @* <ManageRenewal selectedRenewalId="selectedRenewalId" AllUsers="allUsers" OnParentRenewalUpdated="HandleParentRenewalUpdated" /> *@
+        <ManageRenewal2 selectedRenewalId="selectedRenewalId" />
     </div>
 
     
@@ -216,6 +220,20 @@
         allUsers = await UserService.GetAllUsers();
         RenewalList = await GetFilteredList();
     }
+
+    public async Task HandleParentRenewalUpdated(Renewal updatedRenewal)
+    {
+        // Here lays 2 wasted hours of my life RIP
+        // StateHasChanged();
+        // Console.WriteLine("Done updating renewal--------------------------------------xxxxxxxxxxxxxxxxxx");
+        // await RenewalService.UpdateRenewal(updatedRenewal); // Using RenewalService to update the renewal
+        // Console.WriteLine("Done updating renewal--------------------------------------uuuuuuuuuuuuuuuuuuuuu");
+        // selectedRenewalId++;
+        // Console.WriteLine("HandleParentRenewalUpdated: " + updatedRenewal.RenewalId);
+        
+    }
+
+
     private void NavigateToRenewalCreate()
     {
         NavigationManager.NavigateTo("/Renewals/Create");
@@ -311,5 +329,17 @@
 
         Navigation.NavigateTo($"/Renewals/{renewalid}");
 
+    }
+    public static int RenewalProgressPercent(ICollection<TrackTask> tasks)
+    {
+        if (tasks == null || tasks.Count == 0)
+        {
+            return 0;
+        }
+
+        int totalTasks = tasks.Count;
+        int completedTasks = tasks.Count(task => task.Completed);
+
+        return (int)((double)completedTasks / totalTasks * 100);
     }
 }

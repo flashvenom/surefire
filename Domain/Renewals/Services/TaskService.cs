@@ -51,7 +51,7 @@ namespace Mantis.Domain.Renewals.Services
                 GoalDate = t.GoalDate,
                 ClientName = t.Renewal.Client.Name,
                 ClientId = t.Renewal.Client.ClientId,
-                PolicyProduct = t.Renewal.Policy?.Product.LineCode,
+                PolicyProduct = t.Renewal.Policy?.Product?.LineCode ?? "10",
                 RenewalDate = t.Renewal.RenewalDate,
                 Priority = t.GoalDate.HasValue
                     ? (t.GoalDate < today

@@ -19,6 +19,7 @@ using Microsoft.FluentUI.AspNetCore.Components.Components.Tooltip;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Configuration;
 
 //Normal Blazor stuff ---//
 var builder = WebApplication.CreateBuilder(args);
@@ -52,9 +53,13 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 //Database Context ---//
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddQuickGridEntityFrameworkAdapter();
+
+//builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+//    options.UseSqlServer(connectionString));
+
 //builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 

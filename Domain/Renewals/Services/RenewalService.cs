@@ -14,6 +14,7 @@ using Mantis.Domain.Renewals.ViewModels;
 using Mantis.Domain.Policies.Models;
 using Microsoft.Build.Framework;
 using SkiaSharp;
+using Microsoft.AspNetCore.Components;
 
 
 namespace Mantis.Domain.Renewals.Services
@@ -133,8 +134,11 @@ namespace Mantis.Domain.Renewals.Services
         }
 
         public async Task UpdateRenewal(Renewal renewal)
-        {
+        { 
+            Console.WriteLine("Updating r    INSIDE   enewal");
+            _context.Entry(renewal).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+            Console.WriteLine("Done");
         }
 
         public async Task UpdateTaskHighlight(int taskItemId, bool isHighlighted)
@@ -219,6 +223,7 @@ namespace Mantis.Domain.Renewals.Services
                 .Include(r => r.Wholesaler)
                 .Include(r => r.Policy)
                 .Include(r => r.AssignedTo)
+                .Include(r => r.TrackTasks)
                 .OrderBy(r => r.RenewalDate);
 
             if (myUserId != null && myUserId != "Everyone")

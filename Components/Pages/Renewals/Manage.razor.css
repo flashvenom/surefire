@@ -26,6 +26,7 @@
     height: 100%;
     opacity: 1;
 }
+
 .results-off {
     height: 0%;
     overflow: hidden;

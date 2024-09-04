@@ -28,7 +28,7 @@
 {
     <div class="sf-renewalheader">
         <div class="sf-col-1">
-            <span class="sf-clientname">@renewal.Client.Name</span><br>
+            <span class="sf-clientname"><a href="/Clients/List/@renewal.Client.ClientId">@renewal.Client.Name</a></span><br>
             <span class="sf-linecode">@renewal.Product.LineName</span>
         </div>
         <div class="sf-rendate">
@@ -54,10 +54,17 @@
                 <span class="sf-rekt">@(renewal.Wholesaler.CarrierName)</span>
             </div>
         }
+        @if (renewal.Carrier != null && renewal.AssignedTo != null)
+        {
+            <div class="innersep leftpad">
+                <span class="sf-rekt">
+                    <img src="img/staff/@renewal.AssignedTo.PictureUrl" alt="User Image" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 4px; margin-top:10px;" />
+                    @* <span class="txt-p">@renewal.AssignedTo?.FirstName @renewal.AssignedTo?.LastName</span> *@
+                </span>
+            </div>
+        }
         </div>
-        <div>
-        @renewal.RenewalId: @renewal.PolicyId
-        </div>
+
     </div>
     <FluentTabs Size="TabSize.Large">
         <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab">
@@ -252,9 +259,6 @@
         <FluentTab Id="tab-3" Label="Notes" Class="sf-tab">
                 <SfRichTextEditor @bind-Value="@renewal.Notes" Height="500" />
                 <SfButton Content="Save Notes" CssClass="e-primary" OnClick="@(args => SaveRenewal(args, renewal))"></SfButton>
-        </FluentTab>
-        <FluentTab Id="tab-4" Label="Edit" Class="sf-tab">
-                @* <ManageEdit Renewal="@renewal" AllCarriers="@AllCarriers" AllWholesalers="@AllWholesalers" AllUsers="AllUsers" OnRenewalUpdated="HandleRenewalUpdated" />" *@
         </FluentTab>
     </FluentTabs>
 }

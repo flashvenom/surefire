@@ -35,3 +35,8 @@ function openPdfInNewWindow(base64Pdf) {
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
 }
+
+function updateUrl(newPathAndQuery) {
+    const newUrl = `${window.location.origin}${newPathAndQuery}`;
+    window.history.pushState({}, '', newUrl);
+}

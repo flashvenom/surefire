@@ -267,9 +267,6 @@
                 <SfButton Content="Save Notes" CssClass="e-primary" OnClick="@(args => SaveRenewal(args, renewal))"></SfButton><br><br>
                 <span style="font-size:10px; color:lightgray">PolicyId: @renewal.Policy?.PolicyId - RenewalId: @renewal.RenewalId - ClientId: @renewal.Client?.ClientId - AssignedToId: @renewal.AssignedTo?.Id</span>
         </FluentTab>
-        <FluentTab Id="tab-4" Label="Edit" Class="sf-tab">
-                @* <ManageEdit Renewal="@renewal" AllCarriers="@AllCarriers" AllWholesalers="@AllWholesalers" AllUsers="AllUsers" OnRenewalUpdated="HandleRenewalUpdated" />" *@
-        </FluentTab>
     </FluentTabs>
 }
 <style>

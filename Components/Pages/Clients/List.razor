@@ -44,7 +44,7 @@
     <div class="page-content" >
         <div class="mf-flexrow">
             <div class="@dynamicClass">
-                <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick">
+                <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
                 </FluentTextField>
                 <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
@@ -100,7 +100,7 @@
                                                 <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
                                                     <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
                                                     <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Fill" />Edit Policy</a>
-                                                    <a class="smalltool" href="#" @onclick="@((e) => CreateRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Create Renewal</a>
+                                                    <a class="smalltool" href="#" @onclick="@((e) => CreateAndRedirectToRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Renewal</a>
                                                 </div>
                                             </div>
                                         }
@@ -307,25 +307,8 @@
         filteredClients = new List<Client>(clients);
     }
 
-    //Update Breakcrcum
-
-    protected override async Task OnParametersSetAsync()
-    {
-        Console.WriteLine("bc------------=======================----------");
-
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "ClientList" }
-        });
-
-
-    }
-
     private void SetShowCreatePolicy()
     {
-        Console.WriteLine("set tab");
-        
         tabInterface.GoToTabAsync("tab-2");
         showCreatePolicy = true;
     }
@@ -341,17 +324,6 @@
     {
         showCreatePolicy = true;
     }
-
-    private async void EditPolicy(int policyid)
-    {
-        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
-    }
-    public void Dispose()
-    {
-        debounceTimer?.Dispose();
-
-    }
-
     public void ExpandDetails(bool? forceOpen = null)
     {
         if (forceOpen.HasValue)
@@ -364,11 +336,40 @@
         }
     }
 
-    private async Task CreateRenewal(int policyid)
+    private async void EditPolicy(int policyid)
     {
-        var renewal = await RenewalService.CreateRenewalFromPolicy(policyid);
+        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
+    }
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+
+    }
+
+    
+    private async Task CreateAndRedirectToRenewal(int policyid)
+    {
+        // Get the existing renewal ID if it exists
+        var existingRenewalId = await RenewalService.GetExistingRenewalIdAsync(policyid);
+
+        if (existingRenewalId.HasValue)
+        {
+            // If renewal exists, redirect to the existing renewal
+            Navigation.NavigateTo($"/Renewals?openid={existingRenewalId.Value}");
+            return;
+        }
+
+        var renewal = await RenewalService.CreateRenewalFromPolicyAsync(policyid);
+
+        if (renewal == null || renewal.RenewalId == 0)
+        {
+            throw new Exception("Failed to create renewal.");
+        }
+
         int renewalid = renewal.RenewalId;
-        Navigation.NavigateTo($"/Renewals/{renewalid}");
+
+        Navigation.NavigateTo($"/Renewals?openid={renewalid}");
+
     }
 
     private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
@@ -395,6 +396,7 @@
         }
 
         // Separate and sort policies
+
         NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
         ExpandDetails(false);
         SortAndSeparatePolicies();
@@ -488,7 +490,11 @@
         var today = DateTime.Today;
 
         currentPolicies = selectedClient.Policies
-            .Where(p => p.EffectiveDate <= today && p.ExpirationDate >= today)
+            .Where(p =>
+                // Active policies: where today's date falls within the effective and expiration date
+                (p.EffectiveDate <= today && p.ExpirationDate >= today) ||
+                // Future policies: where both the effective and expiration dates are in the future
+                (p.EffectiveDate > today && p.ExpirationDate > today))
             .OrderByDescending(p => p.EffectiveDate)
             .ToList();
 

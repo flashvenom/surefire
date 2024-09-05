@@ -13,6 +13,8 @@ using Microsoft.EntityFrameworkCore;
 using Mantis.Domain.Renewals.ViewModels;
 using Mantis.Domain.Policies.Models;
 using Microsoft.Build.Framework;
+using SkiaSharp;
+using Microsoft.AspNetCore.Components;
 
 
 namespace Mantis.Domain.Renewals.Services
@@ -132,8 +134,11 @@ namespace Mantis.Domain.Renewals.Services
         }
 
         public async Task UpdateRenewal(Renewal renewal)
-        {
+        { 
+            Console.WriteLine("Updating r    INSIDE   enewal");
+            _context.Entry(renewal).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+            Console.WriteLine("Done");
         }
 
         public async Task UpdateTaskHighlight(int taskItemId, bool isHighlighted)
@@ -163,6 +168,15 @@ namespace Mantis.Domain.Renewals.Services
             task.AssignedTo = currentUser;
             await _context.SaveChangesAsync();
             return currentUser;
+        }
+
+        public async Task<ApplicationUser> AssignToSub(int taskItemId)
+        {
+            var task = await _context.TrackTasks.FindAsync(taskItemId);
+            var subuser = await _userManager.FindByIdAsync("db0723c6-1702-4f55-8ff9-f7128ee68631");
+            task.AssignedTo = subuser;
+            await _context.SaveChangesAsync();
+            return subuser;
         }
         
         public async Task UpdateTaskNotesAsync(int taskItemId, string newNotes)
@@ -205,6 +219,49 @@ namespace Mantis.Domain.Renewals.Services
             return renewals;
         }
 
+        public async Task<List<Renewal>> GetFilteredRenewalListAsync(int? myMonth, int? myYear, string? myUserId)
+        {
+            int month = myMonth ?? DateTime.Now.Month;
+            int year = myYear ?? DateTime.Now.Year;
+
+            IQueryable<Renewal> renewalsQuery = _context.Renewals
+                .Where(r => r.RenewalDate.Month == month && r.RenewalDate.Year == year)
+                .Include(r => r.Product)
+                .Include(r => r.Client)
+                .Include(r => r.Carrier)
+                .Include(r => r.Wholesaler)
+                .Include(r => r.Policy)
+                .Include(r => r.AssignedTo)
+                .Include(r => r.TrackTasks)
+                .OrderBy(r => r.RenewalDate);
+
+            if (myUserId != null && myUserId != "Everyone")
+            {
+                renewalsQuery = renewalsQuery.Where(r => r.AssignedToId == myUserId);
+            }
+
+            return await renewalsQuery.ToListAsync();
+        }
+
+
+        public async Task<List<Policy>> GetFilteredRenewalOrphanListAsync(int? myMonth, int? myYear)
+        {
+            int month = myMonth ?? DateTime.Now.Month;
+            int year = myYear ?? DateTime.Now.Year;
+
+            IQueryable<Policy> policyQuery = _context.Policies
+                .Where(p => p.ExpirationDate.Month == month && p.ExpirationDate.Year == year)
+                .Where(p => !_context.Renewals.Any(r => r.PolicyId == p.PolicyId))  // Exclude policies that already have a renewal
+                .Include(p => p.Product)
+                .Include(p => p.Client)
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .OrderBy(p => p.ExpirationDate);
+
+            return await policyQuery.ToListAsync();
+        }
+
+
         //Methods for: Create.razor List.razor
         public async Task NewRenewalAsync(Renewal renewal)
         {
@@ -233,8 +290,10 @@ namespace Mantis.Domain.Renewals.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Renewal> CreateRenewalFromPolicy(int policyid)
+        public async Task<Renewal> CreateRenewalFromPolicyOld(int policyid)
         {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
             var policy = await _context.Policies
                 .Include(p => p.Client)
                 .Include(p => p.Carrier)
@@ -297,9 +356,7 @@ namespace Mantis.Domain.Renewals.Services
                 renewal.Product = policy.Product;
             }
 
-            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             renewal.AssignedTo = currentUser;
-
             _context.Renewals.Add(renewal);
 
             var taskMasters = await _context.TaskMasters.ToListAsync();
@@ -324,6 +381,149 @@ namespace Mantis.Domain.Renewals.Services
             }
             await _context.SaveChangesAsync();
             return renewal;
+        }
+        public async Task<int?> GetExistingRenewalIdAsync(int policyId)
+        {
+            // Check if a renewal exists for the given policy ID and return the RenewalId if it does
+            var existingRenewalId = await _context.Renewals
+                .Where(r => r.Policy.PolicyId == policyId)
+                .Select(r => r.RenewalId)
+                .FirstOrDefaultAsync();
+
+            // If no renewal exists, return null
+            return existingRenewalId == 0 ? (int?)null : existingRenewalId;
+        }
+
+        //This has been generating concurrent context errors, using CreateRenewalFromPolicyAsync instead
+        public async Task<Renewal> CreateRenewalFromPolicy(int policyid)
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            var policy = await _context.Policies
+                .Include(p => p.Client)
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Product)
+                .FirstOrDefaultAsync(p => p.PolicyId == policyid);
+
+            if (policy == null) throw new Exception("Policy not found");
+
+            Renewal renewal = new Renewal
+            {
+                ExpiringPolicyNumber = policy.PolicyNumber,
+                Wholesaler = policy.Wholesaler,
+                Carrier = policy.Carrier,
+                Client = policy.Client,
+                ExpiringPremium = policy.Premium,
+                RenewalDate = policy.ExpirationDate,
+                Policy = policy,
+                Product = await GetProductForPolicyAsync(policy)
+            };
+
+            
+            renewal.AssignedTo = currentUser;
+
+            _context.Renewals.Add(renewal);
+            _context.SaveChanges();
+
+            var taskMasters = await _context.TaskMasters.ToListAsync();
+            foreach (var taskMaster in taskMasters)
+            {
+                var goalDate = taskMaster.DaysBeforeExpiration.HasValue
+                    ? renewal.RenewalDate.AddDays(-(taskMaster.DaysBeforeExpiration.Value))
+                    : (DateTime?)null;
+
+                var trackTask = new TrackTask
+                {
+                    Renewal = renewal,
+                    OrderNumber = taskMaster.OrderNumber,
+                    TaskName = taskMaster.TaskName,
+                    GoalDate = goalDate,
+                    Status = "Pending",
+                    Completed = false,
+                    Hidden = false,
+                    Notes = taskMaster.Description
+                };
+                _context.TrackTasks.Add(trackTask);
+            }
+            await _context.SaveChangesAsync();
+            return renewal;
+        }
+
+        public async Task<Renewal> CreateRenewalFromPolicyAsync(int policyId)
+        {
+            // Retrieve the current user
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
+            // Retrieve the policy with related entities
+            var policy = await _context.Policies
+                .Include(p => p.Client)
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Product)
+                .FirstOrDefaultAsync(p => p.PolicyId == policyId);
+
+            if (policy == null) throw new Exception("Policy not found");
+
+            // Create a new renewal
+            var renewal = new Renewal
+            {
+                ExpiringPolicyNumber = policy.PolicyNumber,
+                Wholesaler = policy.Wholesaler,
+                Carrier = policy.Carrier,
+                Client = policy.Client,
+                ExpiringPremium = policy.Premium,
+                RenewalDate = policy.ExpirationDate,
+                Policy = policy,
+                Product = await GetProductForPolicyAsync(policy),
+                AssignedTo = currentUser
+            };
+
+            _context.Renewals.Add(renewal);
+            await _context.SaveChangesAsync();
+
+            // Load task masters and create associated tasks
+            var taskMasters = await _context.TaskMasters.ToListAsync();
+            foreach (var taskMaster in taskMasters)
+            {
+                var goalDate = taskMaster.DaysBeforeExpiration.HasValue
+                    ? renewal.RenewalDate.AddDays(-taskMaster.DaysBeforeExpiration.Value)
+                    : (DateTime?)null;
+
+                var trackTask = new TrackTask
+                {
+                    Renewal = renewal,
+                    OrderNumber = taskMaster.OrderNumber,
+                    TaskName = taskMaster.TaskName,
+                    GoalDate = goalDate,
+                    Status = "Pending",
+                    Completed = false,
+                    Hidden = false,
+                    Notes = taskMaster.Description
+                };
+                _context.TrackTasks.Add(trackTask);
+            }
+
+            await _context.SaveChangesAsync();
+            return renewal;
+        }
+
+
+        private async Task<Product> GetProductForPolicyAsync(Policy policy)
+        {
+            if (policy.Product != null) return policy.Product;
+
+            return policy.eType.ToLower() switch
+            {
+                var e when e.Contains("professional") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 5),
+                var e when e.Contains("general") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 3),
+                var e when e.Contains("work") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 2),
+                var e when e.Contains("auto") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 4),
+                var e when e.Contains("business") || e.Contains("bop") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 6),
+                var e when e.Contains("umb") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 7),
+                var e when e.Contains("practice") || e.Contains("epli") || policy.eTypeCode.Contains("epli") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 8),
+                var e when e.Contains("med") => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 9),
+                _ => await _context.Products.FirstOrDefaultAsync(p => p.ProductId == 10),
+            };
         }
 
         //Seperated Create and Editor pages

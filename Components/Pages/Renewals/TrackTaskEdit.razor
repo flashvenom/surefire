@@ -100,11 +100,11 @@
     private async Task HandleValidSubmit()
     {
         await RenewalService.UpdateTrackTaskAsync(task);
-        Navigation.NavigateTo($"/Renewals/{task.Renewal.RenewalId}");
+        Navigation.NavigateTo($"/Renewals?openid={task.Renewal.RenewalId}");
     }
 
     private void CancelEdit()
     {
-        Navigation.NavigateTo($"/Renewals/{task.Renewal.RenewalId}");
+        Navigation.NavigateTo($"/Renewals?openid={task.Renewal.RenewalId}");
     }
 }

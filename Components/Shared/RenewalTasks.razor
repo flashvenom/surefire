@@ -1,5 +1,6 @@
 ﻿@using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
+@using Syncfusion.Blazor.Spinner
 @inject TaskService TaskService
 @rendermode InteractiveServer
 
@@ -7,7 +8,7 @@
 <div class="home-box">
     @if (tasks == null)
     {
-        <p>Loading tasks...</p>
+        <SfSpinner />
     }
     else if (!tasks.Any())
     {
@@ -30,7 +31,7 @@
                     <tr class="trow @(task.Highlighted ? "highlighted" : "")">
                         <td class="tcname">@task.ClientName </td>
                         <td><span class="hprod">@task.PolicyProduct</span><span class="hexp">@task.RenewalDate.ToString("MM/dd")</span></td>
-                        <td class="ttname"><a href="Renewals/@task.RenewalId">@task.TaskName</a></td>
+                        <td class="ttname"><a href="Renewals?openid=@task.RenewalId">@task.TaskName</a></td>
                         <td class="ttpri">@((MarkupString)task.Priority)</td>
                     </tr>
                 }

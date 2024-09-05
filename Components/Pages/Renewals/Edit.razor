@@ -83,6 +83,10 @@
                         </SfDropDownList>
                         <ValidationMessage For="() => Renewal.AssignedToId" class="text-danger" />
                     </div>
+                    <div class="mb-3">
+                        <SfNumericTextBox TValue="int?" @bind-Value="Renewal.PolicyId" Placeholder="PolicyId" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Renewal.PolicyId" class="text-danger" />
+                    </div>
                 </div>
             </div>
             <br />
@@ -153,7 +157,7 @@
         try
         {
             await DbContext.SaveChangesAsync();
-            NavigationManager.NavigateTo("/renewals");
+            NavigationManager.NavigateTo($"/Renewals?openid={RenewalId}");
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -175,6 +179,6 @@
 
     public void GoBack()
     {
-        NavigationManager.NavigateTo("/renewals");
+        NavigationManager.NavigateTo($"/Renewals?openid={RenewalId}");
     }
 }

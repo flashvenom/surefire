@@ -394,24 +394,10 @@
 
         int renewalid = renewal.RenewalId;
 
-        Navigation.NavigateTo($"/Renewals/{renewalid}");
+        Navigation.NavigateTo($"/Renewals?openid={renewalid}");
 
     }
 
-    private async Task CreateRenewal(int policyid)
-    {
-        var renewal = await RenewalService.CreateRenewalFromPolicyAsync(policyid);
-
-        if (renewal == null || renewal.RenewalId == 0)
-        {
-            throw new Exception("Failed to create renewal.");
-        }
-
-        int renewalid = renewal.RenewalId;
-
-        Navigation.NavigateTo($"/Renewals/{renewalid}");
-
-    }
     public static int RenewalProgressPercent(ICollection<TrackTask> tasks)
     {
         if (tasks == null || tasks.Count == 0)

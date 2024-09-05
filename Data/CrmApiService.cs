@@ -22,7 +22,7 @@ namespace Mantis.Data
 
         public async Task<string> GetAccessTokenAsync()
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.***REMOVED***/v1/auth/connect/token");
+            var request = new HttpRequestMessage(HttpMethod.Post, _options.TokenAddress);
             var credentials = $"{_options.ClientId}:{_options.ClientSecret}";
             var encodedCredentials = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(credentials));
 
@@ -43,7 +43,7 @@ namespace Mantis.Data
         public async Task<string> GetClientDetailsAsync(string lookupCode, string accessToken)
         {
             string encodedLookupCode = Uri.EscapeDataString(lookupCode);
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/crm/v1/clients?lookupCode={encodedLookupCode}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.ClientAddress}?lookupCode={encodedLookupCode}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -53,7 +53,7 @@ namespace Mantis.Data
 
         public async Task<string> GetClientPoliciesAsync(string clientId, string accessToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/policy/v1/clients/{clientId}/policies");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.PolicyClientsAddress}/{clientId}/policies");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -63,7 +63,7 @@ namespace Mantis.Data
 
         public async Task<string> GetPolicyLinesAsync(string ePolicyId, string accessToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.***REMOVED***/policy/v1/policies/{ePolicyId}/lines");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.PoliciesAddress}/{ePolicyId}/lines");
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
             var response = await _httpClient.SendAsync(request);
@@ -77,5 +77,11 @@ namespace Mantis.Data
     {
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
+        public string BaseAddress { get; set; }
+        public string TokenAddress { get; set; }
+        public string ClientAddress { get; set; }
+        public string PoliciesAddress { get; set; }
+        public string ClientPoliciesAddress { get; set; }
+        public string PolicyClientsAddress { get; set; }
     }
 }

@@ -1,0 +1,16 @@
+﻿@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+
+@implements IDialogContentComponent<TrackTask>
+
+<p>Change this task:</p>
+
+<FluentTextField @bind-Value="@Content.TaskName">Task name:</FluentTextField>
+
+@code {
+    [Parameter]
+    public TrackTask Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+}

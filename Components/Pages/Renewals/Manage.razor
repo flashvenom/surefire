@@ -8,12 +8,14 @@
 @using Mantis.Domain.Shared.Helpers
 @using Mantis.Components.Pages.Renewals
 @using Mantis.Components.Shared
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.AspNetCore.WebUtilities;
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.FluentUI.AspNetCore.Components
 @inject RenewalService RenewalService
 @inject UserService UserService
 @inject NavigationManager NavigationManager
+@inject ProtectedSessionStorage sessionStorage
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -118,14 +120,14 @@
                 <table class="sf-table">
                     <thead class="sf-thead">
                         <tr class="sf-rentable">
-                            <th>Renewal</th>
+                            <th>Date</th>
                             <th>Line</th>
-                            <th><strong>Insured Name</strong></th>
+                            <th><strong>Insured</strong></th>
                             <th>%</th>
                             <th>Carrier</th>
                             <th>MGA</th>
-                            <th>Policy #</th>
-                            <th>Rn-Po#</th>
+                            <th>Policy</th>
+                            <th>Id</th>
                             <th>Assigned To</th>
                         </tr>
                     </thead>
@@ -142,8 +144,8 @@
                                 <td class="sf-td-sm"><a href="/Clients/List/@item.ClientId">@item.Policy?.PolicyNumber</a></td>
                                 <td class="sf-td-mono">@(item.RenewalId + "-" + item.Policy?.PolicyId)</td>
                                 <td>
-                                    <img src="img/staff/@item.AssignedTo.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
-                                    <span class="txt-p">@item.AssignedTo?.FirstName @item.AssignedTo?.LastName</span>
+                                    <img src="img/staff/@item.AssignedTo.PictureUrl" alt="User Image" class="renewal-assignedto" />
+                                    <span class="txt-name">@item.AssignedTo?.FirstName @item.AssignedTo?.LastName</span>
                                 </td>
                             </tr>
                         }
@@ -214,12 +216,10 @@
     public int alreadyJumped = 0;
     private int? lastJumpMonth;
     private int? lastJumpYear;
-
-
-
-    private List<ApplicationUser> allUsers { get; set; }
-
-
+    private int? openid;
+    private bool isInitialized = false;
+    private System.Timers.Timer debounceTimer;
+    List<ApplicationUser> allUsers { get; set; }
     List<Renewal> RenewalList { get; set; } = new List<Renewal>();
     List<Policy> PolicyOrphanList { get; set; } = new List<Policy>();
     string resultsClass = "results-on";
@@ -227,6 +227,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        debounceTimer = new System.Timers.Timer(100);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += (sender, args) => ResetSelectedId();
+
         htmlUser = UserService.GetLoggedInUserId();
         allUsers = await UserService.GetAllUsers();
         RenewalList = await GetFilteredList();
@@ -234,43 +238,33 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Parse query string for jumpMonth and jumpYear
+        //If there is a openid parameter, load the renewal
         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
         var queryParams = QueryHelpers.ParseQuery(uri.Query);
-
-        bool needsUpdate = false;
-
-        if (queryParams.TryGetValue("jumpMonth", out var jumpMonth))
+        if (queryParams.TryGetValue("openid", out var openid))
         {
-            int parsedMonth = Convert.ToInt32(jumpMonth);
-            if (htmlMonth != parsedMonth)
-            {
-                htmlMonth = parsedMonth;
-                needsUpdate = true;
-            }
+            int parsedopenid = Convert.ToInt32(openid);
+            LoadRenewal(parsedopenid);
         }
+    }
 
-        if (queryParams.TryGetValue("jumpYear", out var jumpYear))
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
         {
-            int parsedYear = Convert.ToInt32(jumpYear);
-            if (htmlYear != parsedYear)
-            {
-                htmlYear = parsedYear;
-                needsUpdate = true;
-            }
+            //Use JSinterop to load state from browser storage
+            await LoadStateAsync();
+            isInitialized = true;
+            StateHasChanged();
         }
+    }
 
-        // Only update the filtered list if month or year changed
-        if (needsUpdate)
-        {
-            await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
-        }
-
-        // Check if jumpToRenewalId is passed in the URL and load the renewal if necessary
-        if (jumpToRenewalId != 0)
-        {
-            LoadRenewal(jumpToRenewalId);
-        }
+    private async Task<List<Renewal>> GetFilteredList()
+    {
+        ShowResults();
+        RenewalList = await RenewalService.GetFilteredRenewalListAsync(htmlMonth, htmlYear, htmlUser);
+        PolicyOrphanList = await RenewalService.GetFilteredRenewalOrphanListAsync(htmlMonth, htmlYear);
+        return RenewalList;
     }
     private async Task ChangeMonthAndYearAsync(int month, int year)
     {
@@ -279,40 +273,56 @@
         RenewalList = await GetFilteredList();
         StateHasChanged();
     }
-    private void UpdateUrlWithMonthAndYear()
+    private async Task SaveStateAsync()
     {
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        var queryParams = QueryHelpers.ParseQuery(uri.Query);
-
-        // Create the updated URI with the new jumpMonth and jumpYear
-        var newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object>
-            {
-                ["jumpMonth"] = htmlMonth,
-                ["jumpYear"] = htmlYear
-            });
-
-        // Navigate to the updated URL without reloading the page
-        NavigationManager.NavigateTo(newUri, forceLoad: false);
+        await sessionStorage.SetAsync("htmlMonth", htmlMonth);
+        await sessionStorage.SetAsync("htmlYear", htmlYear);
+        await sessionStorage.SetAsync("htmlUser", htmlUser);
     }
+    private async Task LoadStateAsync()
+    {
+        var monthResult = await sessionStorage.GetAsync<int>("htmlMonth");
+        htmlMonth = monthResult.Success ? monthResult.Value : DateTime.Now.Month;
+
+        var yearResult = await sessionStorage.GetAsync<int>("htmlYear");
+        htmlYear = yearResult.Success ? yearResult.Value : DateTime.Now.Year;
+
+        var userResult = await sessionStorage.GetAsync<string>("htmlUser");
+        htmlUser = userResult.Success ? userResult.Value : "Everyone";
+    }
+
     private void NavigateToRenewalCreate()
     {
         NavigationManager.NavigateTo("/Renewals/Create");
     }
+    public void LoadRenewal(int renewalid)
+    {
+        ShowSelected();
+        selectedRenewalId = renewalid;
+    }
+
     private async void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
+        debounceTimer.Stop();
+        debounceTimer.Start();
         htmlMonth = Convert.ToInt16(args.Value);
-        UpdateUrlWithMonthAndYear();
+        await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
+        debounceTimer.Stop();
+        debounceTimer.Start();
         htmlYear = Convert.ToInt16(args.Value.ToString());
-        UpdateUrlWithMonthAndYear();
+        await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeUser(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
+        debounceTimer.Stop();
+        debounceTimer.Start();
         htmlUser = args.Value.ToString();
+        await SaveStateAsync();
         RenewalList = await GetFilteredList();
         StateHasChanged();
     }
@@ -327,7 +337,9 @@
             htmlMonth = 12;
             htmlYear--;
         }
-        UpdateUrlWithMonthAndYear();
+        debounceTimer.Stop();
+        debounceTimer.Start();
+        await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void NextMonth()
@@ -341,41 +353,49 @@
             htmlMonth = 1;
             htmlYear++;
         }
-        UpdateUrlWithMonthAndYear();
+        debounceTimer.Stop();
+        debounceTimer.Start();
+        await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
-        // RenewalList = await GetFilteredList();
-        // StateHasChanged();
+    }
+
+    private void ResetSelectedId()
+    {
+        //Click out of selected renewal and go back to filtered list
+        //selectedRenewalId = 0;
+        //StateHasChanged();
+        //InvokeAsync(StateHasChanged);
     }
     private void HideResults()
     {
         resultsClass = resultsClass == "results-on" ? "results-off" : "results-on";
     }
-
     private void ShowResults()
     {
+        debounceTimer.Stop();
+        debounceTimer.Start();
         resultsClass = "results-on";
         selectedClass = "results-off";
     }
-
     private void ShowSelected()
     {
         resultsClass = "results-off";
         selectedClass = "results-on";
     }
 
-    public void LoadRenewal(int renewalid)
+    private async Task CreateRenewal(int policyid)
     {
-        Console.WriteLine("LoadRenewal: " + renewalid);
-        ShowSelected();
-        selectedRenewalId = renewalid;
-    }
+        var renewal = await RenewalService.CreateRenewalFromPolicyAsync(policyid);
 
-    private async Task<List<Renewal>> GetFilteredList()
-    {
-        ShowResults();
-        RenewalList = await RenewalService.GetFilteredRenewalListAsync(htmlMonth, htmlYear, htmlUser);
-        PolicyOrphanList = await RenewalService.GetFilteredRenewalOrphanListAsync(htmlMonth, htmlYear);
-        return RenewalList;
+        if (renewal == null || renewal.RenewalId == 0)
+        {
+            throw new Exception("Failed to create renewal.");
+        }
+
+        int renewalid = renewal.RenewalId;
+
+        Navigation.NavigateTo($"/Renewals/{renewalid}");
+
     }
 
     private async Task CreateRenewal(int policyid)

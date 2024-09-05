@@ -28,7 +28,7 @@
 {
     <div class="sf-renewalheader">
         <div class="sf-col-1">
-            <span class="sf-clientname">@renewal.Client.Name</span><br>
+            <span class="sf-clientname"><a href="/Clients/List/@renewal.Client.ClientId">@renewal.Client.Name</a></span><br>
             <span class="sf-linecode">@renewal.Product.LineName</span>
         </div>
         <div class="sf-rendate">
@@ -40,29 +40,42 @@
         {
             <div class="innersep">
                 <span class="sf-runt">EXPIRING POLICY NO.</span<br />
-                <span class="sf-rekt">@(renewal.Policy.PolicyNumber)</span><br />
+                <span class="sf-rekt"><a href="/Policies/Details/@renewal.Policy.PolicyId">@(renewal.Policy.PolicyNumber)</a></span><br />
                 <span class="sf-runt">PREMIUM</span><br />
-                <span class="sf-rekt">@(renewal.Policy.Premium)</span>
+                <span class="sf-rekt">@renewal.Policy.Premium.ToString("C")</span>
             </div>
         }
-        @if (renewal.Carrier != null && renewal.Wholesaler != null)
+        @if (renewal.Carrier != null || renewal.Wholesaler != null)
         {
             <div class="innersep leftpad">
-                <span class="sf-runt">CARRIER</span<br />
-                <span class="sf-rekt">@(renewal.Carrier.CarrierName)</span><br />
-                <span class="sf-runt">WHOLESALER</span><br />
-                <span class="sf-rekt">@(renewal.Wholesaler.CarrierName)</span>
+                @if (renewal.Carrier != null)
+                {
+                    <span class="sf-runt">CARRIER</span<br />
+                    <span class="sf-rekt"><a href="/Carriers/Details/@renewal.Carrier?.CarrierId">@(renewal.Carrier?.CarrierName)</a></span><br />
+                }
+                @if (renewal.Wholesaler != null)
+                {
+                    <span class="sf-runt">WHOLESALER</span><br />
+                    <span class="sf-rekt"><a href="/Carriers/Details/@renewal.Wholesaler?.CarrierId">@(renewal.Wholesaler?.CarrierName)</a></span>
+                }
+            </div>
+        }
+        @if (renewal.Carrier != null && renewal.AssignedTo != null)
+        {
+            <div class="innersep leftpad">
+                <span class="sf-rekt">
+                    <img src="img/staff/@renewal.AssignedTo.PictureUrl" alt="User Image" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 4px; margin-top:10px;" />
+                    @* <span class="txt-p">@renewal.AssignedTo?.FirstName @renewal.AssignedTo?.LastName</span> *@
+                </span>
             </div>
         }
         </div>
-        <div>
-        @renewal.RenewalId: @renewal.PolicyId
-        </div>
+
     </div>
     <FluentTabs Size="TabSize.Large">
         <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab">
             
-        <table class="table">
+        <table class="table" border="0" cellpadding="0" cellspacing="0">
             <thead>
                 <tr>
                     <th></th>
@@ -99,21 +112,20 @@
                                     <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.EyeOff())" Color="Color.FillInverse" Slot="start" /></span>
                                     Hide
                                 </FluentMenuItem>
-
                             </FluentMenu>
                             <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
                         </td>
                         <td style="padding:0px 5px;">@task.TaskItemName</td>
                         <td class="ds">@((MarkupString)DateHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
                         <td>
-                            <input type="text" value="@task.Notes" class="e-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
+                            <input type="text" value="@task.Notes" class="ff-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
                         </td>
-                        <td>
+                        <td class="sf-rightcell">
                             @if (task.AssignedSubUser != null)
                             {
                                 <div style="display: flex; align-items: center;">
-                                    <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
                                     <span class="sf-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
+                                    <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" class="taskassigned" />
                                 </div>
                             }
                         </td>
@@ -203,12 +215,13 @@
                             </div>
                 
                         }
-                        <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.End" ID="@("stepper-" + @item.SubmissionId)" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item))">
+
+                        <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.Bottom" ID="@("stepper-" + @item.SubmissionId)" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item))">
                             <StepperSteps>
-                                <StepperStep IconCss="e-icons e-plus-icon" Label="Started"></StepperStep>
-                                <StepperStep IconCss="e-icons e-pencil-icon" Label="Submitted"></StepperStep>
-                                <StepperStep IconCss="e-icons e-changes-icon" Label="Underwriting"></StepperStep>
-                                <StepperStep IconCss="e-icons e-send-icon" Label="Quoted"></StepperStep>
+                                <StepperStep IconCss="e-icons e-plus-icon" Label="Starting"></StepperStep>
+                                <StepperStep IconCss="e-icons e-pencil-icon" Label="Submited"></StepperStep>
+                                <StepperStep IconCss="e-icons e-changes-icon" Label="UndWrite"></StepperStep>
+                                <StepperStep IconCss="e-icons e-send-icon" Label="Quoting"></StepperStep>
                                 <StepperStep IconCss="e-icons e-signature-icon" Label="Proposed"></StepperStep>
                                 <StepperStep IconCss="e-icons e-trash-icon" Label="Declined"></StepperStep>
                                 <StepperStep IconCss="e-icons e-check-icon" Label="Accepted"></StepperStep>
@@ -251,14 +264,27 @@
         </FluentTab>
         <FluentTab Id="tab-3" Label="Notes" Class="sf-tab">
                 <SfRichTextEditor @bind-Value="@renewal.Notes" Height="500" />
-                <SfButton Content="Save Notes" CssClass="e-primary" OnClick="@(args => SaveRenewal(args, renewal))"></SfButton>
+                <SfButton Content="Save Notes" CssClass="e-primary" OnClick="@(args => SaveRenewal(args, renewal))"></SfButton><br><br>
+                <span style="font-size:10px; color:lightgray">PolicyId: @renewal.Policy?.PolicyId - RenewalId: @renewal.RenewalId - ClientId: @renewal.Client?.ClientId - AssignedToId: @renewal.AssignedTo?.Id</span>
         </FluentTab>
         <FluentTab Id="tab-4" Label="Edit" Class="sf-tab">
                 @* <ManageEdit Renewal="@renewal" AllCarriers="@AllCarriers" AllWholesalers="@AllWholesalers" AllUsers="AllUsers" OnRenewalUpdated="HandleRenewalUpdated" />" *@
         </FluentTab>
     </FluentTabs>
 }
-
+<style>
+    :root .e-stepper {
+        transform: scale(0.8);
+        width:600px;
+        position:relative;
+        top: 10px;
+        left:-60px;
+    }
+:root .e-stepper .e-stepper-progressbar {
+    top: 16px !important;
+    height: 3px;
+}
+</style>
 @code {
     [Parameter]
     public int selectedRenewalId { get; set; }

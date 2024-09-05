@@ -44,7 +44,7 @@
     <div class="page-content" >
         <div class="mf-flexrow">
             <div class="@dynamicClass">
-                <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick">
+                <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
                 </FluentTextField>
                 <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
@@ -100,7 +100,7 @@
                                                 <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
                                                     <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
                                                     <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Fill" />Edit Policy</a>
-                                                    <a class="smalltool" href="#" @onclick="@((e) => CreateAndRedirectToRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Create Renewal</a>
+                                                    <a class="smalltool" href="#" @onclick="@((e) => CreateAndRedirectToRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Renewal</a>
                                                 </div>
                                             </div>
                                         }
@@ -355,7 +355,7 @@
         if (existingRenewalId.HasValue)
         {
             // If renewal exists, redirect to the existing renewal
-            Navigation.NavigateTo($"/Renewals/{existingRenewalId.Value}");
+            Navigation.NavigateTo($"/Renewals?openid={existingRenewalId.Value}");
             return;
         }
 
@@ -368,7 +368,7 @@
 
         int renewalid = renewal.RenewalId;
 
-        Navigation.NavigateTo($"/Renewals/{renewalid}");
+        Navigation.NavigateTo($"/Renewals?openid={renewalid}");
 
     }
 

@@ -157,7 +157,7 @@
         try
         {
             await DbContext.SaveChangesAsync();
-            NavigationManager.NavigateTo($"/Renewals/{RenewalId}");
+            NavigationManager.NavigateTo($"/Renewals?openid={RenewalId}");
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -179,6 +179,6 @@
 
     public void GoBack()
     {
-        NavigationManager.NavigateTo($"/Renewals/{RenewalId}");
+        NavigationManager.NavigateTo($"/Renewals?openid={RenewalId}");
     }
 }

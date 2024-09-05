@@ -31,7 +31,7 @@
                     <tr class="trow @(task.Highlighted ? "highlighted" : "")">
                         <td class="tcname">@task.ClientName </td>
                         <td><span class="hprod">@task.PolicyProduct</span><span class="hexp">@task.RenewalDate.ToString("MM/dd")</span></td>
-                        <td class="ttname"><a href="Renewals/@task.RenewalId">@task.TaskName</a></td>
+                        <td class="ttname"><a href="Renewals?openid=@task.RenewalId">@task.TaskName</a></td>
                         <td class="ttpri">@((MarkupString)task.Priority)</td>
                     </tr>
                 }

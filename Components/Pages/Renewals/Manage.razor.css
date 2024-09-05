@@ -26,6 +26,7 @@
     height: 100%;
     opacity: 1;
 }
+
 .results-off {
     height: 0%;
     overflow: hidden;
@@ -103,3 +104,20 @@ select {
     select::-ms-expand {
         display: none;
     }
+
+.txt-name {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .6em;
+    color: #626262;
+    position:relative;
+    top:-8px;
+    left:-5px;
+}
+.renewal-assignedto {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 4px;
+    position: relative;
+    top: 3px;
+}

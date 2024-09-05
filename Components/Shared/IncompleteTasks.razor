@@ -22,7 +22,7 @@
                 {
                     <tr class="trow2">
                         <td><span class="hprod2">@task.PolicyProduct</span><span class="hexp2">@task.RenewalDate.ToString("MM/dd")</span></td>
-                        <td class="ttname2"><a href="Renewals/@task.RenewalId">@task.TaskName</a></td>
+                        <td class="ttname2"><a href="Renewals?openid=@task.RenewalId">@task.TaskName</a></td>
                     </tr>
                 }
             </tbody>

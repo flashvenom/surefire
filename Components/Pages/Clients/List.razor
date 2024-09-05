@@ -303,7 +303,7 @@
         selectedClient = await ClientService.GetClientById(ClientId);
         SortAndSeparatePolicies();
 
-        clients = await Http.GetFromJsonAsync<List<Client>>("https://localhost:7074/api/Client");
+        clients = await Http.GetFromJsonAsync<List<Client>>("https://flashvenomdesign-001-site6.atempurl.com/api/Client");
         filteredClients = new List<Client>(clients);
     }
 

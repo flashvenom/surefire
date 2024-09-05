@@ -59,7 +59,6 @@
   <ItemGroup>
     <Content Include="Components\Pages\Home.razor.css" />
     <Content Include="Components\Pages\Renewals\Create.razor.css" />
-    <Content Include="Components\Pages\Renewals\View.razor.css" />
   </ItemGroup>
 
   <ItemGroup>

@@ -53,7 +53,7 @@
     }
     private async Task LoadContacts()
     {
-        var response = await Http.GetAsync($"https://localhost:7074/api/Contacts/{ParentType}/{ParentId}");
+        var response = await Http.GetAsync($"https://flashvenomdesign-001-site6.atempurl.com/api/Contacts/{ParentType}/{ParentId}");
         if (response.IsSuccessStatusCode)
         {
             var json = await response.Content.ReadAsStringAsync();

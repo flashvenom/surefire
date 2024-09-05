@@ -85,7 +85,7 @@ builder.Services.AddHttpContextAccessor();
 //My API Services ---------------------------------------//
 builder.Services.AddHttpClient("CertificateApi", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7074/"); // Base address of your Blazor app
+    client.BaseAddress = new Uri("https://flashvenomdesign-001-site6.atempurl.com/"); // Base address of your Blazor app
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 

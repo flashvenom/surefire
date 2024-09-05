@@ -1,5 +1,8 @@
 ﻿.sf-threedot {
     opacity: .5;
+    position:relative;
+    top:1px;
+    left:2px;
 }
 
     .sf-threedot:hover {
@@ -11,6 +14,7 @@
     position: relative;
     top: -4px;
     left: 2px;
+    box-shadow:0px 0px 5px #ffffffc9;
 }
 
 .highlighted-row td:nth-child(2) {
@@ -18,13 +22,80 @@
     color: #000000be !important;
 }
 
+.table {
+    border-collapse: separate; /* Use separate borders instead of collapsed */
+    border-spacing: 0 4px;
+}
 .table thead {
     font-family: "montserrat", sans-serif;
-    font-weight: 100 !important;
+    font-weight: 700 !important;
     text-align: left;
     font-size: 11px;
     color: #767676;
+    text-transform: uppercase;
 }
+tbody tr {
+    background-color: #dce7f4;
+    border-top: 5px solid #0f6cbd;
+    font-weight: bold;
+    
+}
+
+tbody tr td {
+
+}
+.sf-rightcell {
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#dce7f4+0,000000+100&0+0,0.12+100 */
+    background: linear-gradient(to right, rgba(220,231,244,0) 0%,rgba(0,0,0,0.12) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+    padding-left: 10px;
+}
+
+.sf-leftcell {
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#207cca+40,ffffff+43,b9bdcc+46,b9bdcc+46,b9bdcc+94,ffffff+97,dce7f4+100 */
+    background: linear-gradient(to right, #207cca 40%,#ffffff 43%,#b9bdcc 46%,#b9bdcc 46%,#b9bdcc 94%,#ffffff 97%,#dce7f4 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+    padding-right: 10px;
+}
+.taskassigned {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    margin-right: 4px;
+    border:0px solid #fff;
+    position:relative;
+    left:4px;
+}
+:root .ff-input {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 5px 0px;
+    height: 10px !important;
+    font-size: 12px !important;
+    border: 0px;
+    border-radius: 0px;
+    background-color: transparent;
+    border-bottom: 1px dashed #676767;
+    width: 100%;
+}
+
+    :root .ff-input:focus {
+        border: 0px;
+        outline: none;
+        border-bottom: 1px solid #676767;
+    }
+
+    :root .ff-input:active {
+        border: 0px;
+        outline: none;
+        border-bottom: 1px solid #676767;
+    }
+
+
 .sf-tab {
     margin-left: 20px;
 }
@@ -83,12 +154,7 @@
     background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(249,249,249,0.89) 12%,rgba(0,0,0,0.05) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 }
 
-.sf-leftcell {
-    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#207cca+42,b1c9e8+55,ffffff+100 */
-    background: linear-gradient(to right, #207cca 42%,#b1c9e8 55%,#ffffff 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-    border-top-left-radius: 15px;
-    border-bottom-left-radius: 15px;
-}
+
 
 .leftpad {
     padding-left: 25px;
@@ -246,11 +312,7 @@
     box-shadow: 0px 0px 5px #ccc;
 }
 
-:root .e-input {
-    padding: 5px;
-    height: 20px !important;
-    font-size: 12px !important;
-}
+
 
 :root th {
     font-weight: 300 !important;
@@ -277,6 +339,8 @@
 
 .completed-row > td:not(:first-child) {
     opacity: .5 !important;
+    background-color:#ffffff;
+    font-weight:normal;
 }
 
 .hidden-row {
@@ -406,10 +470,7 @@
     top: 21px !important;
 }
 
-:root .e-stepper .e-stepper-progressbar {
-    top: 16px !important;
-    height: 3px;
-}
+
 
 :root .e-plus-icon::before {
     content: '\e805';

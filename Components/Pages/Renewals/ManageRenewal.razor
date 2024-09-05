@@ -75,7 +75,7 @@
     <FluentTabs Size="TabSize.Large">
         <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab">
             
-        <table class="table">
+        <table class="table" border="0" cellpadding="0" cellspacing="0">
             <thead>
                 <tr>
                     <th></th>
@@ -112,21 +112,20 @@
                                     <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.EyeOff())" Color="Color.FillInverse" Slot="start" /></span>
                                     Hide
                                 </FluentMenuItem>
-
                             </FluentMenu>
                             <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
                         </td>
                         <td style="padding:0px 5px;">@task.TaskItemName</td>
                         <td class="ds">@((MarkupString)DateHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
                         <td>
-                            <input type="text" value="@task.Notes" class="e-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
+                            <input type="text" value="@task.Notes" class="ff-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
                         </td>
-                        <td>
+                        <td class="sf-rightcell">
                             @if (task.AssignedSubUser != null)
                             {
                                 <div style="display: flex; align-items: center;">
-                                    <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
                                     <span class="sf-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
+                                    <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" class="taskassigned" />
                                 </div>
                             }
                         </td>
@@ -216,12 +215,13 @@
                             </div>
                 
                         }
-                        <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.End" ID="@("stepper-" + @item.SubmissionId)" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item))">
+
+                        <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.Bottom" ID="@("stepper-" + @item.SubmissionId)" @bind-ActiveStep="@item.StatusInt" StepChanged="@(args => OnStepperValueChanged(args, item))">
                             <StepperSteps>
-                                <StepperStep IconCss="e-icons e-plus-icon" Label="Started"></StepperStep>
-                                <StepperStep IconCss="e-icons e-pencil-icon" Label="Submitted"></StepperStep>
-                                <StepperStep IconCss="e-icons e-changes-icon" Label="Underwriting"></StepperStep>
-                                <StepperStep IconCss="e-icons e-send-icon" Label="Quoted"></StepperStep>
+                                <StepperStep IconCss="e-icons e-plus-icon" Label="Starting"></StepperStep>
+                                <StepperStep IconCss="e-icons e-pencil-icon" Label="Submited"></StepperStep>
+                                <StepperStep IconCss="e-icons e-changes-icon" Label="UndWrite"></StepperStep>
+                                <StepperStep IconCss="e-icons e-send-icon" Label="Quoting"></StepperStep>
                                 <StepperStep IconCss="e-icons e-signature-icon" Label="Proposed"></StepperStep>
                                 <StepperStep IconCss="e-icons e-trash-icon" Label="Declined"></StepperStep>
                                 <StepperStep IconCss="e-icons e-check-icon" Label="Accepted"></StepperStep>
@@ -269,7 +269,19 @@
         </FluentTab>
     </FluentTabs>
 }
-
+<style>
+    :root .e-stepper {
+        transform: scale(0.8);
+        width:600px;
+        position:relative;
+        top: 10px;
+        left:-60px;
+    }
+:root .e-stepper .e-stepper-progressbar {
+    top: 16px !important;
+    height: 3px;
+}
+</style>
 @code {
     [Parameter]
     public int selectedRenewalId { get; set; }

@@ -229,12 +229,6 @@ main {
     transform: translateY(-20px);
     transition: all 0.3s ease-in-out;
 }
-.fsearch-selecteditem {
-    background-color: #2b2b2b;
-    color:#e8e8e8;
-    cursor: pointer;
-    font-weight:bold;
-}
 /*--------------------------Main Layout Items----------------------------*/
 .app-logo {
     opacity: 0.7;
@@ -675,7 +669,6 @@ main {
     font-size: .6em;
     color:#a3a3a3;
 }
-
 .e-toolbar-spacer {
     flex-grow: 1;
 }
@@ -732,7 +725,7 @@ a, .btn-link {
     text-decoration: none;
 }
 .sf-table tbody td {
-    padding:0px 0px;
+    padding:3px 0px;
 }
 .sf-table tbody {
     font-size:1.3em;

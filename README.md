@@ -22,7 +22,7 @@ https://youtu.be/4MuP97-Afqo
 ![Simple renewal tracking system](https://flashvenom.com/surefire/surefire4.png)
 ![Tasks and submissions](https://flashvenom.com/surefire/surefire5.png)
 ![Surefire homepage](https://flashvenom.com/surefire/surefire6.png)
- 
+
 ## Technologies Used
 
 - **ASP.NET Core 8**
@@ -113,6 +113,16 @@ https://youtu.be/4MuP97-Afqo
     ```bash
     dotnet run
     ```
+
+### Version History
+**.0.0.1 - 2021-08-20**
+- Initial Release
+- Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
+- Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
+- Uses Identity for user authentication and employee logins
+- Renewal Center with submission tracking
+- Master task editor to add tasks to be copied as workflow templates for renewals
+- Much more...
 
 ### Roadmap / Wishlist
 - **Get a basic master search going using the top search bar**

@@ -20,10 +20,10 @@
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true"
             Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
         <GridEvents OnActionFailure="@ActionFailure" TValue="Product"></GridEvents>
-        <SfDataManager Url="https://localhost:7074/api/Product"
-                       InsertUrl="https://localhost:7074/api/Product/Insert"
-                       UpdateUrl="https://localhost:7074/api/Product/Update"
-                       RemoveUrl="https://localhost:7074/api/Product/Delete"
+        <SfDataManager Url="https://flashvenomdesign-001-site6.atempurl.com/api/Product"
+                       InsertUrl="https://flashvenomdesign-001-site6.atempurl.com/api/Product/Insert"
+                       UpdateUrl="https://flashvenomdesign-001-site6.atempurl.com/api/Product/Update"
+                       RemoveUrl="https://flashvenomdesign-001-site6.atempurl.com/api/Product/Delete"
                        Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="20"></GridPageSettings>

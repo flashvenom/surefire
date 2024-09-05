@@ -36,4 +36,26 @@ namespace Mantis.Domain.Renewals.Models
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
 
     }
+
+    public class RenewalDto
+    {
+        public int? RenewalId { get; set; }
+        public int? ProductId { get; set; }
+
+        //public DateTime RenewalDate { get; set; }
+        //public string? Notes { get; set; }
+        //public string? ExpiringPolicyNumber { get; set; }
+        //public decimal? ExpiringPremium { get; set; }
+       
+
+        //public int? CarrierId { get; set; }
+       
+        //public int? WholesalerId { get; set; }
+       
+        //public int? PolicyId { get; set; }
+     
+        
+      
+
+    }
 }

@@ -5,6 +5,9 @@
 # Sensative data
 .env
 
+# Ignore sensitive configuration files
+.env
+
 # User-specific files
 *.rsuser
 *.suo
@@ -364,3 +367,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/wwwroot.zip

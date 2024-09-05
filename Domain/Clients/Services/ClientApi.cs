@@ -31,7 +31,7 @@ namespace Mantis.Domain.Carriers.Services
         [HttpGet]
         public List<Client> GetClientList()
         {
-            return _context.Clients.ToList();
+            return _context.Clients.OrderByDescending(c => c.DateOpened).ToList();
         }
 
         [HttpGet("{id}")]

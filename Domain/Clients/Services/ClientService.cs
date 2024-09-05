@@ -33,11 +33,7 @@ namespace Mantis.Domain.Clients.Services
             _crmApiService = crmApiService;
         }
 
-        public async Task<List<Client>> GetCarriersAsync()
-        {
-            return await _context.Clients.ToListAsync();
-        }
-
+        
         public async Task NewClientQuick(Client client)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
@@ -53,6 +49,9 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.PrimaryContact)
                 .Include(c => c.Locations)
                 .Include(c => c.Certificates)
+                    .ThenInclude(p => p.CreatedBy)
+                .Include(c => c.Certificates)
+                    .ThenInclude(p => p.ModifiedBy)
                 .Include(c => c.Contacts)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Carrier)
@@ -61,14 +60,21 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Product)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
-
+            if (client != null)
+            {
+                client.DateOpened = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
             return client;
         }
 
 
 
+
+
         public async Task<Client> GetClientByCertificateId(int certificateId)
         {
+            //Is this an old function we can remove?
             var client = await _context.Certificates
                 .Where(cert => cert.CertificateId == certificateId)
                 .Include(cert => cert.Client)
@@ -291,5 +297,12 @@ namespace Mantis.Domain.Clients.Services
                 throw new ArgumentException("Invalid clientId or eClientId");
             }
         }
+
+        //Cleanups
+        public async Task<List<Client>> GetCarriersAsync()
+        {
+            return await _context.Clients.ToListAsync();
+        }
+
     }
 }

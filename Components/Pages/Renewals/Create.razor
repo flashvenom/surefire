@@ -31,6 +31,9 @@
     <EditForm OnValidSubmit="HandleValidSubmit" EditContext="@editContext" FormName="NewRenewalFormThing">
         <DataAnnotationsValidator />
         <h1>Create New Renewal</h1>
+        <h4>TIP: You should create a renewal from the client screens directly if possible. Open the client and find the "Create Renewal" button under the policy. </h4>
+        <h5>
+            This form is for creating second renewals, leads and new business, or for special circumstances.</h5>
         <div class="sfpage-newcarrier">
             <div class="sf-col-1">
                 @if (clients != null)

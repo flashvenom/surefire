@@ -18,9 +18,10 @@ https://youtu.be/4MuP97-Afqo
 - Store basic policy data like limits, rates and coverages. Attach endorsements to be included in certificates.
 - Issue, store and manage certificates quickly and easily
 ![Using the client screen and UI](https://flashvenom.com/surefire/surefire2.png)
-![Surefire's client browser](https://flashvenom.com/surefire/surefire3.png)
+![Surefire's client browser](https://flashvenom.com/surefire/surefire10.png)
 ![Simple renewal tracking system](https://flashvenom.com/surefire/surefire4.png)
 ![Tasks and submissions](https://flashvenom.com/surefire/surefire5.png)
+![Submission tracker](https://flashvenom.com/surefire/surefire11.png)
 ![Surefire homepage](https://flashvenom.com/surefire/surefire6.png)
  
 ## Technologies Used

@@ -203,17 +203,13 @@
     [Parameter]
     public string htmlUser { get; set; }
 
-    [Parameter]
-    public int jumpToRenewalId { get; set; } = 0;
-
     public int selectedRenewalId { get; set; } = 0;
     public int alreadyJumped = 0;
     private int? lastJumpMonth;
     private int? lastJumpYear;
-    private int? openid;
+    public int openid;
     private bool isInitialized = false;
-    private System.Timers.Timer debounceTimer;
-    List<ApplicationUser> allUsers { get; set; }
+    List<ApplicationUser> allUsers { get; set; } = new List<ApplicationUser>();
     List<Renewal> RenewalList { get; set; } = new List<Renewal>();
     List<Policy> PolicyOrphanList { get; set; } = new List<Policy>();
     string resultsClass = "results-on";
@@ -221,29 +217,33 @@
 
     protected override async Task OnInitializedAsync()
     {
-        debounceTimer = new System.Timers.Timer(100);
-        debounceTimer.AutoReset = false;
-        debounceTimer.Elapsed += (sender, args) => ResetSelectedId();
-
+        Console.WriteLine($"--------------------------------------------OnInitialized rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
         htmlUser = UserService.GetLoggedInUserId();
         allUsers = await UserService.GetAllUsers();
-        RenewalList = await GetFilteredList();
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        //If there is a openid parameter, load the renewal
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        var queryParams = QueryHelpers.ParseQuery(uri.Query);
-        if (queryParams.TryGetValue("openid", out var openid))
-        {
-            int parsedopenid = Convert.ToInt32(openid);
-            LoadRenewal(parsedopenid);
-        }
+        Console.WriteLine($"--------------------------------------------ParamSet rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
+        //if(isInitialized)
+        //{
+            //If there is a openid parameter, load the renewal
+            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+            var queryParams = QueryHelpers.ParseQuery(uri.Query);
+            if (queryParams.TryGetValue("openid", out var openidout))
+            {
+                Console.WriteLine($"--------------------------------------------LoadingRenewal openid:{openidout}");
+                int parsedopenid = Convert.ToInt32(openidout);
+                LoadRenewal(parsedopenid);
+            }else{
+                RenewalList = await GetFilteredList();
+            }
+        //}
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        Console.WriteLine($"--------------------------------------------OnAfterRender firstrender: {firstRender} rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
         if (firstRender)
         {
             //Use JSinterop to load state from browser storage
@@ -255,6 +255,7 @@
 
     private async Task<List<Renewal>> GetFilteredList()
     {
+        Console.WriteLine($"--------------------------------------------GetFilteredList rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
         ShowResults();
         RenewalList = await RenewalService.GetFilteredRenewalListAsync(htmlMonth, htmlYear, htmlUser);
         PolicyOrphanList = await RenewalService.GetFilteredRenewalOrphanListAsync(htmlMonth, htmlYear);
@@ -269,12 +270,14 @@
     }
     private async Task SaveStateAsync()
     {
+        Console.WriteLine($"--------------------------------------------SaveStateAsync rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
         await sessionStorage.SetAsync("htmlMonth", htmlMonth);
         await sessionStorage.SetAsync("htmlYear", htmlYear);
         await sessionStorage.SetAsync("htmlUser", htmlUser);
     }
     private async Task LoadStateAsync()
     {
+        Console.WriteLine($"--------------------------------------------LoadStateAsync rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
         var monthResult = await sessionStorage.GetAsync<int>("htmlMonth");
         htmlMonth = monthResult.Success ? monthResult.Value : DateTime.Now.Month;
 
@@ -291,30 +294,25 @@
     }
     public void LoadRenewal(int renewalid)
     {
+        Console.WriteLine($"--------------------------------------------LoadRenewal rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
         ShowSelected();
         selectedRenewalId = renewalid;
     }
 
     private async void FormChangeMonth(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
-        debounceTimer.Stop();
-        debounceTimer.Start();
         htmlMonth = Convert.ToInt16(args.Value);
         await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeYear(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
-        debounceTimer.Stop();
-        debounceTimer.Start();
         htmlYear = Convert.ToInt16(args.Value.ToString());
         await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
     private async void FormChangeUser(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
-        debounceTimer.Stop();
-        debounceTimer.Start();
         htmlUser = args.Value.ToString();
         await SaveStateAsync();
         RenewalList = await GetFilteredList();
@@ -331,8 +329,6 @@
             htmlMonth = 12;
             htmlYear--;
         }
-        debounceTimer.Stop();
-        debounceTimer.Start();
         await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
     }
@@ -347,18 +343,8 @@
             htmlMonth = 1;
             htmlYear++;
         }
-        debounceTimer.Stop();
-        debounceTimer.Start();
         await SaveStateAsync();
         await ChangeMonthAndYearAsync(htmlMonth, htmlYear);
-    }
-
-    private void ResetSelectedId()
-    {
-        //Click out of selected renewal and go back to filtered list
-        //selectedRenewalId = 0;
-        //StateHasChanged();
-        //InvokeAsync(StateHasChanged);
     }
     private void HideResults()
     {
@@ -366,8 +352,6 @@
     }
     private void ShowResults()
     {
-        debounceTimer.Stop();
-        debounceTimer.Start();
         resultsClass = "results-on";
         selectedClass = "results-off";
     }

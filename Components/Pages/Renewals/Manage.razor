@@ -119,14 +119,14 @@
                 <table class="sf-table">
                     <thead class="sf-thead">
                         <tr class="sf-rentable">
-                            <th>Renewal</th>
+                            <th>Date</th>
                             <th>Line</th>
-                            <th><strong>Insured Name</strong></th>
+                            <th><strong>Insured</strong></th>
                             <th>%</th>
                             <th>Carrier</th>
                             <th>MGA</th>
-                            <th>Policy #</th>
-                            <th>Rn-Po#</th>
+                            <th>Policy</th>
+                            <th>Id</th>
                             <th>Assigned To</th>
                         </tr>
                     </thead>
@@ -143,8 +143,8 @@
                                 <td class="sf-td-sm"><a href="/Clients/List/@item.ClientId">@item.Policy?.PolicyNumber</a></td>
                                 <td class="sf-td-mono">@(item.RenewalId + "-" + item.Policy?.PolicyId)</td>
                                 <td>
-                                    <img src="img/staff/@item.AssignedTo.PictureUrl" alt="User Image" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 4px;" />
-                                    <span class="txt-p">@item.AssignedTo?.FirstName @item.AssignedTo?.LastName</span>
+                                    <img src="img/staff/@item.AssignedTo.PictureUrl" alt="User Image" class="renewal-assignedto" />
+                                    <span class="txt-name">@item.AssignedTo?.FirstName @item.AssignedTo?.LastName</span>
                                 </td>
                             </tr>
                         }
@@ -390,17 +390,5 @@
 
         Navigation.NavigateTo($"/Renewals/{renewalid}");
 
-    }
-    public static int RenewalProgressPercent(ICollection<TrackTask> tasks)
-    {
-        if (tasks == null || tasks.Count == 0)
-        {
-            return 0;
-        }
-
-        int totalTasks = tasks.Count;
-        int completedTasks = tasks.Count(task => task.Completed);
-
-        return (int)((double)completedTasks / totalTasks * 100);
     }
 }

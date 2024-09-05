@@ -89,7 +89,7 @@
                         <tr>
                             <td>@item.RenewalDate.ToString("MM/d")</td>
                             <td class="sf-td-mono">@item.Product?.LineCode</td>
-                            <td class="sf-td-bold"><a href="/Renewals/@item.RenewalId">@item.Client?.Name</a></td>
+                            <td class="sf-td-bold"><a href="/Renewals?openid=@item.RenewalId">@item.Client?.Name</a></td>
                             
                             <td class="sf-td-sm">@item.Carrier?.CarrierName</td>
                             <td class="sf-td-sm2">@item.Wholesaler?.CarrierNickname</td>

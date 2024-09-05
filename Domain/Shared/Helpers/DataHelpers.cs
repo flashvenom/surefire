@@ -4,7 +4,7 @@ namespace Mantis.Domain.Shared.Helpers
 {
     public static class DataHelper
     {
-        public static int RenewalProgressPercent(ICollection<TrackTask> tasks)
+        public static int RenewalProgressPercentWeighted(ICollection<TrackTask> tasks)
         {
             if (tasks == null || tasks.Count == 0)
             {
@@ -29,6 +29,20 @@ namespace Mantis.Domain.Shared.Helpers
 
             // Calculate weighted completion percentage
             return (int)((weightedCompleted / totalWeight) * 100);
+        }
+
+        public static int RenewalProgressPercent(ICollection<TrackTask> tasks)
+        {
+            if (tasks == null || tasks.Count == 0)
+            {
+                return 0;
+            }
+
+            int totalTasks = tasks.Count;
+            int completedTasks = tasks.Count(task => task.Completed);
+
+            // Calculate evenly distributed completion percentage
+            return (int)((double)completedTasks / totalTasks * 100);
         }
     }
 }

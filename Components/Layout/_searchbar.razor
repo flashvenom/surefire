@@ -5,11 +5,12 @@
 @using Mantis.Domain.Shared.Models
 @inject SearchService SearchService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <div class="fsearch-container">
     <div class="fsearch-bar">
-        <FluentTextField Id="fSearcher" @bind-Value="mainSearchString" @oninput="OnInputChanged" @onfocusout="OnBlur" Placeholder="Search everything..." Class="fsearch-quick" @onblur="OnBlur">
+        <FluentTextField Id="fSearcher" @bind-Value="mainSearchString" @oninput="OnInputChanged" @onfocusout="OnBlur" Placeholder="Search everything..." Class="fsearch-quick" @onblur="OnBlur" AutoComplete="off" @onkeydown="HandleKeyDown">
             <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
         </FluentTextField>
     </div>
@@ -19,17 +20,21 @@
                 string dataType = "";
             }
             @if (searchResults != null){
-                @foreach (var item in searchResults)
+                @foreach (var item in searchResults.Select((item, index) => new { Item = item, Index = index }))
                 {
-                    if (item.DataType != dataType)
+                    if (item.Item.DataType != dataType)
                     {
-                        dataType = item.DataType;
-                        <div class="search-category">@item.DataType</div>
+                        dataType = item.Item.DataType;
+                        <div class="search-category">@item.Item.DataType</div>
                     }
-                    <div class="search-item" @onclick="() => GoLink(item)">@item.Primary</div>
-                    @if(item.Parent?.Length != null)
+
+                    <div class="search-item @(selectedIndex == item.Index ? "fsearch-selecteditem" : "")" @onclick="() => GoLink(item.Item)">
+                        @item.Item.Primary
+                    </div>
+
+                    @if(item.Item.Parent?.Length != null)
                     {
-                        <div class="search-item-parent">@item.Parent</div>
+                        <div class="search-item-parent">@item.Item.Parent</div>
                     }
                 }
             }
@@ -107,5 +112,37 @@
             NavigationManager.NavigateTo($"/Clients/List/{item.Id}");
         }
         Console.WriteLine("GoLink" + item.DataType + ":" + item.Id);
+    }
+
+    private int selectedIndex = -1;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (searchResults == null || !searchResults.Any())
+            return;
+        
+        if (e.Key == "Escape")
+        {
+            await JS.InvokeVoidAsync("blurField", "fSearcher");
+            return;
+        }
+
+        if (e.Key == "ArrowDown")
+        {
+            // Move selection down
+            selectedIndex = (selectedIndex + 1) % searchResults.Count;
+            StateHasChanged();
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            // Move selection up
+            selectedIndex = (selectedIndex - 1 + searchResults.Count) % searchResults.Count;
+            StateHasChanged();
+        }
+        else if (e.Key == "Enter" && selectedIndex >= 0)
+        {
+            // Navigate to the selected result
+            GoLink(searchResults[selectedIndex]);
+        }
     }
 }

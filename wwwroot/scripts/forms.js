@@ -40,3 +40,7 @@ function updateUrl(newPathAndQuery) {
     const newUrl = `${window.location.origin}${newPathAndQuery}`;
     window.history.pushState({}, '', newUrl);
 }
+
+function blurField(elementId) {
+    document.getElementById(elementId).blur();
+}

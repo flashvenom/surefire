@@ -32,6 +32,13 @@ https://youtu.be/4MuP97-Afqo
 - **Microsoft FluentUI**
 
 ### Version History
+**.0.0.3 - 2021-09-05**
+- Renewal filter save state using browser session
+- Enhanced renewal task lists
+- Fast Search now has keyboard control
+- File organization and Quality of Life fixes
+- Misc bug fixes
+
 **.0.0.2 - 2021-08-28**
 - Enhanced client browsing
 - Policy coverage details screens for GL, WC and Auto

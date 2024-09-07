@@ -5,6 +5,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Policies.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -155,6 +156,31 @@ namespace Mantis.Domain.Clients.Services
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task AddContactsToClientAsync(int clientId, List<Contact> contacts)
+        {
+            var client = await _context.Clients
+                .Include(c => c.Contacts)
+                .FirstOrDefaultAsync(c => c.ClientId == clientId);
+
+            if (client != null)
+            {
+                foreach (var contact in contacts)
+                {
+                    if (client.Contacts.All(c => c.Email != contact.Email)) // Prevent duplicates by email
+                    {
+                        client.Contacts.Add(contact);
+                    }
+                }
+
+                await _context.SaveChangesAsync(); // Persist changes
+            }
+            else
+            {
+                throw new Exception("Client not found.");
+            }
+        }
+
 
         // Create a new client
         public async Task<int> CreateClientAsync(Client client)

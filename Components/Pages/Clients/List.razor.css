@@ -1,4 +1,50 @@
-﻿.clientlist-tabcontainer {
+﻿:root .smallbutton {
+    font-size: .6em !important;
+    padding: 0px 0px !important;
+    margin: 0px 0px !important;
+    width: 50px;
+}
+
+:root .sf-tab {
+    background-color: #fff;
+    border-radius: 5px;
+    line-height: 1.1;
+}
+
+:root .smallicon {
+    position: relative !important;
+    top: 3px !important;
+    left: -2px !important;
+}
+
+.page-content {
+    display: flex;
+    flex-direction: row;
+}
+
+.tinyexpander {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    opacity: .3;
+}
+
+    .tinyexpander:hover {
+        opacity: 1;
+        cursor: pointer;
+    }
+
+
+
+:root .sf-collapse {
+    width: 15px;
+    background-color: #e2e2e2;
+    height: 100%;
+    float: right;
+}
+
+
+.clientlist-tabcontainer {
     /*background-color:#fcfcfc;*/
     background-color:#fff;
 }

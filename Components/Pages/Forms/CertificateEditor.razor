@@ -569,14 +569,14 @@
                     jsonObject["GeneralLiability_OccurrenceIndicator"] = "On";
                 
                 //Add filename to certificate for when/if we export/combine PDFs
-                if (glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment != null)
+                if (glpolicy.GeneralLiabilityCoverage?.AdditionalInsuredAttachment != null)
                 {
                     certificate.AttachGLAIfilename = glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment.FileName;
 
                 }
 
                 //Add filename to certificate for when/if we export/combine PDFs
-                if (glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment != null)
+                if (glpolicy.GeneralLiabilityCoverage?.WaiverOfSubAttachment != null)
                 {
                     certificate.AttachGLWOSfilename = glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment.FileName;
                 }

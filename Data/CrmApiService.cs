@@ -61,6 +61,16 @@ namespace Mantis.Data
             return await response.Content.ReadAsStringAsync();
         }
 
+        public async Task<string> GetClientContactsAsync(string clientId, string accessToken)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.ClientAddress}/{clientId}/contacts");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync();
+        }
+
         public async Task<string> GetPolicyLinesAsync(string ePolicyId, string accessToken)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"{_options.PoliciesAddress}/{ePolicyId}/lines");

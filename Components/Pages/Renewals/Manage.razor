@@ -29,7 +29,7 @@
 
     <span class="sf-verthr"></span>
 
-    <NavLink class="toolbar-link" @onclick="ShowResults" Match="NavLinkMatch.Prefix">
+    <NavLink class="toolbar-link" @onclick="GetFilteredList" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.BookStar())" />
         <span class="toolbar-text">Browse</span>
     </NavLink>
@@ -220,25 +220,22 @@
         Console.WriteLine($"--------------------------------------------OnInitialized rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
         htmlUser = UserService.GetLoggedInUserId();
         allUsers = await UserService.GetAllUsers();
+        RenewalList = await GetFilteredList();
     }
 
     protected override async Task OnParametersSetAsync()
     {
         Console.WriteLine($"--------------------------------------------ParamSet rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
-        //if(isInitialized)
-        //{
-            //If there is a openid parameter, load the renewal
-            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-            var queryParams = QueryHelpers.ParseQuery(uri.Query);
-            if (queryParams.TryGetValue("openid", out var openidout))
-            {
-                Console.WriteLine($"--------------------------------------------LoadingRenewal openid:{openidout}");
-                int parsedopenid = Convert.ToInt32(openidout);
-                LoadRenewal(parsedopenid);
-            }else{
-                RenewalList = await GetFilteredList();
-            }
-        //}
+        RenewalList = await GetFilteredList();
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+        if (queryParams.TryGetValue("openid", out var openidout))
+        {
+            Console.WriteLine($"--------------------------------------------LoadingRenewal openid:{openidout}");
+            int parsedopenid = Convert.ToInt32(openidout);
+            LoadRenewal(parsedopenid);
+        }
+
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

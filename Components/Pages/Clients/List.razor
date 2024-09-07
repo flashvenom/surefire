@@ -6,6 +6,8 @@
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Shared
 @using Mantis.Domain.Policies.Components
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Components.Shared
@@ -185,6 +187,17 @@
                                 <_Certificates client="selectedClient" />
                             </div>
                         </FluentTab>
+
+                        <FluentTab Id="tab-5" Label="Import" Class="sf-tab">
+                            <div class="tabcontents">
+                                <div class="txt-section">Import Tools</div>
+                                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="ImportContacts">Import Contacts</FluentButton>
+                                <hr>
+                                <ContactsListImport Contacts="@loadedContacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
+                                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Save Imported Contacts</FluentButton>
+                                <hr>
+                            </div>
+                        </FluentTab>
                     </FluentTabs>
                     <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                 </div>
@@ -194,42 +207,6 @@
     </div>
 </div>
 <style>
-    :root .smallbutton {
-        font-size: .6em !important;
-        padding: 0px 0px !important;
-        margin: 0px 0px !important;
-        width: 50px;
-    }
-
-    :root .sf-tab {
-        background-color: #fff;
-        border-radius: 5px;
-        line-height: 1.1;
-    }
-
-    :root .smallicon {
-        position: relative !important;
-        top: 3px !important;
-        left: -2px !important;
-    }
-
-    .page-content {
-        display: flex;
-        flex-direction: row;
-    }
-
-    .tinyexpander {
-        position: absolute;
-        top: 0px;
-        left: 0px;
-        opacity: .3;
-    }
-
-        .tinyexpander:hover {
-            opacity: 1;
-            cursor: pointer;
-        }
-
     :root .sf-quicklist {
         width: 300px !important;
         overflow: hidden;
@@ -253,30 +230,20 @@
         height: 25px !important;
     }
 
-    :root .sf-collapse {
-        width: 15px;
-        background-color: #e2e2e2;
-        height: 100%;
-        float: right;
-    }
-
     :root .sf-searchquick {
         width: 290px !important
     }
 </style>
 
 @code {
-    [Parameter, SupplyParameterFromQuery]
-    public int ClientId { get; set; } = 91;
+        [Parameter, SupplyParameterFromQuery]
+        public int ClientId { get; set; } = 91;
+
+        [Parameter]
+        public bool showCreatePolicy { get; set; } = false;
+
     private HashSet<int> expandedPolicies = new HashSet<int>();
-
-    [Parameter]
-    public bool showCreatePolicy { get; set; } = false;
-
     private int activeTabIndex = 0; // Default to the first tab
-
-
-
     private FluentTabs tabInterface { get; set; }
     private string searchTerm = string.Empty;
     private List<Client> clients = new();
@@ -284,14 +251,13 @@
     private List<Policy> clientPolicies = new();
     private List<Policy> currentPolicies = new();
     private List<Policy> pastPolicies = new();
-
+    private List<Contact> loadedContacts = new();
     private System.Timers.Timer debounceTimer;
     private bool isLoadingCrmId = false;
     private string crmClientId = string.Empty;
     private string isLoadingWhat = "Initializing";
     private string dynamicClass = "sf-quicklist";
     private Client selectedClient { get; set; }
-
     SfTextBox SearchBox { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -307,6 +273,7 @@
         filteredClients = new List<Client>(clients);
     }
 
+    //User Interface
     private void SetShowCreatePolicy()
     {
         tabInterface.GoToTabAsync("tab-2");
@@ -336,17 +303,7 @@
         }
     }
 
-    private async void EditPolicy(int policyid)
-    {
-        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
-    }
-    public void Dispose()
-    {
-        debounceTimer?.Dispose();
-
-    }
-
-    
+    //Utility
     private async Task CreateAndRedirectToRenewal(int policyid)
     {
         // Get the existing renewal ID if it exists
@@ -371,7 +328,134 @@
         Navigation.NavigateTo($"/Renewals?openid={renewalid}");
 
     }
+    private async void EditPolicy(int policyid)
+    {
+        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
+    }
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
 
+    }
+    private async void ImportContacts()
+    {
+        crmClientId = selectedClient?.eClientId;
+
+        if (!string.IsNullOrEmpty(crmClientId))
+        {
+            var accessToken = await CrmApiService.GetAccessTokenAsync();
+            var jsonResponse = await CrmApiService.GetClientContactsAsync(crmClientId, accessToken);
+            var contactsData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
+
+            if (contactsData != null && contactsData.ContainsKey("_embedded"))
+            {
+                var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(contactsData["_embedded"].ToString());
+                if (embeddedData != null && embeddedData.ContainsKey("contacts"))
+                {
+                    var contactsList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(embeddedData["contacts"].ToString());
+                    if (contactsList != null && contactsList.Count > 0)
+                    {
+                        foreach (var contactItem in contactsList)
+                        {
+                            // Retrieve first and last names
+                            var firstName = contactItem.ContainsKey("firstName") ? contactItem["firstName"].ToString() : string.Empty;
+                            var lastName = contactItem.ContainsKey("lastName") ? contactItem["lastName"].ToString() : string.Empty;
+
+                            // Handling phone numbers
+                            var phoneNumbers = contactItem.ContainsKey("phoneNumbers") ? contactItem["phoneNumbers"] as JArray : null;
+                            string phone = string.Empty;
+                            string mobile = string.Empty;
+                            string additionalNotes = string.Empty;
+
+                            if (phoneNumbers != null)
+                            {
+                                foreach (var phoneNumber in phoneNumbers)
+                                {
+                                    var type = phoneNumber["type"]?.ToString();
+                                    var number = phoneNumber["number"]?.ToString();
+
+                                    if (type == "BUSINESS" && string.IsNullOrEmpty(phone))
+                                    {
+                                        phone = number;
+                                    }
+                                    else if (type == "MOBILE" && string.IsNullOrEmpty(mobile))
+                                    {
+                                        mobile = number;
+                                    }
+                                    else
+                                    {
+                                        additionalNotes += $"Additional Number ({type}): {number}\n";
+                                    }
+                                }
+                            }
+
+                            var address = contactItem.ContainsKey("address") ? contactItem["address"] as JObject : null;
+                            var streets = address != null && address.ContainsKey("streets") ? address["streets"] as JArray : null;
+                            var street = streets != null && streets.Count > 0 ? streets.First?.ToString() : string.Empty;
+                            var city = address != null ? address["city"]?.ToString() : string.Empty;
+                            var state = address != null ? address["stateOrProvince"]?.ToString() : string.Empty;
+                            var zipCode = address != null ? address["zipOrPostalCode"]?.ToString() : string.Empty;
+
+                            var contact = new Contact
+                                {
+                                    FirstName = firstName,
+                                    LastName = lastName,
+                                    Email = contactItem.ContainsKey("emails") && contactItem["emails"] is JArray emailsArray && emailsArray.Count > 0
+                                    ? emailsArray.First.Value<string>("emailAddress")
+                                    : string.Empty,
+                                    Phone = phone,
+                                    Mobile = mobile,
+                                    Notes = additionalNotes,
+                                    Address = new Address
+                                    {
+                                        AddressLine1 = street,
+                                        City = city,
+                                        State = state,
+                                        PostalCode = zipCode
+                                    }
+                                    // Add more fields as needed
+                                };
+
+                            loadedContacts.Add(contact);
+                        }
+                        isLoadingWhat += "contacts";
+                    }
+                }
+            }
+        }
+    }
+    private async Task AddLoadedContactsToClient()
+    {
+        if (selectedClient != null && loadedContacts.Any())
+        {
+            try
+            {
+                await ClientService.AddContactsToClientAsync(selectedClient.ClientId, loadedContacts.ToList());
+                loadedContacts.Clear(); // Clear the loaded contacts after adding them
+                await InvokeAsync(StateHasChanged); // Update the UI
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error adding contacts: {ex.Message}");
+            }
+        }
+    }
+
+    //Filter Methods
+    private async Task FilterClients()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            filteredClients = new List<Client>(clients);
+        }
+        else
+        {
+            filteredClients = clients
+                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        await InvokeAsync(StateHasChanged);
+    }
     private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
         searchTerm = e.Value.ToString();
@@ -379,6 +463,7 @@
         debounceTimer.Start();
     }
 
+    // Load and Filter Client Methods
     private async void ClickHandler(ClickEventArgs<Client> args)
     {
         ClientId = filteredClients[args.Index].ClientId;
@@ -402,7 +487,6 @@
         SortAndSeparatePolicies();
         //NavigationManager.NavigateTo($"/Clients/List/{ClientId}", forceLoad: false);
     }
-
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
     {
         //API Call
@@ -444,7 +528,6 @@
             NavigationManager.NavigateTo("Clients/List/" + clientid);
         }
     }
-
     private async Task LoadClientPolicies(string clientId, string accessToken)
     {
         try
@@ -484,7 +567,6 @@
             await InvokeAsync(StateHasChanged);
         }
     }
-
     private void SortAndSeparatePolicies()
     {
         var today = DateTime.Today;
@@ -506,24 +588,7 @@
         isLoadingWhat = "X";
         StateHasChanged();
     }
-
-    private async Task FilterClients()
-    {
-        if (string.IsNullOrEmpty(searchTerm))
-        {
-            filteredClients = new List<Client>(clients);
-        }
-        else
-        {
-            filteredClients = clients
-                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-        await InvokeAsync(StateHasChanged);
-    }
-
     
-
     // Policy Expansion Methods
     private void ToggleExpand(int policyId)
     {
@@ -536,12 +601,10 @@
             expandedPolicies.Add(policyId);
         }
     }
-
     private string GetPolicyClass(int policyId)
     {
         return expandedPolicies.Contains(policyId) ? "policy expanded" : "policy";
     }
-
     private string GetLinksStyle(int policyId)
     {
         return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";

@@ -28,7 +28,7 @@
 @rendermode InteractiveServer
 
 
-<div @onmouseleave="() => ExpandDetails(true)">
+<div @onmouseleave="() => ExpandDetails(1)">
 
     <SfBreadcrumb>
         <BreadcrumbItems>
@@ -47,7 +47,7 @@
         <div class="mf-flexrow">
             <div class="@dynamicClass">
                 <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
-                    <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Slot="start" Color="Color.Neutral" />
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
                 </FluentTextField>
                 <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
                     <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
@@ -58,26 +58,45 @@
 
         @if (selectedClient != null)
         {
-            <div class="sf-selected">
+            <div class="sf-selected" @onmouseenter="() => ExpandDetails(0)">
                 <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
-                <div class="sf-header">
-                    <div class="client-header">
-                        @selectedClient.Name <br />
-                        <span class="client-address">
-                            <span class="map-icon"><FluentIcon Value="@(new Icons.Regular.Size20.Location())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>
-                            @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
-                        </span>
-                    </div>
+                <div class="client-top">
+                   
+                        <div class="top-rowone">
+                            <span class="client-name">@selectedClient.Name</span> 
+                            <span class="client-phone">
+                            <span class="phone-icon"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>
+                                <span class="client-phonenumber">@DateHelper.FormatPhoneNumber(selectedClient.PhoneNumber)</span>
+                            </span>
+                        </div>
+                        <div class="top-rowtwo">
+                            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                            <a class="client-data" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString($"{selectedClient.Address.AddressLine1} {selectedClient.Address.AddressLine2} {selectedClient.Address.City}, {selectedClient.Address.State} {selectedClient.Address.PostalCode}")" target="_blank">
+                                @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+                            </a>
 
-                    <div class="client-header-2">
-                    </div>
+                            @if (!string.IsNullOrEmpty(selectedClient.Email))
+                            {
+                                
+                                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                                <a href="@("mailto:" + selectedClient.Email)" class="client-data">
+                                    @selectedClient.Email
+                                </a>
+                            }
 
-                    <div class="client-header-3">
-                        <span class="client-phone">@*<span class="phone-icon"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>  *@ @DateHelper.FormatPhoneNumber(selectedClient.PhoneNumber)</span><br />
-                        <span class="client-email"><span class="email-icon"><FluentIcon Value="@(new Icons.Regular.Size24.Mail())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span> @selectedClient.Email</span>
-                    </div>
+                            @if (!string.IsNullOrEmpty(selectedClient.Website))
+                            {
+                                
+                                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                                <a href="@("http://" + selectedClient.Website)" class="client-data" target="_blank" >
+                                     @selectedClient.Website
+                                </a>
+                            }
+                        </div>
+                   
+                    
                 </div>
-                <div class="clientlist-tabcontainer">
+                <div class="client-main">
                     <FluentTabs @ref="tabInterface" Size="TabSize.Large">
                         <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
                             <div class="sf-col-container">
@@ -88,16 +107,39 @@
                                         @foreach (var policy in currentPolicies)
                                         {
                                             <div class="@GetPolicyClass(policy.PolicyId)" @onclick="() => ToggleExpand(policy.PolicyId)">
-                                                <div class="policy-header">
-                                                    <div>@policy.Product?.LineName <span style="font-size:7px;">@policy.PolicyId</span></div>
-                                                    <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
-                                                </div>
-                                                <div class="policy-details">
-                                                    <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
-                                                </div>
-                                                <div class="policy-details">
-                                                    <div>@policy.PolicyNumber</div>
-                                                    <div>@policy.Premium.ToString("C")</div>
+                                                <FluentStack>
+                                                    <div class="ff1">
+                                                        <div><span class="policy-linename">@policy.Product?.LineName</span></div>
+                                                    </div>
+                                                    <div class="ff2">
+                                                        <span class="edate">@policy.EffectiveDate.ToShortDateString() -&nbsp;</span>
+                                                        <span class="xdate">@policy.ExpirationDate.ToShortDateString()</span>
+                                                    </div>
+                                                   
+                                                </FluentStack>
+                                              
+                                                <div class="policy-carriers">
+
+                                                    @if (!string.IsNullOrEmpty(policy.Carrier?.CarrierName))
+                                                    {
+                                                        <span class="carrier-name">@DataHelper.CropCarrierName(policy.Carrier?.CarrierName)</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(policy.Wholesaler?.CarrierName))
+                                                    {
+                                                        <span class="lighter">|</span>
+                                                        <span class="carrier-name">@DataHelper.CropCarrierName(policy.Wholesaler?.CarrierName)</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(policy.PolicyNumber))
+                                                    {
+                                                        <span class="lighter">|</span>
+                                                        <span class="carrier-name">@policy.PolicyNumber</span>
+                                                    }
+                                                    @if (policy.Premium > 0)
+                                                    {
+                                                        <span class="lighter">|</span>
+                                                        <span class="carrier-name">@policy.Premium.ToString("C0")</span>
+                                                    }
+                                                    
                                                 </div>
                                                 <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
                                                     <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
@@ -117,35 +159,13 @@
                                         <ContactsList Contacts="@primaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="true" />
                                     }
                                     <ContactsList Contacts="@secondaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="false" />
-                                    <h4 class="sf-toppad">Additional Info</h4>
-                                    <FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size24.Globe())" Color="Color.Neutral" /> <a href="@("https://" + selectedClient.Website)" target="_blank" class="txt-bold-md">@selectedClient.Website</a>
                                 </div>@* sf-col-2 *@
 
                                 <div class="sf-col sf-col-3">
-
-                                    <div class="txt-section">Technical Stuff</div>
-                                    <div class="txt-bold-md">Client Code</div>
-                                    <div class="txt-p-lg">@selectedClient.LookupCode</div>
-                                    <br />
-                                    <div class="txt-bold-md">Client Id</div>
-                                    <div class="txt-p-lg">@selectedClient.ClientId</div>
-                                    <div class="txt-small">@selectedClient.eClientId</div>
-                                    <br />
-                                    <div class="txt-bold-md">Debug</div>
-                                        @if (isLoadingCrmId)
-                                        {
-                                            <span class="txt-small">@isLoadingCrmId.ToString()</span>
-                                            <span class="loading-spinner"></span>
-                                        }
-                                        else if (string.IsNullOrEmpty(crmClientId))
-                                        {
-                                            <span class="txt-small">Loading...</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="txt-small">@crmClientId </span>
-                                        <span class="txt-small">@isLoadingWhat</span>
-                                        }
+                                    @if (!string.IsNullOrEmpty(selectedClient.LogoFilename))
+                                    {
+                                        <img src="/uploads/logos/@selectedClient.LogoFilename" class="img-fluid" />
+                                    }
                                 </div>@* sf-col-3 *@
 
                             </div>
@@ -162,8 +182,6 @@
                                     <PastPoliciesList pastPolicies="pastPolicies" />
                                     @if (clientPolicies != null) { <span>Fetched @(clientPolicies.Count) policies from external source!</span> }
                                 }
-
-                                
                             </div>
                         </FluentTab>
                         <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
@@ -179,19 +197,49 @@
                             </div>
                         </FluentTab>
 
-                        <FluentTab Id="tab-5" Label="Import" Class="sf-tab">
-                            <div class="tabcontents">
-                                <div class="txt-section">Import Tools</div>
-                                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="ImportContacts">Import Contacts</FluentButton>
-                                <hr>
-                                <ContactsListImport Contacts="@loadedContacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
-                                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Save Imported Contacts</FluentButton>
-                                <hr>
-                            </div>
+                        <FluentTab Id="tab-5" Label="Utilities" Class="sf-tab">
+                            <FluentStack Class="tabcontents">
+                                <div style="min-width:400px;">
+                                    <div class="txt-section">Import Tools</div>
+                                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="ImportContacts">Import Contacts</FluentButton>
+                                    @if(loadedContacts.Count > 0)
+                                    {
+                                        <ContactsListImport Contacts="@loadedContacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
+                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Save Imported Contacts</FluentButton>
+                                    }
+                                </div>
+                                <div>
+                                    <div class="txt-section">Data</div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">Client Code</div>
+                                        <div class="txt-small-sub">@selectedClient.LookupCode</div>
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">Client Id</div>
+                                        <div class="txt-small-sub">@selectedClient.ClientId</div>
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">eClient Id</div>
+                                        <div class="txt-small-sub">@selectedClient.eClientId</div>
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">API Status</div>
+                                        @if (isLoadingCrmId)
+                                        {
+                                            <div class="txt-small-sub">@isLoadingCrmId.ToString()</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="txt-small-sub">@isLoadingWhat</div>
+                                        }
+                                    </div>
+                                </div>
+                            </FluentStack>
                         </FluentTab>
                     </FluentTabs>
                     <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
                 </div>
+                
             </div>
         }
         <div style="clear:both;"></div>
@@ -224,6 +272,12 @@
     :root .sf-searchquick {
         width: 290px !important
     }
+    :root .smallicon {
+        position: relative !important;
+        top: 3px !important;
+        left: -2px !important;
+    }
+
 </style>
 
 @code {
@@ -324,11 +378,14 @@
     {
         showCreatePolicy = true;
     }
-    public void ExpandDetails(bool? forceOpen = null)
+    public void ExpandDetails(int? forceIt = null)
     {
-        if (forceOpen.HasValue)
+        if (forceIt == 1)
         {
-            dynamicClass = forceOpen.Value ? "sf-quicklist" : "sf-quicklist-close";
+            dynamicClass = "sf-quicklist";
+        }else if (forceIt == 0)
+        {
+            dynamicClass = "sf-quicklist-close";
         }
         else
         {
@@ -516,7 +573,7 @@
         // Separate and sort policies
 
         NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
-        ExpandDetails(false);
+        ExpandDetails();
         SortAndSeparatePolicies();
         //NavigationManager.NavigateTo($"/Clients/List/{ClientId}", forceLoad: false);
     }

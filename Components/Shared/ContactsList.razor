@@ -27,7 +27,7 @@
 
             // Build the headshot image path per contact
             string headshotImage = !string.IsNullOrEmpty(item.HeadshotFilename)
-            ? "/uploads/client/" + item.HeadshotFilename
+            ? "/uploads/headshots/" + item.HeadshotFilename
             : null;
 
             <FluentStack Class="@("m-contact-" + IsPrimary)">

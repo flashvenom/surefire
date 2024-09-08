@@ -34,7 +34,7 @@ main {
 .page-content {
     padding: 10px;
     background: linear-gradient(135deg, #f9f9f9 0%,#e8e8e8 54%,#f7f7f7 76%,#e2e2e2 100%);
-    height: calc(100vh - 160px);
+    height: calc(100vh - 150px);
     max-height: 90vh;
     max-width: 100vw;
     overflow-y:scroll;
@@ -632,6 +632,12 @@ main {
     text-transform: uppercase;
     text-align:left;
 }
+.txt-small-sub {
+    font-family: "Segoe UI";
+    font-size: .7em;
+    color: #484848;
+    text-align: left;
+}
 .txt-cursive {
     font-family: montserrat, sans-serif;
     font-size: .7em;
@@ -682,7 +688,6 @@ main {
     font-size: 1.5em;
     font-weight: 100;
     font-family: montserrat, sans-serif;
-    background-color:#593293;
 }
 .txt-label {
     font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
@@ -938,4 +943,8 @@ hr {
     font-family: "montserrat", sans-serif;
     font-weight:500;
     color:#8a8a8a;
+}
+.img-fluid {
+    max-width: 100%;
+    height: auto;
 }

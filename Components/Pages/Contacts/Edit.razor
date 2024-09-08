@@ -95,7 +95,7 @@
                         @if (!string.IsNullOrEmpty(Contact.HeadshotFilename))
                         {
                             <div>
-                                <img src="/uploads/client/@Contact.ClientId-@Contact.ContactId-headshot.@GetFileExtension(Contact.HeadshotFilename)" width="100" height="100" alt="Headshot" /><br />
+                                <img src="/uploads/headshots/@Contact.HeadshotFilename" width="100" height="100" alt="Headshot" /><br />
                                 <FluentButton Appearance="Appearance.Lightweight" OnClick="@(async () => await RemoveFile(ContactId))">Remove</FluentButton>
                             </div>
                         }
@@ -216,9 +216,10 @@
             var file = args.Files[0];
             if (file != null)
             {
+                //string uploadPath = DataHelper.BuildUploadPath(Contact.ClientId, Contact.ContactId, Contact.FirstName, Contact.LastName, "headshots", Path.GetExtension(file.FileInfo.Name));
                 string extension = Path.GetExtension(file.FileInfo.Name);
-                string fileName = $"{Contact.ClientId}-{Contact.ContactId}-headshot{extension}";
-                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/client/", fileName);
+                string cleanFileName = DataHelper.BuildUploadPath(Contact.ContactId, Contact.FirstName, Contact.LastName, "headshots", extension);
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/headshots/", cleanFileName);
 
                 using (var stream = file.File.OpenReadStream(long.MaxValue))
                 {
@@ -236,7 +237,7 @@
                 }
 
                 // Update the Contact's HeadshotFilename field
-                Contact.HeadshotFilename = fileName;
+                Contact.HeadshotFilename = cleanFileName;
                 await ContactService.UpdateContactAsync(Contact);
                 StateHasChanged(); // Refresh UI to show the updated headshot
             }

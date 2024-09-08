@@ -20,6 +20,7 @@ namespace Mantis.Domain.Clients.Models
         public string? Email { get; set; }
         public string? Website { get; set; }
         public string? Comments { get; set; }
+        public string? LogoFilename { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedDate { get; set; }
         public DateTime DateOpened { get; set; } = DateTime.UtcNow;

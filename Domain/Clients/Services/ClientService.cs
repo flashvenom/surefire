@@ -69,7 +69,32 @@ namespace Mantis.Domain.Clients.Services
             return client;
         }
 
+        public async Task<Client> RemoveLogo(int clientId)
+        {
+            // Retrieve the client by ID
+            var client = await _context.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
 
+            if (client == null || string.IsNullOrEmpty(client.LogoFilename))
+            {
+                return null; // No client found or no logo to remove
+            }
+
+            // Construct the file path for the logo
+            string filePath = Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot/uploads/logos", client.LogoFilename);
+
+            // Check if the file exists, and if it does, delete it
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+
+            // Set the LogoFilename to null and update the client in the database
+            client.LogoFilename = null;
+            _context.Clients.Update(client);
+            await _context.SaveChangesAsync();
+
+            return client; // Return the updated client
+        }
 
 
 

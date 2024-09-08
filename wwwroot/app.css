@@ -378,29 +378,61 @@ main {
     border: 1px solid #e4e4e4;
     border-left: 5px solid #ccc;
     border-radius: 3px;
-    max-width: 300px;
+    width:100%;
     margin-bottom: 11px;
     font-family: "montserrat", sans-serif;
 }
 
+.m-contact-True {
+    padding: 5px;
+    border: 1px solid #1b8ce3;
+    border-left: 5px solid #1b8ce3;
+    border-radius: 3px;
+    width: 100%;
+    margin-bottom: 11px;
+    font-family: "montserrat", sans-serif;
+    box-shadow: 0px 0px 7px #1b8ce323;
+}
+
+.m-contact-False {
+    padding: 5px;
+    border: 1px solid #e4e4e4;
+    border-left: 5px solid #ccc;
+    border-radius: 3px;
+    width: 100%;
+    margin-bottom: 11px;
+    font-family: "montserrat", sans-serif;
+    background-color:#fcfcfc;
+}
+
 .m-name {
-    font-size: 1em;
+    font-size: 1.25em;
     font-weight: 700;
 }
 .m-title {
-    font-size: .7em;
+    font-size: .9em;
     font-style: italic;
+    color:#868686
 }
 .m-email {
-    font-size: .7em;
+    font-size: 1em;
+    margin-top:4px;
+    margin-bottom:4px;
 }
 .m-phone {
-    font-size: .9em;
+    font-size: 1em;
     font-weight: 300;
+}
+.m-phonetype {
+    font-size: .75em;
+    font-weight: 300;
+}
+.m-padafter {
+    margin-right:20px;
 }
 /*--------------------------Flex----------------------------*/
 .mf-flex {
-    display:flex;
+    display: flex;
 }
 .mf-flexrow {
     display: flex;
@@ -646,7 +678,18 @@ main {
     margin-bottom:7px;
     margin-top:3px;
 }
-
+.txt-persona {
+    font-size: 1.5em;
+    font-weight: 100;
+    font-family: montserrat, sans-serif;
+    background-color:#593293;
+}
+.txt-label {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .8em;
+    color: #484848;
+    margin-bottom:7px;
+}
 /*--------------------------Other Styles----------------------------*/
 .sf-header {
     display: flex;

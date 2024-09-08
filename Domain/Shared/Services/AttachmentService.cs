@@ -112,5 +112,29 @@ namespace Mantis.Domain.Shared.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task RemoveHeadshotFromContact(int contactId)
+        {
+            // Retrieve the contact by ID
+            var contact = await _context.Contacts.FirstOrDefaultAsync(c => c.ContactId == contactId);
+
+            if (contact == null || string.IsNullOrEmpty(contact.HeadshotFilename))
+            {
+                return; // No contact found or no headshot to remove
+            }
+
+            // Construct the file path for the headshot
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/clients", contact.HeadshotFilename);
+
+            // Check if the file exists, and if it does, delete it
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+
+            // Set the HeadshotFilename to null and update the contact in the database
+            contact.HeadshotFilename = null;
+            _context.Contacts.Update(contact);
+            await _context.SaveChangesAsync();
+        }
     }
 }

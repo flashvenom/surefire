@@ -12,12 +12,16 @@ namespace Mantis.Domain.Contacts.Models
         public string? FirstName { get; set; }
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
+        public string FullName => $"{FirstName ?? string.Empty} {LastName ?? string.Empty}".Trim();
         public string? Title { get; set; }
         public string? Email { get; set; }
+        public string? EmailAlternate { get; set; }
         public string? Phone { get; set; }
         public string? Fax { get; set; }
         public string? Mobile { get; set; }
         public string? Notes { get; set; }
+        public string? HeadshotFilename { get; set; }
+        public bool IsStarred { get; set; } = false;
         public bool Underwriter { get; set; }
         public bool Service { get; set; }
         public bool Billing { get; set; }

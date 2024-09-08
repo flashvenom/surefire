@@ -2,11 +2,15 @@
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Contacts.Services
 @using Mantis.Data
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
 @inject ClientService ClientService
+@inject ContactService ContactService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
@@ -65,6 +69,13 @@
 
                     <SfTextBox id="postalCode" @bind-Value="client.Address.PostalCode" Placeholder="Postal Code" FloatLabelType="FloatLabelType.Always" />
                     <ValidationMessage For="() => client.Address.PostalCode" class="text-danger" />
+
+                         <!-- Primary Contact Dropdown -->
+                    <SfDropDownList TValue="int" TItem="Contact" DataSource="@allContacts" Placeholder="Primary Contact" @bind-Value="client.PrimaryContactId" PopupHeight="230px" FloatLabelType="FloatLabelType.Always">
+                        <DropDownListFieldSettings Text="FullName" Value="ContactId" />
+                    </SfDropDownList>
+                    <ValidationMessage For="() => client.PrimaryContactId" class="text-danger" />
+                    
                 </div>
             </div>
 
@@ -81,14 +92,34 @@
     public int ClientId { get; set; }
 
     private Client client;
+    private List<Contact> allContacts = new List<Contact>();
+    private int existingPrimaryContactId;
 
     protected override async Task OnInitializedAsync()
     {
         client = await ClientService.GetClientById(ClientId);
-
+        existingPrimaryContactId = client.PrimaryContactId;
         if (client == null)
         {
             NavigationManager.NavigateTo("notfound");
+        }
+        else
+        {
+            // Load the contacts for the client
+            var clientContacts = client.Contacts.ToList();
+
+            // If the primary contact exists and is not in the client contacts, fetch and add it
+            if (client.PrimaryContactId != 0 && !clientContacts.Any(c => c.ContactId == client.PrimaryContactId))
+            {
+                var primaryContact = await ContactService.GetContactByIdAsync(client.PrimaryContactId);
+                if (primaryContact != null)
+                {
+                    clientContacts.Add(primaryContact);
+                }
+            }
+
+            // Set allContacts to include both regular and primary contacts
+            allContacts = clientContacts;
         }
     }
 
@@ -96,6 +127,23 @@
     {
         try
         {
+            // Check if the primary contact has changed
+            if (client.PrimaryContactId != existingPrimaryContactId)
+            {
+                // If the old primary contact exists and it's being changed and it doesn't have a clientId set, set its ClientId to prevent it from becoming orphaned
+                if (existingPrimaryContactId != 0)
+                {
+                    var oldPrimaryContact = await ContactService.GetContactByIdAsync(existingPrimaryContactId);
+                    if (oldPrimaryContact != null && oldPrimaryContact.ClientId == null)
+                    {
+                        Console.WriteLine($"Updating old primary contact's ClientId to {ClientId}------------------------------");
+                        oldPrimaryContact.ClientId = ClientId; // Reassign the client ID to prevent it from becoming orphaned
+                        await ContactService.UpdateContactAsync(oldPrimaryContact);
+                    }
+                }
+            }
+
+            // Proceed with updating the client
             await ClientService.UpdateClientAsync(client);
             NavigationManager.NavigateTo("/Clients/List/" + ClientId);
         }

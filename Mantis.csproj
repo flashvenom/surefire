@@ -81,6 +81,7 @@
     <PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="3.1.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
     <PackageReference Include="Syncfusion.Blazor.Calendars" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Grid" Version="26.2.9" />
@@ -95,7 +96,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\uploads\" />
+    <Folder Include="wwwroot\uploads\client\" />
   </ItemGroup>
 
   <ItemGroup>

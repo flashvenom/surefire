@@ -31,6 +31,7 @@ namespace Mantis.Domain.Clients.Models
         public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
         public Address Address { get; set; }
+        public int PrimaryContactId { get; set; }
         public Contact PrimaryContact { get; set; }
         public ApplicationUser? Producer { get; set; }
         public ApplicationUser? CSR { get; set; }

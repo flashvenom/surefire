@@ -28,28 +28,24 @@
                 <span class="m-name">@item.FirstName @item.LastName</span><br />
                 @if (item.Title != null)
                 {
-                    <span class="m-title">@item.Title</span>
-
-                    <br />
+                    <span class="m-title">@item.Title</span><br />
                 }
                 @if (item.Email != null)
                 {
-                    <span class="m-email">@item.Email</span>
-
-                    <br />
+                    <span class="m-email">@item.Email</span><br />
                 }
                 @if (item.Phone != null)
                 {
-                    <span class="m-phone">@DateHelper.FormatPhoneNumber(item.Phone)</span>
+                    <span class="m-phone">Phone: @DateHelper.FormatPhoneNumber(item.Phone)</span><br />
                 }
                 @if (item.Mobile != null)
                 {
-                    <span class="m-phone">@DateHelper.FormatPhoneNumber(item.Mobile)</span>
+                    <span class="m-phone">Mobile: @DateHelper.FormatPhoneNumber(item.Mobile)</span><br />
                 }
 
                 @if (item.Notes != null)
                 {
-                    <span class="m-phone">Notes: @item.Notes</span>
+                    <span class="m-phone">Notes: @item.Notes</span><br />
                 }
                 <br>
                 <a href="javascript:void(0);" @onclick="() => RemoveContact(item)">[Remove]</a> <!-- Pass the contact to be removed -->

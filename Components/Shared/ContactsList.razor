@@ -25,12 +25,12 @@
             string fullName = item.FirstName + " " + item.LastName;
             string nameInitials = $"{item.FirstName[0]}{item.LastName[0]}";
 
-            if (!string.IsNullOrEmpty(item.HeadshotFilename))
-            {
-                headshotImage = "/uploads/client/" + item.HeadshotFilename;
-            }
+            // Build the headshot image path per contact
+            string headshotImage = !string.IsNullOrEmpty(item.HeadshotFilename)
+            ? "/uploads/client/" + item.HeadshotFilename
+            : null;
 
-            <FluentStack Class="m-contact">
+            <FluentStack Class="@("m-contact-" + IsPrimary)">
                 <div>
                     <FluentPersona Initials="@nameInitials" ImageSize="55px" Class="txt-persona" Image="@headshotImage" />
                 </div>
@@ -64,18 +64,21 @@
                         </span>
                     }
                 </div>
-                <div style="text-align:center;">
-                    <UI_ToggleBookmark IsStarred="@item.IsStarred" OnStarChanged="@((bool isStarred) => ToggleStar(item.ContactId, isStarred))" />
+                <div style="margin-left: auto;">
+                    @if (IsPrimary == true)
+                    {
+                        <div>
+                            <FluentIcon Value="@(new Icons.Filled.Size24.Star())" Color="Color.Accent" />
+                        </div>
+                    }
+                    else
+                    {
+                        <UI_ToggleBookmark IsStarred="@item.IsStarred" OnStarChanged="@((bool isStarred) => ToggleStar(item.ContactId, isStarred))" />
+                    }
                     <a href="/Contacts/Edit/@(item.ContactId)">
-                        <FluentIcon Value="@(new Icons.Regular.Size24.Pen())" />
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Pen())" CustomColor="#6b6b6b" Color="Color.Custom" />
                     </a>
                 </div>
-                @if(isPrimary == true)
-                {
-                <div>
-                    <FluentIcon Value="@(new Icons.Filled.Size32.Star())" Color="Color.Warning" />
-                </div>
-                }
             </FluentStack>
         }
     }
@@ -92,19 +95,13 @@
     public int ParentId { get; set; }
 
     [Parameter]
-    public bool isPrimary { get; set; }
-
-    public string headshotImage { get; set; }
+    public bool IsPrimary { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         InvokeAsync(StateHasChanged);
     }
     private void ToggleStar(int contactId, bool isStarred)
-    {
-        
-    }
-    private void Dispose()
     {
 
     }

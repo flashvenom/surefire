@@ -47,7 +47,7 @@
         <div class="mf-flexrow">
             <div class="@dynamicClass">
                 <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
-                    <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Slot="start" Color="Color.Neutral" />
                 </FluentTextField>
                 <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
                     <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
@@ -111,21 +111,12 @@
                                 </div>@* sf-col-1 *@
 
                                 <div class="sf-col sf-col-2">
-                                    <div class="txt-section">Primary Contact</div>
-                                    <div class="mf-flexrow">
-                                        <div class="mf-sm">
-                                            <FluentPersona Initials="KS" ImageSize="55px" Class="pinitials" Style="font-size:1.5em; font-weight:100; font-family: montserrat, sans-serif;" />
-                                        </div>
-                                        <div class="mf-item-sm contactcard">
-                                            <span class="txt-bold-md">@selectedClient.PrimaryContact.FirstName  @selectedClient.PrimaryContact.LastName</span>
-                                            <a href="Contacts/Edit/@selectedClient.PrimaryContact.ContactId"><span class="e-btnhover e-icons e-pencil-icon"></span></a><br />
-                                            <span class="txt-p">@selectedClient.PrimaryContact.Phone</span><br />
-                                            <i class="txt-cursive-sm">@selectedClient.PrimaryContact.Email</i>
-                                        </div>
-                                    </div>
-
-                                    <h4 class="sf-toppad">Additional Contacts</h4>
-                                    <ContactsListAll Contacts="@selectedClient.Contacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
+                                    <div class="txt-section">Contacts</div>
+                                    @if (selectedClient.PrimaryContact != null)
+                                    {
+                                        <ContactsList Contacts="@primaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="true" />
+                                    }
+                                    <ContactsList Contacts="@secondaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="false" />
                                     <h4 class="sf-toppad">Additional Info</h4>
                                     <FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size24.Globe())" Color="Color.Neutral" /> <a href="@("https://" + selectedClient.Website)" target="_blank" class="txt-bold-md">@selectedClient.Website</a>
                                 </div>@* sf-col-2 *@
@@ -252,6 +243,10 @@
     private List<Policy> currentPolicies = new();
     private List<Policy> pastPolicies = new();
     private List<Contact> loadedContacts = new();
+    private List<Contact> primaryContactList { get; set; } = new();
+    private List<Contact> secondaryContactList { get; set; } = new();
+    private List<Contact> bookmarkedContactList { get; set; } = new();
+    private List<Contact> unimportantContactList { get; set; } = new();
     private System.Timers.Timer debounceTimer;
     private bool isLoadingCrmId = false;
     private string crmClientId = string.Empty;
@@ -267,10 +262,48 @@
         debounceTimer.Elapsed += (sender, args) => FilterClients();
 
         selectedClient = await ClientService.GetClientById(ClientId);
+        if (selectedClient?.PrimaryContact != null)
+        {
+            primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
+        }
+
+        secondaryContactList = selectedClient?.Contacts
+        .Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId)
+        .ToList();
+
         SortAndSeparatePolicies();
 
         clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
         filteredClients = new List<Client>(clients);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Console.WriteLine("paramchange");
+        if (selectedClient == null || selectedClient.ClientId != ClientId)
+        {
+            Console.WriteLine("selected client has changed");
+            // Only update if the selectedClient is null or if the ClientId has changed
+            selectedClient = await ClientService.GetClientById(ClientId);
+
+            if (selectedClient?.PrimaryContact != null)
+            {
+                primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
+            }
+
+            secondaryContactList = selectedClient?.Contacts
+                .Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId)
+                .ToList();
+            Console.WriteLine("UPDATING stuff on paramchange");
+            SortAndSeparatePolicies();
+        }
+
+        // Only fetch clients once if it hasn't been fetched before
+        if (clients == null || !clients.Any())
+        {
+            clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
+            filteredClients = new List<Client>(clients);
+        }
     }
 
     //User Interface
@@ -583,6 +616,17 @@
         pastPolicies = selectedClient.Policies
             .Where(p => p.ExpirationDate < today)
             .OrderByDescending(p => p.EffectiveDate)
+            .ToList();
+        
+        // Update primary contact list if the primary contact exists
+        if (selectedClient?.PrimaryContact != null)
+        {
+            primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
+        }
+
+        // Update secondary contact list, excluding the primary contact
+        secondaryContactList = selectedClient?.Contacts
+            .Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId)
             .ToList();
 
         isLoadingWhat = "X";

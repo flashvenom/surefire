@@ -43,7 +43,7 @@
         <_toolbar ClientId="selectedClient.ClientId" OnNewPolicy="@SetShowCreatePolicy" />
     }
 
-    <div class="page-content" >
+    <div class="page-content">
         <div class="mf-flexrow">
             <div class="@dynamicClass">
                 <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
@@ -56,53 +56,54 @@
             </div>
         </div>
 
-        @if (selectedClient != null)
-        {
-            <div class="sf-selected" @onmouseenter="() => ExpandDetails(0)">
-                <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
-                <div class="client-top">
-                   
-                        <div class="top-rowone">
-                            <span class="client-name">@selectedClient.Name</span> 
-                            <span class="client-phone">
+        <div class="sf-selected" @onmouseenter="() => ExpandDetails(0)">
+            <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
+            <div class="client-top">
+                @if (selectedClient != null)
+                {
+                    <div class="top-rowone">
+
+                        <span class="client-name">@selectedClient.Name</span>
+                        <span class="client-phone">
                             <span class="phone-icon"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>
-                                <span class="client-phonenumber">@DateHelper.FormatPhoneNumber(selectedClient.PhoneNumber)</span>
-                            </span>
-                        </div>
-                        <div class="top-rowtwo">
-                            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
-                            <a class="client-data" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString($"{selectedClient.Address.AddressLine1} {selectedClient.Address.AddressLine2} {selectedClient.Address.City}, {selectedClient.Address.State} {selectedClient.Address.PostalCode}")" target="_blank">
-                                @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+                            <span class="client-phonenumber">@DateHelper.FormatPhoneNumber(selectedClient.PhoneNumber)</span>
+                        </span>
+
+                    </div>
+                    <div class="top-rowtwo">
+                        <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                        <a class="client-data" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString($"{selectedClient.Address.AddressLine1} {selectedClient.Address.AddressLine2} {selectedClient.Address.City}, {selectedClient.Address.State} {selectedClient.Address.PostalCode}")" target="_blank">
+                            @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+                        </a>
+
+                        @if (!string.IsNullOrEmpty(selectedClient.Email))
+                        {
+
+                            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                            <a href="@("mailto:" + selectedClient.Email)" class="client-data">
+                                @selectedClient.Email
                             </a>
+                        }
 
-                            @if (!string.IsNullOrEmpty(selectedClient.Email))
-                            {
-                                
-                                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
-                                <a href="@("mailto:" + selectedClient.Email)" class="client-data">
-                                    @selectedClient.Email
-                                </a>
-                            }
+                        @if (!string.IsNullOrEmpty(selectedClient.Website))
+                        {
 
-                            @if (!string.IsNullOrEmpty(selectedClient.Website))
-                            {
-                                
-                                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
-                                <a href="@("http://" + selectedClient.Website)" class="client-data" target="_blank" >
-                                     @selectedClient.Website
-                                </a>
-                            }
-                        </div>
-                   
-                    
-                </div>
-                <div class="client-main">
-                    <FluentTabs @ref="tabInterface" Size="TabSize.Large">
-                        <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
-                            <div class="sf-col-container">
-                                <div class="sf-col sf-col-1">
-                                    <div class="txt-section">Current Policies</div>
-                                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
+                            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                            <a href="@("http://" + selectedClient.Website)" class="client-data" target="_blank">
+                                @selectedClient.Website
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="client-main">
+                <FluentTabs @ref="tabInterface" Size="TabSize.Large">
+                    <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
+                        <div class="sf-col-container">
+                            <div class="sf-col sf-col-1">
+                                <div class="txt-section">Current Policies</div>
+                                @if (selectedClient != null)
+                                {
                                     <div class="policy-container">
                                         @foreach (var policy in currentPolicies)
                                         {
@@ -115,9 +116,9 @@
                                                         <span class="edate">@policy.EffectiveDate.ToShortDateString() -&nbsp;</span>
                                                         <span class="xdate">@policy.ExpirationDate.ToShortDateString()</span>
                                                     </div>
-                                                   
+
                                                 </FluentStack>
-                                              
+
                                                 <div class="policy-carriers">
 
                                                     @if (!string.IsNullOrEmpty(policy.Carrier?.CarrierName))
@@ -139,7 +140,7 @@
                                                         <span class="lighter">|</span>
                                                         <span class="carrier-name">@policy.Premium.ToString("C0")</span>
                                                     }
-                                                    
+
                                                 </div>
                                                 <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
                                                     <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
@@ -148,31 +149,46 @@
                                                 </div>
                                             </div>
                                         }
-
                                     </div>
-                                </div>@* sf-col-1 *@
+                                }else{
+                                    <SfSpinner />
+                                }
+                            </div>@* sf-col-1 *@
 
-                                <div class="sf-col sf-col-2">
-                                    <div class="txt-section">Contacts</div>
+                            <div class="sf-col sf-col-2">
+                                <div class="txt-section">Contacts</div>
+                                @if (selectedClient != null)
+                                {
                                     @if (selectedClient.PrimaryContact != null)
                                     {
                                         <ContactsList Contacts="@primaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="true" />
                                     }
                                     <ContactsList Contacts="@secondaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="false" />
-                                </div>@* sf-col-2 *@
+                                }
+                                else
+                                {
+                                    <SfSpinner />
+                                }
+                            </div>@* sf-col-2 *@
 
-                                <div class="sf-col sf-col-3">
+                            <div class="sf-col sf-col-3">
+                                @if (selectedClient != null)
+                                {
                                     @if (!string.IsNullOrEmpty(selectedClient.LogoFilename))
                                     {
                                         <img src="/uploads/logos/@selectedClient.LogoFilename" class="img-fluid" />
                                     }
-                                </div>@* sf-col-3 *@
+                                }
+                            </div>@* sf-col-3 *@
 
-                            </div>
-                        </FluentTab>
-                        <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
-                            <div class="tabcontents">
-                                @if (showCreatePolicy == true){
+                        </div>
+                    </FluentTab>
+                    <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
+                        <div class="tabcontents">
+                            @if (selectedClient != null)
+                            {
+                                @if (showCreatePolicy == true)
+                                {
                                     <CreatePolicyForClient ClientId="ClientId" OnCloseCreatePolicy="@SetHideCreatePolicy" />
                                 }
                                 else
@@ -180,29 +196,47 @@
                                     <CurrentPoliciesList currentPolicies="currentPolicies" />
                                     <div style="height:25px;"></div>
                                     <PastPoliciesList pastPolicies="pastPolicies" />
-                                    @if (clientPolicies != null) { <span>Fetched @(clientPolicies.Count) policies from external source!</span> }
+                                    @if (clientPolicies != null)
+                                    {
+                                        <span>Fetched @(clientPolicies.Count) policies from external source!</span>
+                                    }
                                 }
-                            </div>
-                        </FluentTab>
-                        <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
-                            <div class="tabcontents">
-                                <div class="txt-section">Attachments</div>
-                                <div class="txt-p">Check back later.</div>
-                            </div>
-                        </FluentTab>
-                        <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
-                            <div class="tabcontents">
-                                <div class="txt-section">Certificates</div>
+                            }
+                            else
+                            {
+                                <SfSpinner />
+                            }
+                        </div>
+                    </FluentTab>
+                    <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
+                        <div class="tabcontents">
+                            <div class="txt-section">Attachments</div>
+                            <div class="txt-p">Check back later.</div>
+                        </div>
+                    </FluentTab>
+                    <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
+                        <div class="tabcontents">
+                            <div class="txt-section">Certificates</div>
+                            @if (selectedClient != null)
+                            {
                                 <_Certificates client="selectedClient" />
+                            }
+                            else
+                            {
+                                <SfSpinner />    
+                            }
                             </div>
-                        </FluentTab>
+                    </FluentTab>
 
-                        <FluentTab Id="tab-5" Label="Utilities" Class="sf-tab">
+                    <FluentTab Id="tab-5" Label="Utilities" Class="sf-tab">
+                        @if (selectedClient != null)
+                        {
                             <FluentStack Class="tabcontents">
+                                
                                 <div style="min-width:400px;">
                                     <div class="txt-section">Import Tools</div>
                                     <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="ImportContacts">Import Contacts</FluentButton>
-                                    @if(loadedContacts.Count > 0)
+                                    @if (loadedContacts.Count > 0)
                                     {
                                         <ContactsListImport Contacts="@loadedContacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
                                         <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Save Imported Contacts</FluentButton>
@@ -234,14 +268,14 @@
                                         }
                                     </div>
                                 </div>
+                                
                             </FluentStack>
-                        </FluentTab>
-                    </FluentTabs>
-                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
-                </div>
-                
+                        }
+                    </FluentTab>
+                </FluentTabs>
+                <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
             </div>
-        }
+        </div>
         <div style="clear:both;"></div>
     </div>
 </div>
@@ -272,6 +306,7 @@
     :root .sf-searchquick {
         width: 290px !important
     }
+
     :root .smallicon {
         position: relative !important;
         top: 3px !important;
@@ -281,11 +316,11 @@
 </style>
 
 @code {
-        [Parameter, SupplyParameterFromQuery]
-        public int ClientId { get; set; } = 211;
+    [Parameter, SupplyParameterFromQuery]
+    public int ClientId { get; set; } = 211;
 
-        [Parameter]
-        public bool showCreatePolicy { get; set; } = false;
+    [Parameter]
+    public bool showCreatePolicy { get; set; } = false;
 
     private HashSet<int> expandedPolicies = new HashSet<int>();
     private int activeTabIndex = 0; // Default to the first tab
@@ -383,7 +418,8 @@
         if (forceIt == 1)
         {
             dynamicClass = "sf-quicklist";
-        }else if (forceIt == 0)
+        }
+        else if (forceIt == 0)
         {
             dynamicClass = "sf-quicklist-close";
         }
@@ -491,8 +527,8 @@
                                     FirstName = firstName,
                                     LastName = lastName,
                                     Email = contactItem.ContainsKey("emails") && contactItem["emails"] is JArray emailsArray && emailsArray.Count > 0
-                                    ? emailsArray.First.Value<string>("emailAddress")
-                                    : string.Empty,
+                                        ? emailsArray.First.Value<string>("emailAddress")
+                                        : string.Empty,
                                     Phone = phone,
                                     Mobile = mobile,
                                     Notes = additionalNotes,
@@ -674,7 +710,7 @@
             .Where(p => p.ExpirationDate < today)
             .OrderByDescending(p => p.EffectiveDate)
             .ToList();
-        
+
         // Update primary contact list if the primary contact exists
         if (selectedClient?.PrimaryContact != null)
         {
@@ -689,7 +725,7 @@
         isLoadingWhat = "X";
         StateHasChanged();
     }
-    
+
     // Policy Expansion Methods
     private void ToggleExpand(int policyId)
     {

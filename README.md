@@ -3,64 +3,88 @@
 ## Overview
 Surefire: an insurance agency management system for independant P&C brokers designed with speed and efficiency in mind.
 
+**Video Update - September**
+https://youtu.be/4MuP97-Afqo
+
+**Demo Site**
+[Click here to login](https://flashvenomdesign-001-site6.atempurl.com/)
+
 ## Features
-
-- Track Clients, Contacts, Addresses and Policies. (Video: https://flashvenom.com/images/surefire/clientscreen.gif)
-![Using the client screen and UI](https://flashvenom.com/images/surefire/clientscreen.gif)
-- Designed to be intuitive and keep you moving through your day quickly 
-![Surefire's client browser](https://flashvenom.com/images/surefire/clients.jpg)
-- Includes a renewal manager for employees to stay on top of thier marketing and submissions work-flow manager. (Screencap: https://flashvenom.com/images/surefire/renewals.gif)
-![Simple renewal tracking system](https://flashvenom.com/images/surefire/renewals.gif)
+- Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
+- Simplify your renewal workflow by putting all your renewals, quotes, leads and submissions in one central place.
 - Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
-![Tasks and submissions](https://flashvenom.com/images/surefire/renewals.jpg)
-- The homepage tells you what tasks you have to complete for upcoming renewals and when they're due.
-![Surefire homepage](https://flashvenom.com/images/surefire/homepage.jpg)
-
-
+- Set goal dates and assign sub-tasks to other employees. The homepage tells you what tasks you have to complete next for upcoming renewals and when they're due.
+- Store basic policy data like limits, rates and coverages. Attach endorsements to be included in certificates.
+- Issue, store and manage certificates quickly and easily
+![Using the client screen and UI](https://flashvenom.com/surefire/surefire2.png)
+![Surefire's client browser](https://flashvenom.com/surefire/surefire10.png)
+![Simple renewal tracking system](https://flashvenom.com/surefire/surefire4.png)
+![Tasks and submissions](https://flashvenom.com/surefire/surefire5.png)
+![Submission tracker](https://flashvenom.com/surefire/surefire11.png)
+![Surefire homepage](https://flashvenom.com/surefire/surefire6.png)
+ 
 ## Technologies Used
-
 - **ASP.NET Core 8**
 - **Entity Framework Core**
 - **Blazor**
 - **SyncFusion Components (DataGrid mostly)**
 - **Microsoft FluentUI**
 
-## Wishlist
+### Version History
+**.0.0.3 - 2021-09-05**
+- Renewal filter save state using browser session
+- Enhanced renewal task lists
+- Fast Search now has keyboard control
+- File organization and Quality of Life fixes
+- Misc bug fixes
+
+**.0.0.2 - 2021-08-28**
+- Enhanced client browsing
+- Policy coverage details screens for GL, WC and Auto
+- Certificate editor using SfPdfViewer2
+- Store endorsements as attachments and include them with certificates
+
+**.0.0.1 - 2021-08-20**
+- Initial Release
+- Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
+- Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
+- Uses Identity for user authentication and employee logins
+- Renewal Center with submission tracking
+- Master task editor to add tasks to be copied as workflow templates for renewals
+- Much more...
+
+
+## Features Roadmap
+### Productivity
+- **Ring Central API - Implement a webhook that monitors incoming phone calls and displays a toast notification with the caller's name and number**
+- **Microsoft Graph API - For sending emails, searching for client and policy correspondances, etc**
+- **Zywave API - Integrate the company research calls, content downloads, and insurance code lookup calls**
+- **Client Portal - Provide clients with a way to access basic policy data, request a certificate, and update renewal information.**
+- **Leads Management - Take the layout of Carriers and create a new page for tracking leads and collecting information.
+
+### Crucial Functionality
+- **Profile Pages - For Identity users to change password, email, name, etc.
+- **Proper Register - With roles and permissions. Confirmation emails and Microsoft OAuth authorizations logic
+- **CRUD - Confirm there is a way to safely crud all the things.
+
 ### General
+- **Settings - Add settings page (gear icon in the upper right top menu) to assign a subemployee/assistant, enter API credentials and store UI preferences.**
+- **Forms Tab: Change certificates to forms, and add a library of PDFs which can be manipulated and the JSON saved in the database.**
+- **Smart Breadrums: Dynamically build breadcrums as the user navigates around the different areas of the site.
 
-- **Connect to voip system - bring up toast/card showing who is calling based on callerID** 
-- https://hooks.officeathand.att.com/webhook/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdCI6ImMiLCJvaSI6IjE2ODg4NDk4NjM5ODMxMDUiLCJpZCI6IjE2ODg4NTA2ODMwMTkyOTEifQ.9bLb55tTA0yasuN1YEM3ChXJcrBuKmrq3NIHm-OGNBw
-- https://www.ringcentral.com/apps/office-at-hand/embeddable-voice
-- **Add AI side panel for common tasks**
-- **Add settings page with gear icon upper left**
-- **Add picture for people**
-- **Add Google Map link to address"**
-- **Use AI to get JSON data of any location/address"**
-- **Use AI to search client website and address lookup to get company details, industry codes, etc - new info pops up as (?) you click a check to confirm data, red x to throw away bad data**
 
-- **Applications section will store basic data commonly used on apps like # of employees, gross sales, etc.**
-- **Client portal with no sign-in required - a one time use key is emailed, they can update annual check-ups, see policies, etc**
-### Clients
-- **NOTES fields - "Permanent Notes (for "personal touch" to store things in common / small talk and then a "Recent Events" field in which the notes get smaller lighter as weeks go by**
-- **Add logo of business - grab first google image result of "business name + logo"**
-- **BRAIN: Use email address of client to pull latest email chains and use AI to summarize**
 ### Carriers
-- **(IVANS Api?) Add more carrier data to cross check against clients/policies - Not just what lines they quote, but what lines they are good at, what SIC codes and industries they specialize in, 5 star rating AMBest rating, etc**
-- **Use the JSON fields to add Targeted Lines of Buisness and Industries**
+- **Passwords: Store the user's credentials for carrier websites.
+- **Carrier Data: Provide system for storing target markets, AmBest rating, acceptable risks, ratings and IVANs data to provide more. 
+
+### AI/LLM
+- **Side Panel - Create side panel to provide UI to interactive with OpenAI for common tasks**
+- - Tool: Get JSON data for locations/address
+- - Tool: Get JSON data for clients and policies
+- - Tool: Fetch and suggest images for client logo and contact headshots
 
 
-- ## ToDo
-- **CLIENT PAGE: renewals section, menu section switches: Glance | Policies | Attachments | Claims | Applications**
-- **Get a basic master search going using the top search bar**
-- **Create dummy database with fake client data**
-- DONE | Submission tab in renewal center
-- **Duplicate renewal center for 'Leads' and new business**
-- **SMART BREAD CRUMS: When you open a policy, certificate, etc - it adds it to the BreadCrum trail, and it stays there until you click the X or leave the client entirely - so you can switch between policies / other screens**
-
- 
 ## Installation
-
-
 ### Steps
 
 1. **Clone the repository:**
@@ -90,34 +114,3 @@ Surefire: an insurance agency management system for independant P&C brokers desi
     ```bash
     dotnet run
     ```
-
-### Version History
-**.0.0.1 - 2021-08-20**
-- Initial Release
-- Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
-- Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
-- Uses Identity for user authentication and employee logins
-- Renewal Center with submission tracking
-- Master task editor to add tasks to be copied as workflow templates for renewals
-- Much more...
-
-### Roadmap / Wishlist
-- **Get a basic master search going using the top search bar**
-- **Add settings page with gear icon upper right**
-- **Add picture for people**
-- **Add Google Map link to address"**
-- **Integrate OpenAI side panel**
-- **Use AI and Google API to get JSON data of businesses/locations/addresses"**
-- **Applications section will store basic data commonly used on apps like # of employees, gross sales, etc.**
-- **Client portal with no sign-in required - a one time use key is emailed, they can update annual check-ups, see policies, etc**
-- **Notes Areas - "Permanent Notes (for "personal touch" to store things in common / small talk and then a "Recent Events" field in which the notes get smaller lighter as weeks go by**
-- - **Connect to voip system - bring up toast/card showing who is calling based on callerID**
-- **Add logo of business - grab first google image result of "business name + logo"**
-- **Outlook Interop: Use email address of client to pull latest email chains and use OpenAI to summarize**
-- **(IVANS Api?) Add more carrier data to cross check against clients/policies - Not just what lines they quote, but what lines they are good at, what SIC codes and industries they specialize in, 5 star rating AMBest rating, etc**
-- **Use the JSON fields to add Targeted Lines of Buisness and Industries**
-- **CLIENT PAGE: renewals section, menu section switches: Glance | Policies | Attachments | Claims | Applications**
-- **Duplicate renewal center for 'Leads' and new business**
-- **SMART BREAD CRUMS: When you open a policy, certificate, etc - it adds it to the BreadCrum trail, and it stays there until you click the X or leave the client entirely - so you can switch between policies / other screens**
-- DONE | Create dummy database with fake client data**
-- DONE | Submission tab in renewal center

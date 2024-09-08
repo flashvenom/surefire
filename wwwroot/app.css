@@ -62,6 +62,21 @@ main {
     fill: #5e5e5e00 !important;
 }
 
+.inactive-icon- {
+    fill: #5e5e5e !important;
+    fill: #5e5e5e00 !important;
+}
+
+.inactive-icon-ro-on {
+    fill: #1b8ce3 !important;
+    fill: #1b8ce3 !important;
+}
+
+.inactive-icon-ro-off {
+    fill: #5e5e5e !important;
+    fill: #5e5e5e !important;
+}
+
 .nb-blueline {
     width: 2px;
     height: 37px;
@@ -70,11 +85,6 @@ main {
     top: -6px;
     left: 4px;
 }
-
-.nav-link {
-    padding: 0px !important;
-}
-
 .what {
     color: #808080;
 }
@@ -99,7 +109,131 @@ main {
     border-right: 1px solid #cecece;
     background-color: #e8e8e8;
     z-index: 1000;
+    box-shadow:0px 0px 8px #0000003d;
 }
+.sfnav {
+    position:relative;
+    z-index:1000;
+}
+.sfnav::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: 10px;
+    bottom: -15px;
+    z-index: 999;
+}
+    .sfnav:hover {
+        cursor:pointer;
+    }
+.ro-container {
+    display: inline;
+    padding: 6px;
+    height: 27px;
+    background-color: #f6f6f6;
+    position: absolute;
+    z-index: 1 !important;
+    transition: all 0.2s ease-out;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 5px solid #1b8ce3;
+    border-top: 1px solid #1b8ce3;
+    border-bottom: 1px solid #1b8ce3;
+    color: #1b8ce3 !important;
+}
+:root .nb-bluelinenb-active {
+    transition: all 0.5s ease;
+    width: 2px;
+    height: 37px;
+    float: left;
+    position: relative;
+    top: -6px;
+    left: 4px;
+    background-color: #036ac4 !important;
+    transform-origin: center;
+    transform: scaleY(1);
+}
+:root .nb-bluelinenb-inactive {
+    transition: all 0.5s ease;
+    width: 2px;
+    height: 37px;
+    float: left;
+    position: relative;
+    top: -6px;
+    left: 4px;
+    background-color: #5e5e5e00 !important;
+    transform-origin: center;
+    transform: scaleY(0.1);
+}
+
+:root .inactive-icon {
+    fill: #808080 !important;
+}
+
+/* Each menu item is 46px vertically seperated */
+.ro-home {
+    top: 62px;
+    width: 66px;
+}
+.ro-clients {
+    top: 107px;
+    width: 74px;
+}
+.ro-renewals {
+    top: 153px;
+    width: 103px;
+}
+.ro-carriers {
+    top: 220px;
+    width: 83px;
+}
+.ro-contacts {
+    top: 266px;
+    width: 93px;
+}
+.ro-locations {
+    top: 312px;
+    width: 102px;
+}
+.ro-policies {
+    top:358px;
+    width: 81px;
+}
+.ro-on {
+    display: block;
+    left: 49px;
+}
+.ro-off {
+    left: -120px;
+}
+.ro-off2 {
+    left: -300px;
+    top: 56px;
+    opacity: .5;
+}
+.ro-mi-name {
+    font-family: "montserrat", sans-serif;
+    font-weight:500;
+    font-size: 1.3em;
+    position: relative;
+    top: 1px;
+}
+
+.nav-item {
+    position: relative;
+}
+
+.nav-link {
+    padding: 0px !important;
+}
+
+.nav-sub {
+    padding-left: 60px;
+    font-size: 12px;
+    height: 35px !important;
+}
+
 .top-bar {
     width: 100%;
     height: 50px;
@@ -829,9 +963,7 @@ a, .btn-link {
 .sf-rentable > :nth-child(2) {
     width: 50px;
 }
-/*.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}*/
+
 .content {
     padding-top: 1.1rem;
 }
@@ -877,9 +1009,6 @@ a:hover {
     text-decoration: none !important;
 }
 
-.nav-item {
-    position: relative;
-}
 
 .submenu {
     max-height: 0;
@@ -901,11 +1030,7 @@ hr {
 .toolbar-link {
     color:#000;
 }
-.nav-sub {
-    padding-left: 60px;
-    font-size: 12px;
-    height: 35px !important;
-}
+
 .sfdg-title {
     font-weight: bold;
 }

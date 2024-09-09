@@ -143,7 +143,7 @@ main {
     height: 27px;
     background-color: #f6f6f6;
     position: absolute;
-    z-index: 1 !important;
+    z-index: 500 !important;
     transition: all 0.2s ease-out;
     overflow: hidden;
     white-space: nowrap;

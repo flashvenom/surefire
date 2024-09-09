@@ -596,7 +596,7 @@
     }
 
     // Load and Filter Client Methods
-    private async void ClickHandler(ClickEventArgs<Client> args)
+    private async Task ClickHandler(ClickEventArgs<Client> args)
     {
         ClientId = filteredClients[args.Index].ClientId;
         selectedClient = await ClientService.GetClientById(ClientId);
@@ -729,7 +729,7 @@
             .ToList();
 
         isLoadingWhat = "X";
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
 
     // Policy Expansion Methods

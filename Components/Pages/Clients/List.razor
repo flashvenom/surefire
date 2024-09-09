@@ -8,6 +8,7 @@
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Contacts.Models
 @using Mantis.Domain.Shared
+@using Mantis.Domain.Shared.Helpers
 @using Mantis.Domain.Policies.Components
 @using Mantis.Domain.Renewals.Models
 @using Mantis.Components.Shared
@@ -24,6 +25,7 @@
 @inject RenewalService RenewalService
 @inject CrmApiService CrmApiService
 @inject ClientService ClientService
+@inject DataHelper DataHelper
 @inject IJSRuntime jsRuntime
 @rendermode InteractiveServer
 
@@ -123,12 +125,12 @@
 
                                                     @if (!string.IsNullOrEmpty(policy.Carrier?.CarrierName))
                                                     {
-                                                        <span class="carrier-name">@DataHelper.CropCarrierName(policy.Carrier?.CarrierName)</span>
+                                                        <span class="carrier-name">@StringHelper.CropCarrierName(policy.Carrier?.CarrierName)</span>
                                                     }
                                                     @if (!string.IsNullOrEmpty(policy.Wholesaler?.CarrierName))
                                                     {
                                                         <span class="lighter">|</span>
-                                                        <span class="carrier-name">@DataHelper.CropCarrierName(policy.Wholesaler?.CarrierName)</span>
+                                                        <span class="carrier-name">@StringHelper.CropCarrierName(policy.Wholesaler?.CarrierName)</span>
                                                     }
                                                     @if (!string.IsNullOrEmpty(policy.PolicyNumber))
                                                     {
@@ -343,12 +345,16 @@
     private string dynamicClass = "sf-quicklist";
     private Client selectedClient { get; set; }
     SfTextBox SearchBox { get; set; }
+    private string getUrl;
 
     protected override async Task OnInitializedAsync()
     {
         debounceTimer = new System.Timers.Timer(100);
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += (sender, args) => FilterClients();
+
+        var baseUrl = DataHelper.GetBaseUrl();
+        getUrl = $"{baseUrl}/api/Client";
 
         selectedClient = await ClientService.GetClientById(ClientId);
         if (selectedClient?.PrimaryContact != null)
@@ -362,7 +368,7 @@
 
         SortAndSeparatePolicies();
 
-        clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
+        clients = await Http.GetFromJsonAsync<List<Client>>(@getUrl);
         filteredClients = new List<Client>(clients);
     }
 
@@ -390,7 +396,7 @@
         // Only fetch clients once if it hasn't been fetched before
         if (clients == null || !clients.Any())
         {
-            clients = await Http.GetFromJsonAsync<List<Client>>("https://mantismetro.azurewebsites.net/api/Client");
+            clients = await Http.GetFromJsonAsync<List<Client>>(@getUrl);
             filteredClients = new List<Client>(clients);
         }
     }

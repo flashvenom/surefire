@@ -7,6 +7,8 @@
 @using Syncfusion.Blazor
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Shared
+@using Mantis.Domain.Shared.Helpers
+@inject DataHelper DataHelper
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -18,15 +20,11 @@
 
 <_toolbar />
 
-<div class="page-content">
+<div class="page-content-datagrid">
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true"
             Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
         <GridEvents OnActionFailure="@ActionFailure" TValue="Renewal"></GridEvents>
-        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Renewal"
-                       InsertUrl="https://mantismetro.azurewebsites.net/api/Renewal/Insert"
-                       UpdateUrl="https://mantismetro.azurewebsites.net/api/Renewal/Update"
-                       RemoveUrl="https://mantismetro.azurewebsites.net/api/Renewal/Delete"
-                       Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="@getUrl" InsertUrl="@insertUrl" UpdateUrl="@updateUrl" RemoveUrl="@deleteUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="20"></GridPageSettings>
         <GridColumns>
@@ -56,8 +54,19 @@
     string statusMy = "Loading";
     public List<Renewal> GridData { get; set; }
 
+    private string getUrl;
+    private string insertUrl;
+    private string updateUrl;
+    private string deleteUrl;
+
     protected override async Task OnInitializedAsync()
     {
+        var baseUrl = DataHelper.GetBaseUrl();
+        getUrl = $"{baseUrl}/api/Renewal";
+        insertUrl = $"{baseUrl}/api/Product/Renewal";
+        updateUrl = $"{baseUrl}/api/Product/Renewal";
+        deleteUrl = $"{baseUrl}/api/Product/Renewal";
+
         var copyData = GridData;
         statusMy = "Loaded!";
         BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>

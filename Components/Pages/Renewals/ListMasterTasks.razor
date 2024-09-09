@@ -1,10 +1,12 @@
 ﻿@page "/Renewals/MasterTasks"
 @using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Shared.Helpers
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
+@inject DataHelper DataHelper
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -16,15 +18,11 @@
 
 <_toolbar />
 
-<div class="page-content">
+<div class="page-content-datagrid">
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" 
         Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
         <GridEvents OnActionFailure="@ActionFailure" TValue="TaskMaster"></GridEvents>
-        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/TaskMaster"
-                       InsertUrl="https://mantismetro.azurewebsites.net/api/TaskMaster/Insert"
-                       UpdateUrl="https://mantismetro.azurewebsites.net/api/TaskMaster/Update"
-                       RemoveUrl="https://mantismetro.azurewebsites.net/api/TaskMaster/Delete"
-                       Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="@getUrl" InsertUrl="@insertUrl" UpdateUrl="@updateUrl" RemoveUrl="@deleteUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="20"></GridPageSettings>
         <GridColumns>
@@ -46,6 +44,20 @@
     SfDataManager DataManager { get; set; }
     string statusMy = "Loading";
     public List<TaskMaster> GridData { get; set; }
+
+    private string getUrl;
+    private string insertUrl;
+    private string updateUrl;
+    private string deleteUrl;
+
+    protected override void OnInitialized()
+    {
+        var baseUrl = DataHelper.GetBaseUrl();
+        getUrl = $"{baseUrl}/api/TaskMaster";
+        insertUrl = $"{baseUrl}/api/TaskMaster/Insert";
+        updateUrl = $"{baseUrl}/api/TaskMaster/Update";
+        deleteUrl = $"{baseUrl}/api/TaskMaster/Delete";
+    }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {

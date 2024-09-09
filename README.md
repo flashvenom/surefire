@@ -31,20 +31,26 @@ https://youtu.be/4MuP97-Afqo
 - **Microsoft FluentUI**
 
 ### Version History
-**.0.0.3 - 2021-09-05**
+**.0.0.4 - 2024-09-08**
+- Implemented BaseUrl and IConfigure logic for environment variables for easy development and publishing
+- Many UI/UX/Style/Performance enhancements with a focus on Clients and NavMenu
+- Added upload functionality for contact headshots and client logos
+- Enhanced the client primary contact logic including several bugs
+
+**.0.0.3 - 2024-09-05**
 - Renewal filter save state using browser session
 - Enhanced renewal task lists
 - Fast Search now has keyboard control
 - File organization and Quality of Life fixes
 - Misc bug fixes
 
-**.0.0.2 - 2021-08-28**
+**.0.0.2 - 2024-08-28**
 - Enhanced client browsing
 - Policy coverage details screens for GL, WC and Auto
 - Certificate editor using SfPdfViewer2
 - Store endorsements as attachments and include them with certificates
 
-**.0.0.1 - 2021-08-20**
+**.0.0.1 - 2024-08-20**
 - Initial Release
 - Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
 - Differentiates Carriers between Issuing Carriers and MGA/Wholesalers

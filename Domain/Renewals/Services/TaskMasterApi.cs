@@ -86,7 +86,6 @@ namespace Mantis.Domain.Carriers.Services
         [HttpPost("Delete")]
         public void Delete([FromBody] CRUDModel<TaskMaster> Value)
         {
-            //BRTEAKPOINT DOES NOT HIT HERE
             var existingOrder = _context.Renewals.Find(Value.Value.Id);
             //Delete Code
         }

@@ -9,15 +9,17 @@
 
     <span class="sf-verthr"></span>
 
-    <NavLink class="toolbar-link" href="Carriers" Match="NavLinkMatch.Prefix">
-        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
-        <span class="toolbar-text">Browse</span>
-    </NavLink>
+    <span class="browsebtn @BrowseButtonClass">
+        <NavLink class="toolbar-link" href="Carriers" Match="NavLinkMatch.Prefix"  disabled="@IsBrowseButtonDisabled">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+            <span class="toolbar-text">Browse</span>
+        </NavLink>
+    </span>
 
     @if (CarrierId != 0)
     {
         <span class="sf-verthr2"></span>
-
+         
         <NavLink class="toolbar-link" href="@("Carriers/Edit/" + CarrierId)" Match="NavLinkMatch.Prefix">
             <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
             <span class="toolbar-text">Edit</span>
@@ -35,11 +37,23 @@
     .e-plus-icon::before {
         content: '\e805';
     }
+    .disabled-button {
+        opacity: 0.5;
+        pointer-events: none; /* Ensures it's not clickable */
+    }
+
+    .browsebtn {
+        position:relative;
+        top:3px;
+    }
 </style>
 
 @code {
     [Parameter]
     public int CarrierId { get; set; }
+
+    private string BrowseButtonClass => IsBrowseButtonDisabled ? "disabled-button" : "";
+    private bool IsBrowseButtonDisabled => NavigationManager.Uri.EndsWith("/Carriers", StringComparison.OrdinalIgnoreCase);
 
     private void CreateCarrier()
     {

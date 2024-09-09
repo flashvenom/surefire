@@ -1,12 +1,15 @@
 ﻿@page "/Carriers"
 @using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Shared.Helpers
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
 @inject NavigationManager NavigationManager
+@inject DataHelper DataHelper
 @rendermode InteractiveServer
+
 <SfBreadcrumb>
     <BreadcrumbItems>
         <BreadcrumbItem Text="Carriers" Url="/Carriers" />
@@ -16,10 +19,10 @@
 
 <_toolbar CarrierId="@CarrierId" />
 
-<div class="page-content">
+<div class="page-content-datagrid">
     <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="Carrier"></GridEvents>
-        <SfDataManager  Url="https://mantismetro.azurewebsites.net/api/Carrier" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="@getUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
@@ -59,26 +62,24 @@
     string statusMy = "Loading";
     public List<Carrier> CarrierData { get; set; }
     public int CarrierId { get; set; }
+    private string getUrl;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        statusMy = "Loading...";
-        //InvokeAsync(StateHasChanged);
+        var baseUrl = DataHelper.GetBaseUrl();
+        getUrl = $"{baseUrl}/api/Carrier";
     }
 
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {
         StateHasChanged();
     }
-
     public void CreateNewCarrier()
     {
         NavigationManager.NavigateTo("/Carriers/Create");
     }
-
     private void OnBeginHandler(ActionEventArgs<Carrier> Args) 
     { 
-        statusMy = "Clicked";
         if(Args.RequestType == Syncfusion.Blazor.Grids.Action.Save) 
         { 
             if(Args.Action == "Add") 
@@ -86,13 +87,11 @@
                 var t = Args.Data;
             } 
         } 
-        statusMy = "Clicked...";
         InvokeAsync(StateHasChanged);
     } 
     private void RowSelected(RowSelectEventArgs<Carrier> args)
     {
         CarrierId = args.Data.CarrierId;
-        //NavigationManager.NavigateTo($"/Carriers/Edit/{carrierId}");
     }
     private void RowDoubleClicked(RecordDoubleClickEventArgs<Carrier> args)
     {

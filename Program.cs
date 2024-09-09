@@ -8,6 +8,7 @@ using Mantis.Domain.Renewals.Services;
 using Mantis.Domain.Forms.Services;
 using Mantis.Domain.Contacts.Services;
 using Mantis.Domain.Shared.Services;
+using Mantis.Domain.Shared.Helpers;
 using Mantis.Domain.Users.Services;
 using Mantis.Domain.Voip;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -22,7 +23,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System.Configuration;
 using DotNetEnv;
 
-//Light it up ---------------------------------------------//
+//Initial Variables
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
@@ -30,16 +31,17 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddControllers();
 bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedErrors:Enabled");
 
-//SyncFusion Requirements ---------------------------------//
+//SyncFusion Requirements
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddMemoryCache();
 builder.Services.AddFluentUIComponents();
 Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXdceXVXRGNeWEJ2WEQ=");
 
-//Identity and Authorization ------------------------------//
+//Identity and Authorization
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
+//builder.Services.AddAuthorization();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 builder.Services.AddAuthentication(options =>
 {
@@ -50,10 +52,9 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
-//builder.Services.AddAuthorization();
 
 
-//Database Context ---------------------------------------//
+//Database Context
 string connectionString = Environment.GetEnvironmentVariable("DEFAULTCONNECTION");
 if (string.IsNullOrEmpty(connectionString))
 {
@@ -64,7 +65,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 
-//Surefire Services -------------------------------------//
+//Surefire Services
 builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<CarrierService>();
 builder.Services.AddScoped<UserService>();
@@ -81,8 +82,13 @@ builder.Services.AddSingleton<NavigationService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddSingleton<BreadcrumbService>();
 builder.Services.AddHttpContextAccessor();
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                      .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+                      .AddEnvironmentVariables();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+builder.Services.AddSingleton<DataHelper>();
 
-//My API Services ---------------------------------------//
+//Surefire API Services
 builder.Services.AddHttpClient("CertificateApi", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7074/"); // Base address of your Blazor app
@@ -104,7 +110,7 @@ builder.Services.AddHttpClient("CertificateApi", client =>
 //        .Build();
 //});
 
-//CrmApiService ---------------------------------------//
+//CrmApiService
 builder.Services.Configure<CrmApiOptions>(options =>
 {
     options.ClientId = Environment.GetEnvironmentVariable("CRM_API_CLIENT_ID");
@@ -126,9 +132,9 @@ builder.Services.AddHttpClient<CrmApiService>((sp, client) =>
     client.DefaultRequestHeaders.Add("ClientSecret", crmApiOptions.ClientSecret);
 });
 
+
+//Configure the Application
 var app = builder.Build();
-
-
 if (detailedErrorsEnabled)
 {
     app.UseDeveloperExceptionPage();
@@ -145,17 +151,13 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days.
     app.UseHsts();
     app.UseMigrationsEndPoint();
 }
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
-
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.MapControllers();
 app.MapAdditionalIdentityEndpoints();
-//app.MapHub<CallAlertHub>("/callAlertHub");
 app.Run();

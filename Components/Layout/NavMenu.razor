@@ -93,7 +93,6 @@
     }
     private string GetNavItemClass(string href)
     {
-        Console.WriteLine("currentUrl: " + currentUrl + "  Href: " + href);
         if (string.IsNullOrEmpty(currentUrl) && href == "/")
         {
             return "";
@@ -102,28 +101,23 @@
         {
             if (currentUrl != null)
             {
-                //Console.WriteLine("notnull");
                 if (currentUrl.Contains(href, StringComparison.OrdinalIgnoreCase) || (currentUrl == "" && href == "Home"))
                 {
-                    //Console.WriteLine("ac");
                     return "nb-active";
                 }
                 else
                 {
-                    //Console.WriteLine("na");
                     return "nb-inactive";
                 }
             }
             else
             {
-                Console.WriteLine("BLAH!!!!");
                 return "nb-inactive";
             }
         }
     }
     private void NavTo(string whereto)
     {
-        Console.WriteLine("NAVIGATING TYO" + whereto);
         if(whereto == "Clients")
         {
             NavigationManager.NavigateTo(NavigationService.GetLastClientPage());

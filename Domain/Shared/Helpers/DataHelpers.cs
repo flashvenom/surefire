@@ -1,102 +1,42 @@
 using Mantis.Domain.Renewals.Models;
+using Microsoft.AspNetCore.Components;
 using System.Text.RegularExpressions;
 
 namespace Mantis.Domain.Shared.Helpers
 {
-    public static class DataHelper
+    public class DataHelper
     {
-        public static int RenewalProgressPercentWeighted(ICollection<TrackTask> tasks)
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
+
+        public DataHelper(IConfiguration configuration, IWebHostEnvironment environment)
         {
-            if (tasks == null || tasks.Count == 0)
-            {
-                return 0;
-            }
-
-            int totalTasks = tasks.Count;
-            double totalWeight = 0;
-            double weightedCompleted = 0;
-
-            for (int i = 0; i < totalTasks; i++)
-            {
-                // Higher weight for earlier tasks
-                double weight = (totalTasks - i) / (double)totalTasks;
-                totalWeight += weight;
-
-                if (tasks.ElementAt(i).Completed)
-                {
-                    weightedCompleted += weight;
-                }
-            }
-
-            // Calculate weighted completion percentage
-            return (int)((weightedCompleted / totalWeight) * 100);
+            _configuration = configuration;
+            _environment = environment;
         }
 
-        public static int RenewalProgressPercent(ICollection<TrackTask> tasks)
+        public string GetBaseUrl()
         {
-            if (tasks == null || tasks.Count == 0)
+            // If in Production, prioritize the environment variable
+            if (_environment.IsProduction())
             {
-                return 0;
+                return _configuration["SUREFIRE_BASE_URL"] ?? _configuration["SurefireBaseUrl"];
             }
 
-            int totalTasks = tasks.Count;
-            int completedTasks = tasks.Count(task => task.Completed);
-
-            // Calculate evenly distributed completion percentage
-            return (int)((double)completedTasks / totalTasks * 100);
-        }
-
-        public static string BuildUploadPath(int contactId, string? firstName, string? lastName, string subfolder, string extension)
-        {
-            var cleanName = SanitizeFileName(firstName, lastName);
-            var buildName = $"{contactId}-{cleanName}{extension}";
-
-            return buildName;
-        }
-
-        private static string SanitizeFileName(string? firstName, string? lastName)
-        {
-            // Fallback to "headshot" if both names are null or empty
-            if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName))
+            // If in Development or Debug, use the value from appsettings.Development.json
+            if (_environment.IsDevelopment())
             {
-                return "headshot";
+                return _configuration["SurefireBaseUrl"];
             }
 
-            // If only one of the names is null or empty, use the other
-            var fullName = $"{firstName} {lastName}".Trim();
-
-            // Remove any non-alphabetic characters (allowing only letters)
-            fullName = Regex.Replace(fullName, "[^a-zA-Z]", "");
-
-            // If the name is completely sanitized to empty (no letters), fallback to "headshot"
-            if (string.IsNullOrWhiteSpace(fullName))
-            {
-                return "headshot";
-            }
-
-            return fullName;
-        }
-
-        public static string CropCarrierName(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-            {
-                return string.Empty; // Return an empty string if input is null or empty
-            }
-
-            // Split the input into words
-            var words = input.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-            // Get the first two words
-            var firstTwoWords = string.Join(" ", words.Take(2));
-
-            // If the resulting first two words are less than 8 characters, return the first 10 characters
-            if (firstTwoWords.Length < 8)
-            {
-                return input.Length <= 10 ? input : input.Substring(0, 10);
-            }
-
-            return firstTwoWords;
+            // Fallback to the default base URL in appsettings.json
+            return _configuration["SurefireBaseUrl"];
         }
     }
+
+    public class EmptyValidator : ComponentBase
+    {
+        // No logic required here, this is just to bypass validation.
+    }
+
 }

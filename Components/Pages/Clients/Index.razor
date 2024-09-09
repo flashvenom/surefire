@@ -1,6 +1,8 @@
 ﻿@page "/Clients"
+@page "/Clients/Database"
 @using Mantis.Domain.Clients.Models
 @using Mantis.Components.Layout
+@using Mantis.Domain.Shared.Helpers
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
@@ -8,6 +10,8 @@
 @using Syncfusion.Blazor
 @using Microsoft.FluentUI.AspNetCore.Components
 @inject NavigationManager NavigationManager
+@inject DataHelper DataHelper
+@inject IConfiguration Configuration
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -20,24 +24,88 @@
 <_toolbar />
 
 <div class="page-content">
-    <SfGrid @ref="Grid" DataSource="@ClientData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
-        <GridEvents OnActionBegin="OnBeginHandler" TValue="Client"></GridEvents>
-        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Client" InsertUrl="https://mantismetro.azurewebsites.net/api/Client/Insert" UpdateUrl="https://mantismetro.azurewebsites.net/api/Client/Update" RemoveUrl="https://mantismetro.azurewebsites.net/api/Client/Delete" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+    <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" 
+            Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })">
+        <GridEvents OnActionFailure="@ActionFailure" RowEditing="@RowEditingHandler" RowUpdating="@RowUpdatingHandler" TValue="Client"></GridEvents>
+        <SfDataManager Url="@clientUrl" InsertUrl="@insertClientUrl" UpdateUrl="@updateClientUrl" RemoveUrl="@deleteClientUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
-            <GridColumn Field=@nameof(Client.ClientId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true"></GridColumn>
+            <GridColumn Field=@nameof(Client.ClientId) HeaderText="Id" IsPrimaryKey="true" IsIdentity="true"></GridColumn>
             <GridColumn Field=@nameof(Client.Name) HeaderText="Carrier Name" Width="400"></GridColumn>
             <GridColumn Field=@nameof(Client.PhoneNumber) HeaderText="Phone"></GridColumn>
             <GridColumn Field=@nameof(Client.Email) HeaderText="Website"></GridColumn>
             <GridColumn Field=@nameof(Client.Website) HeaderText="Quoting"></GridColumn>
+            <GridColumn Field=@nameof(Client.LookupCode) HeaderText="LookupCode"></GridColumn>
         </GridColumns>
     </SfGrid>
 </div>
 @code {
     SfGrid<Client> Grid { get; set; }
     SfDataManager DataManager { get; set; }
-    public List<Client> ClientData { get; set; }
+    public List<Client> GridData { get; set; }
+
+    // URLs for the DataManager
+    private string clientUrl;
+    private string insertClientUrl;
+    private string updateClientUrl;
+    private string deleteClientUrl;
+
+    protected override void OnInitialized()
+    {
+        // Construct the URLs dynamically using the base URL from configuration
+        var baseUrl = DataHelper.GetBaseUrl();
+        Console.WriteLine($"Base URL: {baseUrl}");
+        clientUrl = $"{baseUrl}/api/Client";
+        insertClientUrl = $"{baseUrl}/api/Client/Insert";
+        updateClientUrl = $"{baseUrl}/api/Client/Update";
+        deleteClientUrl = $"{baseUrl}/api/Client/Delete";
+    }
+
+    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    {
+        Console.WriteLine("DataGrid ActionFailure. Drumping args.");
+        if (args.Error != null)
+        {
+            Console.WriteLine($"Exception Message: {args.Error.Message}");
+            Console.WriteLine($"Stack Trace: {args.Error.StackTrace}");
+            Console.WriteLine($"RequestType: {args.Error.GetType}");
+            Console.WriteLine($"RequestType: {args.Error.Data}");
+            Console.WriteLine($"Source: {args.Error.Source.ToString()}");
+            Console.WriteLine($"SourceString: {args.Error.Source.FirstOrDefault().ToString()}");
+            Console.WriteLine($"Message: {args.Error.Message}");
+            Console.WriteLine($"Message: {args.Error.Message.ToString()}");
+        }
+       
+    }
+    public void ActionCompletedHandler(ActionEventArgs<Client> args)
+    {
+        Console.WriteLine("DataGrid ActionCommoete.");
+        var shjshj = args.EditContext.Validate();
+        Console.WriteLine($"isValid: {shjshj}");
+        // Here, you can customize your code.
+    }
+    public void RowEditingHandler(RowEditingEventArgs<Client> args)
+    {
+        Console.WriteLine($"Validation: {args.EditContext.GetValidationMessages()}");
+        Console.WriteLine($"isMod: {args.EditContext.IsModified()}");
+        var isValid = args.EditContext.Validate();
+        Console.WriteLine($"isValid: {isValid}");
+        Console.WriteLine($"Validation: {args.EditContext.GetValidationMessages()}");
+
+        Console.WriteLine($"Index: {args.Index.ToString()}");
+        Console.WriteLine($"pks: {args.PrimaryKeys.ToString()}");
+        Console.WriteLine($"pkvals: {args.PrimaryKeyValue.ToString()}");
+    }
+
+    public void RowUpdatingHandler(RowUpdatingEventArgs<Client> args)
+    {
+        Console.WriteLine($"UPDATEValidationIndex: {args.Index.ToString()}");
+        Console.WriteLine($"key: {args.KeyCode}");
+        Console.WriteLine($"pks: {args.PrimaryKeys.ToString()}");
+        Console.WriteLine($"pkvals: {args.PrimaryKeyValue.ToString()}");
+    }
+    
 
     private void OnBeginHandler(ActionEventArgs<Client> Args)
     {

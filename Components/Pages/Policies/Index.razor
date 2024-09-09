@@ -1,11 +1,13 @@
 ﻿@page "/Policies"
 @using Mantis.Domain.Policies.Models
 @using Mantis.Components.Pages.Policies
+@using Mantis.Domain.Shared.Helpers
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
+@inject DataHelper DataHelper
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
@@ -18,10 +20,10 @@
 
 <_toolbar PolicyId="@PolicyId" />
 
-<div class="page-content">
+<div class="page-content-datagrid">
     <SfGrid @ref="Grid" DataSource="@PolicyData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
         <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="PolicyDto"></GridEvents>
-        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Policy/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="@getUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
         <GridPageSettings PageSize="12"></GridPageSettings>
         <GridColumns>
@@ -49,7 +51,15 @@
     string statusMy = "Loading";
     public List<PolicyDto> PolicyData { get; set; }
     public int PolicyId { get; set; }
-
+    private string getUrl;
+    
+    protected override void OnInitialized()
+    {
+        var baseUrl = DataHelper.GetBaseUrl();
+        getUrl = $"{baseUrl}/api/Policy/List";
+    }
+    
+    
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {
         StateHasChanged();

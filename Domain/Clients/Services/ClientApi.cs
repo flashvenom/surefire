@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.AspNetCore.Identity;
 using Mantis.Data;
 using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Renewals.Models;
 
 
 namespace Mantis.Domain.Carriers.Services
@@ -84,9 +85,38 @@ namespace Mantis.Domain.Carriers.Services
                 DataSource = DataOperations.PerformTake(DataSource, DataManagerRequest.Take);
             }
 
-
-
             return new { result = DataSource, count = TotalRecordsCount };
+        }
+
+
+        [HttpPost("Insert")]
+        public void Insert([FromBody] CRUDModel<Client> Value)
+        {
+            _context.Clients.Add(Value.Value);
+            _context.SaveChangesAsync();
+        }
+
+        [HttpPost("Update")]
+        public async void Update([FromBody] CRUDModel<Client> Value)
+        {
+            var existingRecord = _context.Carriers.Find(Value.Value.ClientId);
+
+            if (existingRecord != null)
+            {
+                var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+                existingRecord.CreatedBy = currentUser;
+                _context.Entry(existingRecord).CurrentValues.SetValues(Value.Value);
+                _context.SaveChanges();
+            }
+        }
+
+        [HttpPost("Delete")]
+        public async Task Delete([FromBody] CRUDModel<Client> Value)
+        {
+            int recordId = Convert.ToInt32(Value.Key.ToString());
+            var selectedRecord = await _context.Clients.FindAsync(recordId);
+            _context.Clients.Remove(selectedRecord);
+            _context.SaveChangesAsync();
         }
     }
 }

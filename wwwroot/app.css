@@ -39,6 +39,16 @@ main {
     max-width: 100vw;
     overflow-y:scroll;
 }
+.sjks{
+    color:#c70000
+}
+.page-content-datagrid {
+    padding: 10px;
+    background: linear-gradient(135deg, #f9f9f9 0%,#e8e8e8 54%,#f7f7f7 76%,#e2e2e2 100%);
+    height: calc(100vh - 150px);
+    width: calc(100vw - 50px);
+    overflow-y: scroll;
+}
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;

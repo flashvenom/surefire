@@ -1,10 +1,12 @@
 ﻿@page "/Policies/Products"
 @using Mantis.Domain.Shared
+@using Mantis.Domain.Shared.Helpers
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor
+@inject DataHelper DataHelper
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -16,15 +18,11 @@
 
 <_toolbar />
 
-<div class="page-content">
+<div class="page-content-datagrid">
     <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true"
             Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
         <GridEvents OnActionFailure="@ActionFailure" TValue="Product"></GridEvents>
-        <SfDataManager Url="https://mantismetro.azurewebsites.net/api/Product"
-                       InsertUrl="https://mantismetro.azurewebsites.net/api/Product/Insert"
-                       UpdateUrl="https://mantismetro.azurewebsites.net/api/Product/Update"
-                       RemoveUrl="https://mantismetro.azurewebsites.net/api/Product/Delete"
-                       Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
+        <SfDataManager Url="@getUrl" InsertUrl="@insertUrl" UpdateUrl="@updateUrl" RemoveUrl="@deleteUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
         <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
         <GridPageSettings PageSize="20"></GridPageSettings>
         <GridColumns>
@@ -43,8 +41,32 @@
     SfDataManager DataManager { get; set; }
     public List<Product> GridData { get; set; }
 
+    // URLs for the DataManager
+    private string getUrl;
+    private string insertUrl;
+    private string updateUrl;
+    private string deleteUrl;
+
+    protected override void OnInitialized()
+    {
+        // Construct the URLs dynamically using the base URL from configuration
+        var baseUrl = DataHelper.GetBaseUrl();
+        Console.WriteLine($"Base URL: {baseUrl}");
+        getUrl = $"{baseUrl}/api/Product";
+        insertUrl = $"{baseUrl}/api/Product/Insert";
+        updateUrl = $"{baseUrl}/api/Product/Update";
+        deleteUrl = $"{baseUrl}/api/Product/Delete";
+    }
+
     public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
     {
-        StateHasChanged();
+        Console.WriteLine("DataGrid ActionFailure. Drumping args.");
+        if (args.Error != null)
+        {
+            Console.WriteLine($"Exception Message: {args.Error.Message}");
+            Console.WriteLine($"Stack Trace: {args.Error.StackTrace}");
+            Console.WriteLine($"RequestType: {args.Error.GetType}");
+            Console.WriteLine($"RequestType: {args.Error.Data}");
+        }
     }
 }

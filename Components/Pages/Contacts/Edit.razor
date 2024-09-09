@@ -110,11 +110,10 @@
                 </div>
             </div>
 
-            
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="ShowDeleteConfirmation" Style="color:#c70000;">Delete</FluentButton>
             <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
-            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width:100px;">Save</FluentButton>
 
-            <span style="float:right"><FluentButton Type="ButtonType.Button" CssClass="e-danger" OnClick="ShowDeleteConfirmation">Delete Contact</FluentButton></span>
         </EditForm>
     }
     else
@@ -216,9 +215,8 @@
             var file = args.Files[0];
             if (file != null)
             {
-                //string uploadPath = DataHelper.BuildUploadPath(Contact.ClientId, Contact.ContactId, Contact.FirstName, Contact.LastName, "headshots", Path.GetExtension(file.FileInfo.Name));
                 string extension = Path.GetExtension(file.FileInfo.Name);
-                string cleanFileName = DataHelper.BuildUploadPath(Contact.ContactId, Contact.FirstName, Contact.LastName, "headshots", extension);
+                string cleanFileName = StringHelper.BuildUploadPath(Contact.ContactId, Contact.FirstName, Contact.LastName, "headshots", extension);
                 string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/headshots/", cleanFileName);
 
                 using (var stream = file.File.OpenReadStream(long.MaxValue))

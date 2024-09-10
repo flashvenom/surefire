@@ -26,6 +26,10 @@
     height: 100%;
     opacity: 1;
 }
+.results-temp {
+    height: auto;
+    opacity: 1;
+}
 
 .results-off {
     height: 0%;
@@ -120,4 +124,23 @@ select {
     margin-right: 4px;
     position: relative;
     top: 3px;
+}
+
+.toolbar-calendar-calendar {
+    opacity:1;
+    pointer-events: all;
+}
+.toolbar-calendar-selected {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.toolbar-selected-selected {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.toolbar-selected-calendar {
+    opacity: .4;
+    pointer-events: none;
 }

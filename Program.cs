@@ -18,11 +18,7 @@ using Microsoft.FluentUI.AspNetCore.Components;
 using Syncfusion.Blazor;
 using Microsoft.FluentUI.AspNetCore.Components.Components.Tooltip;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.SignalR.Client;
-using System.Configuration;
 using DotNetEnv;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 //Initial Variables
 var builder = WebApplication.CreateBuilder(args);
@@ -36,20 +32,20 @@ bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedError
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddMemoryCache();
 builder.Services.AddFluentUIComponents();
+builder.Services.AddDataGridEntityFrameworkAdapter();
 Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXdceXVXRGNeWEJ2WEQ=");
 
 //Identity and Authorization
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
-//builder.Services.AddAuthorization();
+builder.Services.AddAuthorization();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = IdentityConstants.ApplicationScheme;
     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
 }).AddIdentityCookies();
-builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme).AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
@@ -159,6 +155,8 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.MapControllers();
 app.MapAdditionalIdentityEndpoints();

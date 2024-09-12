@@ -22,6 +22,11 @@ namespace Mantis.Domain.Carriers.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public IQueryable<Carrier> GetAllCarriers()
+        {
+            return _context.Carriers.AsQueryable();
+        }
+
         public async Task<List<Carrier>> GetAllCarriersAsync()
         {
             return await _context.Carriers.ToListAsync();

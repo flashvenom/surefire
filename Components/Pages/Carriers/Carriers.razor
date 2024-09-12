@@ -1,101 +1,92 @@
 ﻿@page "/Carriers"
 @using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Carriers.Services
 @using Mantis.Domain.Shared.Helpers
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.EntityFrameworkCore
 @inject NavigationManager NavigationManager
 @inject DataHelper DataHelper
+@inject CarrierService CarrierService
 @rendermode InteractiveServer
 
-<SfBreadcrumb>
-    <BreadcrumbItems>
-        <BreadcrumbItem Text="Carriers" Url="/Carriers" />
-        <BreadcrumbItem Text="Database"  />
-    </BreadcrumbItems>
-</SfBreadcrumb>
+<FluentBreadcrumb>
+    <FluentBreadcrumbItem Text="Carriers" Url="/Carriers" />
+    <FluentBreadcrumbItem Text="Database" />
+</FluentBreadcrumb>
 
 <_toolbar CarrierId="@CarrierId" />
 
 <div class="page-content-datagrid">
-    <SfGrid @ref="Grid" DataSource="@CarrierData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
-        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="Carrier"></GridEvents>
-        <SfDataManager Url="@getUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
-        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
-        <GridPageSettings PageSize="12"></GridPageSettings>
-        <GridColumns>
-            <GridColumn Field=@nameof(Carrier.CarrierId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.CarrierName) HeaderText="Name" Width="300"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.CarrierNickname) HeaderText="Nickname"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.Phone) HeaderText="Phone"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.Website) HeaderText="Website"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.QuotingWebsite) HeaderText="Quoting URL"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.NewSubmissionEmail) HeaderText="Submit Email"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.ServicingWebsite) HeaderText="Service URL"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.ServicingEmail) HeaderText="Service Email"></GridColumn>
-            <GridColumn HeaderText="Full Address" AllowEditing="false">
-                <Template>
-                    @{
-                        var order = (Carrier)context;
-                        var fullAddress = string.Join(", ", new[] { order.StreetAddress, order.City, order.State, order.Zip }.Where(part => !string.IsNullOrWhiteSpace(part)));
-                    }
-                    @if (!string.IsNullOrWhiteSpace(fullAddress))
-                    {
-                        <div>@fullAddress</div>
-                    }
-                </Template>
-            </GridColumn>
-            <GridColumn Field=@nameof(Carrier.IssuingCarrier) HeaderText="Issuer" Visible="false"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.Wholesaler) HeaderText="MGA"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.LookupCode) HeaderText="Code" Width="80" Visible="false"></GridColumn>
-            <GridColumn Field=@nameof(Carrier.CreatedBy) HeaderText="Cbifd" Width="80" Visible="false"></GridColumn>
-        </GridColumns>
-    </SfGrid>
+    <FluentDataGrid Items="@FilteredCarriers" ResizableColumns="true" Pagination="@pagination" OnRowDoubleClick="HandleRowDoubleClick">
+        <PropertyColumn Property="@(p => p.CarrierId)" Title="Id" Width="60px" Sortable="true" />
+        <PropertyColumn Property="@(p => p.CarrierName)" Title="Name" Width="350px" Sortable="true" />
+        <PropertyColumn Property="@(p => p.Phone)" Title="Phone" Sortable="true" />
+        <PropertyColumn Property="@(p => p.Website)" Title="Website" Sortable="true" />
+        <PropertyColumn Property="@(p => p.QuotingWebsite)" Title="Quoting URL" Sortable="true" />
+        <PropertyColumn Property="@(p => p.StreetAddress)" Title="Street Address" Sortable="true" />
+        <PropertyColumn Property="@(p => p.City)" Title="City" Sortable="true" />
+        <PropertyColumn Property="@(p => p.State)" Title="State" Sortable="true" />
+        <PropertyColumn Property="@(p => p.Wholesaler)" Title="MGA" Sortable="true" />
+    </FluentDataGrid>
+    <div class="search-container">
+        <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+    </div>
+    <FluentPaginator State="@pagination" />
 </div>
-@statusMy
 
 @code {
-    SfGrid<Carrier> Grid { get; set; }
-    SfDataManager DataManager { get; set; }
-    string statusMy = "Loading";
-    public List<Carrier> CarrierData { get; set; }
+    public IQueryable<Carrier> CarrierData { get; set; }
+    public IQueryable<Carrier> FilteredCarriers { get; set; }
     public int CarrierId { get; set; }
-    private string getUrl;
+    public string SearchTerm { get; set; } = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
+    private System.Timers.Timer debounceTimer;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var baseUrl = DataHelper.GetBaseUrl();
-        getUrl = $"{baseUrl}/api/Carrier";
+        CarrierData = CarrierService.GetAllCarriers();
+        FilteredCarriers = CarrierData;
+        debounceTimer = new System.Timers.Timer(300); // Debounce for 300ms
+        debounceTimer.AutoReset = false; // Prevent multiple triggers
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            await InvokeAsync(ApplySearchFilter); // Apply the search filter after the debounce period
+        };
     }
 
-    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    private void HandleSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
-        StateHasChanged();
+        if (e.Value is string searchTerm)
+        {
+            SearchTerm = searchTerm;
+            debounceTimer.Stop();
+            debounceTimer.Start(); // Start the debounce timer
+        }
     }
-    public void CreateNewCarrier()
+
+
+    private void ApplySearchFilter()
     {
-        NavigationManager.NavigateTo("/Carriers/Create");
+        FilteredCarriers = string.IsNullOrWhiteSpace(SearchTerm)
+        ? CarrierData
+        : CarrierData.Where(c =>
+              EF.Functions.Like(c.CarrierName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Phone.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Website.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.StreetAddress.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.City.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.State.ToLower(), $"%{SearchTerm.ToLower()}%"));
+
+        InvokeAsync(StateHasChanged); // Trigger UI refresh after filtering
     }
-    private void OnBeginHandler(ActionEventArgs<Carrier> Args) 
-    { 
-        if(Args.RequestType == Syncfusion.Blazor.Grids.Action.Save) 
-        { 
-            if(Args.Action == "Add") 
-            { 
-                var t = Args.Data;
-            } 
-        } 
-        InvokeAsync(StateHasChanged);
-    } 
-    private void RowSelected(RowSelectEventArgs<Carrier> args)
+
+    private void HandleRowDoubleClick(FluentDataGridRow<Carrier> row)
     {
-        CarrierId = args.Data.CarrierId;
-    }
-    private void RowDoubleClicked(RecordDoubleClickEventArgs<Carrier> args)
-    {
-        CarrierId = args.RowData.CarrierId;
-        NavigationManager.NavigateTo($"/Carriers/Details/{CarrierId}");
+        if (row != null && row.Item != null)
+        {
+            var selectedCarrier = row.Item;
+            CarrierId = selectedCarrier.CarrierId;
+            NavigationManager.NavigateTo($"/Carriers/Details/{CarrierId}");
+        }
     }
 }

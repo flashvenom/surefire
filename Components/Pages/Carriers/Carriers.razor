@@ -17,7 +17,7 @@
 <_toolbar CarrierId="@CarrierId" />
 
 <div class="page-content-datagrid">
-    <FluentDataGrid Items="@FilteredCarriers" ResizableColumns="true" Pagination="@pagination" OnRowDoubleClick="HandleRowDoubleClick">
+    <FluentDataGrid Items="@FilteredCarriers" ResizableColumns="true" Pagination="@pagination" OnRowDoubleClick="@((FluentDataGridRow<Carrier> row) => HandleRowDoubleClick(row))">
         <PropertyColumn Property="@(p => p.CarrierId)" Title="Id" Width="60px" Sortable="true" />
         <PropertyColumn Property="@(p => p.CarrierName)" Title="Name" Width="350px" Sortable="true" />
         <PropertyColumn Property="@(p => p.Phone)" Title="Phone" Sortable="true" />

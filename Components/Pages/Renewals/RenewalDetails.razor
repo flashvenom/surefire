@@ -13,7 +13,7 @@
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Navigations
-
+@using Syncfusion.Blazor.Spinner
 @using Mantis.Domain.Shared.Helpers
 @using System.Timers
 
@@ -72,6 +72,7 @@
     }
     else
     {
+        <SfSpinner />
         <FluentSkeleton Width="100%" Height="200px" Shimmer="true"></FluentSkeleton>
     }
 </div>
@@ -141,6 +142,7 @@
                 {
                     <tr>
                         <td colspan="4">
+                            <SfSpinner />
                             <FluentSkeleton Width="100%" Height="800px" Shimmer="true"></FluentSkeleton>"
                         </td>
                     </tr>
@@ -247,7 +249,8 @@
         }
         else
         {
-        <FluentSkeleton Width="100%" Height="300px" Shimmer="true"></FluentSkeleton>
+            <SfSpinner />
+            <FluentSkeleton Width="100%" Height="300px" Shimmer="true"></FluentSkeleton>
         }
         @if (AllCarriers != null)
         {
@@ -274,6 +277,7 @@
         }
         else
         {
+            <SfSpinner />
             <FluentSkeleton Width="100%" Height="100px" Shimmer="true"></FluentSkeleton>
         }
     </FluentTab>
@@ -291,6 +295,7 @@
         }
         else
         {
+            <SfSpinner />
             <FluentSkeleton Width="100%" Height="80vh" Shimmer="true"></FluentSkeleton>
         }
     </FluentTab>

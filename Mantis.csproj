@@ -33,8 +33,11 @@
     <Content Remove="Components\Pages\Clients\IndexOld.razor" />
     <Content Remove="Components\Pages\Clients\Test.razor" />
     <Content Remove="Components\Pages\Counter.razor" />
+    <Content Remove="Components\Pages\Renewals\Manage.razor" />
     <Content Remove="Components\Pages\Renewals\ManageEdit.razor" />
+    <Content Remove="Components\Pages\Renewals\ManageRenewal.razor" />
     <Content Remove="Components\Pages\Renewals\Submissions.razor" />
+    <Content Remove="Components\Pages\Renewals\View.razor" />
     <Content Remove="Components\Pages\Renewals\ViewTasks.razor" />
     <Content Remove="Components\Pages\Weather.razor" />
     <Content Remove="Components\Shared\ContactsListAll.razor" />
@@ -51,7 +54,9 @@
     <None Remove="Components\Pages\Renewals\Create.razor.css" />
     <None Remove="Components\Pages\Renewals\Home - Copy.razor.css" />
     <None Remove="Components\Pages\Renewals\Home.razor.css" />
+    <None Remove="Components\Pages\Renewals\Manage.razor.css" />
     <None Remove="Components\Pages\Renewals\ManageEdit.razor.css" />
+    <None Remove="Components\Pages\Renewals\ManageRenewal.razor.css" />
     <None Remove="Components\Pages\Renewals\Submissions.razor.css" />
     <None Remove="Components\Pages\Renewals\View.razor.css" />
     <None Remove="Components\Pages\Renewals\ViewTable.razor.css" />
@@ -64,7 +69,6 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.8" />
@@ -78,9 +82,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.9.3" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.9.3" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="3.1.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.4" />
+    <PackageReference Include="MudBlazor" Version="7.8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
     <PackageReference Include="Syncfusion.Blazor.Calendars" Version="26.2.9" />
@@ -98,12 +101,6 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\uploads\headshots\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="Components\Pages\Renewals\ManageRenewal.razor">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
   </ItemGroup>
 
 </Project>

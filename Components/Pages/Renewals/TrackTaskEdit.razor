@@ -100,11 +100,11 @@
     private async Task HandleValidSubmit()
     {
         await RenewalService.UpdateTrackTaskAsync(task);
-        Navigation.NavigateTo($"/Renewals?openid={task.Renewal.RenewalId}");
+        Navigation.NavigateTo($"/Renewals?&month={task.Renewal.RenewalDate.Month}&year={task.Renewal.RenewalDate.Year}&user=Everyone&renewalId={task.Renewal.RenewalId}&currentView=selected");
     }
 
     private void CancelEdit()
     {
-        Navigation.NavigateTo($"/Renewals?openid={task.Renewal.RenewalId}");
+        Navigation.NavigateTo($"/Renewals?&month={task.Renewal.RenewalDate.Month}&year={task.Renewal.RenewalDate.Year}&user=Everyone&renewalId={task.Renewal.RenewalId}&currentView=selected");
     }
 }

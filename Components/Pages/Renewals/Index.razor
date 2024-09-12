@@ -1,4 +1,4 @@
-﻿@page "/Ren"
+﻿@page "/Renewals"
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
 @using Mantis.Domain.Renewals.Models
@@ -13,11 +13,11 @@
 @using Microsoft.AspNetCore.WebUtilities;
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Spinner
 @inject RenewalService RenewalService
 @inject UserService UserService
 @inject NavigationManager NavigationManager
 @inject CarrierService CarrierService
-@inject ProtectedSessionStorage sessionStorage
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -32,25 +32,49 @@
 
     <span class="sf-verthr"></span>
 
-    <span class="toolbar-calendar-@(currentView)">
+    @* <span class="toolbar-calendar-@(currentView)">
         <NavLink class="toolbar-link" @onclick="ShowSelected" Match="NavLinkMatch.Prefix">
             <FluentIcon Value="@(new Icons.Regular.Size24.BookStar())" />
             <span class="toolbar-text">Renewal</span>
         </NavLink>
-    </span>
+    </span> *@
 
-    <span class="toolbar-selected-@(currentView)">
-        <NavLink class="toolbar-link" @onclick="ShowCalendar" Match="NavLinkMatch.Prefix">
-            <FluentIcon Value="@(new Icons.Regular.Size24.Calendar())" />
-            <span class="toolbar-text">Calendar</span>
+    <span class="sftb toolbar-selected-@(currentView)">
+        <NavLink class="toolbar-link" @onclick="BackToCalendar" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.TaskListLtr())" />
+            <span class="toolbar-text">Renewals</span>
         </NavLink>
     </span>
     
-    
-
     <span class="sf-verthr2"></span>
 
-    <span class="toolbar-calendar-@(currentView)">
+    
+        <a class="sf-chevron" @onclick="PrevMonth"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronLeft())" Color="Color.Custom" CustomColor="#636363" Slot="start" /></a>
+        <NavLink class="toolbar-link-cal" @onclick="ShowCalendar" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Calendar())" />
+        </NavLink>
+        @if (htmlMonth != 0)
+        {
+            <span class="toolbar-text-cal">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(htmlMonth) @htmlYear</span>
+        }
+        <a class="sf-chevron" @onclick="NextMonth"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronRight())" Slot="start" Color="Color.Custom" CustomColor="#636363" /></a>
+        <span class="spcr"></span>
+        <span class="toolbar-link-cal">
+            <FluentIcon Value="@(new Icons.Filled.Size24.Person())" Color="Color.FillInverse" Slot="start" />
+        </span>
+         <select @onchange="OnUserChanged" value="@htmlUser" class="e-input e-dropdownlist">
+            <option value="Everyone">All Employees</option>
+            @if (allUsers != null)
+            {
+                @foreach (var item in allUsers)
+                {
+                    <option value="@item.Id">@item.FirstName @item.LastName</option>
+                }
+            }
+        </select>
+   
+    <!-- Dropdown Holders -->
+    <span style="display:none;">
         <a class="sf-chevron" @onclick="PrevMonth"><FluentIcon Value="@(new Icons.Filled.Size24.CaretLeft())" Color="Color.FillInverse" Slot="start" /></a>
         <span class="monthholder">
             <select @onchange="OnMonthChanged" value="@htmlMonth" class="e-input e-dropdownlist sf-eformbld">
@@ -77,18 +101,9 @@
 
         <span class="sf-verthr2"></span>
 
-        <select @onchange="OnUserChanged" value="@htmlUser" class="e-input e-dropdownlist">
-            <option value="Everyone">Everyone</option>
-            @if (allUsers != null)
-            {
-                @foreach (var item in allUsers)
-                {
-                    <option value="@item.Id">@item.FirstName @item.LastName</option>
-                }
-            }
-        </select>
+
     </span>
-    <span class="spcr"></span>
+    <!-- /Dropdown Holders -->
 
     <span class="sf-verthr2"></span>
 
@@ -102,11 +117,11 @@
         <span class="toolbar-text">Data</span>
     </NavLink>
 
-    @if (selectedRenewalId != 0 && selectedClass != "selected-off")
+    @if (currentView == "selected")
     {
         <span class="sf-verthr2"></span>
 
-        <NavLink class="toolbar-link" href="@("Renewals/Edit/" + selectedRenewalId)" Match="NavLinkMatch.Prefix">
+        <NavLink class="toolbar-link" href="@("Renewals/Edit/" + renewalId)" Match="NavLinkMatch.Prefix">
             <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
             <span class="toolbar-text">Edit Renewal</span>
         </NavLink>
@@ -157,6 +172,7 @@
                     {
                     <tr>
                         <td colspan="8" class="sf-td-mono">
+                            <SfSpinner />
                             <FluentSkeleton Width="100%" Height="500px" Shimmer="true"></FluentSkeleton> 
                         </td>
                     </tr>
@@ -209,75 +225,81 @@
 @code {
     private int htmlMonth;
     private int htmlYear;
+    private int renewalId;
     private string currentView = "calendar";
-    private string htmlUser = "Everyone";
+    private string htmlUser;
     private List<ApplicationUser> allUsers = new List<ApplicationUser>();
     private List<Renewal> RenewalList = new List<Renewal>();
     private bool isLoading = true;
     public List<Carrier> AllCarriers;
     public List<Carrier> AllWholesalers;
     public List<ApplicationUser> AllUsers;
-
     List<Policy> PolicyOrphanList { get; set; } = new List<Policy>();
     private RenewalDetails renewalDetailsComponent;
-
-
-
-    public int selectedRenewalId { get; set; } = 0; 
-    public int alreadyJumped = 0; //?
-    private int? lastJumpMonth; //?
-    private int? lastJumpYear; //?
-    public int openid; //?
-    private bool isInitialized = false; //?
-
-
-
     string resultsClass;
     string selectedClass;
 
     protected override async Task OnInitializedAsync()
     {
-        allUsers = await UserService.GetAllUsers();
-        AllCarriers = await CarrierService.GetAllCarriersAsync();
-        AllWholesalers = await CarrierService.GetAllWholesalersAsync();
-        ParseUrlParameters();
-        ShowCalendar();
-
-        // If no URL params, use default values and load data
-        if (htmlMonth == 0 || htmlYear == 0)
+        if (NavigationManager.Uri.Contains("/Renewals"))
         {
-            htmlMonth = DateTime.Now.Month;
-            htmlYear = DateTime.Now.Year;
-            htmlUser = UserService.GetLoggedInUserId();
-            UpdateUrlWithState();
-        }
+            allUsers = await UserService.GetAllUsers();
+            AllCarriers = await CarrierService.GetAllCarriersAsync();
+            AllWholesalers = await CarrierService.GetAllWholesalersAsync();
+            ParseUrlParameters();
 
-        // Load the renewal list based on the current filters
-        await LazyLoadRenewalList();
+            // If no URL params, use default values and load data
+            Console.WriteLine($"checking for htmlMonth:{htmlMonth} and htmlYear:{htmlYear}");
+            if (htmlMonth == 0 || htmlYear == 0)
+            {
+                htmlMonth = DateTime.Now.Month;
+                htmlYear = DateTime.Now.Year;
+                htmlUser = UserService.GetLoggedInUserId();
+                UpdateUrlWithState();
+            }
+
+            // Load the renewal list based on the current filters
+            await LazyLoadRenewalList();
+
+            // If renewalId is provided in the URL and the view is "selected", load that renewal
+            Console.WriteLine($"checking for renewalId:{renewalId} and currentView:{currentView}");
+            if (renewalId != 0 && currentView == "selected")
+            {
+                Console.WriteLine("loading selected renewal");
+                await LoadSelectedRenewal(renewalId);
+            }
+            else
+            {
+                ShowCalendar();  // Default to calendar view
+            }
+        }
     }
     private async Task LazyLoadRenewalList()
     {
-        Console.WriteLine($"--------------------------------------------LAZY LOAD rid:{selectedRenewalId} isInitialized: {isInitialized} htmlMonth: {htmlMonth} ");
-        // Show a loading skeleton (FluentSkeleton) until the data is loaded.
-        isLoading = true;
-        //RenewalList = null;
-        //StateHasChanged();
+        if (NavigationManager.Uri.Contains("/Renewals"))
+        {
+            Console.WriteLine($"--------------------------------------------LAZY LOAD rid:{renewalId} htmlMonth: {htmlMonth} ");
+            // Show a loading skeleton (FluentSkeleton) until the data is loaded.
+            isLoading = true;
+            //RenewalList = null;
+            //StateHasChanged();
 
-        try
-        {
-            RenewalList = await RenewalService.GetFilteredRenewalListAsync(htmlMonth, htmlYear, htmlUser);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error loading renewal list: " + ex.Message);
-            // Handle errors here (optional)
-        }
-        finally
-        {
-            isLoading = false;
+            try
+            {
+                RenewalList = await RenewalService.GetFilteredRenewalListAsync(htmlMonth, htmlYear, htmlUser);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading renewal list: " + ex.Message);
+                // Handle errors here (optional)
+            }
+            finally
+            {
+                isLoading = false;
 
+            }
+            StateHasChanged(); // Ensure UI updates once the list is loaded.
         }
-        StateHasChanged(); // Ensure UI updates once the list is loaded.
     }
     private void ParseUrlParameters()
     {
@@ -313,6 +335,26 @@
         {
             htmlUser = "Everyone"; // default
         }
+
+        // Parse renewalId from the query params
+        if (queryParams.TryGetValue("renewalId", out var renewalIdValue))
+        {
+            renewalId = int.Parse(renewalIdValue);
+        }
+        else
+        {
+            renewalId = 0; // default
+        }
+
+        // Parse currentview from the query params
+        if (queryParams.TryGetValue("currentView", out var currentViewValue))
+        {
+            currentView = currentViewValue;
+        }
+        else
+        {
+            currentView = "calendar"; // default
+        }
     }
     private async void OnMonthChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
@@ -341,39 +383,38 @@
         {
             { "month", htmlMonth },
             { "year", htmlYear },
-            { "user", htmlUser }
+            { "user", htmlUser },
+            { "renewalId", renewalId },
+            { "currentView", currentView }
         });
 
         NavigationManager.NavigateTo(uri, forceLoad: false); // Change URL without reloading the page
     }
 
-    private async Task LoadSelectedRenewal(int renewalId)
+    private async Task LoadSelectedRenewal(int renewalIdGet)
     {
         ShowSelected();
-        Console.WriteLine("-----LoadSelected");
         try
         {
-            Console.WriteLine("-----LoadSelected2");
             if (renewalDetailsComponent != null)
             {
-                Console.WriteLine("-----LoadSelected3");
-                await renewalDetailsComponent.LoadRenewal(renewalId); // Call the method via the component reference
+                renewalId = renewalIdGet;
+                UpdateUrlWithState();
+                await renewalDetailsComponent.LoadRenewal(renewalIdGet); // Call the method via the component reference
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading selected renewal {renewalId}: " + ex.Message);
+            Console.WriteLine($"Error loading selected renewal {renewalIdGet}: " + ex.Message);
         }
     }
-
-
 
 
     private void NavigateToRenewalCreate()
     {
         NavigationManager.NavigateTo("/Renewals/Create");
     }
-    
+
 
     private async Task NextMonth()
     {
@@ -389,6 +430,7 @@
         }
 
         // Update the URL with the new state and reload the renewal list
+        ShowCalendar();
         UpdateUrlWithState();
         await LazyLoadRenewalList();
     }
@@ -407,10 +449,16 @@
         }
 
         // Update the URL with the new state and reload the renewal list
+        ShowCalendar();
         UpdateUrlWithState();
         await LazyLoadRenewalList();
     }
 
+    private void BackToCalendar()
+    {
+        renewalId = 0;
+        ShowCalendar();
+    }
 
     private void ShowCalendar()
     {

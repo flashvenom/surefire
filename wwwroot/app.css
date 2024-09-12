@@ -268,6 +268,8 @@ main {
     border-radius: 5px;
     align-items: center;
 }
+
+
 .toolbar-link {
     color: #000;
     height: 24px;
@@ -283,6 +285,18 @@ main {
 .toolbar-link svg {
     fill: #000 !important;
 }
+:root .toolbar-link-cal svg {
+    fill: #636363 !important;
+    position: relative;
+    top: 2px;
+}
+.sf-chevron {
+    opacity:.7;
+}
+    .sf-chevron:hover {
+        cursor: pointer;
+        opacity: 1;
+    }
 .toolbar-text {
     -webkit-text-decoration: inherit;
     text-decoration: inherit;
@@ -294,6 +308,8 @@ main {
     :root .toolbar-text a {
         color: #5f5f5f !important;
     }
+
+
 .sf-useremail {
     font-size: .7em;
     color: #fff;

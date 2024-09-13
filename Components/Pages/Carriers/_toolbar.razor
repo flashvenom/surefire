@@ -19,7 +19,8 @@
     @if (CarrierId != 0)
     {
         <span class="sf-verthr2"></span>
-         
+        <span class="toolbar__fluentui-selectedname">@CarrierName</span>
+
         <NavLink class="toolbar-link" href="@("Carriers/Edit/" + CarrierId)" Match="NavLinkMatch.Prefix">
             <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
             <span class="toolbar-text">Edit</span>
@@ -51,6 +52,10 @@
 @code {
     [Parameter]
     public int CarrierId { get; set; }
+
+
+    [Parameter]
+    public string CarrierName { get; set; } = "";
 
     private string BrowseButtonClass => IsBrowseButtonDisabled ? "disabled-button" : "";
     private bool IsBrowseButtonDisabled => NavigationManager.Uri.EndsWith("/Carriers", StringComparison.OrdinalIgnoreCase);

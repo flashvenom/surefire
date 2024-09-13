@@ -1099,3 +1099,39 @@ hr {
     max-width: 100%;
     height: auto;
 }
+.fluent-data-grid {
+    background-color:#fff;
+    border:1px solid #ccc;
+    box-shadow: 0px 0px 7px #ccc;
+}
+.fluent-data-grid__row {
+    background-color:#000;
+}
+.selected-row {
+    background-color: #000;
+}
+:root .selected-row {
+    background-color: #000 !important;
+}
+.toolbar__fluentui-selectedname {
+    font-weight: bold;
+    margin-right: 5px;
+    font-family: "montserrat", sans-serif;
+    font-weight: 500;
+    font-size:.7em;
+}
+.fluent-data-grid__bottombar {
+    position:relative;
+}
+.fluent-data-grid__pagination {
+    position: absolute;
+    top:0px;
+    left:0px;
+    width:100%;
+}
+.fluent-data-grid__search {
+    position: absolute;
+    top: 10px;
+    left: 100px;
+    text-align:center;
+}

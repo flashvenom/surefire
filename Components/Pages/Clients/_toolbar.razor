@@ -22,12 +22,27 @@
 
     <span class="sf-verthr"></span>
 
-    <NavLink class="toolbar-link" href="@NavigationService.GetLastClientPage()" Match="NavLinkMatch.Prefix">
+    <NavLink class="toolbar-link" href="@NavigationService.GetLastClientPageAsync()" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
         <span class="toolbar-text">Browse</span>
     </NavLink>
 
     <NavLink class="toolbar-link" href="/Clients" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
+        <span class="toolbar-text">Data</span>
+    </NavLink>
+
+    <NavLink class="toolbar-link" href="/Clients/List/211" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
+        <span class="toolbar-text">Data</span>
+    </NavLink>
+
+    <NavLink class="toolbar-link" href="/Clients/List/8" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
+        <span class="toolbar-text">Data</span>
+    </NavLink>
+
+    <NavLink class="toolbar-link" href="/Clients/List/11" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
         <span class="toolbar-text">Data</span>
     </NavLink>
@@ -47,6 +62,9 @@
 @code {
     [Parameter]
     public int ClientId { get; set; }
+
+    [Parameter]
+    public string ClientName { get; set; }
 
     [Parameter]
     public EventCallback OnNewPolicy { get; set; }

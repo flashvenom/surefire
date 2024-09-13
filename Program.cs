@@ -76,9 +76,8 @@ builder.Services.AddScoped<AttachmentService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<SearchService>();
 builder.Services.AddScoped<ITooltipService, TooltipService>();
-builder.Services.AddSingleton<NavigationService>();
+builder.Services.AddScoped<NavigationService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-builder.Services.AddSingleton<BreadcrumbService>();
 builder.Services.AddHttpContextAccessor();
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                       .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)

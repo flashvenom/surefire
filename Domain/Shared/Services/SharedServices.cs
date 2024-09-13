@@ -1,16 +1,8 @@
-using Mantis.Domain.Shared;
-using Mantis.Domain.Clients.Models;
-using System.Net;
-using Mantis.Domain.Carriers.Models;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using Syncfusion.Blazor.Navigations;
 using Mantis.Domain.Renewals.ViewModels;
-using Mantis.Domain.Shared;
 using Mantis.Data;
 using Microsoft.AspNetCore.Identity;
-using Mantis.Domain.Policies.Models;
 using Microsoft.EntityFrameworkCore;
+using Mantis.Domain.Carriers.Models;
 
 namespace Mantis.Domain.Shared.Services
 {
@@ -25,6 +17,16 @@ namespace Mantis.Domain.Shared.Services
             _context = context;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+        }
+
+        public IQueryable<Address> GetAllAddresses()
+        {
+            return _context.Address.AsQueryable();
+        }
+
+        public IQueryable<Product> GetAllProducts()
+        {
+            return _context.Products.AsQueryable();
         }
 
 

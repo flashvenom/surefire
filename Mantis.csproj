@@ -27,6 +27,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Domain\Shared\Services\AddressApi.cs" />
+    <Compile Remove="Domain\Shared\Services\ProductApi.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="Components\Layout\NavMenu - Copy.razor" />
     <Content Remove="Components\Pages\Carriers\CarrierDialog.razor" />
     <Content Remove="Components\Pages\Carriers\Carriers - Copy.razor" />
@@ -100,6 +105,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\uploads\headshots\" />
+    <Folder Include="wwwroot\uploads\logos\" />
     <Folder Include="wwwroot\uploads\headshots\" />
   </ItemGroup>
 

@@ -77,6 +77,7 @@ https://youtu.be/4MuP97-Afqo
 - **Settings - Add settings page (gear icon in the upper right top menu) to assign a subemployee/assistant, enter API credentials and store UI preferences.**
 - **Forms Tab: Change certificates to forms, and add a library of PDFs which can be manipulated and the JSON saved in the database.**
 - **Smart Breadrums: Dynamically build breadcrums as the user navigates around the different areas of the site.
+- **Add CRUD to FluentDataGrids
 
 
 ### Carriers

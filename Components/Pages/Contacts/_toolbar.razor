@@ -15,7 +15,7 @@
     {
         <NavLink class="toolbar-link" href="@("Contacts/Edit/" + ContactId)" Match="NavLinkMatch.Prefix">
             <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
-            <span class="toolbar-text">Edit</span>
+            <span class="toolbar-text">Edit @ContactName</span>
         </NavLink>
     }
 </div>
@@ -23,6 +23,9 @@
 @code {
     [Parameter]
     public int ContactId { get; set; }
+
+    [Parameter]
+    public string ContactName { get; set; } = "";
 
     private void NavigateToContactCreate()
     {

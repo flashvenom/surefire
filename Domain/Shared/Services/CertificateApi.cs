@@ -23,7 +23,6 @@ namespace Mantis.Domain.Shared.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-
         [HttpGet("Load/{certificateId}")]
         public async Task<IActionResult> LoadCertificateJson(int certificateId)
         {

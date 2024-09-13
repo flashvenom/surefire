@@ -9,38 +9,52 @@
 @inject CarrierService CarrierService
 @rendermode InteractiveServer
 
-<FluentBreadcrumb>
-    <FluentBreadcrumbItem Text="Carriers" Url="/Carriers" />
-    <FluentBreadcrumbItem Text="Database" />
-</FluentBreadcrumb>
+<SfBreadcrumb>
+    <BreadcrumbItems>
+        <BreadcrumbItem Text="Carriers" Url="/Carriers" />
+        <BreadcrumbItem Text="Browse" />
+    </BreadcrumbItems>
+</SfBreadcrumb>
 
-<_toolbar CarrierId="@CarrierId" />
+<_toolbar CarrierId="@CarrierId" CarrierName="@SelectedCarrierName" />
 
 <div class="page-content-datagrid">
-    <FluentDataGrid Items="@FilteredCarriers" ResizableColumns="true" Pagination="@pagination" OnRowDoubleClick="@((FluentDataGridRow<Carrier> row) => HandleRowDoubleClick(row))">
-        <PropertyColumn Property="@(p => p.CarrierId)" Title="Id" Width="60px" Sortable="true" />
-        <PropertyColumn Property="@(p => p.CarrierName)" Title="Name" Width="350px" Sortable="true" />
-        <PropertyColumn Property="@(p => p.Phone)" Title="Phone" Sortable="true" />
-        <PropertyColumn Property="@(p => p.Website)" Title="Website" Sortable="true" />
-        <PropertyColumn Property="@(p => p.QuotingWebsite)" Title="Quoting URL" Sortable="true" />
-        <PropertyColumn Property="@(p => p.StreetAddress)" Title="Street Address" Sortable="true" />
-        <PropertyColumn Property="@(p => p.City)" Title="City" Sortable="true" />
-        <PropertyColumn Property="@(p => p.State)" Title="State" Sortable="true" />
-        <PropertyColumn Property="@(p => p.Wholesaler)" Title="MGA" Sortable="true" />
-    </FluentDataGrid>
-    <div class="search-container">
-        <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+    <div class="fluent-data-grid">
+        <FluentDataGrid Items="@FilteredCarriers" ResizableColumns="true" Pagination="@pagination" ShowHover="true" 
+            OnRowDoubleClick="@((FluentDataGridRow<Carrier> row) => HandleRowDoubleClick(row))" 
+            OnRowClick="@((FluentDataGridRow<Carrier> row) => HandleRowClick(row))">
+            <PropertyColumn Property="@(p => p.CarrierId)" Title="Id" Width="60px" Sortable="true"  />
+            <PropertyColumn Property="@(p => p.CarrierName)" Title="Name" Width="350px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Phone)" Title="Phone" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Website)" Title="Website" Sortable="true" />
+            <PropertyColumn Property="@(p => p.QuotingWebsite)" Title="Quoting URL" Sortable="true" />
+            <PropertyColumn Property="@(p => p.StreetAddress)" Title="Street Address" Sortable="true" />
+            <PropertyColumn Property="@(p => p.City)" Title="City" Sortable="true" />
+            <PropertyColumn Property="@(p => p.State)" Title="State" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Wholesaler)" Title="MGA" Sortable="true" />
+        </FluentDataGrid>
+        <div class="fluent-data-grid__bottombar">
+            <div class="fluent-data-grid__pagination">
+                <FluentPaginator State="@pagination" />
+            </div>
+            
+            <div class="fluent-data-grid__search">
+                <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+            </div>
+        </div>
     </div>
-    <FluentPaginator State="@pagination" />
 </div>
 
 @code {
     public IQueryable<Carrier> CarrierData { get; set; }
     public IQueryable<Carrier> FilteredCarriers { get; set; }
     public int CarrierId { get; set; }
+    public string SelectedCarrierName { get; set; } = "";
     public string SearchTerm { get; set; } = string.Empty;
     PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
     private System.Timers.Timer debounceTimer;
+    bool SelectFromEntireRow = true;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,6 +101,29 @@
             var selectedCarrier = row.Item;
             CarrierId = selectedCarrier.CarrierId;
             NavigationManager.NavigateTo($"/Carriers/Details/{CarrierId}");
+        }
+    }
+
+    private void HandleRowSelected(FluentDataGridRow<Carrier> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedCarrier = row.Item;
+            CarrierId = selectedCarrier.CarrierId;
+            NavigationManager.NavigateTo($"/Carriers/Details/{CarrierId}");
+        }
+    }
+
+    private void HandleRowClick(FluentDataGridRow<Carrier> row)
+    {
+        if (row != null && row.Item != null)
+        {
+
+            var selectedCarrier = row.Item;
+            row.Class = "selected-row";
+            SelectedCarrierName = row.Item.CarrierName + ": ";
+            CarrierId = selectedCarrier.CarrierId;
+            StateHasChanged();
         }
     }
 }

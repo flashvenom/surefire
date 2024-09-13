@@ -119,13 +119,6 @@
         Products = await SharedService.GetAllProductsAsync();
         Carriers = await CarrierService.GetAllCarriersAsync();
         Wholesalers = await CarrierService.GetAllWholesalersAsync();
-
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home", Url = "/" },
-            new BreadcrumbItem { Text = "Policies", Url = "/Policies" },
-            new BreadcrumbItem { Text = "Edit" }
-        });
     }
 
     private async Task UpdatePolicy()

@@ -116,16 +116,21 @@
             }
         }
     }
-    private void NavTo(string whereto)
+    private async Task NavTo(string whereto)
     {
+        Console.WriteLine("Navigating to " + whereto);
         if(whereto == "Clients")
         {
-            NavigationManager.NavigateTo(NavigationService.GetLastClientPage());
+            Console.WriteLine("Navigating to Clients and setting CLient Page");
+            string lastClientPage = await NavigationService.GetLastClientPageAsync();
+            NavigationManager.NavigateTo(lastClientPage);
         }
         else
         {
+            Console.WriteLine("NOTTTTT");
             NavigationManager.NavigateTo(whereto);
         }
+        
         
     }
     public void Dispose()

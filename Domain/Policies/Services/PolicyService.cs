@@ -5,6 +5,8 @@ using Mantis.Domain.Policies.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Carriers.Models;
+using Mantis.Domain.Shared;
 
 
 namespace Mantis.Domain.Policies.Services
@@ -20,6 +22,48 @@ namespace Mantis.Domain.Policies.Services
             _context = context;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+        }
+
+        public IQueryable<Policy> GetAllPolicies()
+        {
+            return _context.Policies
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Client)
+                .Include(p => p.Product)
+                .Select(p => new Policy
+                {
+                    PolicyId = p.PolicyId,
+                    PolicyNumber = p.PolicyNumber,
+                    EffectiveDate = p.EffectiveDate,
+                    ExpirationDate = p.ExpirationDate,
+                    Premium = p.Premium,
+                    Product = p.Product ?? new Product { LineNickname = "N/A" },  // Handle null Product
+                    Carrier = p.Carrier ?? new Carrier { CarrierName = "N/A" },    // Handle null Carrier
+                    Wholesaler = p.Wholesaler ?? new Carrier { CarrierName = "N/A" }, // Handle null Wholesaler
+                    Client = p.Client
+                })
+                .AsQueryable();
+        }
+
+        public async Task<List<Policy>> GetAllPoliciesListAsync()
+        {
+            var policylist = await _context.Policies
+                .Include(p => p.Carrier)
+                .Include(p => p.Wholesaler)
+                .Include(p => p.Client)
+                .Include(p => p.Product)
+                .ToListAsync();
+
+            // Handle nulls after fetching data
+            foreach (var policy in policylist)
+            {
+                policy.Product ??= new Product { LineNickname = "N/A" };  // Handle null Product
+                policy.Carrier ??= new Carrier { CarrierName = "N/A" };   // Handle null Carrier
+                policy.Wholesaler ??= new Carrier { CarrierName = "N/A" }; // Handle null Wholesaler
+            }
+
+            return policylist;
         }
 
         // Create a new policy

@@ -1,68 +1,114 @@
 ﻿@page "/Renewals/MasterTasks"
 @using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Shared.Helpers
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.EntityFrameworkCore
+@inject NavigationManager NavigationManager
 @inject DataHelper DataHelper
+@inject RenewalService RenewalService
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
     <BreadcrumbItems>
-        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
-        <BreadcrumbItem Text="Master Tasks" />
+        <BreadcrumbItem Text="Tasks" Url="/Tasks" />
+        <BreadcrumbItem Text="Browse" />
     </BreadcrumbItems>
 </SfBreadcrumb>
 
 <_toolbar />
 
 <div class="page-content-datagrid">
-    <SfGrid @ref="Grid" DataSource="@GridData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" 
-        Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Update", "Search", "Cancel", "ColumnChooser" })" RowHeight="30">
-        <GridEvents OnActionFailure="@ActionFailure" TValue="TaskMaster"></GridEvents>
-        <SfDataManager Url="@getUrl" InsertUrl="@insertUrl" UpdateUrl="@updateUrl" RemoveUrl="@deleteUrl" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
-        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog"></GridEditSettings>
-        <GridPageSettings PageSize="20"></GridPageSettings>
-        <GridColumns>
-            <GridColumn Field=@nameof(TaskMaster.Id) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
-            <GridColumn Field=@nameof(TaskMaster.TaskName) HeaderText="Name" Width="400"></GridColumn>
-            <GridColumn Field=@nameof(TaskMaster.Description) HeaderText="Description"></GridColumn>
-            <GridColumn Field=@nameof(TaskMaster.DaysBeforeExpiration) HeaderText="GoalDays"></GridColumn>
-            <GridColumn Field=@nameof(TaskMaster.ParentTaskId) HeaderText="Parent Task"></GridColumn>
-            <GridColumn Field=@nameof(TaskMaster.ForType) HeaderText="For Type"></GridColumn>
-            <GridColumn Field=@nameof(TaskMaster.Important) HeaderText="Important"></GridColumn>
-            <GridColumn Field=@nameof(TaskMaster.OrderNumber) HeaderText="Order"></GridColumn>
-        </GridColumns>
-    </SfGrid>
+    <div class="fluent-data-grid">
+        <FluentDataGrid Items="@FilteredTasks" ResizableColumns="true" Pagination="@pagination" ShowHover="true"
+                        OnRowDoubleClick="@((FluentDataGridRow<TaskMaster> row) => HandleRowDoubleClick(row))"
+                        OnRowClick="@((FluentDataGridRow<TaskMaster> row) => HandleRowClick(row))">
+            <PropertyColumn Property="@(p => p.Id)" Title="Id" Width="60px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.TaskName)" Title="Task Name" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Description)" Title="Description" Sortable="true" />
+            <PropertyColumn Property="@(p => p.DaysBeforeExpiration)" Title="Days Before Expiration" Sortable="true" />
+            <PropertyColumn Property="@(p => p.ParentTaskId)" Title="Parent Task Id" Sortable="true" />
+            <PropertyColumn Property="@(p => p.ForType)" Title="For Type" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Important)" Title="Important" Sortable="true" />
+            <PropertyColumn Property="@(p => p.OrderNumber)" Title="Order Number" Sortable="true" />
+        </FluentDataGrid>
+        <div class="fluent-data-grid__bottombar">
+            <div class="fluent-data-grid__pagination">
+                <FluentPaginator State="@pagination" />
+            </div>
+
+            <div class="fluent-data-grid__search">
+                <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+            </div>
+        </div>
+    </div>
 </div>
-@statusMy
 
 @code {
-    SfGrid<TaskMaster> Grid { get; set; }
-    SfDataManager DataManager { get; set; }
-    string statusMy = "Loading";
-    public List<TaskMaster> GridData { get; set; }
+    public IQueryable<TaskMaster> TaskData { get; set; }
+    public IQueryable<TaskMaster> FilteredTasks { get; set; }
+    public int TaskId { get; set; }
+    public string SelectedTaskName { get; set; } = "";
+    public string SearchTerm { get; set; } = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
+    private System.Timers.Timer debounceTimer;
+    bool SelectFromEntireRow = true;
 
-    private string getUrl;
-    private string insertUrl;
-    private string updateUrl;
-    private string deleteUrl;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        var baseUrl = DataHelper.GetBaseUrl();
-        getUrl = $"{baseUrl}/api/TaskMaster";
-        insertUrl = $"{baseUrl}/api/TaskMaster/Insert";
-        updateUrl = $"{baseUrl}/api/TaskMaster/Update";
-        deleteUrl = $"{baseUrl}/api/TaskMaster/Delete";
+        TaskData = RenewalService.GetAllTaskMasters();
+        FilteredTasks = TaskData;
+        debounceTimer = new System.Timers.Timer(300); // Debounce for 300ms
+        debounceTimer.AutoReset = false; // Prevent multiple triggers
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            await InvokeAsync(ApplySearchFilter); // Apply the search filter after the debounce period
+        };
     }
 
-    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    private void HandleSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
-        statusMy = "ERROR ON GRID!<br>";
-        statusMy += args.Error.ToString();
-        StateHasChanged();
+        if (e.Value is string searchTerm)
+        {
+            SearchTerm = searchTerm;
+            debounceTimer.Stop();
+            debounceTimer.Start(); // Start the debounce timer
+        }
+    }
+
+
+    private void ApplySearchFilter()
+    {
+        FilteredTasks = string.IsNullOrWhiteSpace(SearchTerm)
+        ? TaskData
+        : TaskData.Where(t =>
+              EF.Functions.Like(t.TaskName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(t.Description.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(t.ForType.ToLower(), $"%{SearchTerm.ToLower()}%"));
+
+        InvokeAsync(StateHasChanged); // Trigger UI refresh after filtering
+    }
+
+    private void HandleRowDoubleClick(FluentDataGridRow<TaskMaster> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedTask = row.Item;
+            TaskId = selectedTask.Id;
+            NavigationManager.NavigateTo($"/Tasks/Details/{TaskId}");
+        }
+    }
+
+    private void HandleRowClick(FluentDataGridRow<TaskMaster> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedTask = row.Item;
+            row.Class = "selected-row";
+            SelectedTaskName = selectedTask.TaskName + ": ";
+            TaskId = selectedTask.Id;
+            StateHasChanged();
+        }
     }
 }

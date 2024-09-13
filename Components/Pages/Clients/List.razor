@@ -1,5 +1,5 @@
-﻿@page "/Clients/List"
-@page "/Clients/List/{ClientId:int}"
+﻿// File: Components/Pages/Clients/List.razor
+@page "/Clients/List/{LoadClientId:int}"
 
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Linq
@@ -19,14 +19,12 @@
 @using Mantis.Data
 @using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Shared.Helpers
-@inject HttpClient Http
 @inject NavigationManager NavigationManager
 @inject NavigationService NavigationService
 @inject RenewalService RenewalService
 @inject CrmApiService CrmApiService
 @inject ClientService ClientService
 @inject DataHelper DataHelper
-@inject IJSRuntime jsRuntime
 @rendermode InteractiveServer
 
 
@@ -51,9 +49,9 @@
                 <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
                 </FluentTextField>
-                <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
+                <SfListView DataSource="filteredClients" CssClass="client-list">
                     <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
-                    <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
+                    <ListViewEvents TValue="Client" Clicked="@LoadClientClickHandler" />
                 </SfListView>
             </div>
         </div>
@@ -186,7 +184,7 @@
                         </div>
                     </FluentTab>
                     <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
-                        <div class="tabcontents">
+                        @* <div class="tabcontents">
                             @if (selectedClient != null)
                             {
                                 @if (showCreatePolicy == true)
@@ -208,7 +206,7 @@
                             {
                                 <SfSpinner />
                             }
-                        </div>
+                        </div> *@
                     </FluentTab>
                     <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
                         <div class="tabcontents">
@@ -217,7 +215,7 @@
                         </div>
                     </FluentTab>
                     <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
-                        <div class="tabcontents">
+                        @* <div class="tabcontents">
                             <div class="txt-section">Certificates</div>
                             @if (selectedClient != null)
                             {
@@ -227,7 +225,7 @@
                             {
                                 <SfSpinner />    
                             }
-                            </div>
+                            </div> *@
                     </FluentTab>
 
                     <FluentTab Id="tab-5" Label="Utilities" Class="sf-tab">
@@ -275,7 +273,6 @@
                         }
                     </FluentTab>
                 </FluentTabs>
-                <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
             </div>
         </div>
         <div style="clear:both;"></div>
@@ -319,13 +316,14 @@
 
 @code {
     [Parameter, SupplyParameterFromQuery]
-    public int ClientId { get; set; } = 211;
+    public int LoadClientId { get; set; }
 
     [Parameter]
     public bool showCreatePolicy { get; set; } = false;
 
     private HashSet<int> expandedPolicies = new HashSet<int>();
     private int activeTabIndex = 0; // Default to the first tab
+    private int ClientId { get; set; }
     private FluentTabs tabInterface { get; set; }
     private string searchTerm = string.Empty;
     private List<Client> clients = new();
@@ -349,58 +347,141 @@
 
     protected override async Task OnInitializedAsync()
     {
-        debounceTimer = new System.Timers.Timer(100);
-        debounceTimer.AutoReset = false;
-        debounceTimer.Elapsed += (sender, args) => FilterClients();
-
-        var baseUrl = DataHelper.GetBaseUrl();
-        getUrl = $"{baseUrl}/api/Client";
-
-        selectedClient = await ClientService.GetClientById(ClientId);
-        if (selectedClient?.PrimaryContact != null)
-        {
-            primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
-        }
-
-        secondaryContactList = selectedClient?.Contacts
-        .Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId)
-        .ToList();
-
-        SortAndSeparatePolicies();
-
-        clients = await Http.GetFromJsonAsync<List<Client>>(@getUrl);
+        // var staticClients = new List<Client>
+        // {
+        //     new Client { ClientId = 8, Name = "Aqua-Net Inc.", PhoneNumber = "7145286387", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
+        //     new Client { ClientId = 9, Name = "Stox Posting and Publishing", PhoneNumber = "8013720793", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
+        //     new Client { ClientId = 10, Name = "TEKNIX SERVICES CORP", PhoneNumber = "7145737200", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
+        //     new Client { ClientId = 11, Name = "Cross Axes Tech LLC", PhoneNumber = "7143170203", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
+        //     new Client { ClientId = 12, Name = "Prisma Construction Co. Inc", PhoneNumber = "8186722606", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
+        //     new Client { ClientId = 13, Name = "Budilo Construction", PhoneNumber = "9517410047", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 14, Name = "Martin Construction", PhoneNumber = "8054953126", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 15, Name = "Michael J's Inc.", PhoneNumber = "7603752287", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 16, Name = "Sullivan Construction", PhoneNumber = "3102510745", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 17, Name = "Touch Of Faith Aesthetics, LLC", PhoneNumber = "3239391654", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 18, Name = "Cicone Construction Co., Inc.", PhoneNumber = "7607279991", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 19, Name = "Quad-B Systems", PhoneNumber = "9493105718", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 20, Name = "DAWRE LLC", PhoneNumber = "9492956502", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 21, Name = "Russian School Of Orange County", PhoneNumber = "9498542402", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
+        //     new Client { ClientId = 22, Name = "Kid Friendly Pediatric Dentist", PhoneNumber = "7148321343", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }}
+        // };
+        // clients = staticClients;
+        clients = await ClientService.GetClientListAsync();
         filteredClients = new List<Client>(clients);
+        debounceTimer = new System.Timers.Timer(300);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            Console.WriteLine("Debounce timer elapsed");
+            await InvokeAsync(FilterClients); // Apply the search filter after the debounce period
+        };
+
+        await LoadClient(LoadClientId);
     }
 
-    protected override async Task OnParametersSetAsync()
+    private async Task LoadClient(int loadClientId)
     {
-        Console.WriteLine("paramchange");
-        if (selectedClient == null || selectedClient.ClientId != ClientId)
+        Console.WriteLine("Loading client: " + loadClientId);
+        try
         {
-            Console.WriteLine("selected client has changed");
-            // Only update if the selectedClient is null or if the ClientId has changed
-            selectedClient = await ClientService.GetClientById(ClientId);
+            //Load the Client
+            selectedClient = await ClientService.GetClientById(loadClientId);
 
+            if(selectedClient == null)
+            {
+                //If we couldn't get a client, fall back to one we know is good default client
+                selectedClient = await ClientService.GetClientById(211);
+            }
+
+            //Create the contact list
             if (selectedClient?.PrimaryContact != null)
             {
                 primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
             }
+            secondaryContactList = selectedClient.Contacts.Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId).ToList();
 
-            secondaryContactList = selectedClient?.Contacts
-                .Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId)
+            //Sort the policies
+            var today = DateTime.Today;
+            currentPolicies = selectedClient.Policies.Where(p =>
+                // Active policies: where today's date falls within the effective and expiration date
+                (p.EffectiveDate <= today && p.ExpirationDate >= today) ||
+                // Future policies: where both the effective and expiration dates are in the future
+                (p.EffectiveDate > today && p.ExpirationDate > today))
+                .OrderByDescending(p => p.EffectiveDate)
                 .ToList();
-            Console.WriteLine("UPDATING stuff on paramchange");
-            SortAndSeparatePolicies();
-        }
 
-        // Only fetch clients once if it hasn't been fetched before
-        if (clients == null || !clients.Any())
+            pastPolicies = selectedClient.Policies
+                .Where(p => p.ExpirationDate < today)
+                .OrderByDescending(p => p.EffectiveDate)
+                .ToList();
+
+            // var clientToUpdate = clients.FirstOrDefault(c => c.ClientId == selectedClient.ClientId);
+            // if (clientToUpdate != null)
+            // {
+            //     clientToUpdate.DateOpened = selectedClient.DateOpened; // Update the field
+            // }
+            // SortClientsByLastOpened();
+            Console.WriteLine("Updating state");
+            await InvokeAsync(StateHasChanged);
+
+
+        }
+        catch (Exception ex)
         {
-            clients = await Http.GetFromJsonAsync<List<Client>>(@getUrl);
-            filteredClients = new List<Client>(clients);
+            Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
         }
     }
 
+    private async Task FilterClients()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            filteredClients = new List<Client>(clients);
+        }
+        else
+        {
+            filteredClients = clients
+                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        searchTerm = e.Value.ToString();
+        debounceTimer.Stop();
+        debounceTimer.Start();
+    }
+    private void SortClientsByLastOpened()
+    {
+        filteredClients = filteredClients.OrderByDescending(c => c.DateOpened).ToList();
+    }
+
+    private async Task LoadClientClickHandler(ClickEventArgs<Client> args)
+    {
+        Console.WriteLine("CLICK load client");
+        int loadThisClient = 211;
+        try
+        {
+
+            loadThisClient = filteredClients[args.Index].ClientId;
+            Console.WriteLine("CLICK load client: " + loadThisClient);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
+            ClientId = 211;
+        }
+        finally
+        {
+            Console.WriteLine("loading now...");
+            await NavigationService.SetLastClientPageAsync("/Clients/List/" + loadThisClient);
+            await LoadClient(loadThisClient);
+
+        }
+        Console.WriteLine("done");
+        
+    }
     //User Interface
     private void SetShowCreatePolicy()
     {
@@ -467,7 +548,6 @@
     public void Dispose()
     {
         debounceTimer?.Dispose();
-
     }
     private async void ImportContacts()
     {
@@ -574,51 +654,46 @@
     }
 
     //Filter Methods
-    private async Task FilterClients()
-    {
-        if (string.IsNullOrEmpty(searchTerm))
-        {
-            filteredClients = new List<Client>(clients);
-        }
-        else
-        {
-            filteredClients = clients
-                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-        await InvokeAsync(StateHasChanged);
-    }
-    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
-    {
-        searchTerm = e.Value.ToString();
-        debounceTimer.Stop();
-        debounceTimer.Start();
-    }
+    // private void FilterClientsD()
+    // {
+    //     if (string.IsNullOrEmpty(searchTerm))
+    //     {
+    //         filteredClients = clients.ToList();
+    //     }
+    //     else
+    //     {
+    //         filteredClients = clients
+    //             .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+    //             .ToList();
+    //     }
+    //     await InvokeAsync(StateHasChanged);
+    // }
+
 
     // Load and Filter Client Methods
-    private async Task ClickHandler(ClickEventArgs<Client> args)
-    {
-        ClientId = filteredClients[args.Index].ClientId;
-        selectedClient = await ClientService.GetClientById(ClientId);
-        searchTerm = "";
-        debounceTimer.Stop();
-        debounceTimer.Start();
+    
+    // private async Task ClickHandler(ClickEventArgs<Client> args)
+    // {
+    //     ClientId = filteredClients[args.Index].ClientId;
+    //     selectedClient = await ClientService.GetClientById(ClientId);
+    //     searchTerm = "";
+    //     debounceTimer.Stop();
+    //     debounceTimer.Start();
 
-        //Get policies if we haven't fetched them from the API before
-        if (selectedClient.eClientId == null)
-        {
-            isLoadingCrmId = true;
-            isLoadingWhat += ".:";
-            await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
-        }
+    //     //Get policies if we haven't fetched them from the API before
+    //     if (selectedClient.eClientId == null)
+    //     {
+    //         isLoadingCrmId = true;
+    //         isLoadingWhat += ".:";
+    //         await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
+    //     }
 
-        // Separate and sort policies
+    //     // Separate and sort policies
 
-        NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
-        ExpandDetails();
-        SortAndSeparatePolicies();
-        //NavigationManager.NavigateTo($"/Clients/List/{ClientId}", forceLoad: false);
-    }
+    //     await NavigationService.SetLastClientPageAsync("/Clients/List/" + ClientId);
+    //     ExpandDetails();
+    //     SortAndSeparatePolicies();
+    // }
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
     {
         //API Call

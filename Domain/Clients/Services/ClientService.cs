@@ -15,6 +15,8 @@ using System.Text.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
+using Mantis.Domain.Carriers.Models;
+using Mantis.Domain.Shared;
 
 
 namespace Mantis.Domain.Clients.Services
@@ -34,7 +36,18 @@ namespace Mantis.Domain.Clients.Services
             _crmApiService = crmApiService;
         }
 
-        
+        public IQueryable<Client> GetAllClients()
+        {
+            return _context.Clients.AsQueryable();
+        }
+
+        public async Task<List<Client>> GetClientListAsync()
+        {
+            var clientlist = await _context.Clients.OrderByDescending(c => c.DateOpened).ToListAsync();
+            return clientlist;
+        }
+
+
         public async Task NewClientQuick(Client client)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
@@ -61,11 +74,11 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Product)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
-            if (client != null)
-            {
-                client.DateOpened = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
+            //if (client != null)
+            //{
+            //    client.DateOpened = DateTime.UtcNow;
+            //    await _context.SaveChangesAsync();
+            //}
             return client;
         }
 
@@ -349,11 +362,6 @@ namespace Mantis.Domain.Clients.Services
             }
         }
 
-        //Cleanups
-        public async Task<List<Client>> GetCarriersAsync()
-        {
-            return await _context.Clients.ToListAsync();
-        }
-
+        
     }
 }

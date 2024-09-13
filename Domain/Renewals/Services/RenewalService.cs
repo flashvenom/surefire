@@ -31,6 +31,50 @@ namespace Mantis.Domain.Renewals.Services
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
+        public IQueryable<TaskMaster> GetAllTaskMasters()
+        {
+            return _context.TaskMasters.AsQueryable();
+        }
+
+
+        public IQueryable<Renewal> GetAllRenewals()
+        {
+            return _context.Renewals
+                .Include(r => r.Client)
+                .Include(r => r.Product)
+                .Include(r => r.Policy)
+                .Include(r => r.Carrier)
+                .Include(r => r.Wholesaler)
+                .Select(r => new Renewal
+                {
+                    RenewalId = r.RenewalId,
+                    ExpiringPolicyNumber = r.ExpiringPolicyNumber ?? "-", // Replace null with "-"
+                    ExpiringPremium = r.ExpiringPremium, // Assuming ExpiringPremium is not nullable
+                    RenewalDate = r.RenewalDate,
+                    // Handle null values for related entities
+                    Client = new Client
+                    {
+                        Name = r.Client != null ? r.Client.Name : "-" // Replace null with "-"
+                    },
+                    Product = new Product
+                    {
+                        LineNickname = r.Product != null ? r.Product.LineNickname : "-" // Replace null with "-"
+                    },
+                    Policy = new Policy
+                    {
+                        PolicyNumber = r.Policy != null ? r.Policy.PolicyNumber : "-" // Replace null with "-"
+                    },
+                    Carrier = new Carrier
+                    {
+                        CarrierName = r.Carrier != null ? r.Carrier.CarrierName : "-" // Replace null with "-"
+                    },
+                    Wholesaler = new Carrier
+                    {
+                        CarrierName = r.Wholesaler != null ? r.Wholesaler.CarrierName : "-" // Replace null with "-"
+                    }
+                })
+                .AsQueryable();
+        }
 
         //Methods for: Submissions.razor
         public async Task<Submission> CreateNewSubmissionAsync(int renewalId, int? carrierId = null, int? wholesalerId = null)

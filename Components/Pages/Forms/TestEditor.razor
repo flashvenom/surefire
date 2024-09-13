@@ -1,4 +1,4 @@
-﻿@page "/Forms/Certificate/{CertificateId:int}"
+﻿@page "/Forms/Test/{CertificateId:int}"
 @using Newtonsoft.Json
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.SfPdfViewer
@@ -126,7 +126,7 @@
 
 <div class="control-section" style="height:784px;">
     <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="784px" Width="90%">
-        <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+        <PdfViewerEvents DocumentLoaded="DebugPdf"></PdfViewerEvents>
     </SfPdfViewer2>
 </div>
 
@@ -134,11 +134,11 @@
     [Parameter]
     public int CertificateId { get; set; }
 
-    private string DocumentPath { get; set; } = "";
+    public string DocumentPath { get; set; } = "wwwroot/forms/a126-2016-09.pdf";
     private string ClearPoliciesPath { get; set; } = "";
     private string JsonPath { get; set; } = "";
-    private SfPdfViewer2 pdfViewer;
-    private Stream stream;
+    SfPdfViewer2 pdfViewer;
+    Stream stream;
     public int clientId { get; set; } = 0;
     public Client client { get; set; } =  new Client();
     public Certificate certificate { get; set; } = new Certificate();
@@ -149,34 +149,69 @@
 
     protected override async Task OnInitializedAsync()
     {
-        DocumentPath = "wwwroot/forms/a025-2016-03.pdf";
-        JsonPath = Path.Combine(Environment.WebRootPath, "forms", "_json/a025-2016-03-v2.json");
-        ClearPoliciesPath = Path.Combine(Environment.WebRootPath, "forms", "_json/a025-2016-03-v2-clearpolicies.json");
+        //DocumentPath = "wwwroot/forms/a126-2016-09-alt1.pdf";
+        JsonPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2.json");
+        ClearPoliciesPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2-clearpolicies.json");
         client = await ClientService.GetClientByCertificateId(CertificateId);
         certificate = await FormService.GetCertificateByIdAsync(CertificateId);
         policies = await PolicyService.GetCurrentPoliciesByClientIdAsync(client.ClientId);
         clientId = client.ClientId;
     }
 
-    private async Task LoadJsonDataIntoPdfAsync()
-    {
-        Console.WriteLine("Loading DATABASE JSON data into PDF viewer");
-        if (certificate != null && !string.IsNullOrEmpty(certificate.JSONData))
-        {
-            // Convert JSONData to a Stream
-            var jsonDataStream = new MemoryStream();
-            using (var writer = new StreamWriter(jsonDataStream, leaveOpen: true))
-            {
-                await writer.WriteAsync(certificate.JSONData);
-                await writer.FlushAsync();
-                jsonDataStream.Position = 0;
-            }
 
-            // Load the JSON data into the PDF viewer
-            await pdfViewer.ImportFormFieldsAsync(jsonDataStream, FormFieldDataFormat.Json);
-        }
+    public async void ExportAsStream()
+    {
+        // Export the form field data to an JSON format stream.
+        //stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+        //await pdfViewer.ExportFormFieldsAsync("");
+        
+        Console.WriteLine("Finding Issues with PDF File" + pdfViewer.IsFormFieldDocument.ToString());
     }
 
+    private async Task DebugPdf()
+    {
+        Console.WriteLine("Finding Issues with PDF File");
+        //await CheckForDuplicateFormFields();
+        //await pdfViewer.ExportFormFieldsAsync("");
+        Console.WriteLine("IsFormField " + pdfViewer.IsFormFieldDocument.ToString());
+        Console.WriteLine("IsFormField " + pdfViewer.EnableFormFields.ToString());
+        //await AttachPages();
+        Console.WriteLine("IsFormField " + pdfViewer.EnableFormFieldsValidation.ToString());
+        Console.WriteLine("Done");
+
+    }
+    public async Task AttachPages()
+    {
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        
+        data = FormService.FlattenPdf(data);
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+
+            string attachmentPath = "wwwroot/forms/a125-2016-03-page2.pdf";
+            using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
+            {
+                PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
+                originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
+                attachmentDocument.Close(true);
+            }
+
+
+
+            using (MemoryStream combinedPdfStream = new MemoryStream())
+            {
+                originalDocument.Save(combinedPdfStream);
+
+                byte[] combinedPdfBytes = combinedPdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
+                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+            }
+            originalDocument.Close(true);
+        }
+    }
     private bool IsPolicySelected(Policy policy)
     {
         Console.WriteLine("----------------------------------------------");
@@ -293,61 +328,7 @@
         return string.Empty;
     }
 
-    public async Task AttachPages(bool? addAttachments)
-    {
-        await SaveToDatabase(false);
-
-        byte[] data = await pdfViewer.GetDocumentAsync();
-        data = FormService.FlattenPdf(data);
-        using (MemoryStream originalPdfStream = new MemoryStream(data))
-        {
-            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
-
-            if (certificate.AttachGLAI == true && certificate.AttachGLAIfilename != null)
-            {
-                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLAIfilename);
-                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
-                {
-                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
-                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
-                    attachmentDocument.Close(true);
-                }
-            }
-
-            if (certificate.AttachGLWOS == true && certificate.AttachGLWOSfilename != null)
-            {
-                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachGLWOSfilename);
-                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
-                {
-                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
-                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
-                    attachmentDocument.Close(true);
-                }
-            }
-
-            if (certificate.AttachWCWOS == true && certificate.AttachWCWOSfilename != null)
-            {
-                string attachmentPath = Path.Combine(Environment.WebRootPath, "uploads", certificate.AttachWCWOSfilename);
-                using (FileStream attachmentStream = new FileStream(attachmentPath, FileMode.Open, FileAccess.Read))
-                {
-                    PdfLoadedDocument attachmentDocument = new PdfLoadedDocument(attachmentStream);
-                    originalDocument.ImportPageRange(attachmentDocument, 0, attachmentDocument.Pages.Count - 1);
-                    attachmentDocument.Close(true);
-                }
-            }
-
-
-            using (MemoryStream combinedPdfStream = new MemoryStream())
-            {
-                originalDocument.Save(combinedPdfStream);
-
-                byte[] combinedPdfBytes = combinedPdfStream.ToArray();
-                string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
-                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
-            }
-            originalDocument.Close(true);
-        }
-    }
+   
 
     public async void FlattenForm()
     {
@@ -376,42 +357,27 @@
         _attachmentsVisible = false;
         _policiesVisible = false;
         stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
-
-        stream.Position = 0;
-        using (var reader = new StreamReader(stream))
+        // Use a StreamReader to read the stream content as a string
+        // Use a StreamReader to read the stream content as a string
+        using (StreamReader reader = new StreamReader(stream))
         {
-            string jsonData = await reader.ReadToEndAsync();
-            var jsonObject = JObject.Parse(jsonData);
+            // Read the stream into a JSON string
+            string jsonString = await reader.ReadToEndAsync();
 
-            string holderName = jsonObject["CertificateHolder_FullName"]?.ToString();
-            if (!string.IsNullOrEmpty(holderName))
+            try
             {
-                certificate.HolderName = holderName;
-            }
+                // Deserialize the JSON string into a dynamic object or a specific class
+                var formData = JsonConvert.DeserializeObject<dynamic>(jsonString);
 
-            string holderdescription = jsonObject["CertificateOfLiabilityInsurance_ACORDForm_RemarkText"]?.ToString();
-            if (!string.IsNullOrEmpty(holderdescription))
+                // Use formData as needed, for example:
+                Console.WriteLine("Parsed Form Data: ");
+                Console.WriteLine(formData);
+            }
+            catch (JsonException ex)
             {
-                certificate.ProjectName = holderName;
+                // Handle JSON parsing errors
+                Console.WriteLine($"Error parsing JSON: {ex.Message}");
             }
-
-            string attachGLAI = jsonObject["GeneralLiability_AdditionalInsuredIndicator"]?.ToString();
-            if (!string.IsNullOrEmpty(attachGLAI)) 
-            { 
-                certificate.AttachGLAI = true;
-            }
-
-            string attachGlWOS = jsonObject["GeneralLiability_WaiverOfSubrogationIndicator"]?.ToString();
-            if (!string.IsNullOrEmpty(attachGlWOS)) { certificate.AttachGLWOS = true; }
-
-            string attachWCWOS = jsonObject["WorkersCompensationAndEmployersLiability_WaiverOfSubrogationIndicator"]?.ToString();
-            if (!string.IsNullOrEmpty(attachWCWOS)) { certificate.AttachWCWOS = true; }
-
-            // Save the JSON data to the certificate's JSONData field
-            certificate.JSONData = jsonData;
-
-            // Update the certificate in the database
-            await FormService.UpdateCertificate(certificate);
         }
 
         if(exit == true)

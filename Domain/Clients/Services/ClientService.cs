@@ -78,8 +78,6 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Locations)
                 .Include(c => c.Certificates)
                     .ThenInclude(p => p.CreatedBy)
-                .Include(c => c.Certificates)
-                    .ThenInclude(p => p.ModifiedBy)
                 .Include(c => c.Contacts)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Carrier)
@@ -87,6 +85,10 @@ namespace Mantis.Domain.Clients.Services
                     .ThenInclude(p => p.Wholesaler)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Product)
+                .Include(c => c.FormDocs)  // Include the FormDocs related to the client
+                    .ThenInclude(fd => fd.FormDocRevisions)  // Include the FormDocRevisions related to each FormDoc
+                .Include(c => c.FormDocs)  // Include the FormDocs again to chain FormPdf
+                    .ThenInclude(fd => fd.FormPdf)  // Include the FormPdf for each FormDoc
                 .FirstOrDefaultAsync(c => c.ClientId == id);
             if (client != null)
             {

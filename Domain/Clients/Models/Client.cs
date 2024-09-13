@@ -30,6 +30,7 @@ namespace Mantis.Domain.Clients.Models
         public ICollection<Location> Locations { get; set; } = new List<Location>();
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
         public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+        public ICollection<FormDoc> FormDocs { get; set; } = new List<FormDoc>();
 
         public Address Address { get; set; }
         public int PrimaryContactId { get; set; }

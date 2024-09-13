@@ -8,6 +8,8 @@
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Components
 @using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Forms.Models
+@using Mantis.Domain.Forms.Services
 @using Mantis.Domain.Shared
 @using Mantis.Domain.Shared.Helpers
 @using Mantis.Domain.Renewals.Models
@@ -22,6 +24,7 @@
 @using Syncfusion.Blazor.ProgressBar
 
 @inject NavigationManager NavigationManager
+@inject FormService FormService
 @inject NavigationService NavigationService
 @inject RenewalService RenewalService
 @inject CrmApiService CrmApiService
@@ -233,11 +236,16 @@
                             <div class="txt-section">Applications</div>
                             @if (selectedClient != null)
                             {
-                                <FormDocList />
+                                <FormDocList formDocList="selectedClient.FormDocs.ToList()" />
                             }
                             else
                             {
                                 <FluentSkeleton Width="100%" Height="30px" />
+                            }
+                            <br /><br />Create New: 
+                            @foreach (var item in allFormPdfs)
+                            {
+                                <FluentButton @onclick="@(() => CreateNewForm(item.FormPdfId))">@item.Title</FluentButton>
                             }
                         </div>
                     </FluentTab>
@@ -365,6 +373,7 @@
     private List<Policy> pastPolicies = new();
     private List<Contact> primaryContactList { get; set; } = new();
     private List<Contact> secondaryContactList { get; set; } = new();
+    private List<FormPdf> allFormPdfs { get; set; } = new();
     private HashSet<int> expandedPolicies = new HashSet<int>();
     //Utility
     private List<Contact> loadedContacts = new();
@@ -378,6 +387,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        allFormPdfs = await FormService.GetAllFormPdfs();
         clients = await ClientService.GetClientListAsync();
         filteredClients = new List<ClientListItem>(clients);
         debounceTimer = new System.Timers.Timer(50);
@@ -569,6 +579,13 @@
     {
         Navigation.NavigateTo($"/Policy/Edit/{policyid}");
     }
+
+    private async void CreateNewForm(int formPdfId)
+    {
+        int NewFormDocId = await FormService.CreateFormDoc(formPdfId, selectedClient.ClientId);
+        NavigationManager.NavigateTo($"/Forms/Editor/{NewFormDocId}");
+    }
+
     public void Dispose()
     {
         debounceTimer?.Dispose();

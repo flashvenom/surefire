@@ -4,6 +4,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mantis.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240913155921_FormModelsCreate")]
+    partial class FormModelsCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1930,7 +1933,7 @@ namespace Mantis.Migrations
             modelBuilder.Entity("Mantis.Domain.Forms.Models.FormDoc", b =>
                 {
                     b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
-                        .WithMany("FormDocs")
+                        .WithMany()
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1968,7 +1971,7 @@ namespace Mantis.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Mantis.Domain.Forms.Models.FormDoc", "FormDoc")
-                        .WithMany("FormDocRevisions")
+                        .WithMany()
                         .HasForeignKey("FormDocId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2541,16 +2544,9 @@ namespace Mantis.Migrations
 
                     b.Navigation("Contacts");
 
-                    b.Navigation("FormDocs");
-
                     b.Navigation("Locations");
 
                     b.Navigation("Policies");
-                });
-
-            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormDoc", b =>
-                {
-                    b.Navigation("FormDocRevisions");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Claim", b =>

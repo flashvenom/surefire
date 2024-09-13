@@ -1,4 +1,4 @@
-﻿// File: Components/Pages/Clients/List.razor
+﻿@* File: Components/Pages/Clients/List.razor *@
 @page "/Clients/List/{LoadClientId:int}"
 
 @using Newtonsoft.Json
@@ -49,10 +49,14 @@
                 <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
                 </FluentTextField>
-                <SfListView DataSource="filteredClients" CssClass="client-list">
-                    <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
-                    <ListViewEvents TValue="Client" Clicked="@LoadClientClickHandler" />
-                </SfListView>
+                <div class="client-list">
+                    @foreach (var item in filteredClients)
+                    {
+                        <div class="client-list-item" @onclick="@(() => LoadClientClickHandler(item.ClientId))">
+                            @item.Name
+                        </div>
+                    }
+                </div>
             </div>
         </div>
 
@@ -326,8 +330,8 @@
     private int ClientId { get; set; }
     private FluentTabs tabInterface { get; set; }
     private string searchTerm = string.Empty;
-    private List<Client> clients = new();
-    private List<Client> filteredClients = new();
+    private List<ClientListItem> clients = new();
+    private List<ClientListItem> filteredClients = new();
     private List<Policy> clientPolicies = new();
     private List<Policy> currentPolicies = new();
     private List<Policy> pastPolicies = new();
@@ -342,38 +346,17 @@
     private string isLoadingWhat = "Initializing";
     private string dynamicClass = "sf-quicklist";
     private Client selectedClient { get; set; }
-    SfTextBox SearchBox { get; set; }
     private string getUrl;
 
     protected override async Task OnInitializedAsync()
     {
-        // var staticClients = new List<Client>
-        // {
-        //     new Client { ClientId = 8, Name = "Aqua-Net Inc.", PhoneNumber = "7145286387", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
-        //     new Client { ClientId = 9, Name = "Stox Posting and Publishing", PhoneNumber = "8013720793", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
-        //     new Client { ClientId = 10, Name = "TEKNIX SERVICES CORP", PhoneNumber = "7145737200", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
-        //     new Client { ClientId = 11, Name = "Cross Axes Tech LLC", PhoneNumber = "7143170203", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
-        //     new Client { ClientId = 12, Name = "Prisma Construction Co. Inc", PhoneNumber = "8186722606", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }},
-        //     new Client { ClientId = 13, Name = "Budilo Construction", PhoneNumber = "9517410047", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 14, Name = "Martin Construction", PhoneNumber = "8054953126", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 15, Name = "Michael J's Inc.", PhoneNumber = "7603752287", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 16, Name = "Sullivan Construction", PhoneNumber = "3102510745", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 17, Name = "Touch Of Faith Aesthetics, LLC", PhoneNumber = "3239391654", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 18, Name = "Cicone Construction Co., Inc.", PhoneNumber = "7607279991", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 19, Name = "Quad-B Systems", PhoneNumber = "9493105718", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 20, Name = "DAWRE LLC", PhoneNumber = "9492956502", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 21, Name = "Russian School Of Orange County", PhoneNumber = "9498542402", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" } },
-        //     new Client { ClientId = 22, Name = "Kid Friendly Pediatric Dentist", PhoneNumber = "7148321343", Address = new Address { AddressId = 1, AddressLine1 = "123 Grass Ave", City = "Whatever" }}
-        // };
-        // clients = staticClients;
         clients = await ClientService.GetClientListAsync();
-        filteredClients = new List<Client>(clients);
-        debounceTimer = new System.Timers.Timer(300);
+        filteredClients = new List<ClientListItem>(clients);
+        debounceTimer = new System.Timers.Timer(50);
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += async (sender, e) =>
         {
-            Console.WriteLine("Debounce timer elapsed");
-            await InvokeAsync(FilterClients); // Apply the search filter after the debounce period
+            FilterClients();
         };
 
         await LoadClient(LoadClientId);
@@ -415,12 +398,12 @@
                 .OrderByDescending(p => p.EffectiveDate)
                 .ToList();
 
-            // var clientToUpdate = clients.FirstOrDefault(c => c.ClientId == selectedClient.ClientId);
-            // if (clientToUpdate != null)
-            // {
-            //     clientToUpdate.DateOpened = selectedClient.DateOpened; // Update the field
-            // }
-            // SortClientsByLastOpened();
+            var clientToUpdate = clients.FirstOrDefault(c => c.ClientId == selectedClient.ClientId);
+            if (clientToUpdate != null)
+            {
+                clientToUpdate.DateOpened = selectedClient.DateOpened;
+            }
+            SortClientsByLastOpened();
             Console.WriteLine("Updating state");
             await InvokeAsync(StateHasChanged);
 
@@ -436,7 +419,7 @@
     {
         if (string.IsNullOrEmpty(searchTerm))
         {
-            filteredClients = new List<Client>(clients);
+            filteredClients = new List<ClientListItem>(clients);
         }
         else
         {
@@ -454,34 +437,55 @@
     }
     private void SortClientsByLastOpened()
     {
-        filteredClients = filteredClients.OrderByDescending(c => c.DateOpened).ToList();
+        searchTerm = String.Empty;
+        filteredClients = clients.OrderByDescending(c => c.DateOpened).ToList();
     }
 
-    private async Task LoadClientClickHandler(ClickEventArgs<Client> args)
+    private async Task LoadClientClickHandler(int clientid)
     {
         Console.WriteLine("CLICK load client");
-        int loadThisClient = 211;
         try
         {
-
-            loadThisClient = filteredClients[args.Index].ClientId;
-            Console.WriteLine("CLICK load client: " + loadThisClient);
+            searchTerm = string.Empty;
+            await NavigationService.SetLastClientPageAsync("/Clients/List/" + clientid);
+            await LoadClient(clientid);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
-            ClientId = 211;
         }
         finally
-        {
-            Console.WriteLine("loading now...");
-            await NavigationService.SetLastClientPageAsync("/Clients/List/" + loadThisClient);
-            await LoadClient(loadThisClient);
-
+        {   
+            ExpandDetails(0);
         }
-        Console.WriteLine("done");
-        
     }
+
+    // private async Task LoadClientClickHandler(ClickEventArgs<Client> args)
+    // {
+    //     Console.WriteLine("CLICK load client");
+    //     int loadThisClient = 211;
+    //     try
+    //     {
+
+    //         loadThisClient = filteredClients[args.Index].ClientId;
+    //         Console.WriteLine("CLICK load client: " + loadThisClient);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
+    //         ClientId = 211;
+    //     }
+    //     finally
+    //     {
+    //         Console.WriteLine("loading now...");
+    //         await NavigationService.SetLastClientPageAsync("/Clients/List/" + loadThisClient);
+    //         await LoadClient(loadThisClient);
+
+    //     }
+    //     Console.WriteLine("done");
+        
+    // }
+
     //User Interface
     private void SetShowCreatePolicy()
     {

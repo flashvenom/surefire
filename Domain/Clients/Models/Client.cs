@@ -38,4 +38,11 @@ namespace Mantis.Domain.Clients.Models
         public ApplicationUser? CSR { get; set; }
         public ApplicationUser CreatedBy { get; set; }
     }
+
+    public class ClientListItem
+    {
+        public int ClientId { get; set; }
+        public string Name { get; set; }
+        public DateTime DateOpened { get; set; }
+    }
 }

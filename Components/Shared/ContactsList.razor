@@ -23,7 +23,15 @@
         foreach (var item in Contacts)
         {
             string fullName = item.FirstName + " " + item.LastName;
-            string nameInitials = $"{item.FirstName[0]}{item.LastName[0]}";
+            string nameInitials; ;
+            try
+            {
+                nameInitials = $"{item.FirstName[0]}{item.LastName[0]}";
+            }
+            catch
+            {
+                nameInitials = "??";
+            }
 
             // Build the headshot image path per contact
             string headshotImage = !string.IsNullOrEmpty(item.HeadshotFilename)

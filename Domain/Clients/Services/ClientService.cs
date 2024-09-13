@@ -41,9 +41,23 @@ namespace Mantis.Domain.Clients.Services
             return _context.Clients.AsQueryable();
         }
 
-        public async Task<List<Client>> GetClientListAsync()
+        public async Task<List<Client>> GetClientFullListAsync()
         {
             var clientlist = await _context.Clients.OrderByDescending(c => c.DateOpened).ToListAsync();
+            return clientlist;
+        }
+        public async Task<List<ClientListItem>> GetClientListAsync()
+        {
+            var clientlist = await _context.Clients
+                .OrderByDescending(c => c.DateOpened)
+                .Select(c => new ClientListItem
+                {
+                    ClientId = c.ClientId,
+                    Name = c.Name,
+                    DateOpened = c.DateOpened
+                })
+                .ToListAsync();
+
             return clientlist;
         }
 
@@ -74,11 +88,11 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Product)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
-            //if (client != null)
-            //{
-            //    client.DateOpened = DateTime.UtcNow;
-            //    await _context.SaveChangesAsync();
-            //}
+            if (client != null)
+            {
+                client.DateOpened = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
             return client;
         }
 

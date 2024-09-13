@@ -196,8 +196,6 @@ h4 {
     }
 
 
-
-
 .txt-cursive-sm {
     position: relative;
     top: -6px;
@@ -450,3 +448,22 @@ h4 {
         margin-bottom: 10px;
     }
 
+
+.client-list {
+    margin-top:8px;
+    width:285px;
+    overflow:hidden;
+}
+.client-list-item {
+    padding: 3px 10px;
+    white-space: nowrap;
+    font-size: .9em;
+    color: #6c6c6c;
+    transition: all 0.1s ease-out;
+}
+
+    .client-list-item:hover {
+        background-color: #ffffff;
+        color:#272727;
+        cursor: pointer;
+    }

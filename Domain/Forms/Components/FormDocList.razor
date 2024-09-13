@@ -1,0 +1,42 @@
+﻿@namespace Mantis.Domain.Forms.Components
+@using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Forms.Models
+@using Mantis.Domain.Forms.Services
+
+@if (formDocList is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table" width="100%">
+        <thead>
+            <tr style="text-align:left;">
+                <th>ID</th>
+                <th>Application</th>
+                <th>Created On</th>
+                <th>Created By</th>
+                <th>Modified On</th>
+                <th>Modified By</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (var item in formDocList)
+        {
+            <tr>
+                <td>@item.FormDocId</td>
+                <td><a href="/Forms/FormDoc/@item.FormDocId">@item.FormName</a></td>
+                <td>@item.DateCreated.ToString("MM/dd/yyyy")</td>
+                <td>@item.CreatedBy.FirstName</td>
+                <td>@item.ModifiedBy.FirstName</td>
+                <td>@item.DateModified.ToString("MM/dd/yyyy")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+@code {
+    [Parameter]
+    public List<FormDoc> formDocList { get; set; }
+}

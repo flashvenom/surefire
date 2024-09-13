@@ -95,6 +95,7 @@
     <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Grid" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.InPlaceEditor" Version="26.2.9" />
+    <PackageReference Include="Syncfusion.Blazor.ProgressBar" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.RichTextEditor" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.SfPdfViewer" Version="26.2.9" />
     <PackageReference Include="Syncfusion.Blazor.Spinner" Version="26.2.9" />
@@ -108,6 +109,12 @@
     <Folder Include="wwwroot\uploads\headshots\" />
     <Folder Include="wwwroot\uploads\logos\" />
     <Folder Include="wwwroot\uploads\headshots\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Domain\Policies\Components\PolicyList.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
   </ItemGroup>
 
 </Project>

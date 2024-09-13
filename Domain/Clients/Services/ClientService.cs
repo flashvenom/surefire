@@ -219,10 +219,7 @@ namespace Mantis.Domain.Clients.Services
             {
                 foreach (var contact in contacts)
                 {
-                    if (client.Contacts.All(c => c.Email != contact.Email)) // Prevent duplicates by email
-                    {
-                        client.Contacts.Add(contact);
-                    }
+                    client.Contacts.Add(contact);   
                 }
 
                 await _context.SaveChangesAsync(); // Persist changes

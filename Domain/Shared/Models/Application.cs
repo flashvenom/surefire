@@ -1,8 +1,7 @@
 using Mantis.Domain.Clients.Models;
-using Mantis.Domain.Shared;
 using System.Net;
 
-namespace Mantis.Domain.Policies.Models
+namespace Mantis.Domain.Shared.Models
 {
     public class Application
     {

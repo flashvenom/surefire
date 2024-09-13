@@ -10,7 +10,6 @@ using Mantis.Domain.Contacts.Services;
 using Mantis.Domain.Shared.Services;
 using Mantis.Domain.Shared.Helpers;
 using Mantis.Domain.Users.Services;
-using Mantis.Domain.Voip;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +22,7 @@ using DotNetEnv;
 //Initial Variables
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
-
+builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddControllers();
 bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedErrors:Enabled");

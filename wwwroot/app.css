@@ -410,6 +410,18 @@ main {
     justify-content: center;
     z-index: 100 !important;
 }
+:root .fsearch-quick {
+    opacity: .8;
+}
+:root .fsearch-quick:hover {
+    opacity: 1;
+}
+    :root .fsearch-quick:active {
+        opacity: 1;
+    }
+    :root .fsearch-quick:focus {
+        opacity: 1;
+    }
 .search-bar {
     flex-grow: 1;
     display: flex;
@@ -1134,4 +1146,22 @@ hr {
     top: 10px;
     left: 100px;
     text-align:center;
+}
+
+.sf-bold {
+    font-weight:bold;
+}
+.sf-bold a {
+    text-decoration: none;
+    color:#1f1e60
+}
+    .sf-bold a:hover {
+        color: #036ac4;
+    }
+
+.sf-table-txtsmall {
+    font-size:1.1rem;
+}
+.sf-spacer-sm {
+    height:8px;
 }

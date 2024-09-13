@@ -1,30 +1,33 @@
-﻿@* File: Components/Pages/Clients/List.razor *@
-@page "/Clients/List/{LoadClientId:int}"
+﻿@page "/Clients/List/{LoadClientId:int}"
 
-@using Newtonsoft.Json
-@using Newtonsoft.Json.Linq
+@using Mantis.Data
+@using Mantis.Components.Shared
+@using Mantis.Domain.Forms.Components
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Policies.Components
 @using Mantis.Domain.Contacts.Models
 @using Mantis.Domain.Shared
 @using Mantis.Domain.Shared.Helpers
-@using Mantis.Domain.Policies.Components
 @using Mantis.Domain.Renewals.Models
-@using Mantis.Components.Shared
+@using Mantis.Domain.Renewals.Services
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Lists
-@using Mantis.Data
-@using Mantis.Domain.Renewals.Services
-@using Mantis.Domain.Shared.Helpers
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.ProgressBar
+
 @inject NavigationManager NavigationManager
 @inject NavigationService NavigationService
 @inject RenewalService RenewalService
 @inject CrmApiService CrmApiService
 @inject ClientService ClientService
 @inject DataHelper DataHelper
+
 @rendermode InteractiveServer
 
 
@@ -37,6 +40,7 @@
             <BreadcrumbItem Text="View" />
         </BreadcrumbItems>
     </SfBreadcrumb>
+
 
     @if (selectedClient != null)
     {
@@ -188,7 +192,7 @@
                         </div>
                     </FluentTab>
                     <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
-                        @* <div class="tabcontents">
+                        <div class="tabcontents">
                             @if (selectedClient != null)
                             {
                                 @if (showCreatePolicy == true)
@@ -197,20 +201,16 @@
                                 }
                                 else
                                 {
-                                    <CurrentPoliciesList currentPolicies="currentPolicies" />
+                                    <PolicyList policyList="currentPolicies" listTitle="Current Policies" />
                                     <div style="height:25px;"></div>
-                                    <PastPoliciesList pastPolicies="pastPolicies" />
-                                    @if (clientPolicies != null)
-                                    {
-                                        <span>Fetched @(clientPolicies.Count) policies from external source!</span>
-                                    }
+                                    <PolicyList policyList="pastPolicies" listTitle="Past Policies" />
                                 }
                             }
                             else
                             {
                                 <SfSpinner />
                             }
-                        </div> *@
+                        </div>
                     </FluentTab>
                     <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
                         <div class="tabcontents">
@@ -218,18 +218,28 @@
                             <div class="txt-p">Check back later.</div>
                         </div>
                     </FluentTab>
-                    <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
-                        @* <div class="tabcontents">
+                    <FluentTab Id="tab-4" Label="Forms" Class="sf-tab">
+                        <div class="tabcontents">
                             <div class="txt-section">Certificates</div>
                             @if (selectedClient != null)
                             {
-                                <_Certificates client="selectedClient" />
+                                <CertificateList certList="selectedClient.Certificates.ToList()" />
                             }
                             else
                             {
-                                <SfSpinner />    
+                                <FluentSkeleton Width="100%" Height="30px" />
                             }
-                            </div> *@
+                            <div style="height:25px;"></div>
+                            <div class="txt-section">Applications</div>
+                            @if (selectedClient != null)
+                            {
+                                <FormDocList />
+                            }
+                            else
+                            {
+                                <FluentSkeleton Width="100%" Height="30px" />
+                            }
+                        </div>
                     </FluentTab>
 
                     <FluentTab Id="tab-5" Label="Utilities" Class="sf-tab">
@@ -237,16 +247,30 @@
                         {
                             <FluentStack Class="tabcontents">
                                 
-                                <div style="min-width:400px;">
-                                    <div class="txt-section">Import Tools</div>
-                                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="ImportContacts">Import Contacts</FluentButton>
+                                <div style="min-width:900px;">
+                                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="UtilImportContacts">Import Contacts</FluentButton>
+                                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="UtilLoadPolicies">Load Policies</FluentButton>
+                                    <div class="sf-spacer-sm"></div>
+                                    <div style="width:100%; text-align:center;">@utilityStatus</div>
+                                    <div class="sf-spacer-sm"></div>
+                                    @if (utilityLoading == true)
+                                    {
+                                        <SfProgressBar Type="ProgressType.Circular" Value="20" Height="60" IsIndeterminate="true" Minimum="0" Maximum="100">
+                                            <ProgressBarAnimation Enable="true"></ProgressBarAnimation>
+                                        </SfProgressBar>
+                                    }
                                     @if (loadedContacts.Count > 0)
                                     {
                                         <ContactsListImport Contacts="@loadedContacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
-                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Save Imported Contacts</FluentButton>
+                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Import Contacts</FluentButton>
                                     }
+                                    @* 
+                                    @if (clientPolicies != null)
+                                    {
+                                        <span>Fetched @(clientPolicies.Count) policies from external source!</span>
+                                    } *@
                                 </div>
-                                <div>
+                                <div style="float:right;">
                                     <div class="txt-section">Data</div>
                                     <div style="margin-bottom:10px;">
                                         <div class="txt-small">Client Code</div>
@@ -262,9 +286,9 @@
                                     </div>
                                     <div style="margin-bottom:10px;">
                                         <div class="txt-small">API Status</div>
-                                        @if (isLoadingCrmId)
+                                        @if (utilityLoading)
                                         {
-                                            <div class="txt-small-sub">@isLoadingCrmId.ToString()</div>
+                                            <div class="txt-small-sub">@utilityLoading.ToString()</div>
                                         }
                                         else
                                         {
@@ -325,28 +349,32 @@
     [Parameter]
     public bool showCreatePolicy { get; set; } = false;
 
-    private HashSet<int> expandedPolicies = new HashSet<int>();
-    private int activeTabIndex = 0; // Default to the first tab
+    //Client
+    private Client selectedClient { get; set; }
+    private List<ClientListItem> clients = new();
     private int ClientId { get; set; }
     private FluentTabs tabInterface { get; set; }
+    private int activeTabIndex = 0;
+    //Search
     private string searchTerm = string.Empty;
-    private List<ClientListItem> clients = new();
     private List<ClientListItem> filteredClients = new();
+    private System.Timers.Timer debounceTimer;
+    //Policies
     private List<Policy> clientPolicies = new();
     private List<Policy> currentPolicies = new();
     private List<Policy> pastPolicies = new();
-    private List<Contact> loadedContacts = new();
     private List<Contact> primaryContactList { get; set; } = new();
     private List<Contact> secondaryContactList { get; set; } = new();
-    private List<Contact> bookmarkedContactList { get; set; } = new();
-    private List<Contact> unimportantContactList { get; set; } = new();
-    private System.Timers.Timer debounceTimer;
-    private bool isLoadingCrmId = false;
+    private HashSet<int> expandedPolicies = new HashSet<int>();
+    //Utility
+    private List<Contact> loadedContacts = new();
+    private bool utilityLoading = false;
+    private string utilityStatus = "";
+    private int utilityCount = 0;
     private string crmClientId = string.Empty;
     private string isLoadingWhat = "Initializing";
     private string dynamicClass = "sf-quicklist";
-    private Client selectedClient { get; set; }
-    private string getUrl;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -356,12 +384,13 @@
         debounceTimer.AutoReset = false;
         debounceTimer.Elapsed += async (sender, e) =>
         {
-            FilterClients();
+            await FilterClients();
         };
 
         await LoadClient(LoadClientId);
     }
 
+    //Main Methods
     private async Task LoadClient(int loadClientId)
     {
         Console.WriteLine("Loading client: " + loadClientId);
@@ -373,7 +402,7 @@
             if(selectedClient == null)
             {
                 //If we couldn't get a client, fall back to one we know is good default client
-                selectedClient = await ClientService.GetClientById(211);
+                selectedClient = await ClientService.GetClientById(clients.FirstOrDefault().ClientId);
             }
 
             //Create the contact list
@@ -414,7 +443,6 @@
             Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
         }
     }
-
     private async Task FilterClients()
     {
         if (string.IsNullOrEmpty(searchTerm))
@@ -440,7 +468,6 @@
         searchTerm = String.Empty;
         filteredClients = clients.OrderByDescending(c => c.DateOpened).ToList();
     }
-
     private async Task LoadClientClickHandler(int clientid)
     {
         Console.WriteLine("CLICK load client");
@@ -459,32 +486,6 @@
             ExpandDetails(0);
         }
     }
-
-    // private async Task LoadClientClickHandler(ClickEventArgs<Client> args)
-    // {
-    //     Console.WriteLine("CLICK load client");
-    //     int loadThisClient = 211;
-    //     try
-    //     {
-
-    //         loadThisClient = filteredClients[args.Index].ClientId;
-    //         Console.WriteLine("CLICK load client: " + loadThisClient);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
-    //         ClientId = 211;
-    //     }
-    //     finally
-    //     {
-    //         Console.WriteLine("loading now...");
-    //         await NavigationService.SetLastClientPageAsync("/Clients/List/" + loadThisClient);
-    //         await LoadClient(loadThisClient);
-
-    //     }
-    //     Console.WriteLine("done");
-        
-    // }
 
     //User Interface
     private void SetShowCreatePolicy()
@@ -519,8 +520,27 @@
             dynamicClass = dynamicClass == "sf-quicklist" ? "sf-quicklist-close" : "sf-quicklist";
         }
     }
+    private void ToggleExpand(int policyId)
+    {
+        if (expandedPolicies.Contains(policyId))
+        {
+            expandedPolicies.Remove(policyId);
+        }
+        else
+        {
+            expandedPolicies.Add(policyId);
+        }
+    }
+    private string GetPolicyClass(int policyId)
+    {
+        return expandedPolicies.Contains(policyId) ? "policy expanded" : "policy";
+    }
+    private string GetLinksStyle(int policyId)
+    {
+        return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
+    }
 
-    //Utility
+    //Misc
     private async Task CreateAndRedirectToRenewal(int policyid)
     {
         // Get the existing renewal ID if it exists
@@ -553,10 +573,24 @@
     {
         debounceTimer?.Dispose();
     }
-    private async void ImportContacts()
+
+    //Utilities
+
+    private async void UtilLoadPolicies()
+    {
+        Console.WriteLine("Importing Policies...");
+        utilityStatus = "Importing Policies...";
+        utilityLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
+    }
+    private async void UtilImportContacts()
     {
         crmClientId = selectedClient?.eClientId;
-
+        utilityLoading = true;
+        utilityStatus = "Loading contacts via external API...";
+        await InvokeAsync(StateHasChanged);
         if (!string.IsNullOrEmpty(crmClientId))
         {
             var accessToken = await CrmApiService.GetAccessTokenAsync();
@@ -571,6 +605,7 @@
                     var contactsList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(embeddedData["contacts"].ToString());
                     if (contactsList != null && contactsList.Count > 0)
                     {
+
                         foreach (var contactItem in contactsList)
                         {
                             // Retrieve first and last names
@@ -633,12 +668,17 @@
                                 };
 
                             loadedContacts.Add(contact);
+                            utilityCount++;
+                            utilityStatus = $"Found {utilityCount} contacts via API.";
+                            await InvokeAsync(StateHasChanged);
                         }
-                        isLoadingWhat += "contacts";
                     }
                 }
             }
         }
+        utilityLoading = false;
+        utilityStatus = $"Finished. Found {utilityCount} contacts. Remove the ones you don't need and click import.";
+        await InvokeAsync(StateHasChanged);
     }
     private async Task AddLoadedContactsToClient()
     {
@@ -656,48 +696,6 @@
             }
         }
     }
-
-    //Filter Methods
-    // private void FilterClientsD()
-    // {
-    //     if (string.IsNullOrEmpty(searchTerm))
-    //     {
-    //         filteredClients = clients.ToList();
-    //     }
-    //     else
-    //     {
-    //         filteredClients = clients
-    //             .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-    //             .ToList();
-    //     }
-    //     await InvokeAsync(StateHasChanged);
-    // }
-
-
-    // Load and Filter Client Methods
-    
-    // private async Task ClickHandler(ClickEventArgs<Client> args)
-    // {
-    //     ClientId = filteredClients[args.Index].ClientId;
-    //     selectedClient = await ClientService.GetClientById(ClientId);
-    //     searchTerm = "";
-    //     debounceTimer.Stop();
-    //     debounceTimer.Start();
-
-    //     //Get policies if we haven't fetched them from the API before
-    //     if (selectedClient.eClientId == null)
-    //     {
-    //         isLoadingCrmId = true;
-    //         isLoadingWhat += ".:";
-    //         await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
-    //     }
-
-    //     // Separate and sort policies
-
-    //     await NavigationService.SetLastClientPageAsync("/Clients/List/" + ClientId);
-    //     ExpandDetails();
-    //     SortAndSeparatePolicies();
-    // }
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
     {
         //API Call
@@ -708,7 +706,9 @@
             var accessToken = await CrmApiService.GetAccessTokenAsync();
             var jsonResponse = await CrmApiService.GetClientDetailsAsync(lookupCode, accessToken);
             var clientData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
-            isLoadingWhat += "$";
+            utilityStatus = "Success connecting to external API...";
+            await InvokeAsync(StateHasChanged);
+
             if (clientData != null && clientData.ContainsKey("_embedded"))
             {
                 var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(clientData["_embedded"].ToString());
@@ -718,25 +718,37 @@
                     if (clientsList != null && clientsList.Count > 0)
                     {
                         crmClientId = clientsList[0]["id"].ToString();
+
+                        Console.WriteLine($"Found matching ClientID: {crmClientId}");
+                        utilityStatus = $"Found matching ClientID: {crmClientId}";
+                        await InvokeAsync(StateHasChanged);
+
                         await LoadClientPolicies(crmClientId, accessToken);
-                        isLoadingWhat += "%";
+
+                        await ClientService.UpdateClientIdAndPolicies(selectedClient.ClientId, crmClientId, clientPolicies, accessToken);
+
+                        Console.WriteLine($"Added {utilityCount} policies to database!");
+                        utilityStatus = $"Added {utilityCount} policies to database!";
+                        await InvokeAsync(StateHasChanged);
                     }
                 }
             }
 
-            //Update the database
-            await ClientService.UpdateClientIdAndPolicies(selectedClient.ClientId, crmClientId, clientPolicies, accessToken);
+
+        //
         }
         catch (Exception ex)
         {
+            Console.WriteLine("Failed to important policies.");
+            utilityStatus = "Failed to important policies.";
+            utilityLoading = false;
+            await InvokeAsync(StateHasChanged);
             Console.Error.WriteLine($"Error loading CRM client ID and policies: {ex.Message}");
         }
         finally
         {
-            isLoadingCrmId = false;
-            isLoadingWhat = "Done!";
-            await InvokeAsync(StateHasChanged);
-            NavigationManager.NavigateTo("Clients/List/" + clientid);
+            //await InvokeAsync(StateHasChanged);
+            //NavigationManager.NavigateTo("Clients/List/" + clientid);
         }
     }
     private async Task LoadClientPolicies(string clientId, string accessToken)
@@ -744,7 +756,6 @@
         try
         {
             var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
-            isLoadingWhat += "^";
             var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
 
             if (policyData != null && policyData["_embedded"] != null)
@@ -753,6 +764,12 @@
                 if (embeddedData != null && embeddedData["policies"] != null)
                 {
                     var policiesList = embeddedData["policies"].ToObject<List<JObject>>();
+
+                    Console.WriteLine($"Found {policiesList.Count.ToString()} policies...");
+                    utilityCount = policiesList.Count;
+                    utilityStatus = $"Found {policiesList.Count.ToString()} policies...";
+                    await InvokeAsync(StateHasChanged);
+
                     clientPolicies = policiesList.Select(p => new Policy
                         {
                             PolicyNumber = p["policyNumber"]?.ToString(),
@@ -764,72 +781,18 @@
                             ExpirationDate = p["expirationOn"] != null ? DateTime.Parse(p["expirationOn"].ToString()) : DateTime.MinValue,
                             Premium = p["estimatedPremium"] != null ? decimal.Parse($"{p["estimatedPremium"]["units"]}.{p["estimatedPremium"]["partialUnits"]}") : 0m
                         }).ToList();
+
+                    Console.WriteLine($"Adding {policiesList.Count.ToString()} policies to view...");
+                    utilityStatus = $"Adding {policiesList.Count.ToString()} policies to view...";
+                    await InvokeAsync(StateHasChanged);
                 }
             }
-            SortAndSeparatePolicies();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error loading client policies: {ex.Message}");
-        }
-        finally
-        {
-            isLoadingWhat += "*";
+            utilityStatus = "Error loading policies to view...";
             await InvokeAsync(StateHasChanged);
         }
     }
-    private void SortAndSeparatePolicies()
-    {
-        var today = DateTime.Today;
-
-        currentPolicies = selectedClient.Policies
-            .Where(p =>
-                // Active policies: where today's date falls within the effective and expiration date
-                (p.EffectiveDate <= today && p.ExpirationDate >= today) ||
-                // Future policies: where both the effective and expiration dates are in the future
-                (p.EffectiveDate > today && p.ExpirationDate > today))
-            .OrderByDescending(p => p.EffectiveDate)
-            .ToList();
-
-        pastPolicies = selectedClient.Policies
-            .Where(p => p.ExpirationDate < today)
-            .OrderByDescending(p => p.EffectiveDate)
-            .ToList();
-
-        // Update primary contact list if the primary contact exists
-        if (selectedClient?.PrimaryContact != null)
-        {
-            primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
-        }
-
-        // Update secondary contact list, excluding the primary contact
-        secondaryContactList = selectedClient?.Contacts
-            .Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId)
-            .ToList();
-
-        isLoadingWhat = "X";
-        InvokeAsync(StateHasChanged);
-    }
-
-    // Policy Expansion Methods
-    private void ToggleExpand(int policyId)
-    {
-        if (expandedPolicies.Contains(policyId))
-        {
-            expandedPolicies.Remove(policyId);
-        }
-        else
-        {
-            expandedPolicies.Add(policyId);
-        }
-    }
-    private string GetPolicyClass(int policyId)
-    {
-        return expandedPolicies.Contains(policyId) ? "policy expanded" : "policy";
-    }
-    private string GetLinksStyle(int policyId)
-    {
-        return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
-    }
-
 }

@@ -3,7 +3,7 @@
 ## Overview
 Surefire: an insurance agency management system for independant P&C brokers designed with speed and efficiency in mind.
 
-**Video Update - September**
+**Video Update - September 1**
 https://youtu.be/4MuP97-Afqo
 
 **Demo Site**
@@ -27,10 +27,20 @@ https://youtu.be/4MuP97-Afqo
 - **ASP.NET Core 8**
 - **Entity Framework Core**
 - **Blazor**
-- **SyncFusion Components (DataGrid mostly)**
+- **SyncFusion Components**
 - **Microsoft FluentUI**
 
+## Update
+Going to take a break now for a while. I probably won't be updating at the same breakneck speed unless I get some other people interested in the project.
+
 ### Version History
+**.0.1.0 - 2024-09-13**
+- SfPdfViewer2 implemented for creating and editing PDF forms like certificates, supplementals and applications
+- Switched SfGrid to FluentDataGrid for security reasons and future use
+- Major changes to Client and Renewal pages for performance and UI/UX experience
+- Enhanced main layout and UI including beautiful NavMenu rollovers and tooltips
+- Methods for 3rd party APIs to fetch contacts and policy lists for clients
+
 **.0.0.4 - 2024-09-08**
 - Implemented BaseUrl and IConfigure logic for environment variables for easy development and publishing
 - Many UI/UX/Style/Performance enhancements with a focus on Clients and NavMenu

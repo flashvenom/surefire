@@ -1,0 +1,36 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+
+<div @onclick="ToggleStar" style="cursor: pointer; font-size: 24px;">
+    <FluentIcon Value="StarIcon" CustomColor="#6b6b6b" Color="Color.Custom" />
+</div>
+
+@code {
+    [Parameter] public bool IsStarred { get; set; } = false;
+    [Parameter] public EventCallback<bool> OnStarChanged { get; set; }
+
+    private Microsoft.FluentUI.AspNetCore.Components.Icon StarIcon { get; set; } = new Icons.Regular.Size20.Bookmark();
+
+    protected override void OnInitialized()
+    {
+        SetStarIcon();
+    }
+
+    private async Task ToggleStar()
+    {
+        IsStarred = !IsStarred;
+        SetStarIcon();
+        await OnStarChanged.InvokeAsync(IsStarred);
+    }
+
+    private void SetStarIcon()
+    {
+        if (IsStarred)
+        {
+            StarIcon = new Icons.Filled.Size20.Bookmark(); // Filled star when starred
+        }
+        else
+        {
+            StarIcon = new Icons.Regular.Size20.Bookmark(); // Regular star when unstarred
+        }
+    }
+}

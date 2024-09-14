@@ -1,32 +1,40 @@
-﻿@page "/Clients/List"
-@page "/Clients/List/{ClientId:int}"
+﻿@page "/Clients/List/{LoadClientId:int}"
 
-@using Newtonsoft.Json
-@using Newtonsoft.Json.Linq
+@using Mantis.Data
+@using Mantis.Components.Shared
+@using Mantis.Domain.Forms.Components
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Components
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Forms.Models
+@using Mantis.Domain.Forms.Services
+@using Mantis.Domain.Shared
+@using Mantis.Domain.Shared.Helpers
 @using Mantis.Domain.Renewals.Models
-@using Mantis.Components.Shared
+@using Mantis.Domain.Renewals.Services
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Lists
-@using Mantis.Data
-@using Mantis.Domain.Renewals.Services
-@using Mantis.Domain.Shared.Helpers
-@inject HttpClient Http
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.ProgressBar
+
 @inject NavigationManager NavigationManager
+@inject FormService FormService
 @inject NavigationService NavigationService
 @inject RenewalService RenewalService
 @inject CrmApiService CrmApiService
 @inject ClientService ClientService
-@inject IJSRuntime jsRuntime
+@inject DataHelper DataHelper
+
 @rendermode InteractiveServer
 
 
-<div @onmouseleave="() => ExpandDetails(true)">
+<div @onmouseleave="() => ExpandDetails(1)">
 
     <SfBreadcrumb>
         <BreadcrumbItems>
@@ -36,66 +44,114 @@
         </BreadcrumbItems>
     </SfBreadcrumb>
 
+
     @if (selectedClient != null)
     {
         <_toolbar ClientId="selectedClient.ClientId" OnNewPolicy="@SetShowCreatePolicy" />
     }
 
-    <div class="page-content" >
+    <div class="page-content">
         <div class="mf-flexrow">
             <div class="@dynamicClass">
                 <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
                 </FluentTextField>
-                <SfListView TItem="Client" DataSource="filteredClients" CssClass="client-list">
-                    <ListViewFieldSettings TValue="Client" Id="ClientId" Text="Name" />
-                    <ListViewEvents TValue="Client" Clicked="@ClickHandler" />
-                </SfListView>
+                <div class="client-list">
+                    @foreach (var item in filteredClients)
+                    {
+                        <div class="client-list-item" @onclick="@(() => LoadClientClickHandler(item.ClientId))">
+                            @item.Name
+                        </div>
+                    }
+                </div>
             </div>
         </div>
 
-        @if (selectedClient != null)
-        {
-            <div class="sf-selected">
-                <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
-                <div class="sf-header">
-                    <div class="client-header">
-                        @selectedClient.Name <br />
-                        <span class="client-address">
-                            <span class="map-icon"><FluentIcon Value="@(new Icons.Regular.Size20.Location())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>
-                            @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+        <div class="sf-selected" @onmouseenter="() => ExpandDetails(0)">
+            <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
+            <div class="client-top">
+                @if (selectedClient != null)
+                {
+                    <div class="top-rowone">
+
+                        <span class="client-name">@selectedClient.Name</span>
+                        <span class="client-phone">
+                            <span class="phone-icon"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>
+                            <span class="client-phonenumber">@DateHelper.FormatPhoneNumber(selectedClient.PhoneNumber)</span>
                         </span>
-                    </div>
 
-                    <div class="client-header-2">
                     </div>
+                    <div class="top-rowtwo">
+                        <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                        <a class="client-data" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString($"{selectedClient.Address.AddressLine1} {selectedClient.Address.AddressLine2} {selectedClient.Address.City}, {selectedClient.Address.State} {selectedClient.Address.PostalCode}")" target="_blank">
+                            @selectedClient.Address.AddressLine1 @selectedClient.Address.AddressLine2 @selectedClient.Address.City, @selectedClient.Address.State @selectedClient.Address.PostalCode
+                        </a>
 
-                    <div class="client-header-3">
-                        <span class="client-phone">@*<span class="phone-icon"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span>  *@ @DateHelper.FormatPhoneNumber(selectedClient.PhoneNumber)</span><br />
-                        <span class="client-email"><span class="email-icon"><FluentIcon Value="@(new Icons.Regular.Size24.Mail())" Slot="start" CustomColor="#8d8d8d" Color="Color.Custom" /></span> @selectedClient.Email</span>
+                        @if (!string.IsNullOrEmpty(selectedClient.Email))
+                        {
+
+                            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                            <a href="@("mailto:" + selectedClient.Email)" class="client-data">
+                                @selectedClient.Email
+                            </a>
+                        }
+
+                        @if (!string.IsNullOrEmpty(selectedClient.Website))
+                        {
+
+                            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                            <a href="@("http://" + selectedClient.Website)" class="client-data" target="_blank">
+                                @selectedClient.Website
+                            </a>
+                        }
                     </div>
-                </div>
-                <div class="clientlist-tabcontainer">
-                    <FluentTabs @ref="tabInterface" Size="TabSize.Large">
-                        <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
-                            <div class="sf-col-container">
-                                <div class="sf-col sf-col-1">
-                                    <div class="txt-section">Current Policies</div>
-                                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
+                }
+            </div>
+            <div class="client-main">
+                <FluentTabs @ref="tabInterface" Size="TabSize.Large">
+                    <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
+                        <div class="sf-col-container">
+                            <div class="sf-col sf-col-1">
+                                <div class="txt-section">Current Policies</div>
+                                @if (selectedClient != null)
+                                {
                                     <div class="policy-container">
                                         @foreach (var policy in currentPolicies)
                                         {
                                             <div class="@GetPolicyClass(policy.PolicyId)" @onclick="() => ToggleExpand(policy.PolicyId)">
-                                                <div class="policy-header">
-                                                    <div>@policy.Product?.LineName <span style="font-size:7px;">@policy.PolicyId</span></div>
-                                                    <div>@policy.EffectiveDate.ToShortDateString() - @policy.ExpirationDate.ToShortDateString()</div>
-                                                </div>
-                                                <div class="policy-details">
-                                                    <div>@policy.Carrier?.CarrierName / @policy.Wholesaler?.CarrierName</div>
-                                                </div>
-                                                <div class="policy-details">
-                                                    <div>@policy.PolicyNumber</div>
-                                                    <div>@policy.Premium.ToString("C")</div>
+                                                <FluentStack>
+                                                    <div class="ff1">
+                                                        <div><span class="policy-linename">@policy.Product?.LineName</span></div>
+                                                    </div>
+                                                    <div class="ff2">
+                                                        <span class="edate">@policy.EffectiveDate.ToShortDateString() -&nbsp;</span>
+                                                        <span class="xdate">@policy.ExpirationDate.ToShortDateString()</span>
+                                                    </div>
+
+                                                </FluentStack>
+
+                                                <div class="policy-carriers">
+
+                                                    @if (!string.IsNullOrEmpty(policy.Carrier?.CarrierName))
+                                                    {
+                                                        <span class="carrier-name">@StringHelper.CropCarrierName(policy.Carrier?.CarrierName)</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(policy.Wholesaler?.CarrierName))
+                                                    {
+                                                        <span class="lighter">|</span>
+                                                        <span class="carrier-name">@StringHelper.CropCarrierName(policy.Wholesaler?.CarrierName)</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(policy.PolicyNumber))
+                                                    {
+                                                        <span class="lighter">|</span>
+                                                        <span class="carrier-name">@policy.PolicyNumber</span>
+                                                    }
+                                                    @if (policy.Premium > 0)
+                                                    {
+                                                        <span class="lighter">|</span>
+                                                        <span class="carrier-name">@policy.Premium.ToString("C0")</span>
+                                                    }
+
                                                 </div>
                                                 <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
                                                     <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
@@ -104,132 +160,161 @@
                                                 </div>
                                             </div>
                                         }
-
                                     </div>
-                                </div>@* sf-col-1 *@
+                                }else{
+                                    <SfSpinner />
+                                }
+                            </div>@* sf-col-1 *@
 
-                                <div class="sf-col sf-col-2">
-                                    <div class="txt-section">Primary Contact</div>
-                                    <div class="mf-flexrow">
-                                        <div class="mf-sm">
-                                            <FluentPersona Initials="KS" ImageSize="55px" Class="pinitials" Style="font-size:1.5em; font-weight:100; font-family: montserrat, sans-serif;" />
-                                        </div>
-                                        <div class="mf-item-sm contactcard">
-                                            <span class="txt-bold-md">@selectedClient.PrimaryContact.FirstName  @selectedClient.PrimaryContact.LastName</span>
-                                            <a href="Contacts/Edit/@selectedClient.PrimaryContact.ContactId"><span class="e-btnhover e-icons e-pencil-icon"></span></a><br />
-                                            <span class="txt-p">@selectedClient.PrimaryContact.Phone</span><br />
-                                            <i class="txt-cursive-sm">@selectedClient.PrimaryContact.Email</i>
-                                        </div>
-                                    </div>
+                            <div class="sf-col sf-col-2">
+                                <div class="txt-section">Contacts</div>
+                                @if (selectedClient != null)
+                                {
+                                    @if (selectedClient.PrimaryContact != null)
+                                    {
+                                        <ContactsList Contacts="@primaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="true" />
+                                    }
+                                    <ContactsList Contacts="@secondaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="false" />
+                                }
+                                else
+                                {
+                                    <SfSpinner />
+                                }
+                            </div>@* sf-col-2 *@
 
-                                    <h4 class="sf-toppad">Additional Contacts</h4>
-                                    <ContactsListAll Contacts="@selectedClient.Contacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
-                                    <h4 class="sf-toppad">Additional Info</h4>
-                                    <FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size24.Globe())" Color="Color.Neutral" /> <a href="@("https://" + selectedClient.Website)" target="_blank" class="txt-bold-md">@selectedClient.Website</a>
-                                </div>@* sf-col-2 *@
+                            <div class="sf-col sf-col-3">
+                                @if (selectedClient != null)
+                                {
+                                    @if (!string.IsNullOrEmpty(selectedClient.LogoFilename))
+                                    {
+                                        <img src="/uploads/logos/@selectedClient.LogoFilename" class="img-fluid" />
+                                    }
+                                }
+                            </div>@* sf-col-3 *@
 
-                                <div class="sf-col sf-col-3">
-
-                                    <div class="txt-section">Technical Stuff</div>
-                                    <div class="txt-bold-md">Client Code</div>
-                                    <div class="txt-p-lg">@selectedClient.LookupCode</div>
-                                    <br />
-                                    <div class="txt-bold-md">Client Id</div>
-                                    <div class="txt-p-lg">@selectedClient.ClientId</div>
-                                    <div class="txt-small">@selectedClient.eClientId</div>
-                                    <br />
-                                    <div class="txt-bold-md">Debug</div>
-                                        @if (isLoadingCrmId)
-                                        {
-                                            <span class="txt-small">@isLoadingCrmId.ToString()</span>
-                                            <span class="loading-spinner"></span>
-                                        }
-                                        else if (string.IsNullOrEmpty(crmClientId))
-                                        {
-                                            <span class="txt-small">Loading...</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="txt-small">@crmClientId </span>
-                                        <span class="txt-small">@isLoadingWhat</span>
-                                        }
-                                </div>@* sf-col-3 *@
-
-                            </div>
-                        </FluentTab>
-                        <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
-                            <div class="tabcontents">
-                                @if (showCreatePolicy == true){
+                        </div>
+                    </FluentTab>
+                    <FluentTab Id="tab-2" Label="Policies" Class="sf-tab">
+                        <div class="tabcontents">
+                            @if (selectedClient != null)
+                            {
+                                @if (showCreatePolicy == true)
+                                {
                                     <CreatePolicyForClient ClientId="ClientId" OnCloseCreatePolicy="@SetHideCreatePolicy" />
                                 }
                                 else
                                 {
-                                    <CurrentPoliciesList currentPolicies="currentPolicies" />
+                                    <PolicyList policyList="currentPolicies" listTitle="Current Policies" />
                                     <div style="height:25px;"></div>
-                                    <PastPoliciesList pastPolicies="pastPolicies" />
-                                    @if (clientPolicies != null) { <span>Fetched @(clientPolicies.Count) policies from external source!</span> }
+                                    <PolicyList policyList="pastPolicies" listTitle="Past Policies" />
                                 }
+                            }
+                            else
+                            {
+                                <SfSpinner />
+                            }
+                        </div>
+                    </FluentTab>
+                    <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
+                        <div class="tabcontents">
+                            <div class="txt-section">Attachments</div>
+                            <div class="txt-p">Check back later.</div>
+                        </div>
+                    </FluentTab>
+                    <FluentTab Id="tab-4" Label="Forms" Class="sf-tab">
+                        <div class="tabcontents">
+                            <div class="txt-section">Certificates</div>
+                            @if (selectedClient != null)
+                            {
+                                <CertificateList certList="selectedClient.Certificates.ToList()" />
+                            }
+                            else
+                            {
+                                <FluentSkeleton Width="100%" Height="30px" />
+                            }
+                            <div style="height:25px;"></div>
+                            <div class="txt-section">Applications</div>
+                            @if (selectedClient != null)
+                            {
+                                <FormDocList formDocList="selectedClient.FormDocs.ToList()" />
+                            }
+                            else
+                            {
+                                <FluentSkeleton Width="100%" Height="30px" />
+                            }
+                            <br /><br />Create New: 
+                            @foreach (var item in allFormPdfs)
+                            {
+                                <FluentButton @onclick="@(() => CreateNewForm(item.FormPdfId))">@item.Title</FluentButton>
+                            }
+                        </div>
+                    </FluentTab>
 
+                    <FluentTab Id="tab-5" Label="Utilities" Class="sf-tab">
+                        @if (selectedClient != null)
+                        {
+                            <FluentStack Class="tabcontents">
                                 
-                            </div>
-                        </FluentTab>
-                        <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
-                            <div class="tabcontents">
-                                <div class="txt-section">Attachments</div>
-                                <div class="txt-p">Check back later.</div>
-                            </div>
-                        </FluentTab>
-                        <FluentTab Id="tab-4" Label="Certificates" Class="sf-tab">
-                            <div class="tabcontents">
-                                <div class="txt-section">Certificates</div>
-                                <_Certificates client="selectedClient" />
-                            </div>
-                        </FluentTab>
-                    </FluentTabs>
-                    <SfSpinner @bind-Visible="@isLoadingCrmId"></SfSpinner>
-                </div>
+                                <div style="min-width:900px;">
+                                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="UtilImportContacts">Import Contacts</FluentButton>
+                                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="UtilLoadPolicies">Load Policies</FluentButton>
+                                    <div class="sf-spacer-sm"></div>
+                                    <div style="width:100%; text-align:center;">@utilityStatus</div>
+                                    <div class="sf-spacer-sm"></div>
+                                    @if (utilityLoading == true)
+                                    {
+                                        <SfProgressBar Type="ProgressType.Circular" Value="20" Height="60" IsIndeterminate="true" Minimum="0" Maximum="100">
+                                            <ProgressBarAnimation Enable="true"></ProgressBarAnimation>
+                                        </SfProgressBar>
+                                    }
+                                    @if (loadedContacts.Count > 0)
+                                    {
+                                        <ContactsListImport Contacts="@loadedContacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
+                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Import Contacts</FluentButton>
+                                    }
+                                    @* 
+                                    @if (clientPolicies != null)
+                                    {
+                                        <span>Fetched @(clientPolicies.Count) policies from external source!</span>
+                                    } *@
+                                </div>
+                                <div style="float:right;">
+                                    <div class="txt-section">Data</div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">Client Code</div>
+                                        <div class="txt-small-sub">@selectedClient.LookupCode</div>
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">Client Id</div>
+                                        <div class="txt-small-sub">@selectedClient.ClientId</div>
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">eClient Id</div>
+                                        <div class="txt-small-sub">@selectedClient.eClientId</div>
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <div class="txt-small">API Status</div>
+                                        @if (utilityLoading)
+                                        {
+                                            <div class="txt-small-sub">@utilityLoading.ToString()</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="txt-small-sub">@isLoadingWhat</div>
+                                        }
+                                    </div>
+                                </div>
+                                
+                            </FluentStack>
+                        }
+                    </FluentTab>
+                </FluentTabs>
             </div>
-        }
+        </div>
         <div style="clear:both;"></div>
     </div>
 </div>
 <style>
-    :root .smallbutton {
-        font-size: .6em !important;
-        padding: 0px 0px !important;
-        margin: 0px 0px !important;
-        width: 50px;
-    }
-
-    :root .sf-tab {
-        background-color: #fff;
-        border-radius: 5px;
-        line-height: 1.1;
-    }
-
-    :root .smallicon {
-        position: relative !important;
-        top: 3px !important;
-        left: -2px !important;
-    }
-
-    .page-content {
-        display: flex;
-        flex-direction: row;
-    }
-
-    .tinyexpander {
-        position: absolute;
-        top: 0px;
-        left: 0px;
-        opacity: .3;
-    }
-
-        .tinyexpander:hover {
-            opacity: 1;
-            cursor: pointer;
-        }
-
     :root .sf-quicklist {
         width: 300px !important;
         overflow: hidden;
@@ -253,60 +338,166 @@
         height: 25px !important;
     }
 
-    :root .sf-collapse {
-        width: 15px;
-        background-color: #e2e2e2;
-        height: 100%;
-        float: right;
-    }
-
     :root .sf-searchquick {
         width: 290px !important
     }
+
+    :root .smallicon {
+        position: relative !important;
+        top: 3px !important;
+        left: -2px !important;
+    }
+
 </style>
 
 @code {
     [Parameter, SupplyParameterFromQuery]
-    public int ClientId { get; set; } = 91;
-    private HashSet<int> expandedPolicies = new HashSet<int>();
+    public int LoadClientId { get; set; }
 
     [Parameter]
     public bool showCreatePolicy { get; set; } = false;
 
-    private int activeTabIndex = 0; // Default to the first tab
-
-
-
+    //Client
+    private Client selectedClient { get; set; }
+    private List<ClientListItem> clients = new();
+    private int ClientId { get; set; }
     private FluentTabs tabInterface { get; set; }
+    private int activeTabIndex = 0;
+    //Search
     private string searchTerm = string.Empty;
-    private List<Client> clients = new();
-    private List<Client> filteredClients = new();
+    private List<ClientListItem> filteredClients = new();
+    private System.Timers.Timer debounceTimer;
+    //Policies
     private List<Policy> clientPolicies = new();
     private List<Policy> currentPolicies = new();
     private List<Policy> pastPolicies = new();
-
-    private System.Timers.Timer debounceTimer;
-    private bool isLoadingCrmId = false;
+    private List<Contact> primaryContactList { get; set; } = new();
+    private List<Contact> secondaryContactList { get; set; } = new();
+    private List<FormPdf> allFormPdfs { get; set; } = new();
+    private HashSet<int> expandedPolicies = new HashSet<int>();
+    //Utility
+    private List<Contact> loadedContacts = new();
+    private bool utilityLoading = false;
+    private string utilityStatus = "";
+    private int utilityCount = 0;
     private string crmClientId = string.Empty;
     private string isLoadingWhat = "Initializing";
     private string dynamicClass = "sf-quicklist";
-    private Client selectedClient { get; set; }
 
-    SfTextBox SearchBox { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        debounceTimer = new System.Timers.Timer(100);
+        allFormPdfs = await FormService.GetAllFormPdfs();
+        clients = await ClientService.GetClientListAsync();
+        filteredClients = new List<ClientListItem>(clients);
+        debounceTimer = new System.Timers.Timer(50);
         debounceTimer.AutoReset = false;
-        debounceTimer.Elapsed += (sender, args) => FilterClients();
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            await FilterClients();
+        };
 
-        selectedClient = await ClientService.GetClientById(ClientId);
-        SortAndSeparatePolicies();
-
-        clients = await Http.GetFromJsonAsync<List<Client>>("https://flashvenomdesign-001-site6.atempurl.com/api/Client");
-        filteredClients = new List<Client>(clients);
+        await LoadClient(LoadClientId);
     }
 
+    //Main Methods
+    private async Task LoadClient(int loadClientId)
+    {
+        Console.WriteLine("Loading client: " + loadClientId);
+        try
+        {
+            //Load the Client
+            selectedClient = await ClientService.GetClientById(loadClientId);
+
+            if(selectedClient == null)
+            {
+                //If we couldn't get a client, fall back to one we know is good default client
+                selectedClient = await ClientService.GetClientById(clients.FirstOrDefault().ClientId);
+            }
+
+            //Create the contact list
+            if (selectedClient?.PrimaryContact != null)
+            {
+                primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
+            }
+            secondaryContactList = selectedClient.Contacts.Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId).ToList();
+
+            //Sort the policies
+            var today = DateTime.Today;
+            currentPolicies = selectedClient.Policies.Where(p =>
+                // Active policies: where today's date falls within the effective and expiration date
+                (p.EffectiveDate <= today && p.ExpirationDate >= today) ||
+                // Future policies: where both the effective and expiration dates are in the future
+                (p.EffectiveDate > today && p.ExpirationDate > today))
+                .OrderByDescending(p => p.EffectiveDate)
+                .ToList();
+
+            pastPolicies = selectedClient.Policies
+                .Where(p => p.ExpirationDate < today)
+                .OrderByDescending(p => p.EffectiveDate)
+                .ToList();
+
+            var clientToUpdate = clients.FirstOrDefault(c => c.ClientId == selectedClient.ClientId);
+            if (clientToUpdate != null)
+            {
+                clientToUpdate.DateOpened = selectedClient.DateOpened;
+            }
+            SortClientsByLastOpened();
+            Console.WriteLine("Updating state");
+            await InvokeAsync(StateHasChanged);
+
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
+        }
+    }
+    private async Task FilterClients()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            filteredClients = new List<ClientListItem>(clients);
+        }
+        else
+        {
+            filteredClients = clients
+                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        searchTerm = e.Value.ToString();
+        debounceTimer.Stop();
+        debounceTimer.Start();
+    }
+    private void SortClientsByLastOpened()
+    {
+        searchTerm = String.Empty;
+        filteredClients = clients.OrderByDescending(c => c.DateOpened).ToList();
+    }
+    private async Task LoadClientClickHandler(int clientid)
+    {
+        Console.WriteLine("CLICK load client");
+        try
+        {
+            searchTerm = string.Empty;
+            await NavigationService.SetLastClientPageAsync("/Clients/List/" + clientid);
+            await LoadClient(clientid);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading selected renewal {ClientId}: " + ex.Message);
+        }
+        finally
+        {   
+            ExpandDetails(0);
+        }
+    }
+
+    //User Interface
     private void SetShowCreatePolicy()
     {
         tabInterface.GoToTabAsync("tab-2");
@@ -324,29 +515,42 @@
     {
         showCreatePolicy = true;
     }
-    public void ExpandDetails(bool? forceOpen = null)
+    public void ExpandDetails(int? forceIt = null)
     {
-        if (forceOpen.HasValue)
+        if (forceIt == 1)
         {
-            dynamicClass = forceOpen.Value ? "sf-quicklist" : "sf-quicklist-close";
+            dynamicClass = "sf-quicklist";
+        }
+        else if (forceIt == 0)
+        {
+            dynamicClass = "sf-quicklist-close";
         }
         else
         {
             dynamicClass = dynamicClass == "sf-quicklist" ? "sf-quicklist-close" : "sf-quicklist";
         }
     }
-
-    private async void EditPolicy(int policyid)
+    private void ToggleExpand(int policyId)
     {
-        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
+        if (expandedPolicies.Contains(policyId))
+        {
+            expandedPolicies.Remove(policyId);
+        }
+        else
+        {
+            expandedPolicies.Add(policyId);
+        }
     }
-    public void Dispose()
+    private string GetPolicyClass(int policyId)
     {
-        debounceTimer?.Dispose();
-
+        return expandedPolicies.Contains(policyId) ? "policy expanded" : "policy";
+    }
+    private string GetLinksStyle(int policyId)
+    {
+        return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
     }
 
-    
+    //Misc
     private async Task CreateAndRedirectToRenewal(int policyid)
     {
         // Get the existing renewal ID if it exists
@@ -371,38 +575,144 @@
         Navigation.NavigateTo($"/Renewals?openid={renewalid}");
 
     }
-
-    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    private async void EditPolicy(int policyid)
     {
-        searchTerm = e.Value.ToString();
-        debounceTimer.Stop();
-        debounceTimer.Start();
+        Navigation.NavigateTo($"/Policy/Edit/{policyid}");
     }
 
-    private async void ClickHandler(ClickEventArgs<Client> args)
+    private async void CreateNewForm(int formPdfId)
     {
-        ClientId = filteredClients[args.Index].ClientId;
-        selectedClient = await ClientService.GetClientById(ClientId);
-        searchTerm = "";
-        debounceTimer.Stop();
-        debounceTimer.Start();
+        int NewFormDocId = await FormService.CreateFormDoc(formPdfId, selectedClient.ClientId);
+        NavigationManager.NavigateTo($"/Forms/Editor/{NewFormDocId}");
+    }
 
-        //Get policies if we haven't fetched them from the API before
-        if (selectedClient.eClientId == null)
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
+
+    //Utilities
+
+    private async void UtilLoadPolicies()
+    {
+        Console.WriteLine("Importing Policies...");
+        utilityStatus = "Importing Policies...";
+        utilityLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
+    }
+    private async void UtilImportContacts()
+    {
+        crmClientId = selectedClient?.eClientId;
+        utilityLoading = true;
+        utilityStatus = "Loading contacts via external API...";
+        await InvokeAsync(StateHasChanged);
+        if (!string.IsNullOrEmpty(crmClientId))
         {
-            isLoadingCrmId = true;
-            isLoadingWhat += ".:";
-            await LoadCrmClientIdAndPolicies(selectedClient.LookupCode, selectedClient.ClientId);
+            var accessToken = await CrmApiService.GetAccessTokenAsync();
+            var jsonResponse = await CrmApiService.GetClientContactsAsync(crmClientId, accessToken);
+            var contactsData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
+
+            if (contactsData != null && contactsData.ContainsKey("_embedded"))
+            {
+                var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(contactsData["_embedded"].ToString());
+                if (embeddedData != null && embeddedData.ContainsKey("contacts"))
+                {
+                    var contactsList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(embeddedData["contacts"].ToString());
+                    if (contactsList != null && contactsList.Count > 0)
+                    {
+
+                        foreach (var contactItem in contactsList)
+                        {
+                            // Retrieve first and last names
+                            var firstName = contactItem.ContainsKey("firstName") ? contactItem["firstName"].ToString() : string.Empty;
+                            var lastName = contactItem.ContainsKey("lastName") ? contactItem["lastName"].ToString() : string.Empty;
+
+                            // Handling phone numbers
+                            var phoneNumbers = contactItem.ContainsKey("phoneNumbers") ? contactItem["phoneNumbers"] as JArray : null;
+                            string phone = string.Empty;
+                            string mobile = string.Empty;
+                            string additionalNotes = string.Empty;
+
+                            if (phoneNumbers != null)
+                            {
+                                foreach (var phoneNumber in phoneNumbers)
+                                {
+                                    var type = phoneNumber["type"]?.ToString();
+                                    var number = phoneNumber["number"]?.ToString();
+
+                                    if (type == "BUSINESS" && string.IsNullOrEmpty(phone))
+                                    {
+                                        phone = number;
+                                    }
+                                    else if (type == "MOBILE" && string.IsNullOrEmpty(mobile))
+                                    {
+                                        mobile = number;
+                                    }
+                                    else
+                                    {
+                                        additionalNotes += $"Additional Number ({type}): {number}\n";
+                                    }
+                                }
+                            }
+
+                            var address = contactItem.ContainsKey("address") ? contactItem["address"] as JObject : null;
+                            var streets = address != null && address.ContainsKey("streets") ? address["streets"] as JArray : null;
+                            var street = streets != null && streets.Count > 0 ? streets.First?.ToString() : string.Empty;
+                            var city = address != null ? address["city"]?.ToString() : string.Empty;
+                            var state = address != null ? address["stateOrProvince"]?.ToString() : string.Empty;
+                            var zipCode = address != null ? address["zipOrPostalCode"]?.ToString() : string.Empty;
+
+                            var contact = new Contact
+                                {
+                                    FirstName = firstName,
+                                    LastName = lastName,
+                                    Email = contactItem.ContainsKey("emails") && contactItem["emails"] is JArray emailsArray && emailsArray.Count > 0
+                                        ? emailsArray.First.Value<string>("emailAddress")
+                                        : string.Empty,
+                                    Phone = phone,
+                                    Mobile = mobile,
+                                    Notes = additionalNotes,
+                                    Address = new Address
+                                    {
+                                        AddressLine1 = street,
+                                        City = city,
+                                        State = state,
+                                        PostalCode = zipCode
+                                    }
+                                    // Add more fields as needed
+                                };
+
+                            loadedContacts.Add(contact);
+                            utilityCount++;
+                            utilityStatus = $"Found {utilityCount} contacts via API.";
+                            await InvokeAsync(StateHasChanged);
+                        }
+                    }
+                }
+            }
         }
-
-        // Separate and sort policies
-
-        NavigationService.SetLastClientPage("/Clients/List/" + ClientId);
-        ExpandDetails(false);
-        SortAndSeparatePolicies();
-        //NavigationManager.NavigateTo($"/Clients/List/{ClientId}", forceLoad: false);
+        utilityLoading = false;
+        utilityStatus = $"Finished. Found {utilityCount} contacts. Remove the ones you don't need and click import.";
+        await InvokeAsync(StateHasChanged);
     }
-
+    private async Task AddLoadedContactsToClient()
+    {
+        if (selectedClient != null && loadedContacts.Any())
+        {
+            try
+            {
+                await ClientService.AddContactsToClientAsync(selectedClient.ClientId, loadedContacts.ToList());
+                loadedContacts.Clear(); // Clear the loaded contacts after adding them
+                await InvokeAsync(StateHasChanged); // Update the UI
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error adding contacts: {ex.Message}");
+            }
+        }
+    }
     private async Task LoadCrmClientIdAndPolicies(string lookupCode, int clientid)
     {
         //API Call
@@ -413,7 +723,9 @@
             var accessToken = await CrmApiService.GetAccessTokenAsync();
             var jsonResponse = await CrmApiService.GetClientDetailsAsync(lookupCode, accessToken);
             var clientData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
-            isLoadingWhat += "$";
+            utilityStatus = "Success connecting to external API...";
+            await InvokeAsync(StateHasChanged);
+
             if (clientData != null && clientData.ContainsKey("_embedded"))
             {
                 var embeddedData = JsonConvert.DeserializeObject<Dictionary<string, object>>(clientData["_embedded"].ToString());
@@ -423,34 +735,44 @@
                     if (clientsList != null && clientsList.Count > 0)
                     {
                         crmClientId = clientsList[0]["id"].ToString();
+
+                        Console.WriteLine($"Found matching ClientID: {crmClientId}");
+                        utilityStatus = $"Found matching ClientID: {crmClientId}";
+                        await InvokeAsync(StateHasChanged);
+
                         await LoadClientPolicies(crmClientId, accessToken);
-                        isLoadingWhat += "%";
+
+                        await ClientService.UpdateClientIdAndPolicies(selectedClient.ClientId, crmClientId, clientPolicies, accessToken);
+
+                        Console.WriteLine($"Added {utilityCount} policies to database!");
+                        utilityStatus = $"Added {utilityCount} policies to database!";
+                        await InvokeAsync(StateHasChanged);
                     }
                 }
             }
 
-            //Update the database
-            await ClientService.UpdateClientIdAndPolicies(selectedClient.ClientId, crmClientId, clientPolicies, accessToken);
+
+        //
         }
         catch (Exception ex)
         {
+            Console.WriteLine("Failed to important policies.");
+            utilityStatus = "Failed to important policies.";
+            utilityLoading = false;
+            await InvokeAsync(StateHasChanged);
             Console.Error.WriteLine($"Error loading CRM client ID and policies: {ex.Message}");
         }
         finally
         {
-            isLoadingCrmId = false;
-            isLoadingWhat = "Done!";
-            await InvokeAsync(StateHasChanged);
-            NavigationManager.NavigateTo("Clients/List/" + clientid);
+            //await InvokeAsync(StateHasChanged);
+            //NavigationManager.NavigateTo("Clients/List/" + clientid);
         }
     }
-
     private async Task LoadClientPolicies(string clientId, string accessToken)
     {
         try
         {
             var jsonResponse = await CrmApiService.GetClientPoliciesAsync(clientId, accessToken);
-            isLoadingWhat += "^";
             var policyData = JsonConvert.DeserializeObject<JObject>(jsonResponse);
 
             if (policyData != null && policyData["_embedded"] != null)
@@ -459,6 +781,12 @@
                 if (embeddedData != null && embeddedData["policies"] != null)
                 {
                     var policiesList = embeddedData["policies"].ToObject<List<JObject>>();
+
+                    Console.WriteLine($"Found {policiesList.Count.ToString()} policies...");
+                    utilityCount = policiesList.Count;
+                    utilityStatus = $"Found {policiesList.Count.ToString()} policies...";
+                    await InvokeAsync(StateHasChanged);
+
                     clientPolicies = policiesList.Select(p => new Policy
                         {
                             PolicyNumber = p["policyNumber"]?.ToString(),
@@ -470,81 +798,18 @@
                             ExpirationDate = p["expirationOn"] != null ? DateTime.Parse(p["expirationOn"].ToString()) : DateTime.MinValue,
                             Premium = p["estimatedPremium"] != null ? decimal.Parse($"{p["estimatedPremium"]["units"]}.{p["estimatedPremium"]["partialUnits"]}") : 0m
                         }).ToList();
+
+                    Console.WriteLine($"Adding {policiesList.Count.ToString()} policies to view...");
+                    utilityStatus = $"Adding {policiesList.Count.ToString()} policies to view...";
+                    await InvokeAsync(StateHasChanged);
                 }
             }
-            SortAndSeparatePolicies();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error loading client policies: {ex.Message}");
-        }
-        finally
-        {
-            isLoadingWhat += "*";
+            utilityStatus = "Error loading policies to view...";
             await InvokeAsync(StateHasChanged);
         }
     }
-
-    private void SortAndSeparatePolicies()
-    {
-        var today = DateTime.Today;
-
-        currentPolicies = selectedClient.Policies
-            .Where(p =>
-                // Active policies: where today's date falls within the effective and expiration date
-                (p.EffectiveDate <= today && p.ExpirationDate >= today) ||
-                // Future policies: where both the effective and expiration dates are in the future
-                (p.EffectiveDate > today && p.ExpirationDate > today))
-            .OrderByDescending(p => p.EffectiveDate)
-            .ToList();
-
-        pastPolicies = selectedClient.Policies
-            .Where(p => p.ExpirationDate < today)
-            .OrderByDescending(p => p.EffectiveDate)
-            .ToList();
-
-        isLoadingWhat = "X";
-        StateHasChanged();
-    }
-
-    private async Task FilterClients()
-    {
-        if (string.IsNullOrEmpty(searchTerm))
-        {
-            filteredClients = new List<Client>(clients);
-        }
-        else
-        {
-            filteredClients = clients
-                .Where(client => client.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-        await InvokeAsync(StateHasChanged);
-    }
-
-    
-
-    // Policy Expansion Methods
-    private void ToggleExpand(int policyId)
-    {
-        if (expandedPolicies.Contains(policyId))
-        {
-            expandedPolicies.Remove(policyId);
-        }
-        else
-        {
-            expandedPolicies.Add(policyId);
-        }
-    }
-
-    private string GetPolicyClass(int policyId)
-    {
-        return expandedPolicies.Contains(policyId) ? "policy expanded" : "policy";
-    }
-
-    private string GetLinksStyle(int policyId)
-    {
-        return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
-    }
-
 }

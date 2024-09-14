@@ -1,4 +1,4 @@
-﻿@using Syncfusion.Blazor
+﻿@* @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Navigations
 @inject BreadcrumbService BreadcrumbService
 @rendermode InteractiveServer
@@ -6,11 +6,11 @@
 <div class="breadcrum">
     <SfBreadcrumb>
         <Breadcrumb Items="BreadcrumbService.Items"></Breadcrumb>
-        @* <BreadcrumbItems>
+         <BreadcrumbItems>
             @foreach (var item in BreadcrumbService.Items)
             {
                 <BreadcrumbItem Text="@item.Text" Url="@item.Url" />
             }
-        </BreadcrumbItems> *@
+        </BreadcrumbItems> 
     </SfBreadcrumb>
-</div>
+</div> *@

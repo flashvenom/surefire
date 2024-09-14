@@ -32,18 +32,15 @@
 </div>
 
 <div class="page" >
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    
+     <NavMenu />
+    
 
     <main>
         <article>
             @Body
         </article>
-        <FluentToastProvider />
-        <FluentDialogProvider />
-        <FluentTooltipProvider />
-        <FluentMessageBarProvider />
+       
     </main>
 </div>
 
@@ -53,7 +50,11 @@
     <a class="dismiss">🗙</a>
 </div>
 
-
+<FluentToastProvider />
+<FluentDialogProvider />
+<FluentTooltipProvider />
+<FluentMessageBarProvider />
+<FluentMenuProvider />
 
 @code {
     private ClaimsPrincipal User { get; set; }

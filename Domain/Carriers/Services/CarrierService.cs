@@ -22,6 +22,11 @@ namespace Mantis.Domain.Carriers.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public IQueryable<Carrier> GetAllCarriers()
+        {
+            return _context.Carriers.AsQueryable();
+        }
+
         public async Task<List<Carrier>> GetAllCarriersAsync()
         {
             return await _context.Carriers.ToListAsync();
@@ -55,7 +60,7 @@ namespace Mantis.Domain.Carriers.Services
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
             carrier.CreatedBy = currentUser;
-            
+
             _context.Carriers.Add(carrier);
             await _context.SaveChangesAsync();
         }

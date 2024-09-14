@@ -222,6 +222,9 @@ namespace Mantis.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("LogoFilename")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("LookupCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -292,6 +295,9 @@ namespace Mantis.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EmailAlternate")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Fax")
                         .HasColumnType("nvarchar(max)");
 
@@ -299,7 +305,13 @@ namespace Mantis.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HeadshotFilename")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsInactive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsStarred")
                         .HasColumnType("bit");
 
                     b.Property<string>("LastName")
@@ -413,20 +425,133 @@ namespace Mantis.Migrations
                     b.ToTable("Certificates");
                 });
 
-            modelBuilder.Entity("Mantis.Domain.Policies.Models.Application", b =>
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormDoc", b =>
                 {
-                    b.Property<int>("ApplicationId")
+                    b.Property<int>("FormDocId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApplicationId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FormDocId"));
 
-                    b.Property<DateTime>("ApplicationDate")
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("ApplicationId");
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("datetime2");
 
-                    b.ToTable("Application", (string)null);
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FormPdfId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("JSONData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("FormDocId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("FormPdfId");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.ToTable("FormDocs");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormDocRevision", b =>
+                {
+                    b.Property<int>("FormDocRevisionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FormDocRevisionId"));
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FormDocId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("JSONData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RevisionName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("FormDocRevisionId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("FormDocId");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.ToTable("FormDocRevisions");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormPdf", b =>
+                {
+                    b.Property<int>("FormPdfId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FormPdfId"));
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Filepath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JSONFields")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ModifiedById")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("FormPdfId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ModifiedById");
+
+                    b.ToTable("FormPdf");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.AutoCoverage", b =>
@@ -1421,6 +1546,22 @@ namespace Mantis.Migrations
                     b.ToTable("Locations");
                 });
 
+            modelBuilder.Entity("Mantis.Domain.Shared.Models.Application", b =>
+                {
+                    b.Property<int>("ApplicationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApplicationId"));
+
+                    b.Property<DateTime>("ApplicationDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ApplicationId");
+
+                    b.ToTable("Application");
+                });
+
             modelBuilder.Entity("Mantis.Domain.Shared.Models.Attachment", b =>
                 {
                     b.Property<int>("AttachmentId")
@@ -1786,6 +1927,81 @@ namespace Mantis.Migrations
                     b.Navigation("ModifiedBy");
                 });
 
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormDoc", b =>
+                {
+                    b.HasOne("Mantis.Domain.Clients.Models.Client", "Client")
+                        .WithMany("FormDocs")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Forms.Models.FormPdf", "FormPdf")
+                        .WithMany()
+                        .HasForeignKey("FormPdfId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Client");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("FormPdf");
+
+                    b.Navigation("ModifiedBy");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormDocRevision", b =>
+                {
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Domain.Forms.Models.FormDoc", "FormDoc")
+                        .WithMany("FormDocRevisions")
+                        .HasForeignKey("FormDocId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("FormDoc");
+
+                    b.Navigation("ModifiedBy");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormPdf", b =>
+                {
+                    b.HasOne("Mantis.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Mantis.Data.ApplicationUser", "ModifiedBy")
+                        .WithMany()
+                        .HasForeignKey("ModifiedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ModifiedBy");
+                });
+
             modelBuilder.Entity("Mantis.Domain.Policies.Models.AutoCoverage", b =>
                 {
                     b.HasOne("Mantis.Domain.Shared.Models.Attachment", "AdditionalAttachmentsAttachment")
@@ -1910,7 +2126,7 @@ namespace Mantis.Migrations
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Policy", b =>
                 {
-                    b.HasOne("Mantis.Domain.Policies.Models.Application", "Application")
+                    b.HasOne("Mantis.Domain.Shared.Models.Application", "Application")
                         .WithMany()
                         .HasForeignKey("ApplicationId");
 
@@ -2325,9 +2541,16 @@ namespace Mantis.Migrations
 
                     b.Navigation("Contacts");
 
+                    b.Navigation("FormDocs");
+
                     b.Navigation("Locations");
 
                     b.Navigation("Policies");
+                });
+
+            modelBuilder.Entity("Mantis.Domain.Forms.Models.FormDoc", b =>
+                {
+                    b.Navigation("FormDocRevisions");
                 });
 
             modelBuilder.Entity("Mantis.Domain.Policies.Models.Claim", b =>

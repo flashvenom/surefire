@@ -149,9 +149,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        DocumentPath = "wwwroot/forms/a025-2016-03-v3.pdf";
-        JsonPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2.json");
-        ClearPoliciesPath = Path.Combine(Environment.WebRootPath, "forms", "a025-2016-03-v2-clearpolicies.json");
+        DocumentPath = "wwwroot/forms/a025-2016-03.pdf";
+        JsonPath = Path.Combine(Environment.WebRootPath, "forms", "_json/a025-2016-03-v2.json");
+        ClearPoliciesPath = Path.Combine(Environment.WebRootPath, "forms", "_json/a025-2016-03-v2-clearpolicies.json");
         client = await ClientService.GetClientByCertificateId(CertificateId);
         certificate = await FormService.GetCertificateByIdAsync(CertificateId);
         policies = await PolicyService.GetCurrentPoliciesByClientIdAsync(client.ClientId);
@@ -569,14 +569,14 @@
                     jsonObject["GeneralLiability_OccurrenceIndicator"] = "On";
                 
                 //Add filename to certificate for when/if we export/combine PDFs
-                if (glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment != null)
+                if (glpolicy.GeneralLiabilityCoverage?.AdditionalInsuredAttachment != null)
                 {
                     certificate.AttachGLAIfilename = glpolicy.GeneralLiabilityCoverage.AdditionalInsuredAttachment.FileName;
 
                 }
 
                 //Add filename to certificate for when/if we export/combine PDFs
-                if (glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment != null)
+                if (glpolicy.GeneralLiabilityCoverage?.WaiverOfSubAttachment != null)
                 {
                     certificate.AttachGLWOSfilename = glpolicy.GeneralLiabilityCoverage.WaiverOfSubAttachment.FileName;
                 }

@@ -52,13 +52,17 @@ namespace Mantis.Domain.Shared.Helpers
                 return phoneNumber; // Return the original phone number if it's null or empty
             }
 
-            // Store the original phone number
+            if (phoneNumber.StartsWith("+1"))
+            {
+                phoneNumber = phoneNumber.Substring(2); // Remove the "+1" prefix
+            }
+
+            // Store the original phone number for fallback
             string originalPhoneNumber = phoneNumber;
 
             // Remove any non-numeric characters (like spaces, dashes, or parentheses)
             var digits = new string(phoneNumber.Where(char.IsDigit).ToArray());
 
-            // If the digits string is exactly 10 digits long, format it as (###) ###-####
             if (digits.Length == 10)
             {
                 return string.Format("({0}) {1}-{2}",
@@ -67,7 +71,6 @@ namespace Mantis.Domain.Shared.Helpers
                                      digits.Substring(6, 4));
             }
 
-            // If the digits string is not exactly 10 digits, return the original phone number
             return originalPhoneNumber;
         }
 

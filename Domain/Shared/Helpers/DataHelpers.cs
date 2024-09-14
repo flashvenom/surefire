@@ -1,48 +1,42 @@
 using Mantis.Domain.Renewals.Models;
+using Microsoft.AspNetCore.Components;
+using System.Text.RegularExpressions;
 
 namespace Mantis.Domain.Shared.Helpers
 {
-    public static class DataHelper
+    public class DataHelper
     {
-        public static int RenewalProgressPercentWeighted(ICollection<TrackTask> tasks)
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
+
+        public DataHelper(IConfiguration configuration, IWebHostEnvironment environment)
         {
-            if (tasks == null || tasks.Count == 0)
-            {
-                return 0;
-            }
-
-            int totalTasks = tasks.Count;
-            double totalWeight = 0;
-            double weightedCompleted = 0;
-
-            for (int i = 0; i < totalTasks; i++)
-            {
-                // Higher weight for earlier tasks
-                double weight = (totalTasks - i) / (double)totalTasks;
-                totalWeight += weight;
-
-                if (tasks.ElementAt(i).Completed)
-                {
-                    weightedCompleted += weight;
-                }
-            }
-
-            // Calculate weighted completion percentage
-            return (int)((weightedCompleted / totalWeight) * 100);
+            _configuration = configuration;
+            _environment = environment;
         }
 
-        public static int RenewalProgressPercent(ICollection<TrackTask> tasks)
+        public string GetBaseUrl()
         {
-            if (tasks == null || tasks.Count == 0)
+            // If in Production, prioritize the environment variable
+            if (_environment.IsProduction())
             {
-                return 0;
+                return _configuration["SUREFIRE_BASE_URL"] ?? _configuration["SurefireBaseUrl"];
             }
 
-            int totalTasks = tasks.Count;
-            int completedTasks = tasks.Count(task => task.Completed);
+            // If in Development or Debug, use the value from appsettings.Development.json
+            if (_environment.IsDevelopment())
+            {
+                return _configuration["SurefireBaseUrl"];
+            }
 
-            // Calculate evenly distributed completion percentage
-            return (int)((double)completedTasks / totalTasks * 100);
+            // Fallback to the default base URL in appsettings.json
+            return _configuration["SurefireBaseUrl"];
         }
     }
+
+    public class EmptyValidator : ComponentBase
+    {
+        // No logic required here, this is just to bypass validation.
+    }
+
 }

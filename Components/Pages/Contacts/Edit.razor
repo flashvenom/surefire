@@ -2,11 +2,16 @@
 @using Mantis.Domain.Contacts.Models
 @using Mantis.Domain.Contacts.Services
 @using Mantis.Domain.Clients.Models
+@using Mantis.Domain.Clients.Services
 @using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Shared.Helpers
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject AttachmentService AttachmentService
 @inject NavigationManager NavigationManager
 @inject ContactService ContactService
+@inject ClientService ClientService
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
@@ -20,73 +25,96 @@
 
 <div class="page-content">
     <div class="mh1">Edit Contact</div>
-     @if (Contact != null && editContext != null)
+    @if (Contact != null && editContext != null)
     {
-    <EditForm EditContext="@editContext" OnValidSubmit="UpdateContact">
-        <DataAnnotationsValidator />
+        <EditForm EditContext="@editContext" OnValidSubmit="UpdateContact">
+            <DataAnnotationsValidator />
 
-        <div class="mf-flex mf-flex-row mf-row-container">
-            <div class="mf-item-lg">
-                <div class="mb-3">
-                    <SfTextBox id="firstName" Placeholder="First Name" @bind-Value="Contact.FirstName" FloatLabelType="FloatLabelType.Always" />
-                    <ValidationMessage For="() => Contact.FirstName" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <SfTextBox id="lastName" Placeholder="Last Name" @bind-Value="Contact.LastName" FloatLabelType="FloatLabelType.Always" />
-                    <ValidationMessage For="() => Contact.LastName" class="text-danger" />
-                </div>
+            <div class="mf-flex mf-flex-row mf-row-container">
+                <div class="mf-item-lg">
+                    <div class="mb-3">
+                        <SfTextBox id="firstName" Placeholder="First Name" @bind-Value="Contact.FirstName" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Contact.FirstName" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="lastName" Placeholder="Last Name" @bind-Value="Contact.LastName" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Contact.LastName" class="text-danger" />
+                    </div>
 
-                <div class="mb-3">
-                    <SfTextBox id="title" Placeholder="Title / Department" @bind-Value="Contact.Title" FloatLabelType="FloatLabelType.Always" />
-                    <ValidationMessage For="() => Contact.Title" class="text-danger" />
+                    <div class="mb-3">
+                        <SfTextBox id="title" Placeholder="Title / Department" @bind-Value="Contact.Title" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Contact.Title" class="text-danger" />
+                    </div>
+                    @if (ConfirmedParentType == "Carrier")
+                    {
+                        <table>
+                            <tr>
+                                <td>
+                                    <div class="cb">
+                                        <FluentCheckbox id="underwriter" Label="Underwriter" @bind-Value="Contact.Underwriter" />
+                                    </div>
+                                    <div class="cb">
+                                        <FluentCheckbox id="service" Label="Service" @bind-Value="Contact.Service" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="cb">
+                                        <FluentCheckbox id="billing" Label="Billing" @bind-Value="Contact.Billing" />
+                                    </div>
+                                    <div class="cb">
+                                        <FluentCheckbox id="rep" Label="Account Rep" @bind-Value="Contact.Representative" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    }
                 </div>
-                @if (ConfirmedParentType == "Carrier")
-                {
-                    <table>
-                        <tr>
-                            <td>
-                                <div class="cb">
-                                    <FluentCheckbox id="underwriter" Label="Underwriter" @bind-Value="Contact.Underwriter" />
-                                </div>
-                                <div class="cb">
-                                    <FluentCheckbox id="service" Label="Service" @bind-Value="Contact.Service" />
-                                </div>
-                            </td>
-                            <td>
-                                <div class="cb">
-                                    <FluentCheckbox id="billing" Label="Billing" @bind-Value="Contact.Billing" />
-                                </div>
-                                <div class="cb">
-                                    <FluentCheckbox id="rep" Label="Account Rep" @bind-Value="Contact.Representative" />
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                }
+                <div class="mf-item-lg mf-pad-left">
+                    <div class="mb-3">
+                        <SfTextBox id="email" Placeholder="Email" @bind-Value="Contact.Email" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Contact.Email" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="phone" Placeholder="Phone" @bind-Value="Contact.Phone" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Contact.Phone" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="mobile" Placeholder="Mobile" @bind-Value="Contact.Mobile" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Contact.Mobile" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="notes" Placeholder="Notes" @bind-Value="Contact.Notes" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => Contact.Notes" class="text-danger" />
+                    </div>
+                    
+                </div>
+                <div class="mf-item-lg mf-pad-left">
+                    <div class="mb-3">
+                        <span class="txt-label">Headshot</span>
+
+                        @if (!string.IsNullOrEmpty(Contact.HeadshotFilename))
+                        {
+                            <div>
+                                <img src="/uploads/headshots/@Contact.HeadshotFilename" width="100" height="100" alt="Headshot" /><br />
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(async () => await RemoveFile(ContactId))">Remove</FluentButton>
+                            </div>
+                        }
+                        else
+                        {
+                            <SfUploader AutoUpload="true" AllowedExtensions=".jpg,.jpeg,.png" MaxFileSize="5000000">
+                                <UploaderEvents ValueChange="@OnHeadshotUpload"></UploaderEvents>
+                            </SfUploader>
+                        }
+                    </div>
+
+                </div>
             </div>
-            <div class="mf-item-lg mf-pad-left">
-                <div class="mb-3">
-                    <SfTextBox id="email" Placeholder="Email" @bind-Value="Contact.Email" FloatLabelType="FloatLabelType.Always" />
-                    <ValidationMessage For="() => Contact.Email" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <SfTextBox id="phone" Placeholder="Phone" @bind-Value="Contact.Phone" FloatLabelType="FloatLabelType.Always" />
-                    <ValidationMessage For="() => Contact.Phone" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <SfTextBox id="mobile" Placeholder="Mobile" @bind-Value="Contact.Mobile" FloatLabelType="FloatLabelType.Always" />
-                    <ValidationMessage For="() => Contact.Mobile" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <SfTextBox id="notes" Placeholder="Notes" @bind-Value="Contact.Notes" FloatLabelType="FloatLabelType.Always" />
-                    <ValidationMessage For="() => Contact.Notes" class="text-danger" />
-                </div>
-            </div>
-        </div>
 
-        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
-        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save</FluentButton>
-    </EditForm>
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="ShowDeleteConfirmation" Style="color:#c70000;">Delete</FluentButton>
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width:100px;">Save</FluentButton>
+
+        </EditForm>
     }
     else
     {
@@ -97,11 +125,32 @@
     <a href="/@(ConfirmedParentType)/View/@ContactId">Back to Details</a>
 </div>
 
+
+<FluentDialog Hidden="@dialogHidden" Id="deleteDialog" @ref="deleteDialogRef">
+    <div>
+        <h3>Confirm Delete</h3>
+        @if (IsPrimaryContact)
+        {
+            <p>You cannot delete the primary contact. Try editing it instead.</p>
+        }
+        else
+        {
+            <p>Are you sure you want to delete @Contact.FirstName @Contact.LastName?</p>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Type="ButtonType.Button" OnClick="ConfirmDelete" Appearance="Appearance.Accent" Disabled="@IsPrimaryContact">Delete</FluentButton>
+        <FluentButton Type="ButtonType.Button" OnClick="CancelDelete" Appearance="Appearance.Outline">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
 @code {
     [Parameter] public int ContactId { get; set; }
     private Contact Contact { get; set; } = new Contact();
     private EditContext editContext;
     public string ConfirmedParentType { get; set; }
+    public bool dialogHidden = true;
+    private FluentDialog deleteDialogRef;
+    public bool IsPrimaryContact = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,6 +163,13 @@
 
         editContext = new EditContext(Contact);
 
+        // Determine if the contact is a primary contact
+        if (Contact.ClientId.HasValue)
+        {
+            var client = await ClientService.GetClientById(Contact.ClientId.Value);
+            IsPrimaryContact = client.PrimaryContactId == ContactId;
+        }
+
         if (Contact.CarrierId.HasValue)
         {
             ConfirmedParentType = "Carrier";
@@ -122,6 +178,73 @@
         {
             ConfirmedParentType = "Client";
         }
+    }
+
+    private async Task RemoveFile(int contactId)
+    {
+        await AttachmentService.RemoveHeadshotFromContact(contactId);
+        Contact.HeadshotFilename = null;
+        StateHasChanged();
+    }
+
+    // Show delete confirmation dialog
+    private void ShowDeleteConfirmation()
+    {
+        dialogHidden = false;
+        deleteDialogRef.Show(); //Not working?!
+    }
+
+    // Cancel delete and hide dialog
+    private void CancelDelete()
+    {
+        dialogHidden = true;
+        deleteDialogRef.Hide(); //Not working?!
+    }
+
+    // Confirm delete action
+    private async Task ConfirmDelete()
+    {
+        await ContactService.DeleteContactAsync(ContactId);
+        deleteDialogRef.Hide();
+        GoBack();
+    }
+    private async Task OnHeadshotUpload(UploadChangeEventArgs args)
+    {
+        if (args.Files != null && args.Files.Count > 0)
+        {
+            var file = args.Files[0];
+            if (file != null)
+            {
+                string extension = Path.GetExtension(file.FileInfo.Name);
+                string cleanFileName = StringHelper.BuildUploadPath(Contact.ContactId, Contact.FirstName, Contact.LastName, "headshots", extension);
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/headshots/", cleanFileName);
+
+                using (var stream = file.File.OpenReadStream(long.MaxValue))
+                {
+                    // Resize the image to ensure it's under 500px
+                    var resizedImage = await ImageResizer.ResizeImageAsync(stream, 500);
+
+                    // Make sure the resized image stream is positioned at the beginning
+                    resizedImage.Seek(0, SeekOrigin.Begin);
+
+                    using (var fileStream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write))
+                    {
+                        // Copy the resized image to the file system
+                        await resizedImage.CopyToAsync(fileStream);
+                    }
+                }
+
+                // Update the Contact's HeadshotFilename field
+                Contact.HeadshotFilename = cleanFileName;
+                await ContactService.UpdateContactAsync(Contact);
+                StateHasChanged(); // Refresh UI to show the updated headshot
+            }
+        }
+    }
+
+    private string GetFileExtension(string fileName)
+    {
+        return Path.GetExtension(fileName)?.TrimStart('.');
     }
 
     private async Task UpdateContact()

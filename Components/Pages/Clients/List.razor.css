@@ -1,6 +1,48 @@
-﻿.clientlist-tabcontainer {
-    /*background-color:#fcfcfc;*/
+﻿:root .smallbutton {
+    font-size: .6em !important;
+    padding: 0px 0px !important;
+    margin: 0px 0px !important;
+    width: 50px;
+}
+
+:root .sf-tab {
+    background-color: #fff;
+    border-radius: 5px;
+    line-height: 1.1;
+}
+
+
+
+.page-content {
+    display: flex;
+    flex-direction: row;
+}
+
+.tinyexpander {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    opacity: .3;
+}
+
+    .tinyexpander:hover {
+        opacity: 1;
+        cursor: pointer;
+    }
+
+
+
+:root .sf-collapse {
+    width: 15px;
+    background-color: #e2e2e2;
+    height: 100%;
+    float: right;
+}
+
+
+.client-main {
     background-color:#fff;
+    height:auto;
 }
 h3 {
     font-family: "montserrat", sans-serif;
@@ -54,23 +96,21 @@ h4 {
 .policy {
     color: #fff;
     width: 100%;
-    padding: 3px;
-    padding-left: 7px;
-    padding-right: 7px;
-    margin-bottom: 15px;
-    border-left: 10px solid #4f4f4f;
-    border-radius: 5px;
+    padding: 9px 10px 6px 10px;
+    margin-bottom: 10px;
+    border-left: 5px solid #64a2d8;
+    border-radius: 3px;
     height: 45px;
-    background-color: #747474;
+    background-color: #0f6cbd;
     overflow: hidden;
     cursor: pointer;
     transition: all .4s ease-in-out;
 }
     .policy.expanded {
-        background-color: #0f6cbd;
+        background-color: #141414;
         transition: all .4s ease-in-out;
         height: 76px;
-        border-left: 10px solid #64a2d8;
+        border-left: 5px solid #808080;
         border-radius: 5px;
     }
 
@@ -85,16 +125,56 @@ h4 {
 .policy-header {
     display: flex;
     justify-content: space-between;
-    font-weight: bold;
-    font-size: 14px;
+}
+.edate {
+    font-size: 1.4em;
+    float: left;
+    font-weight: 100;
+}
+.xdate {
+    font-size: 1.4em;
+    float: left;
+    font-weight: 600;
+}
+.carrier-name {
+    font-size: .9em;
+    font-weight: 200;
+    color:#ffffffb1
+
+}
+.ff1 {
 }
 
+.ff2 {
+    margin-left: auto;
+}
+.policy-linename {
+    font-size: 1.4em;
+    font-weight: 700;
+}
+.policy-number {
+    font-size:.75em;
+    color:#ccc;
+}
+.policy-carriers {
+    font-size: 1.125em;
+    font-weight:200;
+    padding: 4px 0px;
+}
+.lighter {
+    color:#ffffff70;
+    padding: 0px 8px;
+}
+.policy-price {
+    font-family: "montserrat", sans-serif;
+    font-size: .9em;
+    font-style: italic;
+    color:#bebebe;
+}
 .policy-details {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    /*background-color: #9b9b9b;
-    border-radius:8px;*/
 }
 
 .past-policy {
@@ -115,14 +195,7 @@ h4 {
         text-align: left;
     }
 
-/*.sf-pp {
-    width: 130px;
-    overflow: hidden;
-}*/
 
-/*.sf-da {
-    width: 50px;
-}*/
 .txt-cursive-sm {
     position: relative;
     top: -6px;
@@ -152,12 +225,83 @@ h4 {
     padding-bottom: 20px;
 }
 
-.client-address {
+
+
+.client-top {
     font-family: "montserrat", sans-serif;
-    font-weight: 200;
-    font-style: normal;
-    font-size: .5em;
+    background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(234,234,234,1) 100%);
+    padding-top: 2px;
+    padding-bottom: 4px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
+.top-rowone {
+    width:100%;
+    height: 50px;
+    overflow:hidden;
+}
+.top-rowtwo {
+    position: relative;
+    top: -4px;
+    color: #454545;
+}
+.client-name {
+    font-weight: 800;
+    font-style: normal;
+    font-size: 2.5em;
+}
+.client-phone {
+    float:right;
+}
+.client-phonenumber {
+    font-weight: 300;
+    font-style: normal;
+    font-size: 2.5em;
+    position: relative;
+    top: -10px;
+    left:-5px;
+    color: #8d8d8d;
+}
+.client-data {
+    font-weight: 300;
+    position: relative;
+    left: -4px;
+    font-style: normal;
+    font-size: 1.125em;
+    margin-right: 25px;
+    text-decoration: none;
+    color: #1e1e1e;
+}
+.client-data:hover {
+    color: #0f6cbd;
+    cursor:pointer;
+}
+.data-icon {
+    position: relative;
+    top: 3px;
+    color: #8d8d8d;
+}
+
+.phone-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+}
+.email-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+}
+.map-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+}
+
+
+
 
 .client-header {
     font-family: "montserrat", sans-serif;
@@ -190,12 +334,7 @@ h4 {
 .sf-col h3 {
 }
 
-.client-phone {
-    font-family: "montserrat", sans-serif;
-    font-weight: 200;
-    font-style: normal;
-    font-size: 2.5em;
-}
+
 
 .client-email {
     font-family: "montserrat", sans-serif;
@@ -244,9 +383,13 @@ h4 {
     width: 100%;
     box-shadow: 0px 0px 6px #0000002b;
     position: relative;
+    background-color: #fff;
+    -webkit-border-top-left-radius: inherit;
+    border-top-left-radius: 10px;
 }
 
 .sf-header {
+    font-family: "montserrat", sans-serif;
     display: flex;
     justify-content: normal;
     flex-direction: row;
@@ -258,6 +401,9 @@ h4 {
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
 }
+
+
+
 
 .client-details {
     display: flex;
@@ -302,19 +448,22 @@ h4 {
         margin-bottom: 10px;
     }
 
-.phone-icon{
-    position:relative;
-    top:2px;
-    color:#8d8d8d;
+
+.client-list {
+    margin-top:8px;
+    width:285px;
+    overflow:hidden;
+}
+.client-list-item {
+    padding: 3px 10px;
+    white-space: nowrap;
+    font-size: .9em;
+    color: #6c6c6c;
+    transition: all 0.1s ease-out;
 }
 
-.email-icon {
-    position: relative;
-    top: 2px;
-    color: #8d8d8d;
-}
-.map-icon {
-    position: relative;
-    top: 2px;
-    color: #8d8d8d;
-}
+    .client-list-item:hover {
+        background-color: #ffffff;
+        color:#272727;
+        cursor: pointer;
+    }

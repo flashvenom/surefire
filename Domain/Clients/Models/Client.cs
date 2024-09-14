@@ -20,6 +20,7 @@ namespace Mantis.Domain.Clients.Models
         public string? Email { get; set; }
         public string? Website { get; set; }
         public string? Comments { get; set; }
+        public string? LogoFilename { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedDate { get; set; }
         public DateTime DateOpened { get; set; } = DateTime.UtcNow;
@@ -29,11 +30,20 @@ namespace Mantis.Domain.Clients.Models
         public ICollection<Location> Locations { get; set; } = new List<Location>();
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
         public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+        public ICollection<FormDoc> FormDocs { get; set; } = new List<FormDoc>();
 
         public Address Address { get; set; }
+        public int PrimaryContactId { get; set; }
         public Contact PrimaryContact { get; set; }
         public ApplicationUser? Producer { get; set; }
         public ApplicationUser? CSR { get; set; }
         public ApplicationUser CreatedBy { get; set; }
+    }
+
+    public class ClientListItem
+    {
+        public int ClientId { get; set; }
+        public string Name { get; set; }
+        public DateTime DateOpened { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿@page "/Renewals"
+﻿@page "/Renew"
 @using Mantis.Domain.Policies.Models
 @using Mantis.Domain.Policies.Services
 @using Mantis.Domain.Renewals.Models
@@ -29,7 +29,7 @@
 
     <span class="sf-verthr"></span>
 
-    <NavLink class="toolbar-link" @onclick="ShowResults" Match="NavLinkMatch.Prefix">
+    <NavLink class="toolbar-link" @onclick="GetFilteredList" Match="NavLinkMatch.Prefix">
         <FluentIcon Value="@(new Icons.Regular.Size24.BookStar())" />
         <span class="toolbar-text">Browse</span>
     </NavLink>
@@ -137,7 +137,7 @@
                                 <td style="text-align:center;">@item.RenewalDate.ToString("M/d")</td>
                                 <td class="sf-td-mono">@item.Product?.LineCode</td>
                                 <td class="sf-td-bold"><a class="renewalitemlink" @onclick="() => LoadRenewal(item.RenewalId)">@item.Client?.Name</a></td>
-                                <td><Battery PerComplete=@DataHelper.RenewalProgressPercent(item.TrackTasks) /></td>
+                                <td><Battery PerComplete=@StringHelper.RenewalProgressPercent(item.TrackTasks) /></td>
                                 <td class="sf-td-sm">@item.Carrier?.CarrierName</td>
                                 <td class="sf-td-sm2">@item.Wholesaler?.CarrierNickname</td>
                                 <td class="sf-td-sm"><a href="/Clients/List/@item.ClientId">@item.Policy?.PolicyNumber</a></td>
@@ -235,7 +235,7 @@
             int parsedopenid = Convert.ToInt32(openidout);
             LoadRenewal(parsedopenid);
         }
-        
+
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

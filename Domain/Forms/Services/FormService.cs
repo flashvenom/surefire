@@ -8,6 +8,7 @@ using Syncfusion.Pdf;
 using Syncfusion.Pdf.Interactive;
 using Syncfusion.Pdf.Parsing;
 using System.IO;
+using Mantis.Domain.Clients.Models;
 
 namespace Mantis.Domain.Forms.Services
 {
@@ -23,6 +24,86 @@ namespace Mantis.Domain.Forms.Services
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
+
+
+        public async Task<List<FormPdf>> GetAllFormPdfs()
+        {
+            var formpdflist = await _context.FormPdf.ToListAsync();
+            return formpdflist;
+        }
+
+        public async Task<int> CreateFormDoc(int formPdfId, int clientId)
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
+            var formPdf = await _context.FormPdf.FindAsync(formPdfId);
+            if (formPdf == null)
+            {
+                throw new Exception("FormPdf not found.");
+            }
+
+            var newformdoc = new FormDoc
+            {
+                ClientId = clientId,
+                Title = "New " + formPdf.Title,
+                Description = formPdf.Description,
+                JSONData = "{}",
+                FormPdf = formPdf,
+                CreatedBy = currentUser,
+                ModifiedBy = currentUser,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow
+            };
+            _context.FormDocs.Add(newformdoc);
+            await _context.SaveChangesAsync();
+
+            return newformdoc.FormDocId;
+        }
+
+        public async Task<FormDoc> GetFormDocByIdAsync(int formDocId)
+        {
+            var formDoc = await _context.FormDocs
+                .Include(fd => fd.Client)      // Include the Client entity
+                .Include(fd => fd.CreatedBy)   // Include the CreatedBy entity
+                .Include(fd => fd.ModifiedBy)  // Include the ModifiedBy entity
+                .Include(fd => fd.FormPdf)     // Include the FormPdf entity
+                .FirstOrDefaultAsync(p => p.FormDocId == formDocId);
+
+            return formDoc;
+        }
+
+        public async Task UpdateFormDoc(FormDoc formdoc)
+        {
+            _context.FormDocs.Update(formdoc);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> DuplicateFormDocAsync(FormDoc originalFormdoc)
+        {
+            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
+            var newFormdoc = new FormDoc
+            {
+                ClientId = originalFormdoc.ClientId,
+                Title = originalFormdoc.Title + " (Copy)",
+                Description = originalFormdoc.Description,
+                JSONData = originalFormdoc.JSONData,
+                DateCreated = DateTime.Now,
+                DateModified = DateTime.Now,
+                FormPdf = originalFormdoc.FormPdf
+            };
+            newFormdoc.CreatedBy = currentUser;
+            newFormdoc.ModifiedBy = currentUser;
+            newFormdoc.DateCreated = DateTime.UtcNow;
+            newFormdoc.DateModified = DateTime.UtcNow;
+
+            _context.FormDocs.Add(newFormdoc);
+            await _context.SaveChangesAsync();
+
+            return newFormdoc.FormDocId;
+        }
+
+
 
         public async Task<int> CreateCertificate(int clientid)
         {
@@ -42,13 +123,15 @@ namespace Mantis.Domain.Forms.Services
 
             return newcert.CertificateId;
         }
-
         public async Task<Certificate> GetCertificateByIdAsync(int certid)
         {
             var certificate = await _context.Certificates.FirstOrDefaultAsync(p => p.CertificateId == certid);
 
             return certificate;
         }
+        
+
+        
         public async Task UpdateCertificate(Certificate certificate)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);

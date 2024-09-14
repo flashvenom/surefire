@@ -1,4 +1,5 @@
 ﻿@page "/"
+@page "/Home"
 @using Mantis.Components.Shared
 @using Mantis.Domain.Policies.Services
 @using Mantis.Domain.Policies.Models
@@ -48,9 +49,6 @@
 
     protected override void OnInitialized()
     {
-        BreadcrumbService.UpdateBreadcrumb(new List<BreadcrumbItem>
-        {
-            new BreadcrumbItem { Text = "Home" }
-        });
+        
     }
 }

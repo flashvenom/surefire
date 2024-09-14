@@ -157,7 +157,7 @@
         try
         {
             await DbContext.SaveChangesAsync();
-            NavigationManager.NavigateTo($"/Renewals?openid={RenewalId}");
+            NavigationManager.NavigateTo($"/Renewals?&month={Renewal.RenewalDate.Month}&year={Renewal.RenewalDate.Year}&user=Everyone&renewalId={RenewalId}&currentView=selected");
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -179,6 +179,6 @@
 
     public void GoBack()
     {
-        NavigationManager.NavigateTo($"/Renewals?openid={RenewalId}");
+        NavigationManager.NavigateTo($"/Renewals?&month={Renewal.RenewalDate.Month}&year={Renewal.RenewalDate.Year}&user=Everyone&renewalId={RenewalId}&currentView=selected");
     }
 }

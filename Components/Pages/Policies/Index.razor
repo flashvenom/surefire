@@ -1,85 +1,113 @@
 ﻿@page "/Policies"
 @using Mantis.Domain.Policies.Models
-@using Mantis.Components.Pages.Policies
-@using Syncfusion.Blazor.Grids
-@using Syncfusion.Blazor.Navigations
-@using Syncfusion.Blazor.Data
-@using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor
+@using Mantis.Domain.Policies.Services
+@using Mantis.Domain.Shared.Helpers
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.EntityFrameworkCore
 @inject NavigationManager NavigationManager
+@inject DataHelper DataHelper
+@inject PolicyService PolicyService
 @rendermode InteractiveServer
 
 <SfBreadcrumb>
     <BreadcrumbItems>
         <BreadcrumbItem Text="Policies" Url="/Policies" />
-        <BreadcrumbItem Text="Database" />
+        <BreadcrumbItem Text="Browse" />
     </BreadcrumbItems>
 </SfBreadcrumb>
 
-<_toolbar PolicyId="@PolicyId" />
+<_toolbar PolicyId="@PolicyId" PolicyNumber="@SelectedPolicyNumber" />
 
-<div class="page-content">
-    <SfGrid @ref="Grid" DataSource="@PolicyData" AllowPaging="true" AllowSorting="true" ShowColumnChooser="true" Toolbar="@(new List<string>() { "Search", "ColumnChooser" })">
-        <GridEvents OnActionBegin="OnBeginHandler" OnActionFailure="ActionFailure" RowSelected="RowSelected" OnRecordDoubleClick="RowDoubleClicked" TValue="PolicyDto"></GridEvents>
-        <SfDataManager Url="https://flashvenomdesign-001-site6.atempurl.com/api/Policy/List" Adaptor="Adaptors.UrlAdaptor"></SfDataManager>
-        <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
-        <GridPageSettings PageSize="12"></GridPageSettings>
-        <GridColumns>
-            <GridColumn Field=@nameof(PolicyDto.PolicyId) HeaderText="Id" ValidationRules="@(new ValidationRules{ Required= true })" IsPrimaryKey="true" IsIdentity="true" Visible="false"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.PolicyNumber) HeaderText="Policy Number" Width="150"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.LineType) HeaderText="Line Type"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.CarrierName) HeaderText="Carrier"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.WholesalerName) HeaderText="Wholesaler"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.EffectiveDate) HeaderText="Effective Date" Format="MM-dd-yyyy"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.ExpirationDate) HeaderText="Expiration Date" Format="MM-dd-yyyy"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.ClientName) HeaderText="Client Name"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.Premium) HeaderText="Premium" Format="C"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.Status) HeaderText="Status"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.Notes) HeaderText="Notes"></GridColumn>
-            <GridColumn Field=@nameof(PolicyDto.ProducerName) HeaderText="Producer"></GridColumn>
-        </GridColumns>
-    </SfGrid>
-   
+<div class="page-content-datagrid">
+    <div class="fluent-data-grid">
+        <FluentDataGrid Items="@FilteredPolicies" ResizableColumns="true" Pagination="@pagination" ShowHover="true"
+                        OnRowDoubleClick="@((FluentDataGridRow<Policy> row) => HandleRowDoubleClick(row))"
+                        OnRowClick="@((FluentDataGridRow<Policy> row) => HandleRowClick(row))">
+            <PropertyColumn Property="@(p => p.PolicyId)" Title="Policy Id" Width="60px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.PolicyNumber)" Title="Policy Number" Width="200px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Product.LineNickname ?? "-")" Title="Line Type" />
+            <PropertyColumn Property="@(p => p.Carrier.CarrierName ?? "-")" Title="Carrier Name" />
+            <PropertyColumn Property="@(p => p.Wholesaler.CarrierName ?? "-")" Title="Wholesaler Name" />
+
+            <PropertyColumn Property="@(p => p.EffectiveDate)" Title="Effective Date" Sortable="true" Format="MM/dd/yyyy" />
+            <PropertyColumn Property="@(p => p.ExpirationDate)" Title="Expiration Date" Sortable="true" Format="MM/dd/yyyy" />
+            <PropertyColumn Property="@(p => p.Client.Name)" Title="Client Name" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Premium)" Title="Premium" Sortable="true" Format="C2" />
+        </FluentDataGrid>
+        <div class="fluent-data-grid__bottombar">
+            <div class="fluent-data-grid__pagination">
+                <FluentPaginator State="@pagination" />
+            </div>
+
+            <div class="fluent-data-grid__search">
+                <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+            </div>
+        </div>
+    </div>
 </div>
-@statusMy
 
 @code {
-    SfGrid<PolicyDto> Grid { get; set; }
-    SfDataManager DataManager { get; set; }
-    string statusMy = "Loading";
-    public List<PolicyDto> PolicyData { get; set; }
+    public IQueryable<Policy> PolicyData { get; set; }
+    public IQueryable<Policy> FilteredPolicies { get; set; }
     public int PolicyId { get; set; }
+    public string SelectedPolicyNumber { get; set; } = "";
+    public string SearchTerm { get; set; } = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
+    private System.Timers.Timer debounceTimer;
+    bool SelectFromEntireRow = true;
 
-    public void ActionFailure(Syncfusion.Blazor.Grids.FailureEventArgs args)
+    protected override async Task OnInitializedAsync()
     {
-        StateHasChanged();
-    }
-
-    public void CreateNewPolicy()
-    {
-        NavigationManager.NavigateTo("/Policies/Create");
-    }
-
-    private void OnBeginHandler(ActionEventArgs<PolicyDto> Args)
-    {
-        statusMy = "Clicked";
-        if (Args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        PolicyData = PolicyService.GetAllPolicies();
+        FilteredPolicies = PolicyData;
+        debounceTimer = new System.Timers.Timer(300); // Debounce for 300ms
+        debounceTimer.AutoReset = false; // Prevent multiple triggers
+        debounceTimer.Elapsed += async (sender, e) =>
         {
-            if (Args.Action == "Add")
-            {
-                var policy = Args.Data;
-            }
+            await InvokeAsync(ApplySearchFilter); // Apply the search filter after the debounce period
+        };
+    }
+
+    private void HandleSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        if (e.Value is string searchTerm)
+        {
+            SearchTerm = searchTerm;
+            debounceTimer.Stop();
+            debounceTimer.Start(); // Start the debounce timer
         }
-        statusMy = "Clicked...";
-        InvokeAsync(StateHasChanged);
     }
-    private void RowSelected(RowSelectEventArgs<PolicyDto> args)
+
+    private void ApplySearchFilter()
     {
-        PolicyId = args.Data.PolicyId;
+        FilteredPolicies = string.IsNullOrWhiteSpace(SearchTerm)
+        ? PolicyData
+        : PolicyData.Where(p =>
+              EF.Functions.Like(p.PolicyNumber.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(p.Client.Name.ToLower(), $"%{SearchTerm.ToLower()}%"));
+
+        InvokeAsync(StateHasChanged); // Trigger UI refresh after filtering
     }
-    private void RowDoubleClicked(RecordDoubleClickEventArgs<PolicyDto> args)
+
+    private void HandleRowDoubleClick(FluentDataGridRow<Policy> row)
     {
-        PolicyId = args.RowData.PolicyId;
-        NavigationManager.NavigateTo($"/Policies/Edit/{PolicyId}");
+        if (row != null && row.Item != null)
+        {
+            var selectedPolicy = row.Item;
+            PolicyId = selectedPolicy.PolicyId;
+            NavigationManager.NavigateTo($"/Policies/Details/{PolicyId}");
+        }
+    }
+
+    private void HandleRowClick(FluentDataGridRow<Policy> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedPolicy = row.Item;
+            row.Class = "selected-row";
+            SelectedPolicyNumber = "#" + selectedPolicy.PolicyNumber;
+            PolicyId = selectedPolicy.PolicyId;
+            StateHasChanged();
+        }
     }
 }

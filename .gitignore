@@ -368,3 +368,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /wwwroot.zip
+/wwwroot/uploads/headshots/147-222-BorisVargas.jpg
+/wwwroot/uploads/headshots/19-WayneMiller.jpg
+/wwwroot/uploads/headshots/223-FredMartino.png
+/wwwroot/uploads/logos/44.png

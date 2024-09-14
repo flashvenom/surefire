@@ -2,11 +2,16 @@
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Clients.Services
+@using Mantis.Domain.Contacts.Models
+@using Mantis.Domain.Contacts.Services
+@using Mantis.Domain.Shared.Helpers
 @using Mantis.Data
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
 @inject ClientService ClientService
+@inject ContactService ContactService
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
@@ -65,7 +70,36 @@
 
                     <SfTextBox id="postalCode" @bind-Value="client.Address.PostalCode" Placeholder="Postal Code" FloatLabelType="FloatLabelType.Always" />
                     <ValidationMessage For="() => client.Address.PostalCode" class="text-danger" />
+
+                         <!-- Primary Contact Dropdown -->
+                    <SfDropDownList TValue="int" TItem="Contact" DataSource="@allContacts" Placeholder="Primary Contact" @bind-Value="client.PrimaryContactId" PopupHeight="230px" FloatLabelType="FloatLabelType.Always">
+                        <DropDownListFieldSettings Text="FullName" Value="ContactId" />
+                    </SfDropDownList>
+                    <ValidationMessage For="() => client.PrimaryContactId" class="text-danger" />
+                    
                 </div>
+
+                <div class="mf-item-lg mf-pad-left">
+                    <div class="mb-3">
+                        <span class="txt-label">Logo</span>
+
+                        @if (!string.IsNullOrEmpty(client.LogoFilename))
+                        {
+                            <div>
+                                <img src="/uploads/logos/@client.LogoFilename" width="100" height="100" alt="Headshot" /><br />
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(async () => await RemoveFile(client.ClientId))">Remove</FluentButton>
+                            </div>
+                        }
+                        else
+                        {
+                            <SfUploader AutoUpload="true" AllowedExtensions=".jpg,.jpeg,.png" MaxFileSize="5000000">
+                                <UploaderEvents ValueChange="@OnHeadshotUpload"></UploaderEvents>
+                            </SfUploader>
+                        }
+                    </div>
+
+                </div>
+
             </div>
 
             <br />
@@ -81,21 +115,111 @@
     public int ClientId { get; set; }
 
     private Client client;
+    private List<Contact> allContacts = new List<Contact>();
+    private int existingPrimaryContactId;
 
     protected override async Task OnInitializedAsync()
     {
         client = await ClientService.GetClientById(ClientId);
-
+        existingPrimaryContactId = client.PrimaryContactId;
         if (client == null)
         {
             NavigationManager.NavigateTo("notfound");
         }
+        else
+        {
+            // Load the contacts for the client
+            var clientContacts = client.Contacts.ToList();
+
+            // If the primary contact exists and is not in the client contacts, fetch and add it
+            if (client.PrimaryContactId != 0 && !clientContacts.Any(c => c.ContactId == client.PrimaryContactId))
+            {
+                var primaryContact = await ContactService.GetContactByIdAsync(client.PrimaryContactId);
+                if (primaryContact != null)
+                {
+                    clientContacts.Add(primaryContact);
+                }
+            }
+
+            // Set allContacts to include both regular and primary contacts
+            allContacts = clientContacts;
+        }
     }
 
+    private async Task RemoveFile(int clientId)
+    {
+        await ClientService.RemoveLogo(clientId);
+        client.LogoFilename = null;
+        StateHasChanged();
+    }
+    private async Task OnHeadshotUpload(UploadChangeEventArgs args)
+    {
+        if (args.Files != null && args.Files.Count > 0)
+        {
+            var file = args.Files[0];
+            if (file != null)
+            {
+                //string uploadPath = $"wwwroot/uploads/logos/{client.ClientId}" + Path.GetExtension(file.FileInfo.Name);
+
+                string extension = Path.GetExtension(file.FileInfo.Name);
+                string fileName = $"{client.ClientId}{extension}";
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/logos/", fileName);
+
+                using (var stream = file.File.OpenReadStream(long.MaxValue))
+                {
+                    // Resize the image to ensure it's under 500px
+                    var resizedImage = await ImageResizer.ResizeImageAsync(stream, 500);
+
+                    // Make sure the resized image stream is positioned at the beginning
+                    resizedImage.Seek(0, SeekOrigin.Begin);
+
+                    using (var fileStream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write))
+                    {
+                        // Copy the resized image to the file system
+                        await resizedImage.CopyToAsync(fileStream);
+                    }
+                }
+
+                // Update the Contact's HeadshotFilename field
+                client.LogoFilename= fileName;
+                await ClientService.UpdateClientAsync(client);
+                StateHasChanged(); // Refresh UI to show the updated headshot
+            }
+        }
+    }
     private async Task UpdateClient()
     {
         try
         {
+            //I don't know why I can't think of a cleaner way to do this.... I imported primary contacts, but didn't set the clientid on the Contact object, so I have to do this to prevent orphaned contacts
+            //I should proably just fix the orphans in the database
+
+            // Check if the primary contact has changed
+            if (client.PrimaryContactId != existingPrimaryContactId)
+            {
+                // If the old primary contact exists and it's being changed and it doesn't have a clientId set, set its ClientId to prevent it from becoming orphaned
+                if (existingPrimaryContactId != 0)
+                {
+                    var oldPrimaryContact = await ContactService.GetContactByIdAsync(existingPrimaryContactId);
+                    if (oldPrimaryContact != null && oldPrimaryContact.ClientId == null)
+                    {
+                        Console.WriteLine($"Updating old primary contact's ClientId to {ClientId}------------------------------");
+                        oldPrimaryContact.ClientId = ClientId; // Reassign the client ID to prevent it from becoming orphaned
+                        await ContactService.UpdateContactAsync(oldPrimaryContact);
+                    }
+                }
+            }else{
+                //Check to see if the existing primary contact has a client id set
+                var oldPrimaryContact = await ContactService.GetContactByIdAsync(existingPrimaryContactId);
+                if (oldPrimaryContact != null && oldPrimaryContact.ClientId == null)
+                {
+                    Console.WriteLine($"Updating old primary contact's ClientId to {ClientId}------------------------------");
+                    oldPrimaryContact.ClientId = ClientId; // Reassign the client ID to prevent it from becoming orphaned
+                    await ContactService.UpdateContactAsync(oldPrimaryContact);
+                }
+            }
+
+            // Proceed with updating the client
             await ClientService.UpdateClientAsync(client);
             NavigationManager.NavigateTo("/Clients/List/" + ClientId);
         }

@@ -46,11 +46,11 @@
 }
 
 .renewalitemlink:hover {
-    cursor: pointer;
+        cursor: pointer;
 }
 
 .spcr {
-    width: 15px;
+    width:15px;
 }
 
 #renewal-view {
@@ -59,15 +59,16 @@
 }
 
 .monthholder {
-    width: 100px;
-    text-align: center;
-}
+    width:100px;
+    text-align:center;
 
+}
 .yearholder {
     text-align: center;
 }
 
 .userholder {
+
 }
 
 
@@ -115,9 +116,9 @@ select {
     font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
     font-size: .6em;
     color: #626262;
-    position: relative;
-    top: -8px;
-    left: -5px;
+    position:relative;
+    top:-8px;
+    left:-5px;
 }
 
 .renewal-assignedto {

@@ -15,6 +15,11 @@ namespace Mantis.Domain.Contacts.Services
             _context = context;
         }
 
+        public IQueryable<Contact> GetAllContacts()
+        {
+            return _context.Contacts.AsQueryable();
+        }
+
         // Create a new contact
         public async Task CreateContactAsync(Contact contact)
         {

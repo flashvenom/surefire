@@ -1,16 +1,12 @@
-﻿@using Mantis.Domain.Policies.Models
-@using Mantis.Domain.Policies.Services
+﻿@namespace Mantis.Domain.Forms.Components
 @using Mantis.Domain.Clients.Models
 @using Mantis.Domain.Forms.Models
-@using Syncfusion.Blazor
-@using Syncfusion.Blazor.Inputs
-@using Syncfusion.Blazor.InPlaceEditor
-@inject PolicyService PolicyService
-@rendermode InteractiveServer
+@using Microsoft.FluentUI.AspNetCore.Components
 
-@if (client is null && client.Certificates is null)
+
+@if (certList is null)
 {
-    <p><em>No Certificates Found...</em></p>
+    <FluentSkeleton Width="100%" Height="30px" Shimmer="true"></FluentSkeleton>
 }
 else
 {
@@ -26,7 +22,7 @@ else
         </thead>
         <tbody>
 
-        @foreach(var item in client.Certificates)
+        @foreach (var item in certList)
         {
             <tr>
                 <td>@item.CertificateId</td>
@@ -41,6 +37,5 @@ else
 }
 @code {
     [Parameter]
-    public Client client { get; set; }
-
+    public List<Certificate> certList { get; set; }
 }

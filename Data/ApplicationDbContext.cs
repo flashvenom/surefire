@@ -28,7 +28,6 @@ namespace Mantis.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Address> Address { get; set; }
-        public DbSet<Certificate> Certificates { get; set; }
 
         // Renewals and Tasks
         public DbSet<TaskMaster> TaskMasters { get; set; }
@@ -47,6 +46,12 @@ namespace Mantis.Data
         public DbSet<RatingBasis> RatingBases { get; set; }
         public DbSet<Loss> Losses { get; set; }
         public DbSet<Claim> Claims { get; set; }
+
+        //Forms
+        public DbSet<Certificate> Certificates { get; set; }
+        public DbSet<FormDoc> FormDocs { get; set; }
+        public DbSet<FormDocRevision> FormDocRevisions { get; set; }
+        public DbSet<FormPdf> FormPdf { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -464,6 +469,64 @@ namespace Mantis.Data
                 .HasOne(c => c.ModifiedBy)
                 .WithMany()
                 .HasForeignKey("ModifiedById")
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            // FormDoc configuration
+            modelBuilder.Entity<FormDoc>()
+                .HasOne(fd => fd.FormPdf)
+                .WithMany()
+                .HasForeignKey(fd => fd.FormPdfId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FormDoc>()
+                .HasOne(fd => fd.Client)
+                .WithMany(c => c.FormDocs) // Assume the Client has ICollection<FormDoc>
+                .HasForeignKey(fd => fd.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FormDoc>()
+                .HasOne(fd => fd.CreatedBy)
+                .WithMany()
+                .HasForeignKey(fd => fd.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FormDoc>()
+                .HasOne(fd => fd.ModifiedBy)
+                .WithMany()
+                .HasForeignKey(fd => fd.ModifiedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // FormDocRevision configuration
+            modelBuilder.Entity<FormDocRevision>()
+                .HasOne(fdr => fdr.FormDoc)
+                .WithMany(fd => fd.FormDocRevisions)
+                .HasForeignKey(fdr => fdr.FormDocId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FormDocRevision>()
+                .HasOne(fdr => fdr.CreatedBy)
+                .WithMany()
+                .HasForeignKey(fdr => fdr.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FormDocRevision>()
+                .HasOne(fdr => fdr.ModifiedBy)
+                .WithMany()
+                .HasForeignKey(fdr => fdr.ModifiedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // FormPdf configuration
+            modelBuilder.Entity<FormPdf>()
+                .HasOne(ff => ff.CreatedBy)
+                .WithMany()
+                .HasForeignKey(ff => ff.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FormPdf>()
+                .HasOne(ff => ff.ModifiedBy)
+                .WithMany()
+                .HasForeignKey(ff => ff.ModifiedById)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

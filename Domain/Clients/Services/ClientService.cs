@@ -5,6 +5,7 @@ using Mantis.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Mantis.Domain.Clients.Models;
+using Mantis.Domain.Contacts.Models;
 using Mantis.Domain.Policies.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,8 @@ using System.Text.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using Azure.Core;
 using Microsoft.AspNetCore.Mvc;
+using Mantis.Domain.Carriers.Models;
+using Mantis.Domain.Shared;
 
 
 namespace Mantis.Domain.Clients.Services
@@ -33,7 +36,32 @@ namespace Mantis.Domain.Clients.Services
             _crmApiService = crmApiService;
         }
 
-        
+        public IQueryable<Client> GetAllClients()
+        {
+            return _context.Clients.AsQueryable();
+        }
+
+        public async Task<List<Client>> GetClientFullListAsync()
+        {
+            var clientlist = await _context.Clients.OrderByDescending(c => c.DateOpened).ToListAsync();
+            return clientlist;
+        }
+        public async Task<List<ClientListItem>> GetClientListAsync()
+        {
+            var clientlist = await _context.Clients
+                .OrderByDescending(c => c.DateOpened)
+                .Select(c => new ClientListItem
+                {
+                    ClientId = c.ClientId,
+                    Name = c.Name,
+                    DateOpened = c.DateOpened
+                })
+                .ToListAsync();
+
+            return clientlist;
+        }
+
+
         public async Task NewClientQuick(Client client)
         {
             var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
@@ -50,8 +78,6 @@ namespace Mantis.Domain.Clients.Services
                 .Include(c => c.Locations)
                 .Include(c => c.Certificates)
                     .ThenInclude(p => p.CreatedBy)
-                .Include(c => c.Certificates)
-                    .ThenInclude(p => p.ModifiedBy)
                 .Include(c => c.Contacts)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Carrier)
@@ -59,6 +85,10 @@ namespace Mantis.Domain.Clients.Services
                     .ThenInclude(p => p.Wholesaler)
                 .Include(c => c.Policies)
                     .ThenInclude(p => p.Product)
+                .Include(c => c.FormDocs)  // Include the FormDocs related to the client
+                    .ThenInclude(fd => fd.FormDocRevisions)  // Include the FormDocRevisions related to each FormDoc
+                .Include(c => c.FormDocs)  // Include the FormDocs again to chain FormPdf
+                    .ThenInclude(fd => fd.FormPdf)  // Include the FormPdf for each FormDoc
                 .FirstOrDefaultAsync(c => c.ClientId == id);
             if (client != null)
             {
@@ -68,7 +98,32 @@ namespace Mantis.Domain.Clients.Services
             return client;
         }
 
+        public async Task<Client> RemoveLogo(int clientId)
+        {
+            // Retrieve the client by ID
+            var client = await _context.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
 
+            if (client == null || string.IsNullOrEmpty(client.LogoFilename))
+            {
+                return null; // No client found or no logo to remove
+            }
+
+            // Construct the file path for the logo
+            string filePath = Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot/uploads/logos", client.LogoFilename);
+
+            // Check if the file exists, and if it does, delete it
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+
+            // Set the LogoFilename to null and update the client in the database
+            client.LogoFilename = null;
+            _context.Clients.Update(client);
+            await _context.SaveChangesAsync();
+
+            return client; // Return the updated client
+        }
 
 
 
@@ -155,6 +210,28 @@ namespace Mantis.Domain.Clients.Services
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task AddContactsToClientAsync(int clientId, List<Contact> contacts)
+        {
+            var client = await _context.Clients
+                .Include(c => c.Contacts)
+                .FirstOrDefaultAsync(c => c.ClientId == clientId);
+
+            if (client != null)
+            {
+                foreach (var contact in contacts)
+                {
+                    client.Contacts.Add(contact);   
+                }
+
+                await _context.SaveChangesAsync(); // Persist changes
+            }
+            else
+            {
+                throw new Exception("Client not found.");
+            }
+        }
+
 
         // Create a new client
         public async Task<int> CreateClientAsync(Client client)
@@ -298,11 +375,6 @@ namespace Mantis.Domain.Clients.Services
             }
         }
 
-        //Cleanups
-        public async Task<List<Client>> GetCarriersAsync()
-        {
-            return await _context.Clients.ToListAsync();
-        }
-
+        
     }
 }

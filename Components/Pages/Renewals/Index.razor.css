@@ -1,11 +1,21 @@
 ﻿:root .e-dropdownlist {
-    font-size: 1em !important;
+    font-size: .8em !important;
+    font-weight: 400;
+    font-weight: normal !important;
+    background-color: transparent !important;
+    border: 0px !important;
+    padding-left: 3px !important;
+    padding-right: 0px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-family: "montserrat", sans-serif;
+    font-size: .8em !important;
 }
 
 :root .e-input {
-    padding-left: 9px;
+    /*padding-left: 9px;
     padding-right: 22px;
-    height: 30px;
+    height: 30px;*/
 }
 
 :root .sf-eformbld {
@@ -24,6 +34,10 @@
 }
 .results-on {
     height: 100%;
+    opacity: 1;
+}
+.results-temp {
+    height: auto;
     opacity: 1;
 }
 
@@ -120,4 +134,47 @@ select {
     margin-right: 4px;
     position: relative;
     top: 3px;
+}
+
+.toolbar-calendar-calendar {
+    opacity:1;
+    pointer-events: all;
+}
+.toolbar-calendar-selected {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.toolbar-selected-selected {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.toolbar-selected-calendar {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.toolbar-text-cal {
+    color: #3c3c3c;
+    font-family: "montserrat", sans-serif;
+    font-size: .85em;
+    width: 115px;
+    text-align: center;
+     -webkit-user-select: none; /* For Safari */
+    -moz-user-select: none;    /* For Firefox */
+    -ms-user-select: none;     /* For Internet Explorer/Edge */
+    user-select: none;
+}
+.toolbar-link-cal {
+    text-decoration: none;
+}
+
+:root .toolbar-link-cal svg {
+    fill: #636363 !important;
+}
+
+.sftb {
+    position:relative;
+    top:1px;
 }

@@ -3,11 +3,18 @@
 ## Overview
 Surefire: an insurance agency management system for independant P&C brokers designed with speed and efficiency in mind.
 
-**Video Update - September 1**
-https://youtu.be/4MuP97-Afqo
+**November 2024 - Development Progress Update Video**
+https://youtu.be/OEAfL_fraq4
 
-**Demo Site**
-[Click here to login](https://flashvenomdesign-001-site6.atempurl.com/)
+![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
+
+**MVP rc1 Coming Soon**
+-New Features: Attachments, Leads Management, Outlook Desktop control via Interop, 
+-API Integrations: VoiP Call Logs & RingCentral API, ePayPolicy API, OpenAI integration, Google Maps API, Microsoft Graph and more...
+
+I will be merging the private dev branch to public early 2025. Contact me for a demo or to discuss the project.
+
+## Table of Contents
 
 ## Features
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
@@ -31,9 +38,12 @@ https://youtu.be/4MuP97-Afqo
 - **Microsoft FluentUI**
 
 ## Update
-Going to take a break now for a while. I probably won't be updating at the same breakneck speed unless I get some other people interested in the project.
+Have very exciting news and massive new updates and features on the private branch. Plan on merging with public in 2025 with a version that works with disjointed API integrations. See the November 2024 Dev Progress Update YouTube video. Please contact me for a demo or to discuss the project.
 
-### Version History
+### Version 
+**.0.1.01 - 2024-11-07**
+- Added migrations for upcoming mvp
+
 **.0.1.0 - 2024-09-13**
 - SfPdfViewer2 implemented for creating and editing PDF forms like certificates, supplementals and applications
 - Switched SfGrid to FluentDataGrid for security reasons and future use
@@ -47,13 +57,16 @@ Going to take a break now for a while. I probably won't be updating at the same 
 - Added upload functionality for contact headshots and client logos
 - Enhanced the client primary contact logic including several bugs
 
+
 **.0.0.3 - 2024-09-05**
 - Renewal filter save state using browser session
 - Enhanced renewal task lists
 - Fast Search now has keyboard control
 - File organization and Quality of Life fixes
 - Misc bug fixes
-
+**Video Update - September 1**
+https://youtu.be/4MuP97-Afqo
+- 
 **.0.0.2 - 2024-08-28**
 - Enhanced client browsing
 - Policy coverage details screens for GL, WC and Auto

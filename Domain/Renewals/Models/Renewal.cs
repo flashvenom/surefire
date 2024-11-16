@@ -2,9 +2,8 @@ using Mantis.Data;
 using Mantis.Domain.Carriers.Models;
 using Mantis.Domain.Policies.Models;
 using Mantis.Domain.Clients.Models;
-using Mantis.Domain.Shared;
 using Mantis.Domain.Shared.Models;
-using System.Collections.Generic;
+using Mantis.Domain.Shared;
 
 namespace Mantis.Domain.Renewals.Models
 {
@@ -36,26 +35,23 @@ namespace Mantis.Domain.Renewals.Models
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
 
     }
-
-    public class RenewalDto
+    public class RenewalListItemViewModel
     {
-        public int? RenewalId { get; set; }
-        public int? ProductId { get; set; }
-
-        //public DateTime RenewalDate { get; set; }
-        //public string? Notes { get; set; }
-        //public string? ExpiringPolicyNumber { get; set; }
-        //public decimal? ExpiringPremium { get; set; }
-       
-
-        //public int? CarrierId { get; set; }
-       
-        //public int? WholesalerId { get; set; }
-       
-        //public int? PolicyId { get; set; }
-     
-        
-      
-
+        public int RenewalId { get; set; }
+        public DateTime RenewalDate { get; set; }
+        public string? ProductLineCode { get; set; }
+        public string? ClientName { get; set; }
+        public string? CarrierName { get; set; }
+        public string? WholesalerNickname { get; set; }
+        public string? PolicyNumber { get; set; }
+        public decimal? Premium { get; set; }
+        public int? Submits { get; set; }
+        public int ClientId { get; set; }
+        public int? PolicyId { get; set; }
+        public ICollection<TrackTask>? TrackTasks { get; set; }
+        public string? AssignedToFirstName { get; set; }
+        public string? AssignedToLastName { get; set; }
+        public string? AssignedToPictureUrl { get; set; }
+        public string? AssignedToId { get; set; }
     }
 }

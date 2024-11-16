@@ -63,6 +63,7 @@ builder.Services.AddScoped<CarrierService>();
 builder.Services.AddScoped<ClientService>();
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<FormService>();
+builder.Services.AddScoped<HomeService>();
 builder.Services.AddScoped<PolicyService>();
 builder.Services.AddScoped<RenewalService>();
 builder.Services.AddScoped<UserService>();

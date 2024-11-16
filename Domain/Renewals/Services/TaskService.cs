@@ -1,89 +1,44 @@
 using Mantis.Data;
 using Mantis.Domain.Renewals.ViewModels;
-using Mantis.Domain.Shared;
 using Mantis.Domain.Shared.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Mantis.Domain.Shared.Services;
 
 namespace Mantis.Domain.Renewals.Services
 {
     public class TaskService
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly StateService _stateService;
+        private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
-        public TaskService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor)
+        public TaskService(StateService stateService, ApplicationDbContext context, IDbContextFactory<ApplicationDbContext> dbContextFactory)
         {
+            _stateService = stateService;
             _context = context;
-            _userManager = userManager;
-            _httpContextAccessor = httpContextAccessor;
-        }
-
-        public async Task<List<HomePageTasksViewModel>> GetHomePageTasksAsync()
-        {
-            var today = DateTime.Today;
-            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
-
-            // Fetch all TrackTasks from the database
-            var tasks = await _context.TrackTasks
-                .Include(t => t.Renewal)
-                    .ThenInclude(r => r.Policy)
-                        .ThenInclude(s => s.Product)
-                .Include(t => t.Renewal)
-                    .ThenInclude(r => r.Client)
-                .Where(t => t.Completed == false)
-                .Where(t => t.GoalDate != null || t.Highlighted == true)
-                .Where(t => t.AssignedTo == currentUser || t.Renewal.AssignedTo == currentUser)
-                .ToListAsync();
-
-            // Create the ViewModel list
-            var result = tasks.Select(t => new HomePageTasksViewModel
-            {
-                RenewalId = t.Renewal.RenewalId,
-                TaskName = t.TaskName,
-                TaskNote = t.Notes,
-                Highlighted = t.Highlighted,
-                GoalDate = t.GoalDate,
-                ClientName = t.Renewal.Client.Name,
-                ClientId = t.Renewal.Client.ClientId,
-                PolicyProduct = t.Renewal.Policy?.Product?.LineCode ?? "10",
-                RenewalDate = t.Renewal.RenewalDate,
-                Priority = t.GoalDate.HasValue
-                    ? (t.GoalDate < today
-                        ? $"<span style='color:red'>{(today - t.GoalDate.Value).Days} Days Late</span>"
-                        : $"{(t.GoalDate.Value - today).Days} Days Left")
-                    : "ASAP"
-            }).ToList();
-
-            // Order by IsHighlighted, Past Due, and Next 20 upcoming tasks
-            return result
-                .OrderByDescending(t => t.Highlighted)
-                .ThenByDescending(t => t.GoalDate.HasValue && t.GoalDate < today)
-                .ThenBy(t => t.GoalDate)
-                .Take(20)
-                .ToList();
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<List<HomePageTasksViewModel>> GetIncompleteTasks()
         {
-            var today = DateTime.Today;
-            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+            using var context = _dbContextFactory.CreateDbContext();
 
-            // Fetch all TrackTasks from the database
-            var tasks = await _context.TrackTasks
+            var today = DateTime.Today;
+            var cutoffDate = today.AddDays(7);
+            var currentUser = _stateService.CurrentUser;
+
+            // Fetch all incomplete tasks assigned to the current user where RenewalDate is today+7 days or older
+            var tasks = await context.TrackTasks
                 .Include(t => t.Renewal)
                     .ThenInclude(r => r.Policy)
                         .ThenInclude(s => s.Product)
                 .Include(t => t.Renewal)
                     .ThenInclude(r => r.Client)
-                .Where(t => t.Completed == false)
-                .Where(t => t.GoalDate != null || t.Highlighted == true)
-                .Where(t => t.AssignedTo == currentUser || t.Renewal.AssignedTo == currentUser)
+                .Where(t => t.Completed == false) // Only incomplete tasks
+                .Where(t => t.AssignedTo == currentUser || t.Renewal.AssignedTo == currentUser) // Assigned to current user
+                .Where(t => t.Renewal.RenewalDate <= cutoffDate) // RenewalDate is today + 7 days or older
+                .OrderBy(t => t.Renewal.RenewalDate) // Order by RenewalDate with oldest at top
+                .Take(20) // Limit to 20 tasks
                 .ToListAsync();
 
             // Create the ViewModel list
@@ -96,102 +51,64 @@ namespace Mantis.Domain.Renewals.Services
                 GoalDate = t.GoalDate,
                 ClientName = t.Renewal.Client.Name,
                 ClientId = t.Renewal.Client.ClientId,
-                PolicyProduct = t.Renewal.Policy?.Product.LineCode,
+                PolicyProduct = t.Renewal.Policy?.Product?.LineCode ?? "Unknown",
                 RenewalDate = t.Renewal.RenewalDate,
-                Priority = t.GoalDate.HasValue
-                    ? (t.GoalDate < today
-                        ? $"<span style='color:red'>{(today - t.GoalDate.Value).Days} Days Past Due</span>"
-                        : $"{(t.GoalDate.Value - today).Days} Days Left")
-                    : "ASAP"
-            }).ToList();
-
-            // Order by IsHighlighted, Past Due, and Next 20 upcoming tasks
-            return result
-                .OrderByDescending(t => t.Highlighted)
-                .ThenByDescending(t => t.GoalDate.HasValue && t.GoalDate < today)
-                .ThenBy(t => t.GoalDate)
-                .Take(10)
-                .ToList();
-        }
-
-        public async Task<List<HomePageTasksViewModel>> GetIncompleteTasksForCurrentUserAsync()
-        {
-            // Get the currently logged-in user
-            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
-
-            // Fetch all incomplete TrackTasks assigned to the current user or sub-assigned
-            var tasks = await _context.TrackTasks
-                .Include(t => t.Renewal)
-                    .ThenInclude(r => r.Policy)
-                        .ThenInclude(p => p.Product)
-                .Include(t => t.Renewal)
-                    .ThenInclude(r => r.Client)
-                .Where(t => t.Completed == false)
-                .Where(t => t.AssignedTo == currentUser || t.Renewal.AssignedTo == currentUser)
-                .OrderBy(t => t.GoalDate ?? t.Renewal.RenewalDate) // Order by GoalDate or RenewalDate if GoalDate is null
-                .Take(30)
-                .ToListAsync();
-
-            // Create the ViewModel list
-            var result = tasks.Select(t => new HomePageTasksViewModel
-            {
-                RenewalId = t.Renewal.RenewalId,
-                TaskName = t.TaskName,
-                TaskNote = t.Notes,
-                Highlighted = t.Highlighted,
-                GoalDate = t.GoalDate,
-                ClientName = t.Renewal.Client.Name,
-                ClientId = t.Renewal.Client.ClientId,
-                PolicyProduct = t.Renewal.Policy?.Product.LineCode,
-                RenewalDate = t.Renewal.RenewalDate,
-                Priority = t.GoalDate.HasValue
-                    ? (t.GoalDate < DateTime.Today
-                        ? $"<span style='color:red'>{(DateTime.Today - t.GoalDate.Value).Days} Days Past Due</span>"
-                        : $"{(t.GoalDate.Value - DateTime.Today).Days} Days Left")
-                    : "ASAP"
+                Priority = $"Renewal Date: {t.Renewal.RenewalDate.ToShortDateString()}"
             }).ToList();
 
             return result;
         }
 
-
-        public async Task<List<DailyTask>> GetDailyTasksAsync()
-        {
-            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
-
-            var tasks = await _context.DailyTasks
-                .Where(task => !task.Completed)
-                .Where(t => t.AssignedTo == currentUser)
-                .ToListAsync();
-            return tasks;
-        }
-
         public async Task<List<DailyTask>> UpdateDailyTaskAsync(DailyTask task)
         {
-            if(task.Completed)
+            using var context = _dbContextFactory.CreateDbContext();
+            var existingTask = await context.DailyTasks.FindAsync(task.Id);
+            if (existingTask != null)
             {
-                task.CompletedDate = DateTime.Now;
+                existingTask.Completed = task.Completed;
+                if (task.Completed)
+                {
+                    existingTask.CompletedDate = DateTime.Now;
+                }
+                await context.SaveChangesAsync();
             }
-            _context.DailyTasks.Update(task);
-
-            await _context.SaveChangesAsync();
-
             return await GetDailyTasksAsync();
         }
 
         public async Task<List<DailyTask>> AddNewDailyTaskAsync(DailyTask task)
         {
-            var currentUser = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
-            task.AssignedTo = currentUser;
+            using var context = _dbContextFactory.CreateDbContext();
+            var currentUser = _stateService.CurrentUser;
+            context.Attach(currentUser);
+            task.AssignedTo = currentUser; // Set the foreign key directly
             task.DateCreated = DateTime.Now;
-
-            _context.DailyTasks.Add(task);
-
-            await _context.SaveChangesAsync();
-
+            task.Order = 100;
+            context.DailyTasks.Add(task);
+            await context.SaveChangesAsync();
             return await GetDailyTasksAsync();
         }
 
+        public async Task<List<DailyTask>> GetDailyTasksAsync()
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            var currentUser = _stateService.CurrentUser;
+            var tasks = await context.DailyTasks
+                .Where(task => !task.Completed)
+                .Where(t => t.AssignedTo == currentUser)
+                .OrderByDescending(t => t.DateCreated)
+                .ToListAsync();
+            return tasks;
+        }
 
+        public async Task UpdateDailyTaskOrderAsync(List<DailyTask> tasks)
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            foreach (var task in tasks)
+            {
+                context.DailyTasks.Update(task);
+            }
+
+            await context.SaveChangesAsync();
+        }
     }
 }

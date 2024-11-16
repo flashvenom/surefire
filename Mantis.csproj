@@ -50,6 +50,8 @@
     <Content Remove="Components\Pages\Renewals\_dialogNewRenewal.razor" />
     <Content Remove="Components\Pages\Weather.razor" />
     <Content Remove="Components\Shared\ContactsListAll.razor" />
+    <Content Remove="Components\Shared\Home\LeadList.razor" />
+    <Content Remove="wwwroot\img\banner-homepage-metro.png" />
     <Content Remove="wwwroot\mantis.css" />
   </ItemGroup>
 
@@ -71,6 +73,7 @@
     <None Remove="Components\Pages\Renewals\Submissions.razor.css" />
     <None Remove="Components\Pages\Renewals\View.razor.css" />
     <None Remove="Components\Pages\Renewals\ViewTable.razor.css" />
+    <None Remove="Components\Shared\Home\LeadList.razor.css" />
   </ItemGroup>
 
   <ItemGroup>

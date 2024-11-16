@@ -1,0 +1,79 @@
+﻿:root tr td {
+    padding: 0px 0px;
+    height: 20px;
+}
+
+.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.5em;
+    padding-top: 5px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    background-color: #423838;
+    color: #fff;
+    text-align: center;
+    box-shadow: 0px 0px 7px #7d212550;
+    z-index: 20;
+    position: relative;
+    margin-top:20px;
+}
+#leadertable {
+    padding-top: 10px;
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    z-index: 99;
+}
+.lead-box {
+    padding: 3px;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    background-color: #fff;
+}
+.leads-box {
+    background: linear-gradient(to right, rgba(227,80,73,0.1) 0%,rgba(32,30,96,0.1) 49%,rgba(255,255,255,0.5) 100%);
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    box-shadow: 0px 0px 20px #dd4c47;
+    z-index: 10;
+}
+.lbg {
+    height: 20px;
+    color: #ffffff64;
+    text-align: left;
+    font-size: .7em;
+    background-color: #000;
+}
+
+    .lbg th {
+        background-color: #423838;
+        padding-left: 4px !important;
+    }
+
+.ltable {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    font-size: 1em;
+
+}
+.lbody {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size:.9em;
+}
+.lbody tr td {
+    padding:0px 4px;
+}
+.lcname {
+    font-weight: bold;
+}
+.lccon {
+    color: #423838;
+}
+.lstage {
+    font-size: .8em;
+}

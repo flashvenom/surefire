@@ -1,0 +1,59 @@
+﻿.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.5em;
+    padding-top: 5px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#e35049+1,201e60+49,3d3d3d+100 */
+    background: linear-gradient(to right, #e35049 1%,#201e60 49%,#3d3d3d 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+
+    color: #fff;
+    text-align: center;
+    box-shadow: 0px 0px 7px #7d212550;
+}
+
+.completed-task {
+    opacity: .5;
+    padding: 5px 13px;
+}
+
+.daily-task {
+    font-weight: 600;
+    font-family: "montserrat", sans-serif;
+    width: 100%;
+    font-size: .85em;
+    color: #404040;
+}
+
+.dailytask-box {
+    box-shadow: 0px 0px 15px #0000004e;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#e35049+0,201e60+49,ffffff+100&0.5+0,0.5+100 */
+    background: linear-gradient(to right, rgba(227,80,73,0.1) 0%,rgba(32,30,96,0.1) 49%,rgba(255,255,255,0.5) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+
+:root .fluent-sortable-list {
+    border: 0px !important;
+}
+
+:root .sortable-item {
+    background-color: #1b8ce3 !important;
+    background: none !important;
+}
+
+.completed-ts {
+    position: relative;
+    top: -16px
+}
+
+.add-field {
+    padding-left: 13px;
+    padding-right: 13px;
+    padding-top: 5px;
+    opacity: .6;
+}
+
+.sortitem {
+    display: flex;
+    align-items: center;
+    height: 10px;
+}

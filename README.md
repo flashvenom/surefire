@@ -8,11 +8,11 @@ https://youtu.be/OEAfL_fraq4
 
 ![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
 
-**MVP rc1 Coming Soon**
--New Features: Attachments, Leads Management, Outlook Desktop control via Interop, 
+**rc1 Coming Soon**
+-New Features: Attachments, Leads Management, Outlook Desktop control via Interop, Plugins and more... 
 -API Integrations: VoiP Call Logs & RingCentral API, ePayPolicy API, OpenAI integration, Google Maps API, Microsoft Graph and more...
 
-I will be merging the private dev branch to public early 2025. Contact me for a demo or to discuss the project.
+I am planning on being finished with merging the private dev branch to public by 2025. Contact me for a demo or to discuss the project.
 
 ## Table of Contents
 
@@ -41,6 +41,12 @@ I will be merging the private dev branch to public early 2025. Contact me for a 
 Have very exciting news and massive new updates and features on the private branch. Plan on merging with public in 2025 with a version that works with disjointed API integrations. See the November 2024 Dev Progress Update YouTube video. Please contact me for a demo or to discuss the project.
 
 ### Version 
+**.0.1.02 - 2024-11-15**
+- Upgraded to dotnet9
+- Added memory caching
+- Updates to Homepage including HomeService
+- Added a StateService
+
 **.0.1.01 - 2024-11-07**
 - Added migrations for upcoming mvp
 
@@ -56,7 +62,6 @@ Have very exciting news and massive new updates and features on the private bran
 - Many UI/UX/Style/Performance enhancements with a focus on Clients and NavMenu
 - Added upload functionality for contact headshots and client logos
 - Enhanced the client primary contact logic including several bugs
-
 
 **.0.0.3 - 2024-09-05**
 - Renewal filter save state using browser session

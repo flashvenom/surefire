@@ -1,24 +1,14 @@
 ﻿@page "/Renewals/EditTrackTask/{taskId:int}"
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Renewals.Services
-@using Mantis.Domain.Users.Services
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.DropDowns
 @using Syncfusion.Blazor.Calendars
 @inject RenewalService RenewalService
-@inject UserService UserService
+@inject StateService _stateService
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
-
-<PageTitle>Edit Track Task</PageTitle>
-<SfBreadcrumb>
-    <BreadcrumbItems>
-        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
-        <BreadcrumbItem Text="Edit Task" />
-    </BreadcrumbItems>
-</SfBreadcrumb>
 
 <div class="page-content">
     <div class="mh1">Edit Task</div>
@@ -52,10 +42,10 @@
                             <td><FluentCheckbox id="highlighted" @bind-Value="task.Highlighted" Label="Highlighted" /></td>
                         </tr>
                     </table>
-                    
+
                 </div>
                 <div class="mf-item-lg mf-pad-left">
-                    
+
                     <div class="mb-3">
                         <SfDatePicker TValue="DateTime?" @bind-Value="task.CompletedDate" Placeholder="Completed Date" FloatLabelType="FloatLabelType.Always" />
                         <ValidationMessage For="() => task.CompletedDate" class="text-danger" />
@@ -73,7 +63,7 @@
                 </div>
             </div>
             <br />
-            <SfButton Content="Cancel" CssClass="e-secondary" OnClick="CancelEdit"></SfButton>
+            <SfButton Content="Cancel" CssClass="e-outline" OnClick="CancelEdit"></SfButton>
             <SfButton Content="Save" CssClass="e-primary" Type="Submit"></SfButton>
         </EditForm>
     }
@@ -89,7 +79,7 @@
     protected override async Task OnInitializedAsync()
     {
         task = await RenewalService.GetTrackTaskByIdAsync(taskId);
-        Users = await UserService.GetAllUsersAsync();
+        Users = await _stateService.AllUsers;
 
         if (task == null)
         {
@@ -100,11 +90,25 @@
     private async Task HandleValidSubmit()
     {
         await RenewalService.UpdateTrackTaskAsync(task);
-        Navigation.NavigateTo($"/Renewals?&month={task.Renewal.RenewalDate.Month}&year={task.Renewal.RenewalDate.Year}&user=Everyone&renewalId={task.Renewal.RenewalId}&currentView=selected");
+        Navigation.NavigateTo($"/Renewals/Details/{task.Renewal.RenewalId}");
     }
 
     private void CancelEdit()
     {
-        Navigation.NavigateTo($"/Renewals?&month={task.Renewal.RenewalDate.Month}&year={task.Renewal.RenewalDate.Year}&user=Everyone&renewalId={task.Renewal.RenewalId}&currentView=selected");
+        if (_stateService.HtmlRenewalId != 0)
+        {
+            Navigation.NavigateTo($"/Renewals/Details/{_stateService.HtmlRenewalId}", forceLoad: true);
+        }
+        else
+        {
+            Navigation.NavigateTo("/Renewals");
+        }
+
+    }
+    public void Dispose()
+    {
+        // clients.Clear();
+        task = new();
+        Users.Clear();
     }
 }

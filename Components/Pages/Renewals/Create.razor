@@ -11,19 +11,10 @@
 @using Mantis.Domain.Renewals.ViewModels
 @using Mantis.Domain.Carriers.Models
 @using Mantis.Domain.Clients.Models
-@using Mantis.Domain.Users.Services
-@using Mantis.Domain.Shared
-@rendermode InteractiveServer
+
 @inject RenewalService RenewalService
 @inject NavigationManager NavigationManager
-@inject UserService UserService
-
-<SfBreadcrumb>
-    <BreadcrumbItems>
-        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
-        <BreadcrumbItem Text="Create" />
-    </BreadcrumbItems>
-</SfBreadcrumb>
+@inject StateService _stateService
 
 <_toolbar />
 
@@ -33,7 +24,8 @@
         <h1>Create New Renewal</h1>
         <h4>TIP: You should create a renewal from the client screens directly if possible. Open the client and find the "Create Renewal" button under the policy. </h4>
         <h5>
-            This form is for creating second renewals, leads and new business, or for special circumstances.</h5>
+            This form is for creating second renewals, leads and new business, or for special circumstances.
+        </h5>
         <div class="sfpage-newcarrier">
             <div class="sf-col-1">
                 @if (clients != null)
@@ -49,7 +41,7 @@
                 {
                     <p>Loading clients...</p>
                 }
-                
+
                 <div class="sf-formcontainer">
                     <SfDatePicker TValue="DateTime" Placeholder="Select Date" @bind-Value="renewalViewModel.RenewalDate" FloatLabelType="FloatLabelType.Always"></SfDatePicker>
                     <ValidationMessage For="@(() => renewalViewModel.RenewalDate)" class="sf-validation" />
@@ -119,7 +111,7 @@
                 <div class="sf-formcontainer">
                     <SfTextBox TValue="string" Placeholder="Expiring Policy Number" @bind-Value="renewalViewModel.ExpiringPolicyNumber" FloatLabelType="FloatLabelType.Always"></SfTextBox>
                 </div>
-                
+
             </div><!--/column2-->
         </div>
 
@@ -132,7 +124,7 @@
     :root .sf-validation {
         font-size: 13px !important;
         color: #bd7b7b;
-        padding-top:4px;
+        padding-top: 4px;
     }
 </style>
 @code {
@@ -151,20 +143,18 @@
         editContext = new EditContext(renewalViewModel);
         editContext.OnValidationRequested += HandleValidationRequested;
         messageStore = new(editContext);
-        carriers = await RenewalService.GetCarriersAsync();
-        wholesalers = carriers.Where(c => c.Wholesaler).ToList();
-        products = await RenewalService.GetProductsAsync();
+        wholesalers = await _stateService.AllWholesalers;
+        carriers = await _stateService.AllCarriers;
+        products = await _stateService.AllProducts;
         clients = await RenewalService.GetClientsAsync();
-        users = await UserService.GetAllUsers();
+        users = await _stateService.AllUsers;
     }
 
-    private void HandleValidationRequested(object? sender,
-        ValidationRequestedEventArgs args)
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
     {
         messageMe = "Validating";
         messageStore?.Clear();
         InvokeAsync(StateHasChanged);
-
     }
 
     private void Submit()

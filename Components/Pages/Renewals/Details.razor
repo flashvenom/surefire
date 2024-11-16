@@ -1,0 +1,1096 @@
+﻿@page "/Renewals/Details/{renewalId:int}"
+@implements IAsyncDisposable
+@using System.Globalization
+@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.ViewModels
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Carriers.Services
+@using Mantis.Components.Pages.Renewals
+@using Mantis.Components.Shared
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.RichTextEditor
+@using Syncfusion.Blazor.Notifications
+@using Syncfusion.Blazor.Calendars
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject NavigationManager NavigationManager
+@inject RenewalService RenewalService
+@inject StateService _stateService
+
+<div class="page-toolbar">
+    <SfButton @onclick="@((args) => NavigateToRenewalCreate())" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Renewal</SfButton>
+
+    <span class="sf-verthr"></span>
+
+    <span class="sftb">
+        <NavLink class="toolbar-link" @onclick="BackToCalendar" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.TaskListLtr())" />
+            <span class="toolbar-text">Renewals</span>
+        </NavLink>
+    </span>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="sf-chevron sftb-disabled"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronLeft())" Color="Color.Custom" CustomColor="#636363" Slot="start" /></a>
+    <NavLink class="toolbar-link-cal" @onclick="BackToCalendar" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Calendar())" />
+    </NavLink>
+    
+    <span class="toolbar-text-cal sftb-disabled">@htmlMonth</span>
+    
+    <a class="sf-chevron sftb-disabled"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronRight())" Slot="start" Color="Color.Custom" CustomColor="#636363" /></a>
+    <span class="spcr"></span>
+    <span class="toolbar-link-cal sftb-disabled">
+        <FluentIcon Value="@(new Icons.Filled.Size24.Person())" Color="Color.FillInverse" Slot="start" />
+    </span>
+    <select class="e-input e-dropdownlist sftb-disabled">
+        <option value="Everyone">@htmlUser</option>
+    </select>
+    <span class="spcr"></span>
+    <!-- /Dropdown Holders -->
+
+    <span class="sf-verthr2"></span>
+
+    <NavLink class="toolbar-link" href="Renewals/MasterTasks" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ShieldTask())" />
+        <span class="toolbar-text">Master Tasks</span>
+    </NavLink>
+
+    <NavLink class="toolbar-link" href="Renewals/List" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
+        <span class="toolbar-text">Data</span>
+    </NavLink>
+
+    <span class="sf-verthr2"></span>
+
+    <NavLink class="toolbar-link" href="@("Renewals/Edit/" + renewalId)" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+        <span class="toolbar-text">Edit Renewal</span>
+    </NavLink>
+</div>
+
+
+<div class="sf-content">
+    <div class="sf-head">
+        @if (renewalDetails != null)
+        {
+            <div class="sf-header-col-name">
+                <span class="sf-clientname"><a href="/Clients/@renewalDetails.Client.ClientId">@renewalDetails.Client.Name</a></span><br>
+                <span class="sf-linecode">@renewalDetails.Product.LineName</span>
+            </div>
+            <div class="sf-header-col-tab">
+                <div class="sf-header-col-tab__leftcol">
+                    <span class="sf-rent">RENEWS</span><br />
+                    <span class="sf-renewaldate">@(renewalDetails.RenewalDate.ToString("M/d") ?? "")</span>
+                </div>
+                    
+                <div class="sf-header__vertline"></div>
+
+                <div class="sf-header-col-tab__col">
+                    @if (renewalDetails.Policy != null)
+                    {
+                        <span class="sf-runt">EXPIRING POLICY NO.</span><br />
+                        <span class="sf-rekt sf-header-col__spacer">
+                            <a href="/Policies/Details/@renewalDetails.Policy.PolicyId">
+                                <Trigger Value="@renewalDetails.Policy.PolicyNumber" Type="Trigger.ClickType.String" Class="sf-rekt sf-header-col__spacer" />
+                            </a>
+                        </span>
+
+                        <br />
+                        <span class="sf-runt">PREMIUM</span><br />
+                        <span class="sf-rekt">@renewalDetails.Policy.Premium.ToString("C")</span>  
+                    }
+                </div>
+
+                <div class="sf-header__spacer"></div>
+
+                <div class="sf-header-col-tab__col">
+                    @if (renewalDetails.Carrier != null || renewalDetails.Wholesaler != null)
+                    {
+                        @if (renewalDetails.Carrier != null)
+                        {
+                            <span class="sf-runt">CARRIER</span><br />
+                            <span class="sf-rekt sf-header-col__spacer"><a href="/Carriers/Details/@renewalDetails.Carrier?.CarrierId">@(renewalDetails.Carrier?.CarrierName)</a></span><br />
+                        }
+                        @if (renewalDetails.Wholesaler != null)
+                        {
+                            <span class="sf-runt">WHOLESALER</span><br />
+                            <span class="sf-rekt"><a href="/Carriers/Details/@renewalDetails.Wholesaler?.CarrierId">@(renewalDetails.Wholesaler?.CarrierName)</a></span>
+                        }
+                    }
+                </div>
+
+                <div class="sf-header__spacer"></div>
+                @if (renewalDetails.Carrier != null && renewalDetails.AssignedTo != null)
+                {
+                    <div class="sf-header__vertline"></div>
+                    <div class="sf-header-col-tab__col">
+                        <span class="sf-rekt">
+                            <img src="img/staff/@renewalDetails.AssignedTo.PictureUrl" alt="User Image" style="width: 65px; height: 65px; border-radius: 50%; margin-right: 4px; margin-top:5px;" />
+                        </span> 
+                    </div>
+                    <div class="sf-header__spacer"></div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="sf-col-1">
+                <SfSkeleton Shape=SkeletonType.Rectangle Width="500px" Height="75px" Visible="true"></SfSkeleton>
+            </div>
+            <div class="sf-rendate">
+                <SfSkeleton Shape=SkeletonType.Rectangle Width="90px" Height="75px" Visible="true"></SfSkeleton>
+            </div>
+            <div class="sf-rendate-2">
+                <div class="innersep"><SfSkeleton Shape=SkeletonType.Rectangle Width="300px" Height="75px" Visible="true"></SfSkeleton> </div>
+                    <div class="innersep leftpad">
+                    <span class="sf-rekt" style="padding-top:5px;">
+                        <SfSkeleton Shape=SkeletonType.Circle Width="60px" Visible="true"></SfSkeleton>
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+    <FluentTabs @ref="renewalTabs" Class="sf-fluenttabs" Size="TabSize.Large" @bind-ActiveTabId="_stateService.HtmlTab">
+        <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab-bg">
+            
+            <table class="table" border="0" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th style="width:280px">Task</th>
+                        <th>Status</th>
+                        <th style="width:400px">Notes</th>
+                        <th>Sub</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (renewalDetails != null)
+                    {
+                        foreach (var task in taskList)
+                        {
+                            <tr class="@GetRowClass(task)">
+                                <td class="sf-leftcell">
+                                    <a id="myId-@(task.TaskItemId)" class="sf-threedot"><FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Fill" /></a>
+                                    <FluentMenu @ref="FluentMenuContextThing" Id="@("myMenuId-" + task.TaskItemId)" Anchor="@("myId-" + task.TaskItemId)" 
+                                            Trigger="MouseButton.Left" Anchored="true" VerticalInset="true" 
+                                            Open="menuOpenState[task.TaskItemId]" 
+                                            @onclick="() => OpenMenu(task.TaskItemId)">
+                                        <FluentMenuItem OnClick="@((e) => HighlightRow(task.TaskItemId))">
+                                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" Color="Color.FillInverse" Slot="start" /></span>
+                                            Highlight
+                                        </FluentMenuItem>
+                                        <FluentMenuItem OnClick="@((e) => ShowGoalDateDialog(task.TaskItemId))">
+                                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.CalendarEdit())" Color="Color.FillInverse" Slot="start" /></span>
+                                            Edit Goal Date
+                                        </FluentMenuItem>
+                                        <FluentMenuItem OnClick="@((e) => AssignToMe(task.TaskItemId))">
+                                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PersonArrowLeft())" Color="Color.FillInverse" Slot="start" /></span>
+                                            Assign To Me
+                                        </FluentMenuItem>
+                                        <FluentMenuItem OnClick="@((e) => AssignToSub(task.TaskItemId))">
+                                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PersonSupport())" Color="Color.FillInverse" Slot="start" /></span>
+                                            Assign To Sub
+                                        </FluentMenuItem>
+                                        <FluentMenuItem OnClick="@((e) => EditRow(task.TaskItemId))">
+                                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" Color="Color.FillInverse" Slot="start" /></span>
+                                            Edit
+                                        </FluentMenuItem>
+                                        <FluentMenuItem OnClick="@((e) => HideRow(task.TaskItemId))">
+                                            <span slot="start"><FluentIcon Value="@(new Icons.Regular.Size24.EyeOff())" Color="Color.FillInverse" Slot="start" /></span>
+                                            Hide
+                                        </FluentMenuItem>
+                                    </FluentMenu>
+                                    <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted" @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+
+                                </td>
+                                <td style="padding:0px 5px;">@task.TaskItemName</td>
+                                <td class="ds">@((MarkupString)StringHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))</td>
+                                <td>
+                                    <input type="text" value="@task.Notes" class="ff-input" @oninput="@(args => OnNotesInputChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value.ToString()))" />
+                                </td>
+                                <td class="sf-rightcell">
+                                    @if (task.AssignedSubUser != null)
+                                    {
+                                        <div style="display: flex; align-items: center;">
+                                            <span class="sf-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
+                                            <img src="img/staff/@task.AssignedSubUser.PictureUrl" alt="User Image" class="taskassigned" />
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 10; i++)
+                        {
+                            <tr>
+                                <td colspan="5" style="padding-bottom:8px;">
+                                    <SfSkeleton Shape=SkeletonType.Rectangle Width="750px" Height="23px" Visible="true"></SfSkeleton>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+            </table>
+        </FluentTab>
+        <FluentTab Id="tab-2" Label="Submissions" Class="sf-tab" @onclick="CheckSubmissions">
+            <div class="sf-navlist">
+                <div class="navlist-btns">
+                    <span class="navlistbtngo" @onclick="() => ShowAddScreen()"><FluentIcon Value="@(new Icons.Filled.Size24.AddSquare())" Color="Color.FillInverse" /></span>
+                    <span class="navlistbtngo" @onclick="() => ShowSummaryScreen()"><FluentIcon Class="navlistbtn" Value="@(new Icons.Filled.Size24.AppsList())" Color="Color.FillInverse" /></span>
+                </div>
+                
+                @if (renewalDetails != null)
+                {
+                    @foreach (var item in renewalDetails.Submissions)
+                    {
+                        <div class="subm @(SelectedSubmission != null && item.SubmissionId == SelectedSubmission.SubmissionId ? "selected-submission" : "")" @onclick="() => LoadSubmission(item.SubmissionId)">
+                            <div class="subm-title">
+                                @if (item.Wholesaler != null && item.Carrier != null)
+                                {
+                                    <span class="subm-title__listing">@item.Wholesaler.CarrierNickname</span>
+                                    <FluentIcon Class="subm-arrow" Value="@(new Icons.Regular.Size16.ChevronDoubleRight())" Color="Color.FillInverse" />
+                                    <span>@StringHelper.CropCarrierName(item.Carrier.CarrierName)</span>
+                                }
+                                @if (item.Carrier != null && item.Wholesaler == null)
+                                {
+                                    <span class="subm-title__listing">@StringHelper.CropCarrierName(item.Carrier.CarrierName)</span>
+                                }
+                                @if (item.Wholesaler != null && item.Carrier == null)
+                                {
+                                    <span class="subm-title__listing">@StringHelper.CropCarrierName(item.Wholesaler.CarrierName)</span>
+                                }
+                            </div>
+
+                            <div class="subm-byline">
+                                <span class="subm-byline__bold">Status:</span> @StringHelper.GetStyledSubmissionStatus(item.StatusInt)
+                                @if (item.Premium != null)
+                                {
+                                    <span class="subm-byline__special">@item.Premium?.ToString("C0")</span>
+                                }
+                            </div>
+
+                            <div class="subm-preview">
+                                @((item.SubmissionNotes.OrderByDescending(a => a.DateCreated).FirstOrDefault() is SubmissionNote latestNote && latestNote != null)
+                                    ? latestNote.Note
+                                    : "(No notes yet)")
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="sf-viewpanel">
+                @if (ViewPanelView == "submissions")
+                {
+                    @if(SelectedSubmission != null)
+                    {
+
+                        <div class="mf-flextwocolumn">
+                            @if (SelectedSubmission.Wholesaler != null)
+                            {
+                                <div class="mf-flextwocolumn-col">
+                                
+                                    <div class="carrier">
+                                        <div class="txt-section">Wholesaler</div>
+                                        <div class="carriertitle"><a href="/Carriers/Details/@SelectedSubmission.Wholesaler.CarrierId" class="sf-link">@SelectedSubmission.Wholesaler.CarrierName</a></div>
+                                        <div class="contentflex">
+                                            <ContactsSlider Contacts="SelectedSubmission.Wholesaler.Contacts.ToList()" ParentType="submissionwholesaler" ParentId="SelectedSubmission.SubmissionId" DefaultContactId="SelectedSubmission.PrimaryWholesalerContactId" />
+                                            @if (!string.IsNullOrEmpty(SelectedSubmission.Wholesaler.QuotingWebsite))
+                                            {
+                                                <div>
+                                                    <a href="@StringHelper.FormatUrl(SelectedSubmission.Wholesaler.QuotingWebsite)" class="weblink" target="_blank"><FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.FillInverse" /></a>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(SelectedSubmission.Wholesaler.QuotingWebsite))
+                                            {
+                                                <div>
+                                                    <a href="mailto:@SelectedSubmission.Wholesaler.NewSubmissionEmail" class="weblink"><FluentIcon Value="@(new Icons.Regular.Size48.Mail())" Color="Color.FillInverse" /></a>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            @if (SelectedSubmission.Carrier != null)
+                            {
+                                <div class="mf-flextwocolumn-col">
+                                    <div class="carrier">
+                                        <div class="txt-section">Carrier</div>
+                                        <div class="carriertitle"><a href="/Carriers/Details/@SelectedSubmission.Carrier.CarrierId" class="sf-link">@SelectedSubmission.Carrier.CarrierName</a></div>
+                                        <div class="contentflex">
+                                            <ContactsSlider Contacts="SelectedSubmission.Carrier.Contacts.ToList()" ParentType="renewal" ParentId="63" />
+                                            @if (!string.IsNullOrEmpty(SelectedSubmission.Carrier.QuotingWebsite))
+                                            {
+                                                <div>
+                                                    <a href="@StringHelper.FormatUrl(SelectedSubmission.Carrier.QuotingWebsite)" class="weblink" target="_blank"><FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.FillInverse" /></a>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(SelectedSubmission.Carrier.QuotingWebsite))
+                                            {
+                                                <div>
+                                                    <a href="mailto:@SelectedSubmission.Carrier.NewSubmissionEmail" class="weblink"><FluentIcon Value="@(new Icons.Regular.Size48.Mail())" Color="Color.FillInverse" /></a>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div><!--/flexcolumn-->
+                        <div style="height:20px;"></div>
+
+                        <div class="mf-flextwocolumnls">
+                            <div class="mf-flextwocolumnls-col mf-flextwocolumnrs-col--first">
+                                <div class="status-container">
+                                    <span class="txt-section">STATUS</span>
+                                    <div style="height:10px;"></div>
+                                    <div class="sf-stepper-container">
+                                        <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.Bottom" ID="main-stepper" @bind-ActiveStep="SelectedSubmission.StatusInt"
+                                                   StepClicked="@(args => OnStepperClicked(args))" Linear="false" @key="SelectedSubmission?.SubmissionId">
+                                            <StepperSteps>
+                                                <StepperStep IconCss="e-icons e-plus-icon" Label="Starting"></StepperStep>
+                                                <StepperStep IconCss="e-icons e-pencil-icon" Label="Submitted"></StepperStep>
+                                                <StepperStep IconCss="e-icons e-changes-icon" Label="Underwriting"></StepperStep>
+                                                <StepperStep IconCss="e-icons e-send-icon" Label="Quoting"></StepperStep>
+                                                <StepperStep IconCss="e-icons e-signature-icon" Label="Proposed"></StepperStep>
+                                                <StepperStep IconCss="e-icons e-trash-icon" Label="Declined"></StepperStep>
+                                                <StepperStep IconCss="e-icons e-check-icon" Label="Accepted"></StepperStep>
+                                            </StepperSteps>
+                                        </SfStepper>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mf-flextwocolumnls-col" style="text-align: center;">
+                                <span class="txt-section">PREMIUM</span><br />
+                                <div style="height:25px;"></div>
+                                @if (SelectedSubmission.Premium == 0 || SelectedSubmission.Premium == null)
+                                {
+                                    <span class="txt-premium">TBD</span>
+                                }
+                                else
+                                {
+                                    <span class="txt-premium">@SelectedSubmission.Premium?.ToString("C0")</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="hr"></div>
+
+                        <div class="mf-flextwocolumnls">
+                            <div class="mf-flextwocolumnls-col" style="border-right: 1px solid #eeeeee;">
+                                <span class="txt-section">NOTES</span><br />
+                                <div style="height:8px;"></div>
+                                <div class="ninetyten">
+                                    <SfTextBox @bind-Value="NewSubmissionNoteText" Placeholder="Enter a new note..." />
+                                </div>
+                                <div class="tenninety">
+                                    <SfButton Content="Add Note" OnClick="AddSubmissionNote"></SfButton>
+                                </div>
+                                <div style="clear: both; height:10px;"></div>
+
+                                @foreach (var note in SelectedSubmission.SubmissionNotes.OrderByDescending(n => n.DateCreated))
+                                {
+                                    <div class="note">
+                                        <span class="note__date">@note.DateCreated.ToString("MM/dd/yyyy") - </span>
+                                        <span class="note__content">@note.Note</span>
+                                    </div>
+                                }
+
+                            </div>
+                            <div class="mf-flextwocolumnls-col" style="border-right: 1px solid #eeeeee;">
+                                <div class="help-container">
+                                    <span class="txt-small-bold">Starting:</span> <span class="txt-small-p">Collecting information from client and putting together the applications.</span><br>
+                                    <span class="txt-small-bold">Submitted:</span> <span class="txt-small-p">Formal submission sent to underwriter, waiting for response or quotes.</span><br>
+                                    <span class="txt-small-bold">Underwriting:</span> <span class="txt-small-p">Working with underwriter and client to clarify any information.</span><br>
+                                    <span class="txt-small-bold">Quoted:</span> <span class="txt-small-p">Received formal quote from carrier, waiting to present to client.</span><br>
+                                    <span class="txt-small-bold">Proposed:</span> <span class="txt-small-p">Quote sent to client as formal proposal.</span><br>
+                                    <span class="txt-small-bold">Declined:</span> <span class="txt-small-p">Carrier declined or applicant does not fit appetite.</span><br>
+                                    <span class="txt-small-bold">Accepted:</span> <span class="txt-small-p">Proposal accepted by client, waiting for signed docs and payment.</span><br>
+                                </div>
+                                <div class="hr"></div>
+                                <span class="txt-section">UPDATE DETAILS</span><span style="float:right; color:red; font-size:10px;" @onclick="DeleteSelectedSubmission">Delete</span>
+                                <FluentStack>
+                                    <div class="ninetyten">
+                                        <SfNumericTextBox TValue="int" @bind-Value="PremiumSave" Format="c2" Placeholder="Premium" FloatLabelType="@FloatLabelType.Always" CssClass="prembox"></SfNumericTextBox>
+                                    </div>
+                                    <div @onclick="SavePremium" class="ittydisk">
+                                        <FluentIcon Value="@(new Icons.Filled.Size24.Save())" Color="Color.Accent" />
+                                    </div>
+                                </FluentStack>
+                                <FluentStack>
+                                    <div class="ninetyten">
+                                        <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Carrier" DataSource="@AllCarriers" AllowFiltering="true" FilterType="FilterType.Contains"
+                                                        FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="CarrierSaveId">
+                                            <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                                        </SfDropDownList>
+                                    </div>
+                                    <div @onclick="SaveCarrier" class="ittydisk">
+                                        <FluentIcon Value="@(new Icons.Filled.Size24.Save())" Color="Color.Accent" />
+                                    </div>
+                                </FluentStack>
+                                <FluentStack>
+                                    <div class="ninetyten">
+                                        <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Wholesaler" DataSource="@AllWholesalers" AllowFiltering="true" FilterType="FilterType.Contains"
+                                                        FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="WholesalerSaveId">
+                                            <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                                        </SfDropDownList>
+                                    </div>
+                                    <div @onclick="SaveWholesaler" class="ittydisk">
+                                        <FluentIcon Value="@(new Icons.Filled.Size24.Save())" Color="Color.Accent" />
+                                    </div>
+                                </FluentStack>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        if(renewalDetails != null)
+                        {
+                            if (renewalDetails?.Submissions.Count == 0)
+                            {
+                                <div class="txt-alert-box">
+                                    <span class="txt-alert">This renewal has no submissions yet. Do you want to create one for the incumbant?</span><br /><br />
+                                    <FluentButton OnClick="CreateIncumbantSubmission" Appearance="Appearance.Accent">CREATE SUBMISSION</FluentButton>
+                                </div>
+                            }
+                        }
+                        
+                        <span class="txt-bold">Please select or create a submission.</span>
+                    }
+                } 
+                
+                @if (ViewPanelView == "add")
+                {
+                    <div class="view-panel-inner">
+                        <div class="txt-section">NEW SUBMISSION</div>
+                        @if (AllCarriers != null)
+                        {
+                            <div class="sf-newsubmission">
+                                <div class="subcol">
+                                    <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Select Carrier" DataSource="@AllCarriers" AllowFiltering="true" FilterType="FilterType.Contains" FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="SelectedCarrierId">
+                                        <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </div>
+                                <div style="height:20px;"></div>
+                                <div class="subcol">
+                                    <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Select Wholesaler" DataSource="@AllWholesalers" AllowFiltering="true" FilterType="FilterType.Contains" FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="SelectedWholsalerId">
+                                        <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                                    </SfDropDownList>
+                                </div>
+                                <div style="height:20px;"></div>
+                                <div class="subcol">
+                                    <SfButton Content="Add Submission" CssClass="e-primary" OnClick="CreateSubmission" class="tweaker2"></SfButton>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                @if (ViewPanelView == "summary" && renewalDetails != null)
+                {
+                    <div class="view-panel-inner">
+                        <div class="txt-section">SUBMISSIONS SUMMARY</div>
+                        
+                        @if(renewalDetails.Submissions.Count > 0)
+                        {
+                            foreach(var item in renewalDetails.Submissions)
+                            {
+                                <span>@item.Carrier?.CarrierName - @StringHelper.GetSubmissionStatus(item.StatusInt) - @item.Premium?.ToString("C0")</span><br />
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </FluentTab>
+        <FluentTab Id="tab-3" Label="Notes" Class="sf-tab">
+            @if (renewalDetails != null)
+            {
+                <SfRichTextEditor @bind-Value="@renewalDetails.Notes" Height="500" />
+                <SfButton Content="Save Notes" CssClass="e-primary" OnClick="UpdateNotepad"></SfButton><br><br>
+                <span style="font-size:10px; color:lightgray">
+                    - PolicyId: @renewalDetails.Policy?.PolicyId
+                    - RenewalId: @renewalDetails.RenewalId
+                    - ClientId: @renewalDetails.Client?.ClientId
+                    - AssignedToId: @renewalDetails.AssignedTo?.Id
+                </span>
+            }
+            else
+            {
+                    <SfSpinner Visible="true"></SfSpinner>
+            }
+        </FluentTab>
+        <FluentTab Id="tab-4" Label="Insights" Class="sf-tab">
+            @if (renewalDetails != null)
+            {
+                <div class="mf-flexleft">
+                    <div class="mf-flexleft-col" style="width:500px;">
+                        <div class="txt-section">Contacts</div>
+                        <ContactsList Contacts="renewalDetails.Client.Contacts" />
+
+                        <div class="hr"></div>
+                        <PaylinkBuilder Client="renewalDetails.Client" Policy="renewalDetails.Policy" />
+                        @if (!string.IsNullOrEmpty(DownPaymentLink))
+                        {
+                            <div style="margin-top:20px;">
+                                <div><strong>Down Payment Link:</strong></div>
+                                <div><a href="@DownPaymentLink" target="_blank">@DownPaymentLink</a></div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(FullPaymentLink))
+                        {
+                            <div style="margin-top:20px;">
+                                <div><strong>Full Payment Link:</strong></div>
+                                <div><a href="@FullPaymentLink" target="_blank">@FullPaymentLink</a></div>
+                            </div>
+                        }
+                    </div>
+                    @* <div class="mf-flexleft-col" style="width:600px;">
+                        <Insights ContactsList="renewalDetails.Client.Contacts.ToList()" />
+                    </div> *@
+                </div>
+            }
+            else
+            {
+                <SfSpinner Visible="true"></SfSpinner>
+            }
+                
+        </FluentTab>
+    </FluentTabs>
+</div>
+
+<FluentDialog Hidden="@dialogHidden" Id="deleteDialog" @ref="editGoalDateDialog">
+    <div>
+        <h3>Edit Goal Date</h3>
+        <SfDatePicker TValue="DateTime" @bind-Value="EditGoalDate" Placeholder="Goal Date" FloatLabelType="FloatLabelType.Always" />
+    </div>
+    <FluentDialogFooter>
+        <SfButton IsPrimary="true" OnClick="SaveGoalDate">Save Date</SfButton>
+        <SfButton OnClick="ClearGoalDate">Clear Date</SfButton>
+        <SfButton OnClick="CancelDialog">Cancel</SfButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter]             public int renewalId { get; set; }
+    [CascadingParameter]    public Action<string> UpdateHeader { get; set; }
+    //-------------------------------------------------------------------------------------------//
+    private string htmlMonth = "Disabled";
+    private string htmlUser = "Disabled";
+    private string resultsClass;
+    private string selectedClass;
+    private string NewSubmissionNoteText { get; set; } = "";
+    private string ViewPanelView { get; set; } = "submissions";
+    private string DownPaymentLink { get; set; }
+    private string FullPaymentLink { get; set; }
+    private bool dialogHidden = true;
+    private bool jumpTo = false;
+    private bool isLoading = true;
+    private bool isInitiated = false;
+    private bool isParamchanged = false;
+    private DateTime EditGoalDate { get; set; }
+    private FluentDialog editGoalDateDialog;
+    private FluentTabs renewalTabs;
+    private Renewal renewalDetails;
+    private Submission SelectedSubmission { get; set; }
+    private List<TaskItemViewModel> taskList;
+    private List<Carrier> AllCarriers = new();
+    private List<Carrier> AllWholesalers = new();
+    private List<ApplicationUser> AllUsers = new();
+    private List<ContactViewModel> ContactOptions { get; set; }
+    private int EditTrackTaskId { get; set; }
+    private int htmlYear;
+    private int SubActiveStep { get; set; } = 1;
+    private int SelectedCarrierId;
+    private int SelectedWholsalerId;
+    private int PremiumSave { get; set; }
+    private int CarrierSaveId { get; set; }
+    private int WholesalerSaveId { get; set; }
+    private int SelectedContactId { get; set; }
+    private decimal DownPaymentAmount { get; set; }
+    private decimal FullPaymentAmount { get; set; }
+    public Dictionary<int, bool> menuOpenState = new Dictionary<int, bool>();
+    private readonly Dictionary<int, CancellationTokenSource> _checkboxDebounceTokens = new();
+    private readonly Dictionary<int, CancellationTokenSource> _notesDebounceTokens = new();
+    private FluentMenu FluentMenuContextThing { get; set; }
+    //-------------------------------------------------------------------------------------------//
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        Console.WriteLine($"StateView: {_stateService.HtmlView}");
+        UpdateHeader?.Invoke("Renewals");
+
+        var renewalDetailsTask = RenewalService.GetRenewalByIdAsync(renewalId);
+        var taskListTask = RenewalService.GetTasksForRenewalAsync(renewalId);
+        var AllCarriersTask = _stateService.AllCarriers;
+        var AllWholesalersTask = _stateService.AllWholesalers;
+
+        await Task.WhenAll(renewalDetailsTask, taskListTask, AllCarriersTask, AllWholesalersTask);
+
+        renewalDetails = await renewalDetailsTask;
+        taskList = await taskListTask;
+        AllCarriers= await AllCarriersTask;
+        AllWholesalers = await AllWholesalersTask;
+
+
+        // Initialize ContactOptions
+        ContactOptions = renewalDetails.Client.Contacts.Select(c => new ContactViewModel { ContactId = c.ContactId, FullName = $"{c.FirstName} {c.LastName}", Email = c.Email }).ToList();
+
+        // Initialize amounts
+        DownPaymentAmount = 0;
+        FullPaymentAmount = 0;
+
+        // _stateService.HtmlView = "details";
+        // _stateService.HtmlRenewalId = renewalId;
+
+        foreach (var task in taskList)
+        {
+            menuOpenState[task.TaskItemId] = false;
+        }
+        if (renewalDetails != null && renewalDetails.AssignedTo != null)
+        {
+            htmlUser = renewalDetails.AssignedTo.FirstName + " " + renewalDetails.AssignedTo.LastName;
+            htmlMonth = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(renewalDetails.RenewalDate.Month);
+            htmlMonth += " " + renewalDetails.RenewalDate.Year.ToString();
+        }
+        await renewalTabs.GoToTabAsync(_stateService.HtmlTab);
+        Console.WriteLine($"StateView2: {_stateService.HtmlView}");
+    }
+
+    //Methods
+    private async Task DebounceSaveNotesAsync(int taskItemId, string newNotes, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(2000, token);
+
+            if (!token.IsCancellationRequested)
+            {
+                await SaveNotesAsync(taskItemId, newNotes);
+                //StateHasChanged();
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // Operation was cancelled; no action needed
+        }
+        finally
+        {
+            // Clean up the token source
+            if (_notesDebounceTokens.TryGetValue(taskItemId, out var cts) && cts.Token == token)
+            {
+                _notesDebounceTokens.Remove(taskItemId);
+                cts.Dispose();
+            }
+        }
+    }
+    private async Task SaveNotesAsync(int taskItemId, string newNotes)
+    {
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.Notes = newNotes;
+            await RenewalService.UpdateTaskNotesAsync(taskItemId, newNotes);
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task SaveGoalDate()
+    {
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == EditTrackTaskId);
+        if (task != null)
+        {
+            task.TaskGoalDate = EditGoalDate;
+            await RenewalService.UpdateTrackTaskModelAsync(task);
+
+            await InvokeAsync(StateHasChanged);
+            CancelDialog();
+        }
+    }
+    private async Task ClearGoalDate()
+    {
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == EditTrackTaskId);
+        if (task != null)
+        {
+            task.TaskGoalDate = null;
+            await RenewalService.UpdateTrackTaskModelAsync(task);
+
+            await InvokeAsync(StateHasChanged);
+            CancelDialog();
+        }
+    }
+    private async Task SaveRenewal(MouseEventArgs arg, Renewal renewal)
+    {
+        await RenewalService.UpdateRenewalAsync(renewal);
+    }
+    private async Task UpdateNotepad()
+    {
+        await RenewalService.UpdateNotepadAsync(renewalDetails);
+    }
+    private void OnNotesInputChanged(int taskItemId, string newNotes)
+    {
+        // Cancel any existing debounce operation for this task
+        if (_notesDebounceTokens.TryGetValue(taskItemId, out var cts))
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+
+        // Create a new cancellation token source
+        var cancellationTokenSource = new CancellationTokenSource();
+        _notesDebounceTokens[taskItemId] = cancellationTokenSource;
+
+        // Start the debounce delay
+        _ = DebounceSaveNotesAsync(taskItemId, newNotes, cancellationTokenSource.Token);
+    }
+    private void CancelDialog()
+    {
+        dialogHidden = true;
+        editGoalDateDialog.Hide(); //Not working?!
+    }
+
+    //Row Methods
+    private string GetRowClass(TaskItemViewModel task)
+    {
+        var classes = new List<string>();
+        if (task.IsHighlighted)
+        {
+            classes.Add("highlighted-row");
+        }
+        if (task.IsHidden)
+        {
+            classes.Add("hidden-row");
+        }
+        if (task.IsCompleted)
+        {
+            classes.Add("completed-row");
+        }
+        return string.Join(" ", classes);
+    }
+    private async Task OnCompletedChanged(int taskItemId, object isChecked)
+    {
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == taskItemId);
+        if (task != null)
+        {
+            task.IsCompleted = (bool)isChecked;
+            await RenewalService.UpdateTaskCompleted(taskItemId, task.IsCompleted);
+            StateHasChanged();
+        }
+    }
+    private async Task HighlightRow(int taskid)
+    {
+        Console.WriteLine("Highlighting row " + taskid);
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == taskid);
+        if (task != null)
+        {
+            task.IsHighlighted = !task.IsHighlighted;
+            await RenewalService.UpdateTaskHighlight(taskid, task.IsHighlighted);
+            foreach (var key in menuOpenState.Keys.ToList())
+            {
+                menuOpenState[key] = false;
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task HideRow(int taskid)
+    {
+        // Console.WriteLine("hiding row " + taskid);
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == taskid);
+        if (task != null)
+        {
+            task.IsHidden = !task.IsHidden;
+            task.IsCompleted = true;
+            await RenewalService.UpdateTaskHidden(taskid, task.IsHidden);
+            StateHasChanged();
+        }
+    }
+    private async Task AssignToMe(int taskid)
+    {
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == taskid);
+        if (task != null)
+        {
+            task.AssignedSubUser = await RenewalService.AssignToMe(taskid);
+            StateHasChanged();
+        }
+
+    }
+    private async Task AssignToSub(int taskid)
+    {
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == taskid);
+
+        if (task != null)
+        {
+            if (task.AssignedSubUser != null)
+            {
+                task.AssignedSubUser = null;
+                await RenewalService.UnassignSub(taskid);
+            }
+            else
+            {
+                task.AssignedSubUser = await RenewalService.AssignToSub(taskid);
+            }
+
+            StateHasChanged();
+        }
+    }
+    private void EditRow(int taskid)
+    {
+        // Console.WriteLine("editing row " + taskid);
+        Navigation.NavigateTo($"/Renewals/EditTrackTask/{taskid}");
+    }
+    private void OpenMenu(int taskId)
+    {
+        foreach (var key in menuOpenState.Keys.ToList())
+        {
+            menuOpenState[key] = false;
+        }
+        menuOpenState[taskId] = true;
+        StateHasChanged();
+        Console.WriteLine("Tester");
+    }
+    private void ShowGoalDateDialog(int taskid)
+    {
+        foreach (var key in menuOpenState.Keys.ToList())
+        {
+            menuOpenState[key] = false;
+        }
+        EditTrackTaskId = taskid;
+        var task = taskList.FirstOrDefault(t => t.TaskItemId == taskid);
+        EditGoalDate = task.TaskGoalDate ?? DateTime.Now;
+        dialogHidden = false;
+        editGoalDateDialog.Show(); //Not working?!
+        StateHasChanged();
+    }
+
+    //Navigation
+    private void NavigateToRenewalCreate()
+    {
+        NavigationManager.NavigateTo("/Renewals/Create");
+    }
+    private void BackToCalendar()
+    {
+        Navigation.NavigateTo("/Renewals");
+    }
+    public void ShowAddScreen()
+    {
+        ViewPanelView = "add";
+        StateHasChanged();
+    }
+    public void ShowSummaryScreen()
+    {
+        ViewPanelView = "summary";
+        StateHasChanged();
+    }
+
+    //Submission
+    private async Task LoadSubmission(int submissionId)
+    {
+        ViewPanelView = "submissions";
+        SelectedSubmission = await RenewalService.GetSubmissionByIdAsync(submissionId);
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task CreateIncumbantSubmission()
+    {
+        var newSubmission = await RenewalService.CreateNewSubmissionAsync(renewalDetails.RenewalId, renewalDetails.Carrier?.CarrierId, renewalDetails.Wholesaler?.CarrierId);
+
+        // Add the new submission to the renewal's submission list
+        renewalDetails.Submissions.Add(newSubmission);
+
+        // Load the created submission in the view panel
+        ViewPanelView = "submissions";
+        await LoadSubmission(newSubmission.SubmissionId);
+    }
+    private async Task CheckSubmissions()
+    {
+        ViewPanelView = "submissions";
+
+        // Update the UI
+        //await InvokeAsync(StateHasChanged);
+    }
+    private async Task OnStepperClicked(StepperClickedEventArgs args)
+    {
+        SelectedSubmission.StatusInt = args.ActiveStep;
+        renewalDetails.Submissions.FirstOrDefault(x => x.SubmissionId == SelectedSubmission.SubmissionId).StatusInt = args.ActiveStep;
+        await RenewalService.UpdateSubmissionAsync(SelectedSubmission);
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task SaveSelectedSubmission()
+    {
+        if (CarrierSaveId > 0)
+        {
+            Carrier carrierSave = AllCarriers.FirstOrDefault(x => x.CarrierId == CarrierSaveId);
+            renewalDetails.Submissions.FirstOrDefault(x => x.SubmissionId == SelectedSubmission.SubmissionId).Carrier = carrierSave;
+            SelectedSubmission.Carrier = carrierSave;
+        }
+
+        if (WholesalerSaveId > 0)
+        {
+            Carrier wholesalerSave = AllWholesalers.FirstOrDefault(x => x.CarrierId == WholesalerSaveId);
+            renewalDetails.Submissions.FirstOrDefault(x => x.SubmissionId == SelectedSubmission.SubmissionId).Wholesaler = wholesalerSave;
+            SelectedSubmission.Wholesaler = wholesalerSave;
+        }
+
+        if(PremiumSave > 0)
+        {
+            renewalDetails.Submissions.FirstOrDefault(x => x.SubmissionId == SelectedSubmission.SubmissionId).Premium = PremiumSave;
+            SelectedSubmission.Premium = PremiumSave;
+        }
+
+        PremiumSave = 0;
+        WholesalerSaveId = 0;
+        CarrierSaveId = 0;
+        await RenewalService.UpdateSubmissionAsync(SelectedSubmission);
+    }
+    private async Task DeleteSelectedSubmission()
+    {
+        if (SelectedSubmission != null)
+        {
+            // Delete the submission from the database
+            await RenewalService.DeleteSubmissionAsync(SelectedSubmission.SubmissionId);
+
+            // Reload the page to reflect changes
+            NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        }
+    }
+    private async Task AddSubmissionNote()
+    {
+        if (!string.IsNullOrWhiteSpace(NewSubmissionNoteText))
+        {
+            var newNote = new SubmissionNote
+                {
+                    Note = NewSubmissionNoteText,
+                    DateCreated = DateTime.UtcNow,
+                    SubmissionId = SelectedSubmission.SubmissionId,
+                    Deleted = false
+                };
+
+            await RenewalService.AddSubmissionNoteAsync(newNote);
+
+            // Add the new note to the top of the list
+            SelectedSubmission.SubmissionNotes.Insert(0, newNote);
+
+            // Clear the input field
+            NewSubmissionNoteText = "";
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task CreateSubmission()
+    {
+        // Add the new submission
+        var newSubmission = await RenewalService.CreateNewSubmissionAsync(renewalDetails.RenewalId, SelectedCarrierId, SelectedWholsalerId);
+
+        // Attach submission to the list of submissions for the renewal and load in view
+        renewalDetails.Submissions.Add(newSubmission);
+        await LoadSubmission(newSubmission.SubmissionId);
+
+        // Set the view to submissions and clear any selections
+        ViewPanelView = "submissions";
+        SelectedCarrierId = 0;
+        SelectedWholsalerId = 0;
+
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task SaveSubmissionItem(MouseEventArgs args, Submission submissionitem)
+    {
+        await RenewalService.UpdateNotesAndPremiumAsync(submissionitem);
+    }
+    private async Task SavePremium()
+    {
+        if (PremiumSave > 0 && PremiumSave != SelectedSubmission.Premium)
+        {
+            await RenewalService.UpdateSubmissionPremiumAsync(SelectedSubmission.SubmissionId, PremiumSave);
+            SelectedSubmission.Premium = PremiumSave;
+            PremiumSave = 0; // Reset after saving
+        }
+    }
+    private async Task SaveCarrier()
+    {
+        if (CarrierSaveId > 0 && CarrierSaveId != SelectedSubmission.Carrier?.CarrierId)
+        {
+
+            SelectedSubmission.Carrier = await RenewalService.UpdateSubmissionCarrierAsync(SelectedSubmission.SubmissionId, CarrierSaveId);
+            CarrierSaveId = 0; // Reset after saving
+                               //Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+        }
+    }
+    private async Task SaveWholesaler()
+    {
+        if (WholesalerSaveId > 0 && WholesalerSaveId != SelectedSubmission.Wholesaler?.CarrierId)
+        {
+            SelectedSubmission.Wholesaler = await RenewalService.UpdateSubmissionWholesalerAsync(SelectedSubmission.SubmissionId, WholesalerSaveId);
+            WholesalerSaveId = 0; // Reset after saving
+        }
+    }
+
+    //Insights
+    private void GeneratePayLinks()
+    {
+        var contact = ContactOptions.FirstOrDefault(c => c.ContactId == SelectedContactId);
+        if (contact != null)
+        {
+            var payer = Uri.EscapeDataString(contact.FullName);
+            var emailAddress = Uri.EscapeDataString(contact.Email);
+            var lineName = renewalDetails.Product.LineName;
+
+            if (DownPaymentAmount > 0)
+            {
+                var amount = DownPaymentAmount.ToString("F2", CultureInfo.InvariantCulture);
+                var comments = Uri.EscapeDataString($"{lineName} Down Payment");
+                DownPaymentLink = $"https://metroinsurance.epaypolicy.com/?payer={payer}&emailAddress={emailAddress}&amount={amount}&comments={comments}";
+            }
+
+            if (FullPaymentAmount > 0)
+            {
+                var amount = FullPaymentAmount.ToString("F2", CultureInfo.InvariantCulture);
+                var comments = Uri.EscapeDataString($"{lineName} Full Payment");
+                FullPaymentLink = $"https://metroinsurance.epaypolicy.com/?payer={payer}&emailAddress={emailAddress}&amount={amount}&comments={comments}";
+            }
+        }
+    }
+    public class ContactViewModel
+    {
+        public int ContactId { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Dispose of notes debounce tokens
+        foreach (var cts in _notesDebounceTokens.Values)
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+        _notesDebounceTokens.Clear();
+
+        // Dispose of checkbox debounce tokens if any
+        foreach (var cts in _checkboxDebounceTokens.Values)
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+        _checkboxDebounceTokens.Clear();
+    }
+
+
+
+
+    private void testers(int taskId)
+    {
+        foreach (var key in menuOpenState.Keys.ToList())
+        {
+            menuOpenState[key] = false;
+        }
+        menuOpenState[taskId] = true;
+        StateHasChanged();
+        Console.WriteLine("Tester");
+    }
+   
+}

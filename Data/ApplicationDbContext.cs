@@ -35,6 +35,7 @@ namespace Mantis.Data
         public DbSet<DailyTask> DailyTasks { get; set; }
         public DbSet<Renewal> Renewals { get; set; }
         public DbSet<Submission> Submissions { get; set; }
+        public DbSet<SubmissionNote> SubmissionNotes { get; set; }
 
         // Policies
         public DbSet<Policy> Policies { get; set; }

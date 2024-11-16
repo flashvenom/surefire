@@ -1,0 +1,270 @@
+﻿@page "/Renewals"
+@using Mantis.Domain.Policies.Models
+@using Mantis.Domain.Renewals.Models
+@using Mantis.Domain.Renewals.Services
+@using Mantis.Domain.Carriers.Models
+@using Mantis.Domain.Shared
+@using Mantis.Domain.Shared.Helpers
+@using Mantis.Components.Pages.Renewals
+@using Mantis.Components.Shared
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Spinner
+@inject StateService _stateService
+@inject RenewalService RenewalService
+@inject NavigationManager NavigationManager
+
+
+<div class="page-toolbar">
+    <SfButton @onclick="@NavToRenewalCreate" CssClass="e-primary" IconCss="e-icons e-plus-icon">New Renewal</SfButton>
+
+    <span class="sf-verthr"></span>
+
+    <span class="sftb toolbar-selected-disabled">
+        <a class="toolbar-link">
+            <FluentIcon Value="@(new Icons.Regular.Size24.TaskListLtr())" />
+            <span class="toolbar-text">Renewals</span>
+        </a>
+    </span>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="sf-chevron" @onclick="PrevMonth"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronLeft())" Color="Color.Custom" CustomColor="#636363" Slot="start" /></a>
+    <a @onclick="() => goToCurrentMonth()" class="toolbar-link-cal" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Calendar())" />
+    </a>
+    @if (_stateService.HtmlMonth != 0)
+    {
+        <span class="toolbar-text-cal">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(_stateService.HtmlMonth) @_stateService.HtmlYear</span>
+    }
+    <a class="sf-chevron" @onclick="NextMonth"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronRight())" Slot="start" Color="Color.Custom" CustomColor="#636363" /></a>
+    <span class="spcr"></span>
+    <a @onclick="() => goToCurrentUser()" class="toolbar-link-cal">
+        <FluentIcon Value="@(new Icons.Filled.Size24.Person())" Color="Color.FillInverse" Slot="start" />
+    </a>
+    <select @onchange="OnUserChanged" value="@_stateService.HtmlUser" class="e-input e-dropdownlist">
+        <option value="Everyone">Everyone</option>
+        @if (allUsers != null)
+        {
+            @foreach (var item in allUsers)
+            {
+                <option value="@item.Id">@item.FirstName @item.LastName</option>
+            }
+        }
+    </select>
+
+    <span class="sf-verthr2"></span>
+
+    <NavLink class="toolbar-link" href="Renewals/MasterTasks" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ShieldTask())" />
+        <span class="toolbar-text">Master Tasks</span>
+    </NavLink>
+
+    <NavLink class="toolbar-link" href="Renewals/List" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
+        <span class="toolbar-text">Data</span>
+    </NavLink>
+</div>
+
+<div class="page-content">
+    <div id="filter-results" class="@(_stateService.IsLoading ? "results-off" : "results-on")">
+        <div class="homelist">
+            <table class="sf-table">
+                <thead class="sf-thead">
+                    <tr class="sf-rentable">
+                        <th>Date</th>
+                        <th>Line</th>
+                        <th><strong>Insured</strong></th>
+                        <th>%</th>
+                        <th>!</th>
+                        <th>Carrier</th>
+                        <th>MGA</th>
+                        <th>Policy</th>
+                        <th>Premium</th>
+                        <th>Assigned To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_stateService.RenewalList != null)
+                    {
+                        @foreach (var item in _stateService.RenewalList)
+                        {
+                            <tr>
+                                <td class="rdate">@item.RenewalDate.ToString("M/dd")</td>
+                                <td class="sf-td-mono" style="padding:0px 8px;"><ProductIcon ProductCode="@item.ProductLineCode" /></td>
+                                <td class="sf-td-bold"><a class="renewalitemlink" @onclick="() => NavToRenewalDetails(item.RenewalId)">@item.ClientName</a></td>
+                                <td><Battery PerComplete="@StringHelper.RenewalProgressPercent(item.TrackTasks)" /></td>
+                                <td class="sf-td-sm">
+                                    <span class="sf-reddot @(item.Submits == 1 ? "rd-1" : item.Submits >= 2 && item.Submits <= 4 ? "rd-2" : item.Submits >= 5 ? "rd-3" : "")">
+                                        @item.Submits
+                                    </span>
+                                </td>
+                                <td class="sf-td-sm ellipsis2">@StringHelper.CropCarrierName(item.CarrierName)</td>
+                                <td class="sf-td-sm2 ellipsis2">@item.WholesalerNickname</td>
+                                <td class="sf-td-sm ellipsis2"><a href="/Clients/@item.ClientId">@item.PolicyNumber</a></td>
+                                <td class="sf-td-mono">@item.Premium?.ToString("C0")</td>
+                                <td class="ellipsis">
+                                    <img src="img/staff/@item.AssignedToPictureUrl" alt="User Image" class="renewal-assignedto" />
+                                    <span class="txt-name">@item.AssignedToFirstName</span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9">
+                                <div style="height:25px;" class="txt-cursive">Loading renewals....</div>
+                                <SfSpinner Visible="true"></SfSpinner>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_stateService.PolicyOrphanList != null && _stateService.HtmlUser == "Everyone")
+        {
+            <div class="orphan-list">
+                <div class="txt-section">Policies without Renewals</div>
+                <table>
+                    <thead class="txt-small">
+                        <tr>
+                            <th>Expire</th>
+                            <th>Line</th>
+                            <th>Client</th>
+                            <th>Carrier</th>
+                            <th>Wholesaler</th>
+                            <th>Policy #</th>
+                            <th>Premium</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody class="txt-p">
+                        @foreach (var item in _stateService.PolicyOrphanList)
+                        {
+                            <tr>
+                                <td style="padding: 3px;">@item.ExpirationDate.ToString("MM/dd/yy")</td>
+                                <td style="padding: 3px;">@item.Product?.LineCode</td>
+                                <td style="padding: 3px;"><a href="/Clients/@item.ClientId" target="_blank">@item.Client?.Name</a></td>
+                                <td style="padding: 3px;">@StringHelper.CropCarrierName(item.Carrier?.CarrierName)</td>
+                                <td style="padding: 3px;">@item.Wholesaler?.CarrierNickname</td>
+                                <td style="padding: 3px;"><a href="/Policies/Details/@(item.PolicyId)">@item.PolicyNumber</a></td>
+                                <td style="padding: 3px;">@item.Premium.ToString("C")</td>
+                                <td style="padding: 3px;"><SfButton OnClick="() => CreateRenewal(item.PolicyId)" CssClass="e-small">Renew</SfButton></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+    private List<ApplicationUser> allUsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Renewals");
+
+        allUsers = await _stateService.AllUsers;
+
+        // Load the renewal list based on the current filters
+        await LazyLoadRenewalList();
+    }
+
+    private async Task LazyLoadRenewalList()
+    {
+        _stateService.IsLoading = true;
+        StateHasChanged();
+
+        _stateService.RenewalList = await RenewalService.GetFilteredRenewalListAsync(
+            _stateService.HtmlMonth, _stateService.HtmlYear, _stateService.HtmlUser
+        );
+
+        if (_stateService.HtmlUser == "Everyone")
+        {
+            _stateService.PolicyOrphanList = await RenewalService.GetFilteredRenewalOrphanListAsync(_stateService.HtmlMonth, _stateService.HtmlYear);
+        }else{
+            _stateService.PolicyOrphanList.Clear();
+        }
+
+        //await RenewalService.SetSmartLastRenewalPageAsync("list", null, _stateService.HtmlMonth, _stateService.HtmlYear, _stateService.HtmlUser, _stateService.CurrentUser?.Id);
+        _stateService.HtmlView = "list";
+        _stateService.IsLoading = false;
+        StateHasChanged();
+    }
+    private async Task OnUserChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        _stateService.HtmlUser = e.Value.ToString();
+        await LazyLoadRenewalList();
+    }
+    private async Task goToCurrentMonth()
+    {
+        _stateService.HtmlMonth = DateTime.Now.Month;
+        _stateService.HtmlYear = DateTime.Now.Year;
+        await LazyLoadRenewalList();
+    }
+    private async Task goToCurrentUser()
+    {
+        if (_stateService.CurrentUser?.Id != null)
+        {
+            _stateService.HtmlUser = _stateService.CurrentUser.Id;
+            await LazyLoadRenewalList();
+        }
+    }
+    private async Task NextMonth()
+    {
+        if (_stateService.HtmlMonth < 12)
+        {
+            _stateService.HtmlMonth++;
+        }
+        else
+        {
+            _stateService.HtmlMonth = 1;
+            _stateService.HtmlYear++;
+        }
+
+        await LazyLoadRenewalList();
+    }
+    private async Task PrevMonth()
+    {
+        if (_stateService.HtmlMonth > 1)
+        {
+            _stateService.HtmlMonth--;
+        }
+        else
+        {
+            _stateService.HtmlMonth = 12;
+            _stateService.HtmlYear--;
+        }
+
+        await LazyLoadRenewalList();
+    }
+    private async Task CreateRenewal(int policyId)
+    {
+        var renewalId = await RenewalService.CreateRenewalFromPolicyAsync(policyId);
+
+        if (renewalId == null || renewalId == 0)
+        {
+            throw new Exception("Failed to create renewal.");
+        }
+
+        NavigationManager.NavigateTo($"/Renewals/Details/{renewalId}");
+    }
+
+    private void NavToRenewalCreate()
+    {
+        NavigationManager.NavigateTo("/Renewals/Create");
+    }
+    private void NavToRenewalDetails(int renewalId)
+    {
+        _stateService.HtmlRenewalId = renewalId;
+        _stateService.HtmlView = "details";
+        _stateService.HtmlTab = "tab-1";
+        NavigationManager.NavigateTo($"/Renewals/Details/{renewalId}");
+    }
+}

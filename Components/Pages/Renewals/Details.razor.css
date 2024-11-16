@@ -1,0 +1,808 @@
+﻿:root .e-dropdownlist {
+    font-size: .8em !important;
+    font-weight: 400;
+    font-weight: normal !important;
+    background-color: transparent !important;
+    border: 0px !important;
+    padding-left: 3px !important;
+    padding-right: 0px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-family: "montserrat", sans-serif;
+    font-size: .8em !important;
+}
+
+:root .e-input {
+    /*padding-left: 9px;
+    padding-right: 22px;
+    height: 30px;*/
+}
+
+:root .sf-eformbld {
+    font-weight: bold !important;
+}
+
+.filter-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#filter-results {
+    display: block;
+    transition: all 0.25s ease-in-out;
+}
+
+.results-on {
+    height: 100%;
+    opacity: 1;
+}
+
+.results-temp {
+    height: auto;
+    opacity: 1;
+}
+
+.results-off {
+    height: 0%;
+    overflow: hidden;
+    opacity: .5;
+}
+
+.selected-on {
+    height: 100%;
+    opacity: 1;
+}
+
+.selected-off {
+    height: 0%;
+    overflow: hidden;
+    opacity: .5;
+}
+
+.renewalitemlink:hover {
+    cursor: pointer;
+}
+
+.spcr {
+    width: 15px;
+}
+
+#renewal-view {
+    display: block;
+    transition: all 0.25s ease-in-out;
+}
+
+.monthholder {
+    width: 100px;
+    text-align: center;
+}
+
+.yearholder {
+    text-align: center;
+}
+
+.userholder {
+}
+
+
+.homelist {
+    background-color: #fff;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0px 0px 10px #ccc;
+}
+
+h1 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 2.9em;
+    margin-bottom: 0px;
+}
+
+:root .e-input {
+    padding-left: 9px;
+    border: 2px solid #f1f1f1;
+    padding-right: 22px;
+    height: 30px;
+    background-color: #f1f1f1;
+    color: #3c3c3c !important;
+}
+
+.sf-chevron {
+    position: relative;
+    top: 2px;
+}
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
+}
+
+    select::-ms-expand {
+        display: none;
+    }
+
+.txt-name {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .6em;
+    color: #626262;
+    position: relative;
+    top: -8px;
+    left: -5px;
+}
+
+.renewal-assignedto {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 4px;
+    position: relative;
+    top: 3px;
+}
+
+.toolbar-calendar-calendar {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.toolbar-calendar-selected {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.toolbar-selected-selected {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.toolbar-selected-calendar {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.toolbar-text-cal {
+    color: #3c3c3c;
+    font-family: "montserrat", sans-serif;
+    font-size: .85em;
+    width: 115px;
+    text-align: center;
+    -webkit-user-select: none; /* For Safari */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
+    user-select: none;
+}
+
+.toolbar-link-cal {
+    text-decoration: none;
+}
+
+:root .toolbar-link-cal svg {
+    fill: #636363 !important;
+}
+
+.sftb {
+    position: relative;
+    top: 1px;
+}
+
+.sftb-disabled {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.sf-threedot {
+    opacity: .5;
+    position: relative;
+    top: 1px;
+    left: 2px;
+}
+
+    .sf-threedot:hover {
+        cursor: pointer;
+        opacity: 1;
+    }
+
+.sf-completedcheckbox {
+    position: relative;
+    top: -4px;
+    left: 2px;
+    box-shadow: 0px 0px 5px #ffffffc9;
+}
+
+.highlighted-row td:nth-child(2) {
+    background-color: #ffe349ff !important;
+    color: #000000be !important;
+}
+
+.table {
+    border-collapse: separate; /* Use separate borders instead of collapsed */
+    border-spacing: 0 4px;
+}
+
+    .table thead {
+        font-family: "montserrat", sans-serif;
+        font-weight: 700 !important;
+        text-align: left;
+        font-size: 11px;
+        color: #767676;
+        text-transform: uppercase;
+    }
+
+tbody tr {
+    background-color: #dce7f4;
+    border-top: 5px solid #0f6cbd;
+    font-weight: bold;
+}
+
+    tbody tr td {
+    }
+
+.sf-rightcell {
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#dce7f4+0,000000+100&0+0,0.12+100 */
+    background: linear-gradient(to right, rgba(220,231,244,0) 0%,rgba(0,0,0,0.12) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+    padding-left: 10px;
+}
+
+.sf-leftcell {
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#207cca+40,ffffff+43,b9bdcc+46,b9bdcc+46,b9bdcc+94,ffffff+97,dce7f4+100 */
+    background: linear-gradient(to right, #207cca 40%,#ffffff 43%,#b9bdcc 46%,#b9bdcc 46%,#b9bdcc 94%,#ffffff 97%,#dce7f4 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+    padding-right: 10px;
+}
+
+.taskassigned {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    margin-right: 4px;
+    border: 0px solid #fff;
+    position: relative;
+    left: 4px;
+}
+
+:root .ff-input {
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 5px 0px;
+    height: 10px !important;
+    font-size: 12px !important;
+    border: 0px;
+    border-radius: 0px;
+    background-color: transparent;
+    border-bottom: 1px dashed #676767;
+    width: 100%;
+}
+
+    :root .ff-input:focus {
+        border: 0px;
+        outline: none;
+        border-bottom: 1px solid #676767;
+    }
+
+    :root .ff-input:active {
+        border: 0px;
+        outline: none;
+        border-bottom: 1px solid #676767;
+    }
+
+.sf-tab-1 {
+    padding-left: 20px;
+}
+
+.sf-tab-2 {
+    padding-left: 20px;
+}
+
+.da {
+    font-size: 10px;
+    color: #6b6b6b !important;
+}
+
+.ds {
+    font-size: 11px !important;
+}
+
+.db {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.eg {
+    font-size: .7em;
+    font-style: italic;
+    color: #838383;
+}
+
+.sf-rendate {
+    width: 100px;
+    text-align: center;
+}
+
+.sf-rendate {
+    vertical-align: central;
+    align-content: center;
+    margin-left: 50px;
+    border-bottom-left-radius: 20px;
+    position: relative;
+    top: -2px;
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2), 0 10px 15px rgba(0, 0, 0, 0.1), 0 25px 20px rgba(0, 0, 0, 0.05), 0 30px 25px rgba(0, 0, 0, 0.02);
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#f9f9f9+12,000000+100&1+0,0.05+100 */
+    background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(249,249,249,0.89) 12%,rgba(0,0,0,0.05) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+
+.sf-rendate-2 {
+    width: auto;
+    padding-top: 4px;
+    border-bottom-right-radius: 20px;
+    padding-left: 15px;
+    position: relative;
+    line-height: 15px;
+    top: -2px;
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.06), 0 25px 20px rgba(0, 0, 0, 0.03), 0 30px 25px rgba(0, 0, 0, 0.01);
+    background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(249,249,249,0.89) 12%,rgba(0,0,0,0.05) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+
+
+
+.leftpad {
+    padding-left: 25px;
+}
+
+.innersep {
+    float: left;
+    border-right: 1px solid #0000001b;
+    padding-right: 20px;
+}
+
+.sf-rent {
+    font-size: .6em;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #797979;
+    position: relative;
+    top: -2px;
+}
+
+.sf-runt {
+    font-size: .6em;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #b7b7b7;
+}
+
+.sf-linecode {
+    font-family: "montserrat", sans-serif;
+    font-weight: 800;
+    font-size: 2em;
+    color: #2b2b2b;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.sf-renewaldate {
+    font-family: "montserrat", sans-serif;
+    font-weight: 600;
+    font-size: 2.3em;
+    color: #797979;
+    position: relative;
+    top: -3px;
+}
+
+.sf-clientname a {
+    text-decoration: none;
+    color: #797979;
+}
+
+    .sf-clientname a:hover {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+.sf-rekt {
+    font-family: "montserrat", sans-serif;
+    font-weight: 600;
+    font-size: 1em;
+    color: #797979;
+}
+
+    .sf-rekt a {
+        -webkit-text-decoration: none;
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .sf-rekt a:hover {
+            -webkit-text-decoration: none;
+            text-decoration: none;
+            color: #000;
+            cursor: pointer;
+        }
+
+.sf-renewalheader {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    padding-left: 5px;
+    z-index: 300;
+    position: relative;
+    top: -10px;
+}
+
+.sf-clientname {
+    font-family: "montserrat", sans-serif;
+    font-weight: 100;
+    font-style: normal;
+    font-size: 2em;
+    position: relative;
+    color: #2c2c2c;
+    top: 4px;
+}
+
+    .sf-clientname h1 {
+        font-family: "montserrat", sans-serif;
+        font-weight: 800;
+        font-style: normal;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+    }
+
+.sf-pilltitle {
+    margin-top: 10px;
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    background-color: #757575;
+    padding: 2px 5px;
+    font-size: .8em;
+    color: #d9d9d9;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.sf-pillvalue {
+    margin-top: 10px;
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    background-color: #e0e0e0;
+    padding: 2px 8px;
+    font-size: .8em;
+    color: #2b2b2b;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.sf-pillcontainers {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+
+
+
+
+
+
+.highlighted-row td:nth-child(2) {
+    background-color: #F4CAC8 !important;
+    color: #000000be !important;
+}
+
+.sf-tab-container {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px #ccc;
+}
+
+
+
+:root th {
+    font-weight: 300 !important;
+}
+
+.sf-threedot {
+    opacity: .3;
+}
+
+.sf-tab {
+    background-color: #fff;
+    border-radius: 5px;
+}
+
+.sf-threedot:hover {
+    opacity: 1;
+}
+
+.sf-threedot svg {
+    position: relative;
+    top: 1px;
+    left: 2px;
+}
+
+.completed-row > td:not(:first-child) {
+    opacity: .5 !important;
+    background-color: #ffffff;
+    font-weight: normal;
+}
+
+.hidden-row {
+    display: none;
+}
+
+.db {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+
+
+.newsubmission {
+    border-top: 1px solid #ccc;
+    padding: 5px;
+}
+
+.carriertitle {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.4em;
+    font-weight: 800;
+    margin-bottom: 7px;
+    position: relative;
+    top: -4px;
+}
+
+.tweaker {
+    margin: 0px;
+    padding: 0px;
+    font-weight: bold;
+    position: relative;
+    top: 30px;
+    padding-right: 20px;
+}
+
+.submissioncontainer {
+    background-color: #fafafa;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    border-left: 10px solid #0f6cbd;
+}
+
+.submissioncontainer-declined {
+    background-color: #ffc6c6;
+    opacity: .8;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #750000;
+    border-left: 10px solid #750000;
+}
+
+.sf-newsubmissionbox {
+}
+
+
+.contentflex {
+    display: flex;
+    flex-direction: row;
+    gap: 10px !important;
+}
+
+.f-title {
+    font-size: .6em;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #797979;
+    position: relative;
+    top: 4px;
+}
+
+.navlistbtngo {
+    opacity: .4 !important;
+}
+
+    .navlistbtngo:hover {
+        opacity: 1;
+        cursor: pointer;
+    }
+
+.navlist-btns {
+    width: calc(100%-15px);
+    padding: 6px;
+    text-align: right;
+}
+
+.f-mtxt {
+}
+
+.view-panel-inner {
+    padding: 15px;
+}
+
+.sf-newsubmission {
+    width: 300px;
+}
+
+.submissioncontainer {
+    font-family: "montserrat", sans-serif;
+}
+
+.f-txt {
+    font-size: .9em;
+}
+
+.contentflex {
+    line-height: 16px;
+    align-self: flex-start;
+    gap: 40px;
+}
+
+.mainpremium {
+    align-self: flex-start;
+    text-align: center;
+    background-color: #6d6d6d;
+    color: #fff;
+    padding: 15px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    line-height: normal;
+    position: relative;
+    top: -10px;
+}
+
+.f-mpremium {
+    font-size: 3em;
+    font-weight: 800;
+}
+
+.f-tpremium {
+    font-size: 1.2em;
+    font-weight: 800;
+    color: #c8c8c8;
+    letter-spacing: 3px;
+}
+
+.maincontent {
+    min-width: 500px;
+}
+
+.carrier {
+    align-self: flex-start;
+}
+
+.tweaker2 {
+    position: relative !important;
+    top: 21px !important;
+}
+
+.weblink {
+    opacity: .3;
+}
+
+    .weblink:hover {
+        opacity: 1;
+    }
+
+:root .e-plus-icon::before {
+    content: '\e805';
+}
+
+:root .e-pencil-icon::before {
+    content: '\e740';
+}
+
+:root .e-pencil-icon::before {
+    content: '\e740';
+}
+
+:root .e-changes-icon::before {
+    content: '\e7a8';
+}
+
+:root .e-send-icon::before {
+    content: '\e71d';
+}
+
+:root .e-trash-icon::before {
+    content: '\e820';
+}
+
+:root .e-check-icon::before {
+    content: '\e727';
+}
+
+:root .e-signature-icon::before {
+    content: '\e897';
+}
+
+.sf-col-1 {
+    min-width: 500px;
+    min-height: 75px;
+}
+
+.sf-stepper-container {
+}
+
+.selected-submission {
+    background-color: #cde6f7; /* Highlight color */
+    pointer-events: none;
+}
+
+.mf-flextwocolumn {
+    border-bottom: 1px solid #eeeeee;
+}
+
+.prembox {
+    font-size: 3em;
+}
+
+.mf-flextwocolumnrs-col--first {
+    border-right: 1px solid #eeeeee;
+    padding-right: 15px;
+}
+
+.ninetyten {
+    width: 90%;
+    float: left;
+}
+
+.tenninety {
+    width: 10%;
+    float: left;
+}
+
+.txt-premium {
+    font-family: montserrat, sans-serif;
+    font-size: 4em;
+    font-weight: 600;
+    font-style: italic;
+    color: #0f6cbd;
+}
+
+.plzselect {
+    font-family: montserrat, sans-serif;
+    font-size: 3em;
+    padding-top: 50px;
+    color: #a9a9a9;
+}
+
+.note__date {
+    font-family: "mono45-headline", monospace;
+    color: #0f6cbd;
+}
+
+.note {
+    padding: 5px 0px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.txt-small-bold {
+    font-weight: bold;
+    font-size: .9em;
+    color: #676767;
+}
+
+.txt-small-p {
+    font-size: .8em;
+    color: #676767;
+}
+
+.ittydisk {
+    filter: saturate(0%);
+    cursor: pointer;
+    margin: 0;
+    padding-top: 0;
+    position: relative;
+    top: 30px;
+}
+
+    .ittydisk:hover {
+        filter: saturate(100%);
+    }

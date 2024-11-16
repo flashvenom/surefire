@@ -1,30 +1,17 @@
 ﻿@page "/Renewals/Edit/{RenewalId:int}"
 @using Microsoft.EntityFrameworkCore
 @using Mantis.Domain.Renewals.Models
-@using Mantis.Domain.Shared
-@using Mantis.Domain.Shared.Services
-@using Mantis.Domain.Carriers.Services
+@using Mantis.Domain.Renewals.Services
 @using Mantis.Domain.Carriers.Models
-@using Mantis.Domain.Users.Services
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Data
 @using Syncfusion.Blazor.Inputs
 @using Syncfusion.Blazor.DropDowns
 @using Syncfusion.Blazor.Calendars
-@inject ApplicationDbContext DbContext
+@using Syncfusion.Blazor.Spinner
 @inject NavigationManager NavigationManager
-@inject SharedService SharedService
-@inject CarrierService CarrierService
-@inject UserService UserService
-@rendermode InteractiveServer
-
-<PageTitle>Edit Renewal</PageTitle>
-<SfBreadcrumb>
-    <BreadcrumbItems>
-        <BreadcrumbItem Text="Renewals" Url="/Renewals" />
-        <BreadcrumbItem Text="Edit" />
-    </BreadcrumbItems>
-</SfBreadcrumb>
+@inject RenewalService RenewalService
+@inject StateService _stateService
 
 <_toolbar />
 
@@ -33,38 +20,49 @@
     @if (Renewal is null || Products is null || Carriers is null || Wholesalers is null || Users is null)
     {
         <p><em>Loading...</em></p>
+
+        <SfSpinner Visible="true"></SfSpinner>
     }
     else
     {
         <EditForm Model="Renewal" OnValidSubmit="UpdateRenewal">
             <DataAnnotationsValidator />
             <ValidationSummary />
-            <div class="mf-flex mf-flex-row mf-row-container">
+            <div class="mf-flex-row mf-row-container">
                 <div class="mf-item-lg">
-                    <div class="mb-3">
-                        <SfDatePicker TValue="DateTime" @bind-Value="Renewal.RenewalDate" Placeholder="Renewal Date" FloatLabelType="FloatLabelType.Always" />
-                        <ValidationMessage For="() => Renewal.RenewalDate" class="text-danger" />
+                    <div class="mf-flex-editpage">
+                        <div class="mf-item-half">
+                            <div class="mb-3 mf-item-space">
+                                <SfDatePicker TValue="DateTime" @bind-Value="Renewal.RenewalDate" Placeholder="Renewal Date" FloatLabelType="FloatLabelType.Always" />
+                                <ValidationMessage For="() => Renewal.RenewalDate" class="text-danger" />
+                            </div>
+                            <div class="mb-3" style="opacity:.5">
+                                <SfNumericTextBox TValue="decimal?" @bind-Value="Renewal.ExpiringPremium" Placeholder="Expiring Premium" FloatLabelType="FloatLabelType.Always" Format="C2" Readonly="true" />
+                                <ValidationMessage For="() => Renewal.ExpiringPremium" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="mf-item-half">
+                            <div class="mb-3 mf-item-space">
+                                <SfDropDownList TValue="string" TItem="ApplicationUser" DataSource="@Users" Placeholder="Assigned To" @bind-Value="Renewal.AssignedToId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="FirstName" Value="Id" />
+                                </SfDropDownList>
+                                <ValidationMessage For="() => Renewal.AssignedToId" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3" style="opacity:.5">
+                                <SfTextBox @bind-Value="Renewal.ExpiringPolicyNumber" Placeholder="Expiring Policy Number" FloatLabelType="FloatLabelType.Always" Readonly="true" />
+                                <ValidationMessage For="() => Renewal.ExpiringPolicyNumber" class="text-danger" />
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <SfTextBox @bind-Value="Renewal.ExpiringPolicyNumber" Placeholder="Expiring Policy Number" FloatLabelType="FloatLabelType.Always" />
-                        <ValidationMessage For="() => Renewal.ExpiringPolicyNumber" class="text-danger" />
-                    </div>
-                    <div class="mb-3">
-                        <SfNumericTextBox TValue="decimal?" @bind-Value="Renewal.ExpiringPremium" Placeholder="Expiring Premium" FloatLabelType="FloatLabelType.Always" Format="C2" />
-                        <ValidationMessage For="() => Renewal.ExpiringPremium" class="text-danger" />
-                    </div>
-                    <div class="mb-3">
-                        <SfTextBox @bind-Value="Renewal.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" />
-                        <ValidationMessage For="() => Renewal.Notes" class="text-danger" />
-                    </div>
-                </div>
-                <div class="mf-item-lg mf-pad-left">
-                    <div class="mb-3">
+                    <div class="mf-flex mf-flex-row mf-row-container">
                         <SfDropDownList TValue="int" TItem="Product" DataSource="@Products" Placeholder="Product" @bind-Value="Renewal.ProductId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
                             <DropDownListFieldSettings Text="LineName" Value="ProductId" />
                         </SfDropDownList>
                         <ValidationMessage For="() => Renewal.ProductId" class="text-danger" />
                     </div>
+                </div>
+                <div class="mf-item-lg mf-pad-left">
                     <div class="mb-3">
                         <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Carriers" Placeholder="Carrier" @bind-Value="Renewal.CarrierId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
                             <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
@@ -76,16 +74,6 @@
                             <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
                         </SfDropDownList>
                         <ValidationMessage For="() => Renewal.WholesalerId" class="text-danger" />
-                    </div>
-                    <div class="mb-3">
-                        <SfDropDownList TValue="string" TItem="ApplicationUser" DataSource="@Users" Placeholder="Assigned To" @bind-Value="Renewal.AssignedToId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
-                            <DropDownListFieldSettings Text="FirstName" Value="Id" />
-                        </SfDropDownList>
-                        <ValidationMessage For="() => Renewal.AssignedToId" class="text-danger" />
-                    </div>
-                    <div class="mb-3">
-                        <SfNumericTextBox TValue="int?" @bind-Value="Renewal.PolicyId" Placeholder="PolicyId" FloatLabelType="FloatLabelType.Always" />
-                        <ValidationMessage For="() => Renewal.PolicyId" class="text-danger" />
                     </div>
                 </div>
             </div>
@@ -108,77 +96,21 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Renewal = await DbContext.Renewals
-            .Include(r => r.Product)
-            .Include(r => r.Carrier)
-            .Include(r => r.Wholesaler)
-            .Include(r => r.AssignedTo)
-            .FirstOrDefaultAsync(m => m.RenewalId == RenewalId);
-
-        if (Renewal is null)
-        {
-            NavigationManager.NavigateTo("notfound");
-            return;
-        }
-
-        Products = await SharedService.GetAllProductsAsync();
-        Carriers = await CarrierService.GetAllCarriersAsync();
-        Wholesalers = await CarrierService.GetAllWholesalersAsync();
-        Users = await UserService.GetAllUsersAsync();
-
-        if (Renewal.Product != null)
-        {
-            Renewal.ProductId = Renewal.Product.ProductId;
-        }
-        if (Renewal.Carrier != null)
-        {
-            Renewal.CarrierId = Renewal.Carrier.CarrierId;
-        }
-        if (Renewal.Wholesaler != null)
-        {
-            Renewal.WholesalerId = Renewal.Wholesaler.CarrierId;
-        }
-        if (Renewal.AssignedTo != null)
-        {
-            Renewal.AssignedToId = Renewal.AssignedTo.Id;
-        }
-
+        Renewal = await RenewalService.GetRenewalByIdTrackAsync(RenewalId);
+        Products = await _stateService.AllProducts;
+        Carriers = await _stateService.AllCarriers;
+        Wholesalers = await _stateService.AllWholesalers;
+        Users = await _stateService.AllUsers;
     }
 
     private async Task UpdateRenewal()
     {
-        Renewal.Product = Products.FirstOrDefault(p => p.ProductId == Renewal.ProductId);
-        Renewal.Carrier = Carriers.FirstOrDefault(c => c.CarrierId == Renewal.CarrierId);
-        Renewal.Wholesaler = Wholesalers.FirstOrDefault(w => w.CarrierId == Renewal.WholesalerId);
-        Renewal.AssignedTo = Users.FirstOrDefault(u => u.Id == Renewal.AssignedToId);
-
-        DbContext.Attach(Renewal!).State = EntityState.Modified;
-
-        try
-        {
-            await DbContext.SaveChangesAsync();
-            NavigationManager.NavigateTo($"/Renewals?&month={Renewal.RenewalDate.Month}&year={Renewal.RenewalDate.Year}&user=Everyone&renewalId={RenewalId}&currentView=selected");
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!RenewalExists(Renewal!.RenewalId))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
-        }
-    }
-
-    private bool RenewalExists(int renewalId)
-    {
-        return DbContext.Renewals.Any(e => e.RenewalId == renewalId);
+        await RenewalService.UpdateRenewalAsync(Renewal);
+        Navigation.NavigateTo($"/Renewals/Details/{Renewal.RenewalId}");
     }
 
     public void GoBack()
     {
-        NavigationManager.NavigateTo($"/Renewals?&month={Renewal.RenewalDate.Month}&year={Renewal.RenewalDate.Year}&user=Everyone&renewalId={RenewalId}&currentView=selected");
+        NavigationManager.NavigateTo($"/Renewals/Details/{RenewalId}");
     }
 }

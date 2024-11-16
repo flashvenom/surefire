@@ -70,6 +70,7 @@ builder.Services.AddScoped<SearchService>();
 builder.Services.AddScoped<SharedService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<StateService>();
 builder.Services.AddHttpContextAccessor();
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                       .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)

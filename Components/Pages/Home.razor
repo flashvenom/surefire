@@ -25,6 +25,8 @@
         <div class="left-column">
             <div class="left-column__pad">
                 <RenewalTasks tabTitle="Renewal Task Items" tasks="@tasks" isLoading="isLoading" />
+                <div style="height:25px;"></div>
+                <RenewalTasks tabTitle="My Sub Task Items" tasks="@subtasks" bgColor="darkpurple" isLoading="isLoading" />
             </div>
         </div>
         <div class="right-column">
@@ -57,6 +59,7 @@
 
 @code {
     private List<HomePageTasksViewModel> tasks;
+    private List<HomePageTasksViewModel> subtasks;
     private List<HomePageTasksViewModel> incompleteTasks;
     private List<DailyTask> dailyTasks;
     private List<DailyTask> dailyTasksCompleted;
@@ -65,16 +68,27 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var tasksTask = HomeService.GetHomePageTasksAsync();
+        var subtasksTask = HomeService.GetHomePageSubTasksAsync();
         var dailyTasksTask = HomeService.GetDailyTasksAsync();
         var dailyTasksCompletedTask = HomeService.GetDailyCompletedTasksAsync();
         var incompleteTasksTask = HomeService.GetIncompleteTasksForCurrentUserAsync();
         var upcomingRenewalsTask = HomeService.GetUpcomingRenewalsAsync();
 
-        await Task.WhenAll(dailyTasksTask, dailyTasksCompletedTask, incompleteTasksTask, upcomingRenewalsTask);
+        await Task.WhenAll(tasksTask, subtasksTask, dailyTasksTask, dailyTasksCompletedTask, incompleteTasksTask, upcomingRenewalsTask);
 
+        tasks = await tasksTask;
+        subtasks = await subtasksTask;
         dailyTasks = await dailyTasksTask;
         dailyTasksCompleted = await dailyTasksCompletedTask;
         incompleteTasks = await incompleteTasksTask;
         upcomingRenewals = await upcomingRenewalsTask;
+
+        if (dailyTasksCompleted == null)
+        {
+            dailyTasksCompleted = new List<DailyTask>();
+        }
+        isLoading = false;
+        StateHasChanged();
     }
 }

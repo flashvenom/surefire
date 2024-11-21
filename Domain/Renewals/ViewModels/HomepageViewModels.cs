@@ -13,6 +13,7 @@ namespace Mantis.Domain.Renewals.ViewModels
         public string TaskNote { get; set; }
         public DateTime? GoalDate { get; set; }
         public string PolicyProduct { get; set; }
+        public string? PolicyNumber { get; set; }
         public DateTime RenewalDate { get; set; }
         public string Priority { get; set; }
     }

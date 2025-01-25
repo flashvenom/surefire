@@ -505,7 +505,7 @@
                 tarsnferamount = Settlement.AccountingPaidToCarrierAmount?.ToString("F2") ?? "",
                 rbfamount = Settlement.SettlementItems.FirstOrDefault(i => i.ItemCode == SettlmentItemCode.RBF)?.Amount?.ToString("F2") ?? "",
                 rbfcode = "RBF",
-                rbfdesc = "Metro Retail Broker Fee",
+                rbfdesc = "Retail Broker Fee",
                 checkeddinance = checkedFinance,
                 checkagencybill = checkedAgencyBill,
                 checkdirectbill = checkedDirectBill,

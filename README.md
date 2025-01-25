@@ -9,6 +9,8 @@ https://youtu.be/4MuP97-Afqo
 **Demo App**
 [Available Soon to Download Here](https://surefireams.com/)
 
+![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
+
 ## Features
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
 - Bring all your APIs together to track payments, phone calls, leads, signed documents, forms and more

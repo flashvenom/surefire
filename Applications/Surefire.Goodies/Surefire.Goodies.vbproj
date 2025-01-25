@@ -58,12 +58,12 @@
     <None Include="Photoshop\banner-homepage.psd" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="WordMacros\CleanAcordXML.bas" />
-    <Compile Include="WordMacros\Clipboard.bas" />
-    <Compile Include="WordMacros\SendAsEmail.bas" />
-    <Compile Include="WordMacros\UpdateProposal.bas" />
-    <Compile Include="WordMacros\UpdateProposal.cls" />
-    <Compile Include="WordMacros\WrapXML.bas" />
+    <Compile Remove="WordMacros\CleanAcordXML.bas" />
+    <Compile Remove="WordMacros\Clipboard.bas" />
+    <Compile Remove="WordMacros\SendAsEmail.bas" />
+    <Compile Remove="WordMacros\UpdateProposal.bas" />
+    <Compile Remove="WordMacros\UpdateProposal.cls" />
+    <Compile Remove="WordMacros\WrapXML.bas" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />

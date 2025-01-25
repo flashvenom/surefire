@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Surefire", "Surefire\Surefire.csproj", "{6C9F7FD0-469D-4B43-9FFB-4F29D2D7617B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{2A0E3944-BB6A-4FFE-8088-9699E502C2F6}"
+	ProjectSection(SolutionItems) = preProject
+		Plugins\Instructions.txt = Plugins\Instructions.txt
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppliedEpic", "Plugins\AppliedEpicCRM\AppliedEpic.csproj", "{BC154E37-A3EE-41BB-82FE-98AB9D21885D}"
 EndProject
@@ -21,7 +24,32 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Surefire.Call", "Applicatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Surefire.Desktop", "Applications\Surefire.Desktop\Surefire.Desktop.csproj", "{0FA5252D-E8DB-4BA6-9389-1AD7BC6957BA}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Surefire.Goodies", "Applications\Surefire.Goodies\Surefire.Goodies.vbproj", "{F0AC226A-9C57-4AE6-AB7B-8533E4EE4988}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Goodies", "Goodies", "{7A746BFD-D342-4F67-8ADC-F461ACF73EC1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Photoshop", "Photoshop", "{59A4B32B-4E22-416F-A337-0074CC48F2D5}"
+	ProjectSection(SolutionItems) = preProject
+		Goodies\Photoshop\banner-homepage.psd = Goodies\Photoshop\banner-homepage.psd
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WordMacros", "WordMacros", "{11F61D9C-6B9E-4358-A92D-7907AB6C2AD5}"
+	ProjectSection(SolutionItems) = preProject
+		Goodies\WordMacros\CleanAcordXML.bas = Goodies\WordMacros\CleanAcordXML.bas
+		Goodies\WordMacros\Clipboard.bas = Goodies\WordMacros\Clipboard.bas
+		Goodies\WordMacros\SendAsEmail.bas = Goodies\WordMacros\SendAsEmail.bas
+		Goodies\WordMacros\UpdateProposal.bas = Goodies\WordMacros\UpdateProposal.bas
+		Goodies\WordMacros\UpdateProposal.cls = Goodies\WordMacros\UpdateProposal.cls
+		Goodies\WordMacros\WrapXML.bas = Goodies\WordMacros\WrapXML.bas
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{0A69C4B1-1AC1-45F7-8F0C-5D2F1DAF17B7}"
+	ProjectSection(SolutionItems) = preProject
+		Goodies\Installer\Installer.iss = Goodies\Installer\Installer.iss
+		Goodies\Installer\Lic.rtf = Goodies\Installer\Lic.rtf
+		Goodies\Installer\sf-large.bmp = Goodies\Installer\sf-large.bmp
+		Goodies\Installer\sf-small.bmp = Goodies\Installer\sf-small.bmp
+		Goodies\Installer\surefireicon.ico = Goodies\Installer\surefireicon.ico
+		Goodies\Installer\Wel.rtf = Goodies\Installer\Wel.rtf
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,10 +80,6 @@ Global
 		{0FA5252D-E8DB-4BA6-9389-1AD7BC6957BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0FA5252D-E8DB-4BA6-9389-1AD7BC6957BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0FA5252D-E8DB-4BA6-9389-1AD7BC6957BA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F0AC226A-9C57-4AE6-AB7B-8533E4EE4988}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F0AC226A-9C57-4AE6-AB7B-8533E4EE4988}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F0AC226A-9C57-4AE6-AB7B-8533E4EE4988}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F0AC226A-9C57-4AE6-AB7B-8533E4EE4988}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,7 +91,9 @@ Global
 		{5A5B9286-22B3-47B5-B0DE-2B21D095BCD1} = {104A90E1-18F2-4B52-B97B-39AB8AAF2131}
 		{93C365D2-C4A4-45D9-9CEE-22A02E668C1E} = {104A90E1-18F2-4B52-B97B-39AB8AAF2131}
 		{0FA5252D-E8DB-4BA6-9389-1AD7BC6957BA} = {104A90E1-18F2-4B52-B97B-39AB8AAF2131}
-		{F0AC226A-9C57-4AE6-AB7B-8533E4EE4988} = {104A90E1-18F2-4B52-B97B-39AB8AAF2131}
+		{59A4B32B-4E22-416F-A337-0074CC48F2D5} = {7A746BFD-D342-4F67-8ADC-F461ACF73EC1}
+		{11F61D9C-6B9E-4358-A92D-7907AB6C2AD5} = {7A746BFD-D342-4F67-8ADC-F461ACF73EC1}
+		{0A69C4B1-1AC1-45F7-8F0C-5D2F1DAF17B7} = {7A746BFD-D342-4F67-8ADC-F461ACF73EC1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1DB27740-CCD5-4B49-8E91-2DF484708326}

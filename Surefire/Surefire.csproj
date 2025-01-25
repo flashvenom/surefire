@@ -173,7 +173,7 @@
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<!-- Remove all "Plugins" folders in subdirectories -->
-		<Exec Command="for /d %%d in (&quot;$(SolutionDir)Surefire\bin\Plugins\*&quot;) do if exist %%d\Plugins rmdir /s /q &quot;%%d\Plugins&quot;" />
+		<!--<Exec Command="for /d %%d in (&quot;$(SolutionDir)Surefire\bin\Plugins\*&quot;) do if exist %%d\Plugins rmdir /s /q &quot;%%d\Plugins&quot;" />-->
 
 		<!-- Copy Plugins to the Surefire\Plugins folder -->
 		<Exec Command="xcopy /E /Y &quot;$(SolutionDir)Surefire\bin\Plugins&quot; &quot;$(SolutionDir)Surefire\Plugins&quot;" />

@@ -3,7 +3,6 @@ using Surefire.Domain.Logs;
 using Surefire.Domain.Ember;
 using Surefire.Domain.OpenAI;
 using Surefire.Domain.Plugins;
-using Surefire.Domain.Shared.Models;
 using Surefire.Domain.Forms.Services;
 using Surefire.Domain.Users.Services;
 using Surefire.Domain.Shared.Services;
@@ -14,7 +13,6 @@ using Surefire.Domain.Policies.Services;
 using Surefire.Domain.Renewals.Services;
 using Surefire.Domain.Accounting.Services;
 using Surefire.Domain.Attachments.Services;
-using Surefire.Domain.Attachments.Models;
 using DotNetEnv;
 using Syncfusion.Blazor;
 using Surefire.Components;
@@ -22,17 +20,14 @@ using Surefire.Components.Account;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.FluentUI.AspNetCore.Components.Components.Tooltip;
-using NuGet.Configuration;
 
 
 // INITIAL VARIABLES -- -- -- -   -     -
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-//builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 Env.Load();
 bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedErrors:Enabled");
@@ -42,7 +37,8 @@ bool detailedErrorsEnabled = builder.Configuration.GetValue<bool>("DetailedError
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddDataGridEntityFrameworkAdapter();
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("[SYNCFUSIONKEY]");
+string syncFusionKey = Environment.GetEnvironmentVariable("SYNCFUSION");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(syncFusionKey);
 
 
 // IDEN AND AUTH -- -- -- -   -     -
@@ -51,8 +47,7 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-builder.Services.AddAuthentication(options =>
-{
+builder.Services.AddAuthentication(options => { 
     options.DefaultScheme = IdentityConstants.ApplicationScheme;
     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
 }).AddIdentityCookies();
@@ -78,10 +73,9 @@ else
 }
 
 
-
 // OPENAI -- -- -- -   -     -
 builder.Services.AddHttpClient<OpenAiService>();
-string openAiApiKey = Environment.GetEnvironmentVariable("OPENAI_KEY");
+string openAiApiKey = Environment.GetEnvironmentVariable("OPENAI") ?? "MISSING";
 builder.Configuration["OpenAi:ApiKey"] = openAiApiKey;
 
 
@@ -110,6 +104,7 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true).AddEnvironmentVariables();
 
+
 // PLUGINS -- -- -- -   -     -
 builder.Services.AddScoped<PluginManager>();
 #if DEBUG
@@ -121,20 +116,20 @@ var serviceProvider = builder.Services.BuildServiceProvider();
 var logger = serviceProvider.GetRequiredService<ILoggingService>();
 PluginLoader.LoadPlugins(builder.Services, pluginsPath, serviceProvider, logger);
 
+
 // ---------------------------------------------------//
 // App Configuration Protocols ---------------------- //
 // ---------------------------------------------------//
 var app = builder.Build();
-app.UseDeveloperExceptionPage();
-app.UseMigrationsEndPoint();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
 
-//Turn off for WenView2 Desktop runtime
-//app.UseHttpsRedirection();
-
+//app.UseHttpsRedirection(); //Turn off for WenView2 Desktop runtime
+app.UseDeveloperExceptionPage();
+app.UseMigrationsEndPoint();
 app.MapStaticAssets();
 app.UseStaticFiles();
 app.UseAntiforgery();
@@ -143,10 +138,9 @@ app.UseAuthorization();
 app.MapHub<NotificationHub>("/notificationHub");
 app.MapHub<EmberHub>("/emberHub");
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-//app.MapControllers();
 app.MapAdditionalIdentityEndpoints();
 
-// Seed data on application startup
+// Check if we need to configure and seed a local database
 if(databaseType == "SQLite")
 {
     using (var scope = app.Services.CreateScope())
@@ -156,8 +150,8 @@ if(databaseType == "SQLite")
         var dbContext = scopedServiceProvider.GetRequiredService<ApplicationDbContext>();
         try
         {
-            //dbContext.Database.Migrate(); // Applies any pending migrations
-            //SeedData(scopedServiceProvider);
+            dbContext.Database.Migrate(); // Applies any pending migrations
+            SeedInitialData.SeedData(scopedServiceProvider);
         }
         catch (Exception ex)
         {
@@ -168,69 +162,3 @@ if(databaseType == "SQLite")
 }
 
 app.Run();
-
-
-void SeedData(IServiceProvider serviceProvider)
-{
-    var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
-    // Check if the admin user exists
-    if (!userManager.Users.Any())
-    {
-        var adminUser = new ApplicationUser
-        {
-            UserName = "demo@surefire.com",
-            FirstName = "John",
-            LastName = "Smith",
-            Email = "demo@surefire.com",
-            PhoneNumber = "3103103103",
-            PictureUrl = "default.png",
-            EmailConfirmed = true
-        };
-
-        var result = userManager.CreateAsync(adminUser, "Password123!").Result;
-
-        var folders = new[]
-        {
-            new Folder
-            {
-                Name = "Policy",
-                Description = "For declarations pages and copies of policies"
-            },
-            new Folder
-            {
-                Name = "Endorsement",
-                Description = "For carrier endorsements and policy changes"
-            },
-            new Folder
-            {
-                Name = "Quote",
-                Description = "For quotes and documents from carriers regarding renewals and new business"
-            },
-            new Folder
-            {
-                Name = "Accounting",
-                Description = "Invoices and such"
-            },
-            new Folder
-            {
-                Name = "Application",
-                Description = "Apps and supps and supps and apps"
-            }
-        };
-
-        context.Folders.AddRange(folders);
-
-        var settings = new Surefire.Domain.Shared.Models.Settings();
-        settings.FileStore = FileStoreType.Local;
-        settings.DisablePlugins = false;
-        context.Settings.Add(settings);
-
-        context.SaveChanges();
-
-        if (!result.Succeeded)
-        {
-            throw new Exception("Failed to create the admin user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
-    }
-}

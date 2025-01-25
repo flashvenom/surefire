@@ -362,41 +362,18 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-# Fody - auto-generated XML schema
-FodyWeavers.xsd
-/wwwroot.zip
-/wwwroot/uploads/headshots/147-222-BorisVargas.jpg
-/wwwroot/uploads/headshots/19-WayneMiller.jpg
-/wwwroot/uploads/headshots/223-FredMartino.png
-/wwwroot/uploads/logos/44.png
-/certificate.crt
-/Surefire/certificate.crt
-/Ember/publish2
-/Surefire/wwwroot/uploads/clients/180
-/Surefire/wwwroot/uploads/temp
-/Surefire/wwwroot/uploads/clients/92
-/Surefire/wwwroot/uploads/policies/92
-/Surefire/.googleai.json
-/Surefire/wwwroot/forms/trash
-/Surefire/wwwroot/uploads/clients/211
-/EmberWin
-/Surefire/wwwroot/uploads/clients/7
-/Surefire/wwwroot/uploads/headshots/13-OliviaJackson.jpg
-/Surefire/wwwroot/uploads/headshots/221-DavidWayne.jpg
-/Surefire/wwwroot/uploads/headshots/222-JillStein.jpg
-/Surefire/wwwroot/uploads/headshots/223-KyleCombs.png
-/Surefire/wwwroot/uploads/headshots/224-JackDyson.png
-/Surefire/wwwroot/uploads/headshots/7-SophiaAnderson.jpg
-/Surefire/wwwroot/uploads/logos/7.png
-/Surefire/wwwroot/uploads/logos/carrier/150.png
-/Surefire/wwwroot/uploads/headshots
-/Surefire/wwwroot/uploads/logos
+# Surefire Stuff
+/Build/*
+/Surefire/Plugins/AppliedEpicCRM/*
+/Surefire/Plugins/ePayPolicy/*
+/Surefire/Plugins/RingCentral/*
+/Surefire/wwwroot/uploads/clients/*
+/Surefire/wwwroot/uploads/temp/*
+/Surefire/wwwroot/uploads/policies/*
+/Surefire/wwwroot/uploads/headshots/*
+/Surefire/wwwroot/uploads/logos/*
 /Surefire/Plugins/flashvenom.AppliedEpic/net9.0
 /Surefire/Plugins/flashvenom.RingCentral/net9.0
-/Surefire/wwwroot/uploads/clients/15
-/Surefire/wwwroot/uploads/clients/189
-/Surefire/wwwroot/uploads/clients/178
-/Build/Web
-/Surefire/Plugins
-/Build/Desktop
-/Build/Installer
+/Plugins/*
+
+# Fody - auto-generated XML schema

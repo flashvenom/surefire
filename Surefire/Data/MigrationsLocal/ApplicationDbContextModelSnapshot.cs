@@ -7,7 +7,7 @@ using Surefire.Data;
 
 #nullable disable
 
-namespace Surefire.MigrationsLocal
+namespace Surefire.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot

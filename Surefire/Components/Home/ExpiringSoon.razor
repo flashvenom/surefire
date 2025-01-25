@@ -1,0 +1,50 @@
+﻿@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Policies.Services
+@using Syncfusion.Blazor.Notifications
+
+
+<div class="homemodule-small-header">Expiring This Week</div>
+<div class="homemodule-small-container">
+    <table id="upcomingrenewals-table" cellspacing="0">
+        <tbody>
+            @if (upcomingRenewals == null || isLoading)
+            {
+                for (var i = 0; i < 7; i++)
+                {
+                    <tr>
+                        <td><SfSkeleton Shape=SkeletonType.Rectangle Width="100%" Height="15px" CssClass="e-customize" Visible="true"></SfSkeleton></td>
+                    </tr>
+                }
+            }
+            else if (!upcomingRenewals.Any())
+            {
+                <tr>
+                    <td><div class="nothingfound">Nothing found here.</div></td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var policy in upcomingRenewals)
+                {
+                    <tr class="trow2">
+                        <td class="intd"><span class="prodmeme">@StringHelper.GetSafeSubstring(policy.Product?.LineCode, 0, 3)</span><span class="hexp2">@policy.ExpirationDate.ToString("MM/dd")</span></td>
+                        <td class="ttname2"><a class="rentask-link ellipsis" @onclick="() => HandleRenewalClick(policy.ClientId)">@policy.Client?.Name</a></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public List<Policy> upcomingRenewals { get; set; } = new List<Policy>();
+
+    [Parameter]
+    public bool isLoading { get; set; }
+
+    private void HandleRenewalClick(int clientId)
+    {
+        Navigation.NavigateTo($"/Clients/{clientId}");
+    }
+}

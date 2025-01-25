@@ -1,0 +1,74 @@
+﻿.top-rowone {
+    width: 100%;
+    height: 50px;
+    overflow: hidden;
+}
+.client-name {
+    font-weight: 800;
+    font-style: normal;
+    font-size: 2.5em;
+    position: relative;
+    top: 9px;
+}
+
+.client-phone {
+    float: right;
+}
+
+.client-phonenumber {
+    font-weight: 300;
+    font-style: normal;
+    font-size: 2.5em;
+    position: relative;
+    top: -10px;
+    left: -5px;
+    color: #8d8d8d;
+}
+
+.phone-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+    filter: grayscale(100%);
+}
+
+    .phone-icon:hover {
+        color: #0f6cbd;
+        filter: grayscale(0%);
+    }
+
+.email-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+}
+
+.map-icon {
+    position: relative;
+    top: 2px;
+    color: #8d8d8d;
+}
+.client-data {
+    font-weight: 300;
+    position: relative;
+    left: -4px;
+    top:-4px;
+    font-style: normal;
+    font-size: 1.125em;
+    margin-right: 25px;
+    text-decoration: none;
+    color: #1e1e1e;
+}
+
+    .client-data:hover {
+        color: #0f6cbd;
+        cursor: pointer;
+    }
+
+.data-icon {
+    position: relative;
+    top: -1px;
+    left:-1px;
+    color: #8d8d8d;
+}
+

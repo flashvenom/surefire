@@ -1,0 +1,63 @@
+﻿.sf-calltable {
+    line-height:10px;
+    border-collapse:collapse;
+
+}
+    .sf-calltable td {
+        text-align: left;
+        padding: 5px 0px;
+        padding: 5px 0px;
+    }
+
+.phone-icon {
+    position:relative;
+    top:0px;
+    left:5px;
+}
+.phone-icon-cell {
+    width: 40px;
+}
+.phone-longago {
+    font-size: .8em;
+    position: relative;
+    top: -3px;
+    left: 10px;
+    color: #808080;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.phonetxt {
+    font-size: .8em;
+    position: relative;
+    top: -3px;
+    left: 10px;
+    color: #808080;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.phone-lognum-out {
+    font-size: 1.8em;
+    font-weight: 100;
+    color: #d44942;
+    min-width: 155px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.phone-lognum-in {
+    font-size: 1.8em;
+    font-weight: 300;
+    color: #0f6cbd;
+    min-width: 155px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.phone-none {
+    font-size:1em;
+    color:#b7b7b7;
+    position:relative;
+    top:-8px;
+}

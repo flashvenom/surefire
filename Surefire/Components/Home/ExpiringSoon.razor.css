@@ -1,0 +1,82 @@
+﻿.homemodule-small-header {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.3em;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#3d3d3d+1,6755c3+100 */
+    background: linear-gradient(to right, #3d3d3d 1%,#1f1e60 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    color: #dcdcdc;
+    text-align: center;
+}
+.homemodule-small-container {
+    background-color: #ffffff76;
+}
+.intd {
+    width: 75px;
+}
+.rentask-link {
+    text-decoration:none;
+}
+.rentask-link:hover {
+    cursor:pointer;
+}
+.prodmeme {
+    background-color: #3d3d3d;
+    color: #fff;
+    padding-left: 3px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 3px;
+    font-size: .9em;
+    font-weight: bold;
+    min-width: 90px;
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
+    letter-spacing: 1.5px;
+}
+tr .trow2 {
+    display: block;
+    margin-top: 0px !important;
+    padding: 0px;
+}
+
+.trow2 td {
+    padding: 0px;
+}
+#upcomingrenewals-table {
+    padding-top: 10px;
+    text-align: left;
+    min-width: 250px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-right: 5px solid #1f1e60;
+}
+.hexp2 {
+    background-color: #ffffffa7;
+    color: #424242;
+    padding-left: 3px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    font-size: .9em;
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
+}
+
+
+
+.dailytask-box {
+    border: 1px solid #5e5e5e;
+}
+.ttname2 {
+    font-size: .75em;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

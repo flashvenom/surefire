@@ -1,0 +1,184 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>Surefire</RootNamespace>
+		<UserSecretsId>aspnet-Mantis-4d25c3cf-6f2d-47fa-a359-982211831511</UserSecretsId>
+		<ApplicationIcon>wwwroot\favicon.ico</ApplicationIcon>
+		<PublishTrimmed>False</PublishTrimmed>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="bin\**" />
+	  <Compile Remove="Plugins\AppliedEpic\**" />
+	  <Compile Remove="Plugins\ePayPolicy\**" />
+	  <Compile Remove="Plugins\RingCentral\**" />
+	  <Compile Remove="wwwroot\psd\**" />
+	  <Compile Remove="wwwroot\uploads\policies\1823\**" />
+	  <Compile Remove="wwwroot\uploads\policies\1843\**" />
+	  <Compile Remove="wwwroot\vbscript\**" />
+	  <Content Remove="bin\**" />
+	  <Content Remove="Plugins\AppliedEpic\**" />
+	  <Content Remove="Plugins\ePayPolicy\**" />
+	  <Content Remove="Plugins\RingCentral\**" />
+	  <Content Remove="wwwroot\psd\**" />
+	  <Content Remove="wwwroot\uploads\policies\1823\**" />
+	  <Content Remove="wwwroot\uploads\policies\1843\**" />
+	  <Content Remove="wwwroot\vbscript\**" />
+	  <EmbeddedResource Remove="bin\**" />
+	  <EmbeddedResource Remove="Plugins\AppliedEpic\**" />
+	  <EmbeddedResource Remove="Plugins\ePayPolicy\**" />
+	  <EmbeddedResource Remove="Plugins\RingCentral\**" />
+	  <EmbeddedResource Remove="wwwroot\psd\**" />
+	  <EmbeddedResource Remove="wwwroot\uploads\policies\1823\**" />
+	  <EmbeddedResource Remove="wwwroot\uploads\policies\1843\**" />
+	  <EmbeddedResource Remove="wwwroot\vbscript\**" />
+	  <None Remove="bin\**" />
+	  <None Remove="Plugins\AppliedEpic\**" />
+	  <None Remove="Plugins\ePayPolicy\**" />
+	  <None Remove="Plugins\RingCentral\**" />
+	  <None Remove="wwwroot\psd\**" />
+	  <None Remove="wwwroot\uploads\policies\1823\**" />
+	  <None Remove="wwwroot\uploads\policies\1843\**" />
+	  <None Remove="wwwroot\vbscript\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Domain\Users\Services\IdentityRedirectManager.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Remove="wwwroot\schemas\extractor_context.xlsx" />
+	  <Content Remove="wwwroot\schemas\extractor_mergedExample.xml" />
+	  <Content Remove="wwwroot\schemas\extractor_xpaths.txt" />
+	  <Content Remove="wwwroot\uploads\headshots\1-NathanSmith.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\147-222-BorisVargas.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\17-FaithTatro.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\19-WayneMiller.jpeg" />
+	  <Content Remove="wwwroot\uploads\headshots\19-WayneMiller.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\219-JillSmith.png" />
+	  <Content Remove="wwwroot\uploads\headshots\220-DillionPacinao.png" />
+	  <Content Remove="wwwroot\uploads\headshots\220-NathanSmith.png" />
+	  <Content Remove="wwwroot\uploads\headshots\222-BorisVargas.jpeg" />
+	  <Content Remove="wwwroot\uploads\headshots\223-FredMartino.png" />
+	  <Content Remove="wwwroot\uploads\headshots\224-SusanPrichard.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\227-BrianStreuter.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\249-JesseRuiz.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\250-HenryChou.jpg" />
+	  <Content Remove="wwwroot\uploads\headshots\40-SarahThomas.png" />
+	  <Content Remove="wwwroot\uploads\headshots\46-JenniferRigby.jpg" />
+	  <Content Remove="wwwroot\uploads\logos\17.jpg" />
+	  <Content Remove="wwwroot\uploads\logos\172.png" />
+	  <Content Remove="wwwroot\uploads\logos\175.png" />
+	  <Content Remove="wwwroot\uploads\logos\18.png" />
+	  <Content Remove="wwwroot\uploads\logos\211.jpg" />
+	  <Content Remove="wwwroot\uploads\logos\40.jpg" />
+	  <Content Remove="wwwroot\uploads\logos\44.png" />
+	  <Content Remove="wwwroot\uploads\logos\83.png" />
+	  <Content Remove="wwwroot\uploads\logos\carrier\1164.png" />
+	  <Content Remove="wwwroot\uploads\logos\carrier\144.png" />
+	  <Content Remove="wwwroot\uploads\logos\carrier\17.jpg" />
+	  <Content Remove="wwwroot\uploads\SAMPLE-GL-AI-WITH-PNC.pdf" />
+	  <Content Remove="wwwroot\uploads\SAMPLE-GL-AIPACKET.pdf" />
+	  <Content Remove="wwwroot\uploads\SAMPLE-GL-WOS.pdf" />
+	  <Content Remove="wwwroot\uploads\SCIF-WOS-ENDT.pdf" />
+	  <Content Remove="wwwroot\uploads\temp\166.json" />
+	  <Content Remove="wwwroot\uploads\temp\173.json" />
+	  <Content Remove="wwwroot\uploads\temp\174.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="DotNetEnv" Version="3.1.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.10.4" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.DataGrid.EntityFrameworkAdapter" Version="4.10.4" />
+		<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.10.4" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="OpenAI" Version="2.0.0" />
+		<PackageReference Include="RingCentral.Net" Version="6.2.6" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+		<PackageReference Include="Syncfusion.Blazor.Calendars" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.DropDowns" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.Grid" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.InPlaceEditor" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.ProgressBar" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.RichTextEditor" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.SfPdfViewer" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.Spinner" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.SplitButtons" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Blazor.Themes" Version="26.2.9" />
+		<PackageReference Include="Syncfusion.Pdf.Net.Core" Version="27.1.56" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
+		<PackageReference Include="System.Drawing.Common" Version="9.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Plugins\" />
+		<Folder Include="wwwroot\img\misc\" />
+		<Folder Include="wwwroot\uploads\clients\" />
+		<Folder Include="wwwroot\uploads\headshots\" />
+		<Folder Include="wwwroot\uploads\logos\carrier\" />
+		<Folder Include="wwwroot\uploads\policies\" />
+		<Folder Include="wwwroot\uploads\temp\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Properties\Resources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="Components\RootComponent.razor">
+		  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
+		<Content Update="Components\Profile\SystemTracking.razor">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
+		<Content Update="Components\Renewals\Renewals.razor">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
+		<Content Update="Domain\Policies\Components\PolicyList.razor">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Properties\Resources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+	
+	<!--<Target Name="PreBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="xcopy /E /Y &quot;$(SolutionDir)Surefire\bin\Plugins&quot; &quot;$(SolutionDir)Surefire\Plugins&quot;&#xD;&#xA;" />
+	</Target>-->
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<!-- Remove all "Plugins" folders in subdirectories -->
+		<Exec Command="for /d %%d in (&quot;$(SolutionDir)Surefire\bin\Plugins\*&quot;) do if exist %%d\Plugins rmdir /s /q &quot;%%d\Plugins&quot;" />
+
+		<!-- Copy Plugins to the Surefire\Plugins folder -->
+		<Exec Command="xcopy /E /Y &quot;$(SolutionDir)Surefire\bin\Plugins&quot; &quot;$(SolutionDir)Surefire\Plugins&quot;" />
+
+		<!-- Copy Debug output to the Build\Web folder -->
+		<!--<Exec Command="xcopy /E /Y &quot;$(SolutionDir)Surefire\bin\Debug\net9.0&quot; &quot;$(SolutionDir)Build\Web&quot;" />-->
+	</Target>
+</Project>

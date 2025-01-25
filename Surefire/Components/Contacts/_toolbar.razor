@@ -1,0 +1,42 @@
+﻿@using Surefire.Domain.Contacts.Models
+
+<div class="page-toolbar">
+    <FluentButton Appearance="Appearance.Accent" OnClick="NavigateToContactCreate"><FluentIcon Value="@(new Icons.Regular.Size20.Add())" Color="Color.Custom" CustomColor="#fff" Slot="start" /> New Contact</FluentButton>
+
+    @if (ContactId != 0)
+    {
+        <span class="sf-verthr2"></span>
+
+        <NavLink class="toolbar-link" href="@("Contacts/Edit/" + ContactId)">
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit @ContactName</span>
+        </NavLink>
+    }
+
+    @if (ShowSmartPaste)
+    {
+        <span class="sf-verthr2"></span>
+
+        <NavLink href="javascript:void(0);" @onclick="DoShowSmartPaste" class="toolbar-link">
+            <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardPulse())" />
+            <span class="toolbar-text">SmartPaste</span>
+        </NavLink>
+    }
+</div>
+
+@code {
+    [Parameter] public int ContactId { get; set; }
+    [Parameter] public string ContactName { get; set; } = "";
+    [Parameter] public bool ShowSmartPaste { get; set; }
+    [Parameter] public EventCallback OnShowSmartPaste { get; set; }
+
+    private async Task DoShowSmartPaste()
+    {
+        await OnShowSmartPaste.InvokeAsync();
+    }
+
+    private void NavigateToContactCreate()
+    {
+        Navigation.NavigateTo("/Contacts/Create");
+    }
+}

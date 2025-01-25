@@ -1,0 +1,104 @@
+﻿@namespace Surefire.Domain.Attachments.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Surefire.Domain.Attachments.Services
+@using Surefire.Domain.Attachments.Models
+@using Surefire.Domain.Shared.Helpers
+@using Surefire.Domain.Ember
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@inject EmberService EmberService
+@inject AttachmentService AttachmentService
+@inject NavigationManager NavigationManager
+
+<div class="btn-bar">
+    <div class="attach-buttons">
+        <a @onclick="OpenFileWithWindows" class="btndiv"><img src="/img/btn-view.jpg" class="img-fluid" /></a>
+        <a href="http://bizname-web/@(attachment?.LocalPath)" target="_blank" class="btndiv"><img src="/img/btn-document.jpg" class="img-fluid" /></a>
+        <a @onclick="OpenFolder" class="btndiv"><img src="/img/btn-folder.jpg" class="img-fluid" /></a>
+        <div class="btndiv"><img src="/img/btn-edit.jpg" class="img-fluid" /></div>
+        <div class="btndiv"><img src="/img/btn-download.jpg" class="img-fluid" /></div>
+        <div class="btndiv"><img src="/img/btn-share.jpg" class="img-fluid" /></div>
+    </div>
+</div>
+@if (attachment != null)
+{
+    <div class="preview-container">
+        <div class="attachment-description">@attachment.Description</div>
+        <div class="attachment-filename">@attachment.OriginalFileName</div>
+       @*  <FluentButton Appearance="Appearance.Outline" Title="View Document" OnClick="OpenFileWithWindows"><FluentIcon Value="@(new Icons.Regular.Size28.Document())" Slot="start" />Open</FluentButton>
+        <a href="http://bizname-web/@(attachment?.LocalPath)" target="_blank"><FluentButton Appearance="Appearance.Outline" Title="Preview"><FluentIcon Value="@(new Icons.Regular.Size28.Link())" Slot="start" />Preview</FluentButton></a>
+        <FluentButton Appearance="Appearance.Outline" Title="Open Folder" OnClick="OpenFolder"><FluentIcon Value="@(new Icons.Regular.Size28.Folder())" Slot="start" />Folder</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" Title="Edit"><FluentIcon Value="@(new Icons.Regular.Size28.Edit())" Slot="start" />Edit</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" Title="Delete"><FluentIcon Value="@(new Icons.Regular.Size28.Delete())" Slot="start" />Delete</FluentButton> *@
+
+        <div class="preview-space">
+            @if (attachment.FileFormat.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="attachment-image"><img src="@($"/{attachment.LocalPath}/{Path.ChangeExtension(attachment.HashedFileName, null)}_thumb.jpg")" class="img-fluid" /></div>
+            }
+        </div>
+        <div class="attachment-details">
+            <p><strong>Filepath:</strong> @attachment.LocalPath</p>
+            <p><strong>File Type:</strong> @attachment.FileFormat</p>
+            <p><strong>Date Created:</strong> @attachment.DateCreated.ToString("MM/dd/yyyy")</p>
+            <p><strong>Created By:</strong> @attachment.UploadedBy?.FirstName</p>
+
+            @if (attachment.Policy != null)
+            {
+                <h3>Policy Details</h3>
+                <p><strong>Product Line:</strong> @attachment.Policy?.Product?.LineNickname</p>
+                <p><strong>Carrier:</strong> @attachment.Policy?.Carrier</p>
+                <p><strong>Wholesaler:</strong> @attachment.Policy?.Wholesaler</p>
+                <p><strong>Policy Number:</strong> <a href="/Policies/Details/@attachment.Policy?.PolicyId">@attachment.Policy?.PolicyNumber</a></p>
+                
+            }
+        </div>
+    </div>
+}
+else
+{
+    <p>No attachment selected</p>
+}
+
+@code {
+    [Parameter] public int? attachmentId { get; set; }
+    private Attachment attachment;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (attachmentId.HasValue)
+        {
+            attachment = await AttachmentService.GetAttachmentByIdAsync(attachmentId.Value);
+        }
+    }
+    private async Task OpenFolder()
+    {
+        Console.WriteLine("OPening folder..." + attachment?.LocalPath);
+        if (!string.IsNullOrEmpty(attachment?.LocalPath))
+        {
+            Console.WriteLine("sss...");
+            string cleanFolder = $"\\\\bizname-web\\{attachment?.LocalPath.Replace(attachment.HashedFileName, "")}";
+            //await EmberService.OpenFolder(cleanFolder);
+        }
+    }
+    private async Task OpenFileWithWindows()
+    {
+        Console.WriteLine("OPening with windows...");
+        if (!string.IsNullOrEmpty(attachment?.LocalPath))
+        {
+            string cleanFolder = $"\\\\bizname-web\\{attachment?.LocalPath}";
+           //await EmberService.OpenFolder(cleanFolder);
+        }
+    }
+    private async Task PreviewFileInBrowser()
+    {
+        if (!string.IsNullOrEmpty(attachment?.LocalPath))
+        {
+            NavigationManager.NavigateTo($"https://bizname-web/{attachment?.LocalPath}");
+        }
+    }
+}

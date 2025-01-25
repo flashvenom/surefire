@@ -1,0 +1,147 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using Surefire.Domain.Shared.Helpers
+@using Surefire.Domain.Ember
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject StateService StateService
+@inject EmberService EmberService 
+
+
+@if (!string.IsNullOrEmpty(Value))
+{
+    @if (Type == ClickType.String)
+    {
+        <span class="@CssClass" @onclick="HandleClick">@Value</span>
+    }
+    else
+    {
+        <a href="#" class="@CssClass" @onclick="HandleClick" @onclick:preventDefault="true">@Value</a>
+    }
+}
+else
+{
+    <span class="@CssClass">[No content provided]</span>
+}
+
+@code {
+    [Parameter]
+    public ClickType Type { get; set; }
+
+    [Parameter]
+    public string Value { get; set; }
+
+    [Parameter]
+    public string Class { get; set; }
+
+    [Parameter]
+    public int EntityId { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    private bool isCopied = false;
+
+    private string CssClass => $"{Class} {(isCopied ? "copied" : "")}";
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        string actionValue = Value;
+        string displayContent = ChildContent != null ? ChildContent.ToString() : Value;
+
+        if (string.IsNullOrEmpty(actionValue))
+        {
+            throw new InvalidOperationException("The 'Value' parameter must be set when 'ChildContent' is used.");
+        }
+
+        if (e.CtrlKey && e.ShiftKey)
+        {
+            await HandleCtrlShiftClick();
+            return;
+        }
+        else if (e.CtrlKey || Type == ClickType.String)
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", actionValue);
+            StateService.UpdateStatus($"Copied to clipboard: '{actionValue}'");
+
+            isCopied = true;
+            StateHasChanged();
+
+            await Task.Delay(500);
+
+            isCopied = false;
+            StateHasChanged();
+        }
+        else
+        {
+            switch (Type)
+            {
+                case ClickType.Email:
+                    Navigation.NavigateTo($"mailto:{actionValue}", forceLoad: true);
+                    break;
+                case ClickType.Phone:
+                    Navigation.NavigateTo($"tel:{StringHelper.CleanPhoneNumber(actionValue)}", forceLoad: true);
+                    break;
+                case ClickType.Url:
+                    if (!actionValue.StartsWith("http://") && !actionValue.StartsWith("https://"))
+                    {
+                        actionValue = $"http://{actionValue}";
+                    }
+                    await JS.InvokeVoidAsync("window.open", actionValue, "_blank");
+                    break;
+                case ClickType.StreetAddress:
+                    string mapsUrl = $"https://www.google.com/maps/search/?api=1&query={Uri.EscapeDataString(actionValue)}";
+                    await JS.InvokeVoidAsync("window.open", mapsUrl, "_blank");
+                    break;
+                case ClickType.PolicyNumber:
+                    Navigation.NavigateTo($"/Policies/Details/{EntityId}");
+                    break;
+            }
+        }
+    }
+
+    // Outlook Interop methods
+    private async Task OutlookSearchForThisPolicy(string policyNumber)
+    {
+        var policySearchList = StringHelper.GeneratePolicyVariations(policyNumber);
+        await EmberService.RunEmberFunction("OutlookSearch_Policy", policySearchList);
+    }
+
+    private async Task OutlookSearchBroad()
+    {
+        List<string> emailAddresses = new List<string> { Value };
+        await EmberService.RunEmberFunction("OutlookSearch_EmailBroad", emailAddresses);
+    }
+    private async Task HandleCtrlShiftClick()
+    {
+        switch (Type)
+        {
+            case ClickType.Email:
+                await OutlookSearchBroad();
+                break;
+            case ClickType.String:
+                await OutlookSearchForThisPolicy(Value);
+                break;
+            case ClickType.Phone:
+                await OutlookSearchForThisPolicy(Value);
+                break;
+            case ClickType.Url:
+                // Do nothing
+                break;
+            case ClickType.StreetAddress:
+                // Do nothing
+                break;
+        }
+    }
+
+    public enum ClickType
+    {
+        Email,
+        Phone,
+        Url,
+        String,
+        StreetAddress,
+        PolicyNumber
+    }
+}

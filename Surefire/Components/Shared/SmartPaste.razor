@@ -1,0 +1,55 @@
+﻿@using Surefire.Domain.OpenAI
+@using Surefire.Domain.Shared.Services
+@inject OpenAiService OpenAiService
+
+<FluentDialog Hidden="@dialogHidden" Id="smartPasteDialog" @ref="dialog">
+    <div>
+        <h3>Paste the Text Here</h3>
+        <FluentTextArea @bind-Value="textBlockContent" style="width: 100%;" Placeholder="Paste the text here" />
+    </div>
+    <FluentDialogFooter>
+        <SfButton IsPrimary="true" OnClick="ExtractData">Extract Data</SfButton>
+        <SfButton OnClick="CancelDialog">Cancel</SfButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public EventCallback<LeadData> OnDataExtracted { get; set; }
+
+    private bool dialogHidden = true;
+    private FluentDialog dialog;
+    private string textBlockContent;
+
+    // Method to show the dialog
+    public void Show()
+    {
+        dialogHidden = false;
+    }
+
+    // Method to hide the dialog
+    public void Hide()
+    {
+        dialogHidden = true;
+    }
+
+    // Method to extract data using OpenAI and pass it back to the parent
+    private async Task ExtractData()
+    {
+        if (string.IsNullOrWhiteSpace(textBlockContent))
+            return;
+
+        var extractedData = await OpenAiService.ExtractLeadDataAsync(textBlockContent);
+
+        if (extractedData != null)
+        {
+            // Trigger the event to pass data to the parent component
+            await OnDataExtracted.InvokeAsync(extractedData);
+            Hide();
+        }
+    }
+
+    private void CancelDialog()
+    {
+        Hide();
+    }
+}

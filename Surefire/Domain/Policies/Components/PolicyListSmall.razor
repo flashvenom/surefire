@@ -1,0 +1,41 @@
+﻿@namespace Surefire.Components.Shared
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Policies.Services
+@using Microsoft.AspNetCore.Components.Web @* Important *@
+@inject PolicyService PolicyService
+@inject NavigationManager Navigation
+
+<div class="policylistsmall-container">
+    @if (policyList == null)
+    {
+        <p>Loading tasks...</p>
+    }
+    else if (!policyList.Any())
+    {
+        <p>No tasks available.</p>
+    }
+    else
+    {
+        <table id="incomplete-table" cellspacing="0">
+            <tbody>
+                @foreach (var task in policyList)
+                {
+                    <tr class="trow2">
+                        <td><span class="hprod2" @onclick="x => HandlePolicyClick(task.PolicyId)">@StringHelper.GetSafeSubstring(task.Product?.LineCode, 0, 3)</span><span class="hexp2">@task.ExpirationDate.ToString("MM/dd")</span></td>
+                        <td class="ttname2"><a href="/Clients/@task.ClientId" class="rentask-link">@task.Client.Name</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<Policy> policyList { get; set; }
+
+    protected async Task HandlePolicyClick(int policyId)
+    {
+        Navigation.NavigateTo($"/Policies/Details/{policyId}");
+    }
+}

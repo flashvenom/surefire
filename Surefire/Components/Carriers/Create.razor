@@ -1,0 +1,106 @@
+﻿@page "/Carriers/Create"
+@using Microsoft.EntityFrameworkCore
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.Carriers.Services
+@using Syncfusion.Blazor.Inputs
+@inject CarrierService CarrierService
+
+<_toolbar PageName="Create" />
+
+<div class="page-content">
+    <h1>Create New Carrier</h1>
+    <EditForm method="post" EditContext="editContext" OnValidSubmit="AddCarrier" FormName="create">
+        <DataAnnotationsValidator />
+
+        <div class="sfpage-newcarrier">
+            <div class="sf-col-1">
+                <div class="mb-3">
+                    <SfTextBox id="carriername" Placeholder="Carrier Name" @bind-Value="Carrier.CarrierName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.CarrierName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="lookupcode" Placeholder="Lookup Code" @bind-Value="Carrier.LookupCode" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.LookupCode" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="carriernickname" Placeholder="Nickname" @bind-Value="Carrier.CarrierNickname" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.CarrierNickname" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="phone" Placeholder="Main Phone" @bind-Value="Carrier.Phone" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.Phone" class="text-danger" />
+                </div>
+                <div class="cb">
+                    <FluentCheckbox id="isuer" Label="Issuer" @bind-Value="Carrier.IssuingCarrier" />
+                </div>
+                <div class="cb">
+                    <FluentCheckbox id="wholesaler" @bind-Value="Carrier.Wholesaler" Label="Wholesaler" />
+                    <ValidationMessage For="() => Carrier.Wholesaler" class="text-danger" />
+                </div>
+            </div>
+            <div class="sf-col-2">
+
+                <div class="mb-3">
+                    <SfTextBox id="website" @bind-Value="Carrier.Website" Placeholder="Website" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.Website" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="quotingwebsite" @bind-Value="Carrier.QuotingWebsite" Placeholder="Quoting URL" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.QuotingWebsite" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="servicingwebsite" @bind-Value="Carrier.ServicingWebsite" Placeholder="Servicing URL" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.ServicingWebsite" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="newsubmissionemail" @bind-Value="Carrier.NewSubmissionEmail" Placeholder="New Submission Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.NewSubmissionEmail" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="servicingemail" @bind-Value="Carrier.ServicingEmail" Placeholder="Servicing Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.ServicingEmail" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <SfTextBox id="notes" @bind-Value="Carrier.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => Carrier.Notes" class="text-danger" />
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </EditForm>
+</div>
+
+<div>
+    <a href="/carriers">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm] public Carrier Carrier { get; set; } = new();
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    private EditContext editContext;
+
+    protected override void OnInitialized()
+    {
+        UpdateHeader?.Invoke("Carriers");
+        if (Carrier == null)
+        {
+            Carrier = new Carrier();
+        }
+        editContext = new EditContext(Carrier);
+    }
+
+    public async Task AddCarrier()
+    {
+        if (editContext.Validate()) // Check if the form is valid
+        {
+            var carrier = new Carrier();
+            carrier.CarrierName = Carrier.CarrierName;
+
+            await CarrierService.CreateCarrierAsync(Carrier);
+
+            Navigation.NavigateTo("/Carriers");
+        }
+    }
+}

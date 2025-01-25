@@ -1,0 +1,120 @@
+﻿@using Surefire.Domain.Users.Services
+@using Syncfusion.Blazor.InPlaceEditor
+@using Syncfusion.Blazor.Inputs
+@inject UserService UserService
+
+<div class="user-list-container">
+    <table class="user-list-table">
+        <thead>
+            <tr>
+                <th>&nbsp;</th>
+                <th width="100">First Name</th>
+                <th width="100">Last Name</th>
+                <th width="200">Email</th>
+                <th width="150">Phone Number</th>
+                <th width="100">Desktop Username</th>
+                <th>Last Login</th>
+                <th>&nbsp</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (users == null)
+            {
+                <tr>
+                    <td colspan="7">Loading...</td>
+                </tr>
+            }
+            else if (!users.Any())
+            {
+                <tr>
+                    <td colspan="7">No users found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var user in users)
+                {
+                    string headshotImage = !string.IsNullOrEmpty(user.PictureUrl) ? "/img/staff/" + user.PictureUrl : null;
+                    <tr>
+                        <td><FluentPersona Initials="--" ImageSize="35px" Class="txt-persona" Image="@headshotImage" /></td>
+                        <td>
+                            <SfInPlaceEditor @bind-Value="@user.FirstName" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" PrimaryKey="@user.Id" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="Unknown">
+                                <EditorComponent>
+                                    <SfTextBox @bind-Value="@user.FirstName" Width="100px"></SfTextBox>
+                                </EditorComponent>
+                                <InPlaceEditorEvents OnActionBegin="@(args => UpdateUserDetails(args, "FirstName"))" TValue="string"></InPlaceEditorEvents>
+                            </SfInPlaceEditor>
+                        </td>
+                        <td>
+                            <SfInPlaceEditor @bind-Value="@user.LastName" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" PrimaryKey="@user.Id" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="Unknown">
+                                <EditorComponent>
+                                    <SfTextBox @bind-Value="@user.LastName" Width="100px"></SfTextBox>
+                                </EditorComponent>
+                                <InPlaceEditorEvents OnActionBegin="@(args => UpdateUserDetails(args, "LastName"))" TValue="string"></InPlaceEditorEvents>
+                            </SfInPlaceEditor>
+                        </td>
+                        <td>
+                            <SfInPlaceEditor @bind-Value="@user.Email" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" PrimaryKey="@user.Id" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="Unknown">
+                                <EditorComponent>
+                                    <SfTextBox @bind-Value="@user.Email" Width="200px"></SfTextBox>
+                                </EditorComponent>
+                                <InPlaceEditorEvents OnActionBegin="@(args => UpdateUserDetails(args, "Email"))" TValue="string"></InPlaceEditorEvents>
+                            </SfInPlaceEditor>
+                        </td>
+                        <td>
+                            <SfInPlaceEditor @bind-Value="@user.PhoneNumber" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" PrimaryKey="@user.Id" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="Unknown">
+                                <EditorComponent>
+                                    <SfTextBox @bind-Value="@user.PhoneNumber" Width="150px"></SfTextBox>
+                                </EditorComponent>
+                                <InPlaceEditorEvents OnActionBegin="@(args => UpdateUserDetails(args, "Email"))" TValue="string"></InPlaceEditorEvents>
+                            </SfInPlaceEditor>
+                        </td>
+                        <td>
+                            <SfInPlaceEditor @bind-Value="@user.DesktopUsername" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" PrimaryKey="@user.Id" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="Unknown">
+                                <EditorComponent>
+                                    <SfTextBox @bind-Value="@user.DesktopUsername" Width="100px"></SfTextBox>
+                                </EditorComponent>
+                                <InPlaceEditorEvents OnActionBegin="@(args => UpdateUserDetails(args, "DesktopUsername"))" TValue="string"></InPlaceEditorEvents>
+                            </SfInPlaceEditor>
+                        </td>
+                        <td>@(user.LastLogin.HasValue ? user.LastLogin.Value.ToString("MM/dd/yyyy hh:mm tt") : "N/A")</td>
+                        <td>Delete</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<ApplicationUser>? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetAllUsersAsync();
+    }
+    private async Task UpdateUserDetails(ActionBeginEventArgs<string> args, string fieldName)
+    {
+        if (args.Data.Value == null)
+        {
+            Console.WriteLine("No value provided.");
+            return;
+        }
+
+        // Extract field name and new value from args
+        var userId = args.Data.PrimaryKey;
+        var newValue = args.Data.Value.ToString();
+
+        // Call the service to update the user
+        bool success = await UserService.UpdateUserDetailsAsync(userId, fieldName, newValue);
+        if (!success)
+        {
+            // Handle errors (e.g., show notification)
+            Console.WriteLine($"Failed to update field {fieldName} for user {userId}.");
+        }
+        else
+        {
+            Console.WriteLine($"Successfully updated field {fieldName} for user {userId}.");
+        }
+    }
+}

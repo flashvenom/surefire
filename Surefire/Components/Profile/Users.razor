@@ -1,0 +1,175 @@
+﻿@using Surefire.Domain.Users.Services
+@inject UserService UserService
+@inject IDialogService DialogService
+
+<FluentDialog @bind-Hidden="dialogHidden">
+    <div>
+        <h3>Confirm Delete</h3>
+        <p>Are you sure you want to delete this user?</p>
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Type="ButtonType.Button" OnClick="ConfirmDelete" Appearance="Appearance.Accent">Delete</FluentButton>
+        <FluentButton Type="ButtonType.Button" OnClick="CancelDelete" Appearance="Appearance.Outline">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<div class="user-list-container">
+    <table class="user-list-table">
+        <thead>
+            <tr>
+                <th width="40">&nbsp;</th>
+                <th width="100">First Name</th>
+                <th width="100">Last Name</th>
+                <th width="200">Email</th>
+                <th width="150">Phone Number</th>
+                <th width="100">Desktop Username</th>
+                <th>Last Login</th>
+                <th>&nbsp</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (users == null)
+            {
+                <tr>
+                    <td colspan="8">Loading...</td>
+                </tr>
+            }
+            else if (!users.Any())
+            {
+                <tr>
+                    <td colspan="8">No users found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var user in users)
+                {
+                    string headshotImage = !string.IsNullOrEmpty(user.PictureUrl) ? "/img/staff/" + user.PictureUrl : null;
+                    // Ensure FirstName and LastName are not null
+                    string fullName = (user?.FirstName ?? "") + " " + (user?.LastName ?? "");
+
+                    string nameInitials;
+                    if (!string.IsNullOrEmpty(user?.FirstName) && !string.IsNullOrEmpty(user?.LastName))
+                    {
+                        nameInitials = $"{user.FirstName[0]}{user.LastName[0]}";
+                    }
+                    else
+                    {
+                        nameInitials = "??";
+                    }
+                    <tr>
+                        <td><FluentPersona Initials="@nameInitials" ImageSize="35px" Class="txt-persona" Image="@headshotImage" /></td>
+                        <td>@user.FirstName</td>
+                        <td>@user.LastName</td>
+                        <td>@user.Email</td>
+                        <td>@user.PhoneNumber</td>
+                        <td>@user.DesktopUsername</td>
+                        <td>@(user.LastLogin.HasValue ? user.LastLogin.Value.ToString("MM/dd/yyyy hh:mm tt") : "N/A")</td>
+                        <td>
+                            <FluentStack>
+                                <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" OnClick="() => ShowEditDialog(user)" />
+                                <FluentIcon Value="@(new Icons.Regular.Size24.Delete())" OnClick="() => ShowDeleteConfirmation(user.Id)" />
+                            </FluentStack>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div style="height:8px;"></div>
+<a @onclick="ShowAddDialog" class="sf-add-button"><FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Color.Custom" CustomColor="#036ac4" /> Add User</a>
+
+<style>
+    :root .user-list-container {
+        overflow-x: auto; /* Prevent overflow issues */
+    }
+
+    :root .fluent-persona .initials {
+        font-size: .7em;
+        font-weight: 300;
+    }
+</style>
+@code {
+    private List<ApplicationUser>? users;
+    private bool dialogHidden = true;
+    private string userToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetAllUsersAsync();
+    }
+
+    private void ShowDeleteConfirmation(string userId)
+    {
+        userToDelete = userId;
+        dialogHidden = false; // Show the dialog
+    }
+
+    private void CancelDelete()
+    {
+        dialogHidden = true; // Hide the dialog
+    }
+
+    private async Task ConfirmDelete()
+    {
+        try
+        {
+            await UserService.DeleteUserAsync(userToDelete); // Delete the user
+            users = await UserService.GetAllUsersAsync(); // Refresh the user list
+            dialogHidden = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error deleting user: {ex.Message}");
+        }
+    }
+
+    private async Task ShowAddDialog()
+    {
+        var user = new ApplicationUser(); // New user object
+        await OpenUserDialog(user, isEdit: false);
+    }
+
+    private async Task ShowEditDialog(ApplicationUser user)
+    {
+        var userCopy = new ApplicationUser
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                DesktopUsername = user.DesktopUsername
+            };
+
+        await OpenUserDialog(userCopy, isEdit: true);
+    }
+
+    private async Task OpenUserDialog(ApplicationUser user, bool isEdit)
+    {
+        var dialog = await DialogService.ShowDialogAsync<DialogUser>(user, new DialogParameters()
+            {
+                Title = isEdit ? "Edit User" : "Add User",
+                Width = "400px",
+                PreventDismissOnOverlayClick = true
+            });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            var updatedUser = (ApplicationUser)result.Data;
+            if (isEdit)
+            {
+                await UserService.UpdateUserAsync(updatedUser);
+            }
+            else
+            {
+                await UserService.AddUserAsync(updatedUser);
+            }
+            users = await UserService.GetAllUsersAsync(); // Refresh user list
+        }
+    }
+}

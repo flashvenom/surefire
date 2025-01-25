@@ -1,0 +1,16 @@
+.profile-manager {
+    padding: 20px;
+}
+
+.profile-section {
+    margin-bottom: 30px;
+}
+
+.profile-section h4 {
+    margin-bottom: 15px;
+}
+
+.profile-manager ::deep .fluent-text-field {
+    margin-bottom: 15px;
+    width: 300px;
+}

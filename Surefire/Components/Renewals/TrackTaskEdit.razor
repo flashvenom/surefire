@@ -1,0 +1,113 @@
+﻿@page "/Renewals/EditTrackTask/{taskId:int}"
+@using Surefire.Domain.Renewals.ViewModels
+@using Surefire.Domain.Renewals.Services
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@inject RenewalService RenewalService
+@inject StateService _stateService
+
+<_toolbar PageName="TaskEdit" />
+
+<div class="page-content">
+    <div class="mh1">Edit Task</div>
+    @if (task == null || Users == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <EditForm Model="@task" OnValidSubmit="HandleValidSubmit" FormName="editTrackTaskForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mf-flex mf-flex-row mf-row-container">
+                <div class="mf-item-lg">
+                    <div class="mb-3">
+                        <SfTextBox id="taskName" @bind-Value="task.TaskName" Placeholder="Task Name" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.TaskName" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextBox id="status" @bind-Value="task.Status" Placeholder="Status" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.Status" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfDatePicker TValue="DateTime?" @bind-Value="task.GoalDate" Placeholder="Goal Date" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.GoalDate" class="text-danger" />
+                    </div>
+                    <table style="margin:23px;">
+                        <tr>
+                            <td><FluentCheckbox id="completed" @bind-Value="task.Completed" Label="Completed" /></td>
+                            <td><FluentCheckbox id="hidden" @bind-Value="task.Hidden" Label="Hidden" /></td>
+                            <td><FluentCheckbox id="highlighted" @bind-Value="task.Highlighted" Label="Highlighted" /></td>
+                        </tr>
+                    </table>
+                    
+                </div>
+                <div class="mf-item-lg mf-pad-left">
+                    
+                    <div class="mb-3">
+                        <SfDatePicker TValue="DateTime?" @bind-Value="task.CompletedDate" Placeholder="Completed Date" FloatLabelType="FloatLabelType.Always" />
+                        <ValidationMessage For="() => task.CompletedDate" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfDropDownList TValue="string" TItem="ApplicationUser" DataSource="@Users" Placeholder="Sub Assignee" @bind-Value="task.UserName" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Text="UserName" Value="UserName" />
+                        </SfDropDownList>
+                        <ValidationMessage For="() => task.UserName" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfTextArea id="notes" @bind-Value="task.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" Width="100%" />
+                        <ValidationMessage For="() => task.Notes" class="text-danger" />
+                    </div>
+                </div>
+            </div>
+            <br />
+            <SfButton Content="Cancel" CssClass="e-outline" OnClick="CancelEdit"></SfButton>
+            <SfButton Content="Save" CssClass="e-primary" Type="Submit"></SfButton>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int taskId { get; set; }
+
+    private TrackTaskEditViewModel task = new();
+    private List<ApplicationUser> Users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        task = await RenewalService.GetTrackTaskByIdAsync(taskId);
+        Users = await _stateService.AllUsers;
+
+        if (task == null)
+        {
+            Navigation.NavigateTo("notfound");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await RenewalService.UpdateTrackTaskAsync(task);
+        Navigation.NavigateTo($"/Renewals/Details/{task.Renewal.RenewalId}");
+    }
+
+    private void CancelEdit()
+    {
+        if(_stateService.HtmlRenewalId != 0)
+        {
+            Navigation.NavigateTo($"/Renewals/Details/{_stateService.HtmlRenewalId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/Renewals");
+        }
+
+    }
+    public void Dispose()
+    {
+        // clients.Clear();
+        task = new();
+        Users.Clear();
+    }
+}

@@ -1,0 +1,44 @@
+﻿.cred-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20%; /* Adjust this as needed */
+    text-align: center;
+}
+
+.homemodule-small-header {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.3em;
+    padding-top: 15px;
+    padding-bottom: 1px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#3d3d3d+1,6755c3+100 */
+    background: linear-gradient(to right, #3d3d3d 1%,#1f1e60 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    color: #dcdcdca9;
+    text-transform: uppercase;
+    font-size:1em;
+    letter-spacing:5px;
+    text-align: center;
+}
+.dailytask-box {
+    border: 1px solid #5e5e5e;
+}
+.quick-links-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 5px; /* Spacing between logos */
+    background: linear-gradient(to right, #3d3d3d 1%, #1f1e60 100%);
+    border-right: 5px solid #1f1e60;
+    border-left: 1px solid #3d3d3d;
+    border-bottom-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    padding-bottom:10px;
+}
+
+
+
+.logo {
+    max-width: 100%;
+    object-fit: contain; /* Ensures logos scale properly inside the box */
+    display: block;
+}

@@ -1,0 +1,70 @@
+﻿@using Surefire.Domain.Clients.Models
+@inject HomeService HomeService
+@inject NavigationManager NavigationManager
+
+<div class="sectiontitletab">Leads</div>
+<div class="leads-box">
+    <table id="leadertable" cellspacing="0" class="ltable">
+        <thead class="lbg">
+            <tr>
+                <th><span class="ctweak">Company</span></th>
+                <th>Contact</th>
+                <th>Phone</th>
+                <th>Last</th>
+            </tr>
+        </thead>
+        <tbody class="lbody">
+            @if (isLoading)
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    <tr class="lrow">
+                        <td colspan="5">
+                            <SfSkeleton Shape=SkeletonType.Rectangle Width="570px" Height="13px" CssClass="e-customize" Visible="true"></SfSkeleton>
+                        </td>
+                    </tr>
+                }
+            }
+            else if (leads == null || !leads.Any())
+            {
+                <tr>
+                    <td colspan="5" class="no-taskssub">No leads available</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var lead in leads)
+                {
+                    <tr class="lrow">
+                        <td class="lcname"><span class="dot dot-@(lead?.Stage ?? 0)"></span><a class="llink link-@(lead?.Stage ?? 0)" href="/Leads/@lead.LeadId">@lead.CompanyName</a></td>
+                        <td class="lccon ellipsis">@lead.ContactName</td>
+                        <td class="lccon ellipsis">@lead.PhoneNumber</td>
+                        <td class="lstage ellipsis">@StringHelper.FormatDateTimeDifference(lead.LastOpened)</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <div style="height:7px;"></div>
+</div>
+
+@code {
+    private List<Lead>? leads;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            leads = await HomeService.GetAllLeadsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching leads: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

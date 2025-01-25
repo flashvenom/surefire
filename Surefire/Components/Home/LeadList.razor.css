@@ -1,0 +1,131 @@
+﻿:root tr td {
+    padding: 0px 0px;
+    height: 20px;
+}
+
+.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.5em;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    /*background-color: #1e1d5f;*/
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#3d3d3d+0,201e60+49,3d3d3d+100 */
+    background: linear-gradient(to right, rgba(61,61,61,1) 0%,rgba(32,30,96,1) 49%,rgba(61,61,61,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+
+
+
+
+
+
+    color: #b8adef;
+    text-align: center;
+    box-shadow: 0px 0px 7px #7d212550;
+    z-index: 20;
+    position: relative;
+    margin-top: 20px;
+}
+#leadertable {
+    padding-top: 10px;
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    z-index: 99;
+}
+.lead-box {
+    padding: 3px;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    background-color: #fff;
+}
+.leads-box {
+    background: linear-gradient(to right, rgba(227,80,73,0.1) 0%,rgba(32,30,96,0.1) 49%,rgba(255,255,255,0.5) 100%);
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    box-shadow: 0px 0px 40px #0000007c;
+    z-index: 10;
+}
+.lbg {
+    height: 20px;
+    color: #ffffff64;
+    text-align: left;
+    font-size: .7em;
+}
+
+    .lbg th {
+        padding-left: 4px !important;
+        color: #979797;
+    }
+
+.ltable {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    font-size: 1em;
+
+}
+.lbody {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size:.9em;
+}
+.lbody tr td {
+    padding:0px 4px;
+}
+.lcname {
+    font-weight: bold;
+    color: #525252;
+}
+.lccon {
+    color: #423838;
+    font-size: .8em;
+}
+.lstage {
+    color: #423838;
+    font-size: .8em;
+}
+.dot {
+    height: 8px;
+    width: 8px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    top: -0px;
+    margin-right: 8px;
+    margin-left: 6px;
+}
+.dot-0 {
+    background-color: #d94c43;
+    box-shadow: 0px 0px 7px #d94c43;
+    border:1px solid #ffffffaa;
+}
+.dot-1 {
+    background-color: #72174a;
+    box-shadow: 0px 0px 7px #72174a;
+    border: 1px solid #ffffffaa;
+}
+.dot-2 {
+    background-color: #036ac4;
+    box-shadow: 0px 0px 7px #036ac4;
+    border: 1px solid #ffffffaa;
+}
+.ctweak {
+    margin-left: 26px;
+}
+.llink {
+    text-decoration:none;
+}
+.link-0 {
+    color: #d94c43;
+}
+.link-1 {
+    color: #72174a;
+}
+.link-2 {
+    color: #036ac4;
+}

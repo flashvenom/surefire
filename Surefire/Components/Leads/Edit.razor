@@ -1,0 +1,180 @@
+﻿@page "/Leads/Edit/{id:int}"
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Clients.Services
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.Renewals.Services
+@using Surefire.Domain.Users.Services
+@inject UserService UserService
+@inject ClientService ClientService
+@inject RenewalService RenewalService
+
+<_toolbar PageName="Edit" />
+
+<div class="page-content">
+    <div class="biz-top">
+
+        <div class="mh1">Edit Lead</div>
+
+        @if (editContext != null)
+        {
+        <EditForm OnValidSubmit="HandleValidSubmit" EditContext="@editContext" FormName="EditLeadForm">
+            <DataAnnotationsValidator />
+
+            <div class="sfpage-newcarrier">
+                <div class="sf-col-1">
+                    @* CompanyName *@
+                    <SfTextBox id="companyName" @bind-Value="lead.CompanyName" Placeholder="Company Name" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="@(() => lead.CompanyName)" class="text-danger" />
+
+                    @* ContactName *@
+                    <SfTextBox id="contactName" @bind-Value="lead.ContactName" Placeholder="Contact Name" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="@(() => lead.ContactName)" class="text-danger" />
+
+                    @* PhoneNumber *@
+                    <SfTextBox id="phoneNumber" @bind-Value="lead.PhoneNumber" Placeholder="Phone Number" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="@(() => lead.PhoneNumber)" class="text-danger" />
+
+                    @* Email *@
+                    <SfTextBox id="email" @bind-Value="lead.Email" Placeholder="Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="@(() => lead.Email)" class="text-danger" />
+
+                    @* Website *@
+                    <SfTextBox id="website" @bind-Value="lead.Website" Placeholder="Website" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="@(() => lead.Website)" class="text-danger" />
+
+                    @* Operations *@
+                    <SfTextBox id="operations" @bind-Value="lead.Operations" Placeholder="Operations" FloatLabelType="FloatLabelType.Always" Multiline="true" />
+                    <ValidationMessage For="@(() => lead.Operations)" class="text-danger" />
+                </div><!--/column1-->
+                <div class="sf-col-2">
+                    @* Stage *@
+                    <SfDropDownList TValue="int?" TItem="LeadSt" Placeholder="Select Stage" @bind-Value="lead.Stage" DataSource="@LeadStages" FloatLabelType="FloatLabelType.Always">
+                        <DropDownListFieldSettings Value="Value" Text="Name"></DropDownListFieldSettings>
+                    </SfDropDownList>
+
+                    @* Notes *@
+                    <SfTextBox id="notes" @bind-Value="lead.Notes" Placeholder="Notes" FloatLabelType="FloatLabelType.Always" Multiline="true" />
+                    <ValidationMessage For="@(() => lead.Notes)" class="text-danger" />
+
+                    @* Client Dropdown *@
+                    @if (clients != null)
+                    {
+                        <div class="sf-formcontainer">
+                            <SfDropDownList TValue="int?" TItem="Client" Placeholder="Select Client" DataSource="@clients" @bind-Value="lead.ClientId" FloatLabelType="FloatLabelType.Auto" AllowFiltering="true">
+                                <DropDownListFieldSettings Value="ClientId" Text="Name"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                            <ValidationMessage For="@(() => lead.ClientId)" class="sf-validation" />
+                        </div>
+                    }
+                    else
+                    {
+                        <p>Loading clients...</p>
+                    }
+
+                    @* Product Dropdown *@
+                    @if (products != null)
+                    {
+                        <div class="sf-formcontainer">
+                            <SfDropDownList TValue="int?" TItem="Product" Placeholder="Select Product" DataSource="@products" @bind-Value="lead.ProductId" FloatLabelType="FloatLabelType.Auto">
+                                <DropDownListFieldSettings Value="ProductId" Text="LineName"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                            <ValidationMessage For="@(() => lead.ProductId)" class="sf-validation" />
+                        </div>
+                    }
+                    else
+                    {
+                        <p>Loading products...</p>
+                    }
+
+                    @* BindDate *@
+                    <SfDatePicker TValue="DateTime?" Placeholder="Select Bind Date" @bind-Value="lead.BindDate" FloatLabelType="FloatLabelType.Always"></SfDatePicker>
+                    <ValidationMessage For="@(() => lead.BindDate)" class="sf-validation" />
+
+                </div><!--/column2-->
+            </div>
+            <SfButton CssClass="e-primary" IsSubmit="true">Save Changes</SfButton>
+            </EditForm>
+        }
+        else
+        {
+            <div class="txt-cursive">Loading...</div>
+        }
+    </div>
+</div>
+
+<style>
+    :root .sf-validation {
+        font-size: 13px !important;
+        color: #bd7b7b;
+        padding-top: 4px;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private Lead lead = new();
+    private List<Client> clients;
+    private List<Product> products;
+    private EditContext editContext;
+    private ValidationMessageStore? messageStore;
+
+    public class LeadSt
+    {
+        public string Name { get; set; }
+        public int Value { get; set; }
+    }
+
+    List<LeadSt> LeadStages = new List<LeadSt>
+    {
+        new LeadSt() { Name="New", Value=0 },
+        new LeadSt() { Name="Active", Value=1 },
+        new LeadSt() { Name="Holding", Value=2 },
+        new LeadSt() { Name="Tickler", Value=3 },
+        new LeadSt() { Name="Archive", Value=4 },
+        new LeadSt() { Name="Trash", Value=5 },
+        new LeadSt() { Name="Converted", Value=6 }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await RenewalService.GetProductsAsync();
+        clients = await RenewalService.GetClientsAsync();
+
+        lead = await ClientService.GetLeadByIdAsync(id);
+
+        if (lead == null)
+        {
+            Navigation.NavigateTo("/Leads");
+            return;
+        }
+
+        editContext = new EditContext(lead);
+        editContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new(editContext);
+    }
+
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
+    {
+        messageStore?.Clear();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await ClientService.UpdateLeadAsync(lead);
+        Navigation.NavigateTo($"/Leads/{lead.LeadId}");
+    }
+
+    public void Dispose()
+    {
+        if (editContext != null)
+        {
+            editContext.OnValidationRequested -= HandleValidationRequested;
+        }
+    }
+}

@@ -1,0 +1,172 @@
+﻿@page "/Carriers/Details/{CarrierId:int}"
+@using Microsoft.EntityFrameworkCore
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Policies.Services
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.Carriers.Services
+@inject CarrierService CarrierService
+@inject PolicyService PolicyService
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+
+<_toolbar CarrierId="@CarrierId" OnSaveContact="@SaveContact" PageName="Details" />
+
+@if (carrier is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="sfc-top">
+        <div class="sfc-header-col-name">
+            <span class="biz-name">@carrier.CarrierName</span><br />
+            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+            @if (!string.IsNullOrEmpty(carrier.StreetAddress))
+            {
+                <a class="biz-data" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString($"{carrier.StreetAddress} {carrier.City}, {carrier.State} {carrier.Zip}")" target="_blank">
+                    @carrier.StreetAddress @carrier.City @carrier.State @carrier.Zip
+                </a>
+            }
+
+            @if (!string.IsNullOrEmpty(carrier.ServicingEmail))
+            {
+
+                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                <Trigger Value="@carrier.ServicingEmail" Type="Trigger.ClickType.Email" Class="biz-data" />
+            }
+
+            @if (!string.IsNullOrEmpty(carrier.Website))
+            {
+                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                <Trigger Value="@carrier.Website" Type="Trigger.ClickType.Url" Class="biz-data" />
+            }
+        </div>
+        <div class="sfc-header-col-phone">
+            <span class="client-phone">
+                <span class="phone-icon">
+                    <a href="tel:@StringHelper.FormatTelDialNumber(carrier.Phone)"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#036ac4" Color="Color.Custom" /></a>
+                </span>
+                <Trigger Value="@StringHelper.FormatPhoneNumber(carrier.Phone)" Type="Trigger.ClickType.Phone" Class="client-phonenumber" />
+            </span>
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div class="mf-flex mf-row">
+            <div class="mf-item-sm" style="min-width:350px;">
+                <div class="txt-section">Contacts</div>
+                <div class="carrier-contacts">
+                    <ContactsList Contacts="@carrier.Contacts" ParentType="Carrier" ParentId="@CarrierId" />
+                </div>
+            </div>
+
+            <div class="mf-item-sm mf-pad-left" style="margin-left:40px; min-width:550px;">
+
+                <div class="txt-section">TOOLS</div>
+                <div class="div-section">
+                    <div class="mf-flextwocolumn">
+                        <div class="mf-flextwocolumn-col">
+                            <div class="txt-section txt-sm">Service Centers</div>
+                            @if (!string.IsNullOrEmpty(carrier.ServicingWebsite))
+                            {
+                                <a href="@StringHelper.FormatUrl(carrier.ServicingWebsite)" target="_blank">
+                                    <FluentIcon Value="@(new Icons.Regular.Size48.Globe())" CustomColor="#454545" Color="Color.Custom" />
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(carrier.ServicingEmail))
+                            {
+                                <a href="mailto:@(carrier.ServicingEmail)">
+                                    <FluentIcon Value="@(new Icons.Regular.Size48.Mail())" CustomColor="#454545" Color="Color.Custom" /><br />
+                                </a>
+                            }
+                        </div>
+                        <div class="mf-flextwocolumn-col">
+                            <div class="txt-section txt-sm">Quoting Links</div>
+
+                            @if (!string.IsNullOrEmpty(carrier.QuotingWebsite))
+                            {
+                                <a href="@StringHelper.FormatUrl(carrier.QuotingWebsite)" target="_blank">
+                                    <FluentIcon Value="@(new Icons.Filled.Size48.Globe())" CustomColor="#454545" Color="Color.Custom" />
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(carrier.NewSubmissionEmail))
+                            {
+                                <a href="@("mailto:" + carrier.NewSubmissionEmail)">
+                                    <FluentIcon Value="@(new Icons.Filled.Size48.Mail())" CustomColor="#454545" Color="Color.Custom" /><br />
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="txt-section spc">CREDENTIALS</div>
+                <div class="div-section">
+                    @{
+                        Console.WriteLine(carrier.Credentials.Count);
+                    }
+                    <CredentialList CarrierId="@CarrierId" Credentials="@carrier.Credentials" OnCredentialChanged="OnCredentialChanged" />
+                    </div>
+
+                <div class="txt-section spc">NOTES</div>
+                <div class="div-section">
+                    @if(string.IsNullOrEmpty(carrier.Notes))
+                    {
+                        <span class="txt-bold">(No notes found)</span>
+                    }
+                    else
+                    {
+                        <span class="txt-p">@carrier.Notes</span>
+                    }
+                </div>
+            </div>
+            <div class="mf-item-sm mf-pad-left" style="margin-left:40px;">
+                @if (carrier.LogoFilename != null)
+                {
+                    <img src="/uploads/logos/carrier/@carrier.LogoFilename" class="img-fluid" />
+                }
+                <div class="txt-section">Policies</div>
+                <div class="div-section">
+                    <PolicyListSmall policyList="@carrierPolicies" />
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter] public int CarrierId { get; set; }
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    Carrier? carrier;
+    private List<Policy> carrierPolicies = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Carriers");
+        await LoadCarrierData();
+    }
+
+    private async Task LoadCarrierData()
+    {
+        carrier = await CarrierService.GetCarrierByIdAsync(CarrierId);
+        if (carrier is null)
+        {
+            Navigation.NavigateTo("notfound");
+            return;
+        }
+        carrierPolicies = await PolicyService.GetCurrentPoliciesByCarrierIdAsync(CarrierId);
+    }
+    private async Task OnCredentialChanged()
+    {
+        // Reload the carrier to get updated credentials
+        await LoadCarrierData();
+        StateHasChanged();
+    }
+    private void SaveContact(Contact contact)
+    {
+        //carrier.Contacts.Add(contact);
+    }
+}

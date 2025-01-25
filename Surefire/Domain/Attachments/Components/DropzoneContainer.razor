@@ -1,0 +1,181 @@
+﻿@namespace Surefire.Domain.Attachments.Components
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@using Surefire.Domain.Logs
+@using Surefire.Domain.Attachments.Models
+@using Surefire.Domain.Attachments.Services
+@using Surefire.Domain.Shared.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@inject AttachmentService AttachmentService
+@inject NavigationManager NavigationManager
+@inject StateService StateService
+@inject ILoggingService _log
+
+<div class="policy-drop-zone drop-zone-@DropZoneId">
+    @ChildContent
+</div>
+<SfUploader @ref="Uploader" DropArea="@($".drop-zone-{DropZoneId}")" DropEffect="DropEffect.Copy">
+    <UploaderButtons Browse="Upload File..." />
+    <UploaderEvents Success="OnUploadSuccess" OnFailure="OnUploadFailure" ValueChange="OnChange"></UploaderEvents>
+</SfUploader>
+
+<FluentDialog Hidden="@IsDialogHidden" Id="attachDialog" @ref="addAttachmentDialog" TrapFocus="false">
+    <div>
+        <SfTextBox @ref="descriptionTextBox" @bind-value="Attachment.Description" FloatLabelType="FloatLabelType.Always" Placeholder="Description" />
+    </div>
+    <div>
+        <SfDropDownList TValue="int" TItem="Folder" Placeholder="Select Folder" DataSource="@Folders" AllowFiltering="true" FilterType="FilterType.Contains" FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="SelectedFolderId">
+            <DropDownListFieldSettings Value="FolderId" Text="Name"></DropDownListFieldSettings>
+        </SfDropDownList>
+    </div>
+    @if (IsPolicy)
+    {
+        <div>
+            <label><input type="checkbox" @bind="Attachment.IsPolicyCopy" /> Is Policy Copy</label><br />
+            <label><input type="checkbox" @bind="Attachment.IsEndorsement" /> Is Endorsement</label><br />
+            <label><input type="checkbox" @bind="Attachment.IsBinder" /> Is Binder</label><br />
+            <label><input type="checkbox" @bind="Attachment.IsQuote" /> Is Quote</label><br />
+            <label><input type="checkbox" @bind="Attachment.IsProposal" /> Is Proposal</label><br />
+        </div>
+    }
+    else if (IsRenewal)
+    {
+        <div>
+            <label><input type="checkbox" @bind="Attachment.IsQuote" /> Is Quote</label><br />
+            <label><input type="checkbox" @bind="Attachment.IsProposal" /> Is Proposal</label><br />
+        </div>
+    }
+    <FluentDialogFooter>
+        <SfButton IsPrimary="true" OnClick="SaveAttachment">Save</SfButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public int? ClientId { get; set; }
+    [Parameter] public int? PolicyId { get; set; }
+    [Parameter] public int? CarrierId { get; set; }
+    [Parameter] public int? RenewalId { get; set; }
+    [Parameter] public int? SubmissionId { get; set; }
+    [Parameter] public int? AutoFolderId { get; set; }
+    [Parameter] public string? FileBrowserButton { get; set; } = "Default";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnAttachmentAdded { get; set; }
+
+    private string AllowedExtensions { get; set; } = ".pdf,.docx,.xlsx,.txt,.png,.jpg";
+    private string DropZoneId { get; set; } = $"dropzone-{Guid.NewGuid()}";
+    private Attachment Attachment { get; set; } = new Attachment();
+    private List<Folder> Folders { get; set; } = new List<Folder>();
+    private FluentDialog addAttachmentDialog { get; set; }
+    private SfTextBox descriptionTextBox { get; set; }
+    private SfUploader Uploader { get; set; }
+    private int SelectedFolderId { get; set; }
+    private bool IsRenewal => RenewalId.HasValue;
+    private bool IsPolicy => PolicyId.HasValue;
+    private bool IsDialogHidden = true;
+    private bool isDragOver = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Folders = await AttachmentService.GetFoldersAsync();
+    }
+
+    private async Task OnChange(UploadChangeEventArgs args)
+    {
+        try
+        {
+            foreach (var file in args.Files)
+            {
+                var path = $"wwwroot/uploads/temp/{file.FileInfo.Name}";
+                var fileName = file.FileInfo.Name;
+
+                using (var filestream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                {
+                    await file.File.OpenReadStream(long.MaxValue).CopyToAsync(filestream);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _log.LogAsync(LogLevel.Error, $"Error uploading file: {ex.Message}", "DropzoneContainer", ex);
+        }
+    }
+
+    private void OnUploadSuccess(SuccessEventArgs args)
+    {
+        // File uploaded successfully, show the dialog
+        Attachment.OriginalFileName = args.File.Name;
+        Attachment.Description = args.File.Name;
+        Attachment.FileSize = args.File.Size;
+        Attachment.FileFormat = Path.GetExtension(args.File.Name);
+        Attachment.ClientId = ClientId;
+        Attachment.PolicyId = PolicyId;
+        Attachment.CarrierId = CarrierId;
+        Attachment.RenewalId = RenewalId;
+        Attachment.SubmissionId = SubmissionId;
+
+        if (AutoFolderId.HasValue)
+        {
+            _log.LogAsync(LogLevel.Error, $"Attempting Auto Folder", "DropzoneContainer");
+            Attachment.FolderId = AutoFolderId;
+            SaveAttachment();
+            return;
+        }
+
+        IsDialogHidden = false;
+        Console.WriteLine("UploadSuccess");
+    }
+
+    private void OnUploadFailure(FailureEventArgs args)
+    {
+        _log.LogAsync(LogLevel.Error, $"Upload failure: {args.Response}", "DropzoneContainer");
+        Console.WriteLine("File upload failed: " + args.File.Name);
+    }
+
+    private async Task SaveAttachment()
+    {
+        // Assign folder if selected
+        if(SelectedFolderId > 0)
+        {
+            Attachment.FolderId = SelectedFolderId;
+        }
+
+        await AttachmentService.SaveDropZoneAttachmentAsync(Attachment);
+
+        IsDialogHidden = true;
+
+        if (OnAttachmentAdded.HasDelegate)
+        {
+            await OnAttachmentAdded.InvokeAsync(null);
+        }
+
+        // Notify that an attachment has been added
+        StateService.NotifyAttachmentListUpdated();
+
+        Attachment = new Attachment();
+        Console.WriteLine("DropZone's attachment save complete.");
+    }
+}
+@if(FileBrowserButton == "Hidden"){
+    <style>
+        :root .e-upload {
+            display: none !important;
+        }
+    </style>
+}
+@if (FileBrowserButton == "Small")
+{
+    <style>
+        .e-upload .e-file-select-wrap .e-btn, .e-upload .e-upload-actions .e-btn, .e-bigger.e-small .e-upload .e-file-select-wrap .e-btn, .e-bigger.e-small .e-upload .e-upload-actions .e-btn {
+        font-size: .9em;
+        padding: 0px 12px !important;
+        color: #cd8a89;
+        position: relative;
+        top: -35px;
+        left: 15px;
+        }
+    </style>
+}

@@ -1,0 +1,89 @@
+﻿@inject StateService _stateService
+
+<div class="page-toolbar">
+    <FluentButton Appearance="Appearance.Accent" OnClick="HandleAddAction">
+        <FluentIcon Value="@(new Icons.Regular.Size20.Add())" Color="Color.Custom" CustomColor="#fff" Slot="start" />
+        @(PageName == "MasterTasks" ? "New MasterTask" : "New Renewal")
+    </FluentButton>
+    
+
+    <span class="sf-verthr"></span>
+
+    <a class="toolbar-link" href="Renewals">
+        <FluentIcon Value="@(new Icons.Regular.Size24.TaskListLtr())" />
+        <span class="toolbar-text">Renewals</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="sf-chevron sftb-disabled"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronLeft())" Color="Color.Custom" CustomColor="#636363" Slot="start" /></a>
+    <a class="toolbar-link-cal">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Calendar())" />
+    </a>
+    <span class="toolbar-text-cal sftb-disabled">@htmlMonth</span>
+    <a class="sf-chevron sftb-disabled"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronRight())" Slot="start" Color="Color.Custom" CustomColor="#636363" /></a>
+
+    <span class="spcr"></span>
+
+    <span class="toolbar-link-cal sftb-disabled">
+        <FluentIcon Value="@(new Icons.Filled.Size24.Person())" Color="Color.FillInverse" Slot="start" />
+    </span>
+    <select class="e-input e-dropdownlist-disabled sftb-disabled">
+        <option value="Everyone">@htmlUser</option>
+    </select>
+    <span class="spcr"></span>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("MasterTasks", PageName) ? "toolbar-disabled" : "")" href="Renewals/MasterTasks">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ShieldTask())" />
+        <span class="toolbar-text">Master Tasks</span>
+    </a>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("List", PageName) ? "toolbar-disabled" : "")" href="/Renewals/List">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+
+    <a class="toolbar-link toolbar-disabled">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Pen())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+
+</div>
+
+<style>
+    .e-plus-icon::before {
+    content: '\e805';
+    }
+</style>
+
+@code {
+
+    [Parameter] public int RenewalId { get; set; }
+    [Parameter] public string PageName { get; set; }
+    [Parameter] public EventCallback<string> OnMenuAction { get; set; }
+    public List<ApplicationUser> allUsers { get; set; }
+    public string htmlMonth = "- - - -";
+    public string htmlUser = "- - - -";
+
+    protected override async Task OnInitializedAsync()
+    {
+        allUsers = await _stateService.AllUsers;
+        htmlMonth = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(_stateService.HtmlMonth);
+        htmlUser = _stateService.HtmlUser;
+    }
+
+    private void NavigateToRenewalCreate()
+    {
+        Navigation.NavigateTo("/Renewals/Create");
+    }
+    private async Task HandleAddAction()
+    {
+        string action = PageName == "MasterTasks" ? "AddMasterTask" : "AddRenewal";
+        if (OnMenuAction.HasDelegate)
+        {
+            await OnMenuAction.InvokeAsync(action);
+        }
+    }
+}

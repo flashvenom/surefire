@@ -1,0 +1,100 @@
+﻿@page "/Carriers"
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.Carriers.Services
+@using Microsoft.EntityFrameworkCore
+@inject CarrierService CarrierService
+
+<_toolbar CarrierId="@CarrierId" CarrierName="@SelectedCarrierName" OnSearchTermChanged="@HandleSearchInput" PageName="Carriers" />
+
+<div class="page-content-datagrid">
+    <div class="fluent-data-grid">
+        <FluentDataGrid Items="@FilteredCarriers" ResizableColumns="true" Pagination="@pagination" ShowHover="true" OnRowClick="@((FluentDataGridRow<Carrier> row) => HandleRowClick(row))">
+            <PropertyColumn Property="@(p => p.CarrierId)" Title="Id" Width="60px" Sortable="true"  />
+            <PropertyColumn Property="@(p => p.CarrierName)" Title="Name" Width="350px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Phone)" Title="Phone" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Website)" Title="Website" Sortable="true" />
+            <PropertyColumn Property="@(p => p.QuotingWebsite)" Title="Quoting URL" Sortable="true" />
+            <PropertyColumn Property="@(p => p.StreetAddress)" Title="Street Address" Sortable="true" />
+            <PropertyColumn Property="@(p => p.City)" Title="City" Sortable="true" />
+            <PropertyColumn Property="@(p => p.State)" Title="State" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Wholesaler)" Title="MGA" Sortable="true" />
+        </FluentDataGrid>
+        <div class="fluent-data-grid__bottombar">
+            <div class="fluent-data-grid__pagination">
+                <FluentPaginator State="@pagination" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    public IQueryable<Carrier> CarrierData { get; set; }
+    public IQueryable<Carrier> FilteredCarriers { get; set; }
+    public int CarrierId { get; set; }
+    public string SelectedCarrierName { get; set; } = "";
+    public string SearchTerm { get; set; } = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
+    private System.Timers.Timer debounceTimer;
+    bool SelectFromEntireRow = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Carriers");
+        CarrierData = CarrierService.GetAllCarriers();
+        FilteredCarriers = CarrierData;
+        debounceTimer = new System.Timers.Timer(200);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            Console.WriteLine("ddd");
+            await InvokeAsync(ApplySearchFilter);
+        };
+    }
+
+    private void HandleSearchInput(string searchTerm)
+    {
+        Console.WriteLine("Handling");
+        SearchTerm = searchTerm;
+        debounceTimer.Stop();
+        debounceTimer.Start(); // Start the debounce timer
+    }
+
+    private void ApplySearchFilter()
+    {
+        Console.WriteLine("apply");
+
+        FilteredCarriers = string.IsNullOrWhiteSpace(SearchTerm)
+        ? CarrierData
+        : CarrierData.Where(c =>
+              EF.Functions.Like(c.CarrierName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Phone.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Website.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.StreetAddress.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.City.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.State.ToLower(), $"%{SearchTerm.ToLower()}%"));
+
+        InvokeAsync(StateHasChanged); // Trigger UI refresh after filtering
+    }
+
+    private void HandleRowSelected(FluentDataGridRow<Carrier> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedCarrier = row.Item;
+            CarrierId = selectedCarrier.CarrierId;
+            Navigation.NavigateTo($"/Carriers/Details/{CarrierId}");
+        }
+    }
+
+    private void HandleRowClick(FluentDataGridRow<Carrier> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedCarrier = row.Item;
+            CarrierId = selectedCarrier.CarrierId;
+            Navigation.NavigateTo($"/Carriers/Details/{CarrierId}");
+        }
+    }
+}

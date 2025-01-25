@@ -1,0 +1,48 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+
+@code {
+    [Parameter] public string ProductCode { get; set; }
+
+    private Icon GetIcon()
+    {
+        return ProductCode switch
+        {
+            "WCO" => new Icons.Regular.Size24.PeopleTeam(),    // Worker's Compensation
+            "AUT" => new Icons.Regular.Size24.VehicleCar(),         // Auto
+            "BOP" => new Icons.Regular.Size24.Briefcase(),          // Business Owner's Package
+            "GLI" => new Icons.Regular.Size24.Shield(),             // General Liability
+            "E&O" => new Icons.Regular.Size24.ClipboardCheckmark(), // Errors & Omissions & Professional Liability
+            "EPLI" => new Icons.Regular.Size24.PeopleError(),       // Employer Practice Liability Insurance
+            "PKG" => new Icons.Regular.Size24.Box(),                // Package
+            "UMB" => new Icons.Regular.Size24.Umbrella(),           // Umbrella
+            _ => new Icons.Regular.Size24.QuestionCircle()          // Default icon for unknown product codes
+        };
+    }
+
+    private string GetCustomColor()
+    {
+        return ProductCode switch
+        {
+            "WCO" => "#d76f6a",  // Red for Work Comp
+            "AUT" => "#3a9ad9",  // Blue for Auto
+            "BOP" => "#f4b942",  // Yellow for Business Owner's Package
+            "GLI" => "#70d44b",  // Green for General Liability
+            "E&O" => "#d29a0c",  // Orange for Errors & Omissions
+            "EPLI" => "#7d4b9d", // Purple for Employers Practice Liability
+            "PKG" => "#ff8c00",  // Orange for Package
+            "UMB" => "#ef6fda",  // Pink for Umbrella
+            _ => "#cccccc"       // Default black color for unknown product codes
+        };
+    }
+}
+
+<table>
+    <tr>
+        <td class="tdtwe" style="color:@GetCustomColor()">@ProductCode.Substring(0, Math.Min(3, ProductCode.Length))</td>
+        <td class="tdtwe">
+            <div class="icotwe">
+                <FluentIcon Value="@(GetIcon())" Color="Color.Custom" CustomColor="@GetCustomColor()" />
+            </div>
+        </td>
+    </tr>
+</table>

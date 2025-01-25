@@ -1,0 +1,74 @@
+﻿.sf-header {
+    display: flex;
+    justify-content: normal;
+    flex-direction: row;
+    background: linear-gradient(to bottom, rgba(249,249,249,1) 0%,rgba(234,234,234,1) 100%);
+    padding-top: 12px;
+    padding-bottom: 8px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.client-header {
+    font-family: "montserrat", sans-serif;
+    font-weight: 800;
+    font-style: normal;
+    font-size: 2.5em;
+    flex: 2;
+    line-height: 30px;
+}
+
+    .client-header h1 {
+        font-family: "montserrat", sans-serif;
+        font-weight: 800;
+        font-style: normal;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+    }
+
+.client-header-2 {
+    flex: 1;
+}
+
+.client-header-3 {
+    flex: 1;
+    line-height: 20px;
+    text-align: right;
+    align-content: center;
+}
+
+.client-title {
+    font-family: "montserrat", sans-serif;
+    font-weight: 200;
+    font-style: normal;
+    font-size: .5em;
+}
+
+.contact-key {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: .7em;
+    color:#717171;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+.contact-value {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 1.2em;
+    color: #2f2f2f;
+    margin-bottom:15px;
+}
+
+.m-h3 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 100;
+    font-style: normal;
+    font-size: 2em;
+    color: #a7a7a7;
+    margin-bottom: 10px;
+}

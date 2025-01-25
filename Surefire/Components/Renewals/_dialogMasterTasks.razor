@@ -1,0 +1,67 @@
+﻿@inherits AppComponentBase
+@using Surefire.Domain.Renewals.Models
+@using Surefire.Domain.Renewals.Services
+@using Microsoft.AspNetCore.Components
+@implements IDialogContentComponent<TaskMaster>
+@inject TaskService TaskService
+@inject RenewalService RenewalService
+
+<!-- Header -->
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+            @Dialog.Instance.Parameters.Title
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+<!-- Body -->
+<FluentDialogBody>
+    <EditForm Model="Content">
+        <DataAnnotationsValidator />
+
+        <FluentTextField @bind-Value="Content.TaskName" Placeholder="Task Name" Label="Task Name" />
+        <FluentTextArea @bind-Value="Content.Description" Placeholder="Description" Label="Description" />
+        <FluentNumberField @bind-Value="Content.DaysBeforeExpiration" Placeholder="Days Before Expiration" Label="Days Before Expiration" />
+        <FluentNumberField @bind-Value="Content.ParentTaskId" Placeholder="Parent Task Id" Label="Parent Task Id" />
+        <FluentCheckbox @bind-Value="Content.Important">Important</FluentCheckbox>
+        <FluentNumberField @bind-Value="Content.OrderNumber" Placeholder="Order Number" Label="Order Number" />
+
+        <div style="color: var(--error);">
+            <FluentValidationSummary />
+        </div>
+    </EditForm>
+</FluentDialogBody>
+
+<!-- Footer -->
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Save</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Cancel</FluentButton>
+</FluentDialogFooter>
+
+@code {
+    [CascadingParameter] public FluentDialog Dialog { get; set; } = default!;
+    [Parameter] public TaskMaster Content { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        // Initialization logic if needed
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Content.TaskName))
+        {
+            // Validation error: TaskName is required
+            return;
+        }
+
+        await Dialog.CloseAsync(Content);
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}

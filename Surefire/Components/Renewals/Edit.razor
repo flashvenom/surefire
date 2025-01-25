@@ -1,0 +1,111 @@
+﻿@page "/Renewals/Edit/{RenewalId:int}"
+@using Microsoft.EntityFrameworkCore
+@using Surefire.Domain.Renewals.Models
+@using Surefire.Domain.Renewals.Services
+@using Surefire.Domain.Carriers.Models
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Spinner
+@inject RenewalService RenewalService
+@inject StateService _stateService
+
+<_toolbar PageName="Edit" />
+
+<div class="page-content">
+    <div class="mh1">Edit Renewal</div>
+    @if (Renewal is null || Products is null || Carriers is null || Wholesalers is null || Users is null)
+    {
+        <p><em>Loading...</em></p><SfSpinner Visible="true"></SfSpinner>
+    }
+    else
+    {
+        <EditForm Model="Renewal" OnValidSubmit="UpdateRenewal">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mf-flex-row mf-row-container">
+                <div class="mf-item-lg">
+                    <div class="mf-flex-editpage">
+                        <div class="mf-item-half">
+                            <div class="mb-3 mf-item-space">
+                                <SfDatePicker TValue="DateTime" @bind-Value="Renewal.RenewalDate" Placeholder="Renewal Date" FloatLabelType="FloatLabelType.Always" />
+                                <ValidationMessage For="() => Renewal.RenewalDate" class="text-danger" />
+                            </div>
+                            <div class="mb-3" style="opacity:.5">
+                                <SfNumericTextBox TValue="decimal?" @bind-Value="Renewal.ExpiringPremium" Placeholder="Expiring Premium" FloatLabelType="FloatLabelType.Always" Format="C2" Readonly="true" />
+                                <ValidationMessage For="() => Renewal.ExpiringPremium" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="mf-item-half">
+                            <div class="mb-3 mf-item-space">
+                                <SfDropDownList TValue="string" TItem="ApplicationUser" DataSource="@Users" Placeholder="Assigned To" @bind-Value="Renewal.AssignedToId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="FirstName" Value="Id" />
+                                </SfDropDownList>
+                                <ValidationMessage For="() => Renewal.AssignedToId" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3" style="opacity:.5">
+                                <SfTextBox @bind-Value="Renewal.ExpiringPolicyNumber" Placeholder="Expiring Policy Number" FloatLabelType="FloatLabelType.Always" Readonly="true" />
+                                <ValidationMessage For="() => Renewal.ExpiringPolicyNumber" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mf-flex mf-flex-row mf-row-container">
+                        <SfDropDownList TValue="int" TItem="Product" DataSource="@Products" Placeholder="Product" @bind-Value="Renewal.ProductId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Text="LineName" Value="ProductId" />
+                        </SfDropDownList>
+                        <ValidationMessage For="() => Renewal.ProductId" class="text-danger" />
+                    </div>
+                </div>
+                <div class="mf-item-lg mf-pad-left">
+                    <div class="mb-3">
+                        <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Carriers" Placeholder="Carrier" @bind-Value="Renewal.CarrierId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                        </SfDropDownList>
+                        <ValidationMessage For="() => Renewal.CarrierId" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Wholesalers" Placeholder="Wholesaler" @bind-Value="Renewal.WholesalerId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                        </SfDropDownList>
+                        <ValidationMessage For="() => Renewal.WholesalerId" class="text-danger" />
+                    </div>
+                </div>
+            </div>
+            <br />
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Renewal</FluentButton>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+
+    private Renewal? Renewal { get; set; }
+    private List<Product> Products { get; set; }
+    private List<Carrier> Carriers { get; set; }
+    private List<Carrier> Wholesalers { get; set; }
+    private List<ApplicationUser> Users { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Renewal = await RenewalService.GetRenewalByIdTrackAsync(RenewalId);
+        Products = await _stateService.AllProducts;
+        Carriers = await _stateService.AllCarriers;
+        Wholesalers = await _stateService.AllWholesalers;
+        Users = await _stateService.AllUsers;
+    }
+
+    private async Task UpdateRenewal()
+    {
+        await RenewalService.UpdateRenewalAsync(Renewal);
+        Navigation.NavigateTo($"/Renewals/Details/{Renewal.RenewalId}");
+    }
+
+    public void GoBack()
+    {
+        Navigation.NavigateTo($"/Renewals/Details/{RenewalId}");
+    }
+}

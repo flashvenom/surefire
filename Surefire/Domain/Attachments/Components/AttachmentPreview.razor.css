@@ -1,0 +1,49 @@
+﻿.preview-container {
+    padding:0px 15px;
+    
+}
+.attach-buttons {
+    display:flex;
+    background-color: transparent;
+    background: none;
+}
+.btndiv {
+    flex: 1 1 auto;
+    opacity: .6;
+    overflow: hidden;
+    filter: saturate(0%);
+}
+    .btndiv:hover {
+        opacity: 1;
+        filter: saturate(100%);
+    }
+.btndiv img {
+    box-shadow:0px 0px 8px #000;
+}
+.btn-bar {
+   border-radius:10px;
+   overflow:hidden;
+   margin:0px;
+   padding:0px;
+   /*box-shadow:0px 0px 5px #000;*/
+}
+.preview-container {
+
+}
+.attachment-description {
+    font-family: "montserrat", sans-serif;
+    font-weight:600;
+    margin-top:15px;
+    font-size:1.25em;
+}
+.attachment-filename {
+    font-family: "montserrat", sans-serif;
+    color:#525252;
+}
+.attachment-details {
+    font-size:.8em;
+}
+.attachment-details p {
+    padding:0px !important;
+    margin:0px !important;
+}

@@ -1,0 +1,108 @@
+﻿.policy-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+.policy {
+    color: #fff;
+    width: 100%;
+    padding: 9px 10px 6px 10px;
+    margin-bottom: 10px;
+    border-left: 5px solid #8870B8;
+    border-radius: 3px;
+    height: 45px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#593294+0,4c2871+46,4c2871+100 */
+    /*background: linear-gradient(to right, #593294 0%,#4c2871 46%,#4c2871 100%);*/ /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    background-image: url(../../../img/bg-grad.jpg);
+    background-size: cover;
+    overflow: hidden;
+    transition: all .4s ease-in-out;
+}
+
+    .policy.expanded {
+        background-color: #141414;
+        transition: all .4s ease-in-out;
+        height: 76px;
+        border-left: 5px solid #FF6600;
+        border-radius: 5px;
+        background-image: url(../../../img/bg-grad.jpg);
+        background-position-x: -800px;
+        background-size: cover;
+    }
+
+.policy-header {
+    display: flex;
+    justify-content: space-between;
+}
+.policy-carriers {
+    font-size: 1.125em;
+    font-weight: 200;
+    padding: 4px 0px;
+    margin-bottom:5px;
+}
+
+.policy-linename {
+    font-size: 1.4em;
+    font-weight: 700;
+}
+
+    .policy-linename:hover {
+        cursor: pointer;
+    }
+
+.ff2 {
+    margin-left: auto;
+}
+
+.edate {
+    font-size: 1.4em;
+    float: left;
+    font-weight: 100;
+}
+
+.xdate {
+    font-size: 1.4em;
+    float: left;
+    font-weight: 600;
+}
+
+.rotate-90 {
+    transform: rotate(90deg);
+    transition: transform 0.3s ease;
+}
+
+.rotate-0 {
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+.smalltool {
+    font-size: 11px;
+    padding: 3px 5px;
+    margin: 0px;
+    color: #fff;
+    border: 1px solid #ffffff68;
+    -webkit-text-decoration: none;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+    .smalltool:hover {
+        cursor: pointer;
+        border: 1px solid #fff;
+    }
+
+.carrier-name {
+    font-size: .9em;
+    font-weight: 200;
+    color: #ffffffb1 !important;
+}
+
+    .carrier-name a {
+        color: #ffffffb1 !important;
+        text-decoration: none;
+    }
+
+.lighter {
+    color: #ffffff70;
+    padding: 0px 8px;
+}

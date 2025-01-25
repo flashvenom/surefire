@@ -1,0 +1,270 @@
+﻿@page "/Leads/{LoadLeadId:int}"
+@using Surefire.Domain.Forms.Components
+@using Surefire.Domain.Forms.Models
+@using Surefire.Domain.Forms.Services
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Renewals.Models
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Policies.Components
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Clients.Services
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.RichTextEditor
+@using Syncfusion.Blazor.Lists
+@using Syncfusion.Blazor.ProgressBar
+@using Syncfusion.Blazor.DropDowns
+@inject FormService FormService
+@inject ClientService ClientService
+@inject StateService _stateService
+
+<_toolbar LeadId="LoadLeadId" />
+
+<div class="page-content">
+    <div class="biz-top">
+        <div class="biz-rowone">
+            @if (selectedLead != null)
+            {
+                <span class="biz-name">@selectedLead.CompanyName</span>
+                @if (!string.IsNullOrEmpty(selectedLead.PhoneNumber))
+                {
+                    <span class="biz-phone">
+                        <span class="phone-icon"><a href="tel:@StringHelper.FormatTelDialNumber(selectedLead.PhoneNumber)"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#036ac4" Color="Color.Custom" /></a></span>
+                        <span class="biz-phonenumber">@StringHelper.FormatPhoneNumber(selectedLead.PhoneNumber)</span>
+                    </span>
+                }
+            }
+        </div>
+        <div class="biz-rowtwo">
+            @if (selectedLead != null)
+            {
+                @if (!string.IsNullOrEmpty(selectedLead.Address))
+                {
+                    <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                    <a class="biz-data" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString($"{selectedLead.Address} {selectedLead.City}, {selectedLead.State} {selectedLead.Zip}")" target="_blank">
+                        @selectedLead.Address @selectedLead.City, @selectedLead.State @selectedLead.Zip
+                    </a>
+                }
+
+                @if (!string.IsNullOrEmpty(selectedLead.Email))
+                {
+                    <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                    <a href="@("mailto:" + selectedLead.Email)" class="biz-data">
+                        @selectedLead.Email
+                    </a>
+                }
+
+                @if (!string.IsNullOrEmpty(selectedLead.Website))
+                {
+                    <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                    <a href="@("http://" + selectedLead.Website)" class="biz-data" target="_blank">
+                        @selectedLead.Website
+                    </a>
+                }
+            }
+        </div>
+    </div>
+    <div class="biz-main">
+        @if (selectedLead != null)
+        {
+            <FluentTabs @ref="tabInterface" Size="TabSize.Large">
+                <FluentTab Id="tab-1" Label="Overview" Class="sf-tab">
+                    <div class="mf-flex mf-flexrow">
+                        <div style="width:500px;">
+                            <SfRichTextEditor @bind-Value="@selectedLead.Notes" Height="550" />
+                            <SfButton Content="Save Notes" CssClass="e-primary" OnClick="@(args => SaveLead(args, selectedLead))"></SfButton><br><br>
+                        </div>
+
+                        <div style="margin-left:30px;">
+                            @if(leadContacts != null)
+                            {
+                                <ContactsList Contacts="leadContacts" />
+                            }
+                            
+
+                            @if (selectedLead.Product != null)
+                            {
+                                <div class="txt-section">PRODUCT</div>
+                                <div class="txt-sectionvalue" style="margin-bottom:15px;">
+                                    @selectedLead.Product.LineName
+                                </div>
+                            }
+
+                            @if (selectedLead.BindDate != null)
+                            {
+                                <div class="txt-section">GOAL DATE</div>
+                                <div class="txt-sectionvalue" style="margin-bottom:15px;">
+                                    @selectedLead.BindDate?.ToString("MMMM dd, yyyy")
+                                </div>
+                            }
+
+                            @if (selectedLead.Stage != null)
+                            {
+                                <div class="txt-section">STAGE</div>
+                                <div class="txt-sectionvalue" style="margin-bottom:15px;">
+                                    @selectedLead.Stage
+                                </div>
+                            }
+
+                            @if (selectedLead.Operations != null)
+                            {
+                                <div class="txt-section">OPERATIONS</div>
+                                <div class="txt-sectionvalue" style="margin-bottom:15px;">
+                                    @selectedLead.Operations
+                                </div>
+                            }
+                        </div>
+
+                        <div class="notescol">
+                            <span class="txt-section">NOTES</span><br />
+                            <div style="height:8px;"></div>
+                            <div class="ninetyten">
+                                <SfTextBox @bind-Value="NewLeadNoteText" Placeholder="Enter a new note..." />
+                            </div>
+                            <div class="tenninety">
+                                <SfButton Content="+" OnClick="AddSubmissionNote"></SfButton>
+                            </div>
+                            <div style="clear: both; height:10px;"></div>
+
+                            @foreach (var note in selectedLead.LeadNotes.OrderByDescending(n => n.DateCreated))
+                            {
+                                <div class="note">
+                                    <span class="note__date">@note.DateCreated.ToString("MM/dd/yyyy") - </span>
+                                    <span class="note__content">@note.Note</span>
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+                </FluentTab>
+                <FluentTab Id="tab-2" Label="Submissions" Class="sf-tab">
+                        <Submissions LeadId="selectedLead.LeadId" />
+                </FluentTab>
+                <FluentTab Id="tab-4" Label="Forms" Class="sf-tab">
+                    <div class="txt-section">Applications</div>
+                    @if (selectedLead != null)
+                    {
+                        <FormDocList formDocList="selectedLead.FormDocs.ToList()" />
+                    }
+                    <br /><br />Create New:
+                    @foreach (var item in allFormPdfs)
+                    {
+                        <FluentButton @onclick="() => CreateNewForm(item.FormPdfId)">@item.Title</FluentButton>
+                    }
+                </FluentTab>
+            </FluentTabs>
+        }
+    </div>
+    <div style="clear:both;"></div>
+</div>
+
+@code {
+    [Parameter]
+    public int LoadLeadId { get; set; }
+
+    [Parameter]
+    public bool showCreatePolicy { get; set; } = false;
+
+    private Lead selectedLead { get; set; }
+    private FluentTabs tabInterface { get; set; }
+    private List<FormPdf> allFormPdfs { get; set; } = new();
+    private List<Carrier> allCarriers { get; set; }
+    private List<Carrier> allWholesalers { get; set; }
+    public ApplicationUser UserMe { get; set; }
+    private int SelectedCarrierId;
+    private int SelectedWholsalerId;
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+    private List<Contact> leadContacts;
+    private string NewLeadNoteText { get; set; } = "";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var loadLeadTask = LoadLead(LoadLeadId);
+        var formPdfsTask = FormService.GetAllFormPdfs();
+        var carriersTask = _stateService.AllCarriers;
+        var wholesalersTask = _stateService.AllWholesalers;
+
+        await Task.WhenAll(loadLeadTask, formPdfsTask, carriersTask, wholesalersTask);
+
+        allFormPdfs = await formPdfsTask;
+        allCarriers = await carriersTask;
+        allWholesalers = await wholesalersTask;
+
+        UserMe = _stateService.CurrentUser;
+        UpdateHeader?.Invoke("Leads");
+        leadContacts = new List<Contact>
+        {
+            new Contact()
+            {
+                FirstName = selectedLead.ContactName,
+                LastName = "",
+                Phone = selectedLead.PhoneNumber,
+                Email = selectedLead.Email
+            }
+        };
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadLead(int loadClientId)
+    {
+        try
+        {
+            selectedLead = await ClientService.GetLeadByIdAsync(loadClientId) ?? await ClientService.GetLeadByIdAsync(1);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading selected renewal {loadClientId}: " + ex.Message);
+        }
+    }
+
+    private async Task SaveLead(MouseEventArgs arg, Lead lead)
+    {
+        await ClientService.UpdateLeadSimpleAsync(lead);
+    }
+
+
+
+    // Utilities
+    private async Task CreateNewForm(int formPdfId)
+    {
+        try
+        {
+            int newFormDocId = await FormService.CreateFormDoc(formPdfId, null, selectedLead.LeadId);
+            Navigation.NavigateTo($"/Forms/Editor/{newFormDocId}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error creating new form: {ex.Message}");
+            // Optionally, display an error message to the user
+        }
+    }
+    private async Task AddSubmissionNote()
+    {
+        if (!string.IsNullOrWhiteSpace(NewLeadNoteText))
+        {
+            var newNote = new LeadNote
+                {
+                    Note = NewLeadNoteText,
+                    DateCreated = DateTime.UtcNow,
+                    LeadId = selectedLead.LeadId,
+                    Deleted = false
+                };
+
+            
+            await ClientService.AddLeadNoteAsync(newNote);
+            
+
+            // Add the new note to the top of the list
+            selectedLead.LeadNotes.Insert(0, newNote);
+
+            // Clear the input field
+            NewLeadNoteText = "";
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

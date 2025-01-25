@@ -1,0 +1,90 @@
+﻿@namespace Surefire.Domain.Attachments.Components
+@using Surefire
+@using Surefire.Data
+@using Surefire.Domain.Attachments.Models
+@using Surefire.Domain.Ember
+@using Surefire.Domain.Logs
+@using Surefire.Domain.Shared.Helpers
+@using Surefire.Domain.Shared.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.JSInterop
+@inject EmberService EmberService
+@inject NavigationManager Navigation
+@inject ILoggingService _logs
+@inject IJSRuntime JSRuntime
+
+@if (AttachmentsList != null)
+{
+    @foreach (var file in AttachmentsList)
+    {
+        <div class="quickfile">
+            <a href="@("https://localhost/" + file?.LocalPath + "/" + file?.HashedFileName)" target="_blank">
+                <div class="quickfile-image"><img src="@StringHelper.BuildThumbnailPath(file)" class="img-fluid" draggable="true" data-file="@StringHelper.BuildWindowsPath(file, false)" @ondragstart="(args => OnDragStart(args, file))" /></div>
+                <div class="quickfile-name">@file.Description</div>
+            </a>
+            <div class="quickfile-buttons">
+                <FluentIcon Value="@(new Icons.Filled.Size16.Folder())" Color="Color.Accent" Class="quickfile-buttons__icon" OnClick="() => OpenWithWindows(file, true)" />
+                <FluentIcon Value="@(new Icons.Filled.Size16.OpenFolder())" Color="Color.Accent" Class="quickfile-buttons__icon" OnClick="() => OpenWithWindows(file, false)" />
+                <a href="@("https://bizname-web/" + file?.LocalPath + "/" + file?.HashedFileName)" target="_blank"><FluentIcon Value="@(new Icons.Filled.Size16.Window())" Color="Color.Accent" Class="quickfile-buttons__icon" /></a>
+                <FluentIcon Value="@(new Icons.Filled.Size16.Edit())" Color="Color.Accent" Class="quickfile-buttons__icon" />
+            </div>
+        </div>
+    }
+    <div style="clear:both;"></div>
+}
+
+@code {
+    [Parameter] public List<Attachment> AttachmentsList { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OpenWithWindows(Attachment attachment, bool openFolderOnly)
+    {
+        try
+        {
+            await _logs.LogAsync(LogLevel.Information, $"Opening folder: {attachment?.LocalPath}", "AttachmentIcons");
+
+            if (!string.IsNullOrEmpty(attachment?.LocalPath))
+            {
+                if (openFolderOnly)
+                {
+                    List<string> mylistfiles = new List<string> { StringHelper.BuildWindowsPath(attachment, true) };
+                    await EmberService.RunEmberFunction("Windows_OpenFolder", mylistfiles);
+                }else{
+                    List<string> mylistfiles = new List<string> { StringHelper.BuildWindowsPath(attachment, false) };
+                    await EmberService.RunEmberFunction("Windows_OpenFile", mylistfiles);
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            await _logs.LogAsync(LogLevel.Error, ex.ToString(), "AttachmentIcons");
+        }
+    }
+    private async Task PreviewFileInBrowser(Attachment attachment)
+    {
+        {
+            Navigation.NavigateTo($"https://bizname-web/{attachment?.LocalPath}{attachment?.HashedFileName}");
+        }
+    }
+    private async Task OnDragStart(DragEventArgs args, Attachment file)
+    {
+        Console.WriteLine("testing dragger: " + file.HashedFileName);
+        try
+        {
+            var filePath = StringHelper.BuildWindowsPath(file, false);
+            Console.WriteLine("testing dragger2: " + filePath);
+            await JSRuntime.InvokeVoidAsync("setDragData", filePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            await _logs.LogAsync(LogLevel.Error, ex.ToString(), "AttachmentIcons");
+        }
+    }
+}

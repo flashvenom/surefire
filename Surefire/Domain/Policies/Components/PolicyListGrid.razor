@@ -1,0 +1,167 @@
+﻿@namespace Surefire.Domain.Policies.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.Shared.Helpers
+@inject NavigationManager NavigationManager
+
+<div class="sf-spacer-sm"></div>
+@if (policyList == null)
+{
+    <FluentSkeleton Width="100%" Height="400px" Shimmer="true"></FluentSkeleton>
+}
+else
+{
+    <!-- Tag Buttons -->
+    <div class="tag-container">
+        @foreach (var tag in tags)
+        {
+            <FluentButton Appearance="@(selectedTag == tag ? Appearance.Accent : Appearance.Outline)" Class="tag-button" OnClick="() => SelectTag(tag)">
+                @if(tag.Type == "Carrier" || tag.Type == "Wholesaler")
+                {
+                    <span class="csm">@StringHelper.CropCarrierName(tag.Name)</span>
+                }else{
+                    <strong>@GetDisplayTagName(tag.Name)</strong>
+                }
+                
+            </FluentButton>
+        }
+    </div>
+
+    <!-- Data Grid -->
+    <div class="fluent-data-grid">
+        <FluentDataGrid Items="@GetFilteredAndSortedPolicyList()" ResizableColumns="true" ShowHover="true" TGridItem="Policy" OnRowDoubleClick="@((FluentDataGridRow<Policy> row) => HandleRowDoubleClick(row))">
+            <PropertyColumn Property="@(p => p.EffectiveDate)" Title="Effective" Sortable="true" Format="MM-dd-yyyy" Width="125px" />
+            <PropertyColumn Property="@(p => p.ExpirationDate)" Title="Expiration" Sortable="true" Format="MM-dd-yyyy" Width="125px" />
+            <PropertyColumn Property="@(p => p.Product != null ? p.Product.LineName : "")" Title="Line" Sortable="true" />
+            <PropertyColumn Property="@(p => p.PolicyNumber)" Title="Policy #" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Carrier != null ? p.Carrier.CarrierName : "")" Title="Carrier" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Wholesaler != null ? p.Wholesaler.CarrierName : "")" Title="Wholesaler" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Premium)" Title="Premium" Sortable="true" Format="C2" />
+            <PropertyColumn Property="@(p => p.PolicyId)" Title="MetroId" Sortable="true" Width="100px" />
+        </FluentDataGrid>
+    </div>
+}
+@code {
+    [Parameter]
+    public IQueryable<Policy> policyList { get; set; }
+
+    [Parameter]
+    public string listTitle { get; set; } = "Policies";
+
+    private class Tag
+    {
+        public string Name { get; set; }
+        public string Type { get; set; } // "Product", "Carrier", "Wholesaler", "All"
+    }
+
+    private List<Tag> tags = new List<Tag>();
+    private Tag selectedTag;
+    private bool isDescending = true;
+
+    protected override void OnParametersSet()
+    {
+        if (policyList != null)
+        {
+            // Initialize tags
+            var productLines = policyList
+                .Select(p => p.Product != null ? p.Product.LineName : null)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .Select(name => new Tag { Name = name, Type = "Product" })
+                .ToList();
+
+            var carriers = policyList
+                .Select(p => p.Carrier != null ? p.Carrier.CarrierName : null)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .Select(name => new Tag { Name = name, Type = "Carrier" })
+                .ToList();
+
+            var wholesalers = policyList
+                .Select(p => p.Wholesaler != null ? p.Wholesaler.CarrierName : null)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .Select(name => new Tag { Name = name, Type = "Wholesaler" })
+                .ToList();
+
+            // Add "Everything" tag
+            tags = new List<Tag> { new Tag { Name = "All Policies", Type = "All" } };
+
+            // Combine all tags
+            tags.AddRange(productLines);
+            tags.AddRange(carriers);
+            tags.AddRange(wholesalers);
+
+            // Set default selected tag
+            selectedTag = tags.FirstOrDefault(t => t.Name == "All Policies");
+        }
+    }
+
+    private void SelectTag(Tag tag)
+    {
+        selectedTag = tag;
+    }
+    private string GetDisplayTagName(string tagName)
+    {
+        return tagName switch
+        {
+            "Worker's Compensation" => "Work Comp",
+            "Commercial Auto" => "Auto",
+            "Employer's Practice Liability Insurance" => "EPLI",
+            "Business Owner's Package" => "BOP",
+            "Professional Liability" => "E&O",
+            "Commercial Umbrella" => "Umbrella",
+            "Commercial Package" => "Package",
+            _ when tagName.Contains("Hartford") => "Hartford",
+            _ => tagName // Default to original name if no match
+        };
+    }
+    private IQueryable<Policy> GetFilteredAndSortedPolicyList()
+    {
+        IQueryable<Policy> filteredPolicies;
+
+        // Apply filtering based on the selected tag
+        if (selectedTag == null || selectedTag.Type == "All")
+        {
+            filteredPolicies = policyList;
+        }
+        else
+        {
+            switch (selectedTag.Type)
+            {
+                case "Product":
+                    filteredPolicies = policyList.Where(p => p.Product != null && p.Product.LineName == selectedTag.Name);
+                    break;
+                case "Carrier":
+                    filteredPolicies = policyList.Where(p => p.Carrier != null && p.Carrier.CarrierName == selectedTag.Name);
+                    break;
+                case "Wholesaler":
+                    filteredPolicies = policyList.Where(p => p.Wholesaler != null && p.Wholesaler.CarrierName == selectedTag.Name);
+                    break;
+                default:
+                    filteredPolicies = policyList;
+                    break;
+            }
+        }
+
+        // Apply sorting by ExpirationDate in descending order by default
+        return isDescending
+            ? filteredPolicies.OrderByDescending(p => p.ExpirationDate)
+            : filteredPolicies.OrderBy(p => p.ExpirationDate);
+    }
+
+    private void HandleRowDoubleClick(FluentDataGridRow<Policy> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedPolicy = row.Item;
+            NavigationManager.NavigateTo($"/Policies/Details/{selectedPolicy.PolicyId}");
+        }
+    }
+}

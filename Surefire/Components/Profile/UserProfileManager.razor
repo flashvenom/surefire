@@ -1,0 +1,157 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IMessageService MessageService
+
+<FluentMessageBarProvider />
+
+<div class="profile-manager">
+    <h3>Profile Settings</h3>
+
+    @if (_user != null)
+    {
+        <FluentStack Orientation="Orientation.Vertical" Gap="20">
+            <div class="profile-section">
+                <FluentTextField @bind-Value="_firstName" Label="First Name" />
+                <FluentTextField @bind-Value="_lastName" Label="Last Name" />
+                <FluentButton Appearance="Appearance.Accent" 
+                @onclick="UpdateProfileAsync">Save Changes</FluentButton>
+            </div>
+
+            <div class="profile-section">
+                <h4>Change Password</h4>
+                <FluentTextField Type="password" @bind-Value="_currentPassword" 
+                Label="Current Password" />
+                <FluentTextField Type="password" @bind-Value="_newPassword" 
+                Label="New Password" />
+                <FluentTextField Type="password" @bind-Value="_confirmPassword" 
+                Label="Confirm New Password" />
+                <FluentButton Appearance="Appearance.Accent" 
+                @onclick="ChangePasswordAsync">Update Password</FluentButton>
+            </div>
+        </FluentStack>
+    }
+</div>
+
+@code {
+    private ApplicationUser _user;
+    private string _firstName;
+    private string _lastName;
+    private string _currentPassword;
+    private string _newPassword;
+    private string _confirmPassword;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await UserManager.GetUserAsync(SignInManager.Context.User);
+        if (_user != null)
+        {
+            _firstName = _user.FirstName;
+            _lastName = _user.LastName;
+        }
+    }
+
+    private async Task UpdateProfileAsync()
+    {
+        if (_user != null)
+        {
+            _user.FirstName = _firstName;
+            _user.LastName = _lastName;
+            var result = await UserManager.UpdateAsync(_user);
+            if (result.Succeeded)
+            {
+                MessageService.ShowMessageBar(options =>
+                    {
+                        options.Title = "Success";
+                        options.Body = "Profile updated successfully";
+                        options.Intent = MessageIntent.Success;
+                    }
+                );
+            }
+            else
+            {
+                var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+                MessageService.ShowMessageBar(options =>
+                    {
+                        options.Title = "Error";
+                        options.Body = errors;
+                        options.Intent = MessageIntent.Error;
+                        options.Timeout = 4000;
+                    }
+                );
+            }
+        }
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        if (_user == null)
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = "User not found";
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_currentPassword) || 
+            string.IsNullOrEmpty(_newPassword) || 
+            string.IsNullOrEmpty(_confirmPassword))
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = "Please fill in all password fields";
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        if (_newPassword != _confirmPassword)
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Intent = MessageIntent.Error;
+                    options.Body = "New password and confirmation do not match";
+                    options.Title = "Error";
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        var result = await UserManager.ChangePasswordAsync(_user, 
+            _currentPassword, _newPassword);
+
+        if (result.Succeeded)
+        {
+            // Clear password fields
+            _currentPassword = _newPassword = _confirmPassword = string.Empty;
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Success";
+                    options.Body = "Password changed successfully";
+                    options.Intent = MessageIntent.Success;
+                }
+            );
+        }
+        else
+        {
+            var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = errors;
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+        }
+    }
+}

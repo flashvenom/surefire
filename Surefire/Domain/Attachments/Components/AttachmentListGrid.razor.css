@@ -1,0 +1,36 @@
+﻿.attachment-btn {
+    background-color:#fff;
+    display:inline-flex;
+    padding:2px;
+    position:relative;
+    top:3px;
+    border-radius:3px;
+    opacity:.6;
+    
+}
+.attachment-btn:hover {
+    cursor:pointer;
+    box-shadow:0px 0px 10px #0000009d;
+    opacity:1;
+}
+.mf-flexatt {
+    display: flex;
+    flex-direction: row;
+    width:100%;
+}
+.mf-flexcol-att1 {
+    flex: 1 1 auto;
+    overflow:hidden;
+}
+.mf-flexcol-att2 {
+    flex: 0 0 320px;
+    border: 10px solid #f1f1f1;
+    border-top: 10px solid #ffffff9d;
+    /*box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);*/
+    border-radius: 12px;
+    position: relative;
+    top: -100px;
+}
+.att-preview {
+    padding:15px;
+}

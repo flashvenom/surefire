@@ -1,0 +1,138 @@
+﻿@page "/Contacts/Details/{ContactId:int}"
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Contacts.Services
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Carriers.Models
+@inject ContactService ContactService
+
+<_toolbar ContactId="ContactId" />
+
+@if (Contact != null)
+{
+    <div class="sf-header">
+        <div class="client-header">
+            <table>
+                <tr>
+                    <td>
+                        @{
+                            string nameInitials = $"{Contact.FirstName?[0]}{Contact.LastName?[0]}";
+                            string headshotImage = !string.IsNullOrEmpty(Contact.HeadshotFilename) ? "/uploads/headshots/" + Contact.HeadshotFilename : null;
+                        }
+                        <div style="font-size:.5em;">
+                            <FluentPersona Initials="@nameInitials" ImageSize="70px" Class="txt-persona" Image="@headshotImage" />
+                        </div>
+                    </td>
+                    <td style="padding-left:20px;">
+                        <div class="client-name">@Contact.FirstName @Contact.LastName</div>
+                        <div class="client-title">@Contact.Title</div>
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+    </div>
+
+    <div class="page-content">
+        <div class="mf-flex mf-row">
+            <div class="mf-item-sm" style="padding-left:105px;">
+                @if (Contact.Email != null)
+                {
+                    <div class="contact-key">Email</div>
+                    <div class="contact-value"><a href="mailto:@Contact.Email">@Contact.Email</a></div>
+                }
+
+                @if (Contact.Phone != null)
+                {
+                    <div class="contact-key">Phone</div>
+                    <div class="contact-value"><a href="tel:@Contact.Phone">@Contact.Phone</a></div>
+                }
+
+                @if (Contact.Mobile != null)
+                {
+                    <div class="contact-key">Mobile</div>
+                    <div class="contact-value"><a href="tel:@Contact.Mobile">@Contact.Mobile</a></div>
+                }
+                @if (Contact.Notes != null)
+                {
+                    <div class="contact-key">Notes</div>
+                    <div class="contact-value">@Contact.Notes</div>
+                }
+
+                <div style="height:25px;"></div>
+                <div class="contact-key">TYPE</div>
+                @if (ConfirmedParentType == "Carrier" && Contact.Underwriter == true)
+                {
+                    <div class="txt-section">Underwriter</div>
+                }
+                @if (ConfirmedParentType == "Carrier" && Contact.Service == true)
+                {
+                    <div class="txt-section">Account Service</div>
+                }
+                @if (ConfirmedParentType == "Carrier" && Contact.Billing == true)
+                {
+                    <div class="txt-section">Billing Rep</div>
+                }
+                @if (ConfirmedParentType == "Carrier" && Contact.Representative == true)
+                {
+                    <div class="txt-section">Representative</div>
+                }
+
+
+            </div>
+            <div class="mf-item-sm mf-pad-left">
+                <div class="contact-key">Related Links</div>
+                <ul>
+                    @if (RelatedClients != null && RelatedClients.Any())
+                    {
+                        @foreach (var client in RelatedClients)
+                        {
+                            <li><a href="@($"/Clients/{client.ClientId}")">@client.Name</a></li>
+                        }
+                    }
+                    @if (Contact.Carrier != null)
+                    {
+                        <li><a href="@($"/Carriers/Details/{Contact.Carrier.CarrierId}")">@Contact.Carrier.CarrierName</a></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code {
+    [Parameter] public int ContactId { get; set; }
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+    private Contact Contact { get; set; } = new Contact();
+    public string ConfirmedParentType { get; set; }
+    private List<Client> RelatedClients { get; set; } = new List<Client>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Contacts");
+        // Load the contact by ID
+        Contact = await ContactService.GetContactByIdAsync(ContactId);
+        if (Contact == null)
+        {
+            // Handle case where contact is not found
+            Navigation.NavigateTo("/Contacts");
+            return;
+        }
+
+        // Determine parent type (Carrier or Client)
+        if (Contact.CarrierId.HasValue)
+        {
+            ConfirmedParentType = "Carrier";
+        }
+        else if (Contact.ClientId.HasValue)
+        {
+            ConfirmedParentType = "Client";
+        }
+        // Load related clients
+        RelatedClients = await ContactService.GetContactRelatedClients(ContactId);
+    }
+}

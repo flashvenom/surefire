@@ -1,0 +1,234 @@
+﻿@page "/Forms/PurpleSheet/{RenewalId:int}"
+@using System.IO
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Syncfusion.Pdf
+@using Syncfusion.Pdf.Parsing
+@using Syncfusion.Blazor.SfPdfViewer
+@using Surefire.Domain.Forms.Models
+@using Surefire.Domain.Forms.Services
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Clients.Services
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Policies.Services
+@using Surefire.Domain.Renewals.Services
+@using Surefire.Domain.Renewals.Models
+@inject FormService FormService
+@inject ClientService ClientService
+@inject PolicyService PolicyService
+@inject RenewalService RenewalService
+@inject IWebHostEnvironment Environment
+@inject IHttpClientFactory _http
+@inject IJSRuntime JS
+
+<div class="page-toolbar">
+    <a id="Email" class="toolbar-link" @onclick="() => ExportForm(true, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.OpenFolder())" />
+        <span class="toolbar-text">Open</span>
+    </a>
+
+    <a id="Save" class="toolbar-link" @onclick="() => ExportForm(false, false, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
+        <span class="toolbar-text">Save</span>
+    </a>
+
+    <a id="Print" class="toolbar-link" @onclick="() => ExportForm(false, true, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
+        <span class="toolbar-text">Print</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Cancel" class="toolbar-link" @onclick="NavCancel">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
+        <span class="toolbar-text">Exit</span>
+    </a>
+</div>
+
+<div class="control-section" style="height:784px;">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="784px" Width="90%">
+        <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+    </SfPdfViewer2>
+</div>
+
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+    public FormPdf FormPdf { get; set; } = new FormPdf();
+    public FormDoc FormDoc { get; set; } = new FormDoc();
+    private string JsonPath { get; set; } = "";
+    public string DocumentPath { get; set; } = "wwwroot/forms/metro-purplesheet.pdf";
+    SfPdfViewer2 pdfViewer;
+    Stream stream;
+    public int clientId { get; set; } = 0;
+    public Client client { get; set; } =  new Client();
+    public Renewal renewal { get; set; } = new Renewal();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        JsonPath = Path.Combine(Environment.WebRootPath, "uploads/temp/", RenewalId.ToString(), ".json");
+        renewal = await RenewalService.GetRenewalForPurpleSheetAsync(RenewalId);
+        clientId = renewal.ClientId;
+    }
+    //Methods
+    private async Task LoadJsonDataIntoPdfAsync()
+    {
+        try
+        {
+            string filePath = Path.Combine("wwwroot", "uploads", "temp", $"{RenewalId}.json");
+            Console.WriteLine($"Constructing: " + filePath);
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine($"JSON file not found: {filePath}");
+                return;
+            }
+            string jsonData = await File.ReadAllTextAsync(filePath);
+            Console.WriteLine(jsonData);
+            byte[] byteArray = System.Text.Encoding.UTF8.GetBytes(jsonData);
+             using (MemoryStream jsonStream = new MemoryStream(byteArray))
+             {
+                 await pdfViewer.ImportFormFieldsAsync(jsonStream, FormFieldDataFormat.Json);
+             }
+
+            Console.WriteLine("JSON data successfully loaded into the PDF viewer.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading JSON data into PDF: {ex.Message}");
+        }
+    }
+
+
+    public async Task<string> ExtractJson()
+    {
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        using (StreamReader reader = new StreamReader(stream))
+        {
+            // Read the stream into a JSON string
+            string jsonString = await reader.ReadToEndAsync();
+
+            try
+            {
+                // Parse or return the raw JSON string (depending on your needs)
+                return jsonString;
+            }
+            catch (JsonException ex)
+            {
+                // Handle JSON parsing errors
+                Console.WriteLine($"Error parsing JSON: {ex.Message}");
+                return null;
+            }
+        }
+    }
+    public async Task<string> ExportForm(bool? openNewWindow, bool? printNow, bool? saveToDisk)
+    {
+
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+
+        data = FormService.FlattenPdf(data);
+
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+            using (MemoryStream pdfStream = new MemoryStream())
+            {
+                originalDocument.Save(pdfStream);
+
+                // Convert the PDF to a base64 string
+                byte[] pdfBytes = pdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(pdfBytes);
+
+                // Handle options like print, save, or opening a new window
+                if (printNow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+
+                if (saveToDisk == true)
+                {
+                    string certname = (renewal != null ? renewal.Client.Name : renewal.RenewalId) + "form.pdf";
+                    await JS.InvokeVoidAsync("downloadPdf", base64Pdf, certname);
+                }
+
+                if (openNewWindow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+            }
+
+            // Close the document
+            originalDocument.Close(true);
+        }
+
+        return string.Empty;
+    }
+    public async Task<string> ExportForm2(bool? openNewWindow, bool? printNow, bool? attachToEmail, bool? saveToDisk)
+    {
+
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        data = FormService.FlattenPdf(data);
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+            originalDocument.Save(originalPdfStream);
+
+            byte[] combinedPdfBytes = originalPdfStream.ToArray();
+            string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
+
+
+
+            if (printNow == true)
+            {
+                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+            }
+
+            if (saveToDisk == true)
+            {
+                string certname = "certname.pdf";
+                await JS.InvokeVoidAsync("downloadPdf", base64Pdf, certname);
+            }
+
+            @if (openNewWindow == true)
+            {
+                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+            }
+
+            originalDocument.Close(true);
+        }
+        return string.Empty;
+    }
+    public async Task DuplicateForm()
+    {
+        int newdocid = await FormService.DuplicateFormDocAsync(FormDoc);
+        Navigation.NavigateTo($"/Forms/Editor/{newdocid}");
+
+    }
+    public async Task ResetForm()
+    {
+        Navigation.NavigateTo($"/Forms/Editor/{FormDoc.FormDocId}");
+
+    }
+    public async void FlattenForm()
+    {
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        byte[] flattenedPdfBytes = FormService.FlattenPdf(data);
+        string base64Pdf = Convert.ToBase64String(flattenedPdfBytes);
+        await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+    }
+    public void NavCancel()
+    {
+        if (renewal != null && renewal.RenewalId > 0)
+        {
+            Navigation.NavigateTo($"/Renewals/Details/{renewal.RenewalId}");
+        }
+        else
+        {
+            Navigation.NavigateTo($"/Renewals");
+        }
+    }
+}

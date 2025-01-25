@@ -1,0 +1,157 @@
+﻿@using Syncfusion.Blazor.Inputs
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Policies.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.Globalization
+@inject IJSRuntime JS
+
+<span class="txt-section-bar">Paylink Builder</span>
+<div class="div-section">
+
+    <FluentStack>
+        <div style="width:50%"><SfTextBox Id="payer" @oninput="(e) => OnInputChanged(e, 1)" Value="@payer"  Placeholder="Payer" FloatLabelType="FloatLabelType.Always" /></div>
+        <div style="width:50%"><SfTextBox Id="email" @oninput="(e) => OnInputChanged(e, 2)" Value="@email" Placeholder="Email Address" FloatLabelType="FloatLabelType.Always" /></div>
+    </FluentStack>
+    <div style="height:10px;"></div>
+    <FluentStack>
+        <div style="width:70%"><SfTextBox Id="note" @oninput="(e) => OnInputChanged(e, 3)" Value="@note" Placeholder="Comments/Notes" FloatLabelType="FloatLabelType.Always" /></div>
+        <div style="width:30%"><SfNumericTextBox Id="amount"  @oninput="(e) => OnInputChanged(e, 4)" Value="@amount" TValue="decimal" Format="c2" Placeholder="Amount" FloatLabelType="@FloatLabelType.Always"></SfNumericTextBox></div>
+    </FluentStack>
+    <div class="gurl"></div>
+    <FluentStack>
+        <div class="alink">@generatedUrl</div>
+        <div class="blink">
+            <FluentButton Appearance="Appearance.Accent" OnClick="CopyToClipboard">
+                <FluentIcon Value="@(new Icons.Filled.Size24.Copy())" Color="Color.Custom" CustomColor="#fff" />
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="OpenLinkInNewTab">
+                <FluentIcon Value="@(new Icons.Filled.Size24.Open())" Color="Color.Custom" CustomColor="#fff" />
+            </FluentButton>
+        </div>@* c5403b *@
+    </FluentStack>
+    <span style="display:none;"><FluentTextField Id="generatedUrl" @bind-Value="generatedUrl" style="width: 100%;" ReadOnly /></span>
+   
+</div>
+
+
+@code {
+    [Parameter]
+    public Client Client { get; set; }
+
+    [Parameter]
+    public Policy Policy { get; set; }
+
+    private string payer;
+    private string email;
+    private string note;
+    private decimal amount;
+    private string amountString;
+    private string generatedUrl = "https://metroinsurance.epaypolicy.com/";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Client != null)
+        {
+            payer = Client?.Name;
+            email = Client?.PrimaryContact?.Email;
+            if(Policy != null)
+            {
+                if (Policy.EffectiveDate != null && Policy.ExpirationDate != null)
+                {
+                    var lineNickname = Policy.Product?.LineNickname ?? "Unknown Product";
+                    note = $"{Policy.EffectiveDate:yy}-{Policy.ExpirationDate:yy} {lineNickname} Policy Down Payment";
+                }
+            }
+
+            BuildUrl();
+        }
+    }
+
+    private void OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e, int field)
+    {
+        if (field == 1)
+        {
+            payer = e.Value?.ToString();
+        }
+        else if (field == 2)
+        {
+            email = e.Value?.ToString();
+        }
+        else if (field == 3)
+        {
+            note = e.Value?.ToString();
+        }
+        else if (field == 4)
+        {
+            if (decimal.TryParse(e.Value?.ToString(), out decimal parsedAmount))
+            {
+                amount = parsedAmount;
+            }
+            else
+            {
+                amount = 0; // Fallback if parsing fails
+            }
+        }
+
+        BuildUrl();
+    }
+    private void BuildUrl()
+    {
+        var url = "https://epaypolicy.com/";
+        var queryParams = new List<string>();
+
+        if (!string.IsNullOrEmpty(payer))
+        {
+            queryParams.Add($"payer={Uri.EscapeDataString(payer)}");
+        }
+
+        if (!string.IsNullOrEmpty(email))
+        {
+            queryParams.Add($"emailAddress={Uri.EscapeDataString(email)}");
+        }
+
+        if (amount > 0)
+        {
+            queryParams.Add($"amount={amount.ToString("F2", CultureInfo.InvariantCulture)}");
+        }
+
+        if (!string.IsNullOrEmpty(note))
+        {
+            queryParams.Add($"comments={Uri.EscapeDataString(note)}");
+        }
+
+        if (queryParams.Count > 0)
+        {
+            generatedUrl = url + "?" + string.Join("&", queryParams);           
+        }
+        StateHasChanged();
+    }
+
+    private void OnAmountChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        Console.WriteLine("Amountchanged");
+        if (decimal.TryParse(e.Value?.ToString(), NumberStyles.Currency, CultureInfo.InvariantCulture, out var value))
+        {
+            amount = value;
+            amountString = value.ToString("C2", CultureInfo.InvariantCulture); // Formatting as currency for display
+            BuildUrl();
+        }
+        else
+        {
+            amount = 0;
+            amountString = string.Empty;
+            BuildUrl();
+        }
+    }
+
+    private void CopyToClipboard()
+    {
+        JS.InvokeVoidAsync("navigator.clipboard.writeText", generatedUrl);
+        Console.WriteLine("URL copied to clipboard.");
+    }
+
+    private void OpenLinkInNewTab()
+    {
+        JS.InvokeVoidAsync("window.open", generatedUrl, "_blank");
+    }
+}

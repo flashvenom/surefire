@@ -1,0 +1,116 @@
+﻿@page "/Leads/Index"
+@using Surefire.Domain.Clients.Services
+@using Surefire.Domain.Shared.Helpers
+@using Surefire.Domain.Clients.Models
+@using Microsoft.EntityFrameworkCore
+@inject ClientService ClientService
+
+<_toolbar PageName="List" />
+
+<div class="page-content">
+   
+        <div class="fluent-data-grid">
+            <FluentDataGrid Items="@FilteredLeads" ResizableColumns="true" Pagination="@pagination" ShowHover="true"
+                            OnRowDoubleClick="@((FluentDataGridRow<Lead> row) => HandleRowDoubleClick(row))"
+                            OnRowClick="@((FluentDataGridRow<Lead> row) => HandleRowClick(row))">
+                <PropertyColumn Property="@(p => p.LeadId)" Title="Lead Id" Width="60px" Sortable="true" />
+                <PropertyColumn Property="@(p => p.CompanyName)" Title="Company Name" Sortable="true" />
+                <PropertyColumn Property="@(p => p.ContactName)" Title="Contact Name" Sortable="true" />
+                <PropertyColumn Property="@(p => p.PhoneNumber)" Title="Phone Number" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Email)" Title="Email" Sortable="true" />
+                <PropertyColumn Property="@(p => p.BindDate)" Title="Bind Date" Format="d" Sortable="true" />
+                <PropertyColumn Property="@(p => p.CreatedDate)" Title="Created Date" Format="d" Sortable="true" />
+                <PropertyColumn Property="@(p => p.LastOpened)" Title="Last Opened" Format="d" Sortable="true" />
+                @* <PropertyColumn Property="@(p => p.CreatedBy.UserName)" Title="Created By" Width="150px" Sortable="true" /> *@
+                <PropertyColumn Property="@(p => p.ClientId)" Title="Client Id" Sortable="true" />
+                @* <PropertyColumn Property="@(p => p.ProductId)" Title="Product Id" Width="80px" Sortable="true" /> *@
+            </FluentDataGrid>
+            <div class="fluent-data-grid__bottombar">
+                <div class="fluent-data-grid__pagination">
+                    <FluentPaginator State="@pagination" />
+                </div>
+
+                <div class="fluent-data-grid__search">
+                    <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+                </div>
+            </div>
+        </div>
+   
+</div>
+
+@code {
+    public IQueryable<Lead> LeadData { get; set; }
+    public IQueryable<Lead> FilteredLeads { get; set; }
+    public int LeadId { get; set; }
+    public string SelectedCompanyName { get; set; } = "";
+    public string SearchTerm { get; set; } = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
+    private System.Timers.Timer debounceTimer;
+    bool SelectFromEntireRow = true;
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        LeadData = ClientService.GetAllLeads().Include(l => l.CreatedBy).Include(l => l.Product);
+        FilteredLeads = LeadData;
+        debounceTimer = new System.Timers.Timer(300);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            await InvokeAsync(ApplySearchFilter);
+        };
+
+        UpdateHeader?.Invoke("Leads");
+    }
+
+    private void HandleSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        if (e.Value is string searchTerm)
+        {
+            SearchTerm = searchTerm;
+            debounceTimer.Stop();
+            debounceTimer.Start(); // Start the debounce timer
+        }
+    }
+
+    private void ApplySearchFilter()
+    {
+        FilteredLeads = string.IsNullOrWhiteSpace(SearchTerm)
+        ? LeadData
+        : LeadData.Where(l =>
+              EF.Functions.Like(l.CompanyName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(l.ContactName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(l.PhoneNumber.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(l.Email.ToLower(), $"%{SearchTerm.ToLower()}%")
+        );
+
+        InvokeAsync(StateHasChanged); // Trigger UI refresh after filtering
+    }
+
+    private void HandleRowDoubleClick(FluentDataGridRow<Lead> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedLead = row.Item;
+            LeadId = selectedLead.LeadId;
+            Navigation.NavigateTo($"/Leads/{LeadId}");
+        }
+    }
+
+    private void HandleRowClick(FluentDataGridRow<Lead> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedLead = row.Item;
+            row.Class = "selected-row";
+            SelectedCompanyName = selectedLead.CompanyName + ": ";
+            LeadId = selectedLead.LeadId;
+            StateHasChanged();
+        }
+    }
+
+    private void NavToCreate()
+    {
+        Navigation.NavigateTo("/Leads/Create");
+    }
+}

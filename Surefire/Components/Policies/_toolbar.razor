@@ -1,0 +1,70 @@
+﻿@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.SplitButtons
+
+<div class="page-toolbar">
+    <FluentMenuButton Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="Policy"><FluentIcon Value="@(new Icons.Regular.Size20.Document())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Policy</FluentMenuItem>
+        <FluentMenuItem Id="Product"><FluentIcon Value="@(new Icons.Regular.Size20.ScanObject())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Product</FluentMenuItem>
+    </FluentMenuButton>
+
+    <span class="sf-verthr"></span>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Policies", PageName) ? "toolbar-disabled" : "")" @onclick="GoToPolicies">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Policies</span>
+    </a>
+
+     <a class="toolbar-link @(LogicHelper.IsDisabled("Products,Create,Edit,Policies", PageName) ? "toolbar-disabled" : "")" href="@("Policies/Edit/" + PolicyId)" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+
+    <a class="toolbar-link  @(LogicHelper.IsDisabled("Details,Products,Policies", PageName) ? "toolbar-disabled" : "")" href="@("Policies/Details/" + PolicyId)" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+        <span class="toolbar-text">Details</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Products", PageName) ? "toolbar-disabled" : "")" @onclick="GoToProducts">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Tag())" />
+        <span class="toolbar-text">Product Lines</span>
+    </a>
+
+</div>
+
+@code {
+    [Parameter] 
+    public EventCallback<string> OnMenuAction { get; set; }
+
+    [Parameter] public int PolicyId { get; set; }
+    [Parameter] public bool EditMode { get; set; } = false;
+    [Parameter] public string PageName { get; set; }
+    [Parameter] public string PolicyNumber { get; set; } = "";
+
+    private void NavigateToRenewalCreate()
+    {
+        Navigation.NavigateTo("/Policies");
+    }
+    private void GoToPolicies()
+    {
+        Navigation.NavigateTo("/Policies");
+    }
+    private void GoToProducts()
+    {
+        Navigation.NavigateTo("/Policies/Products");
+    }
+    private async Task HandleOnMenuChanged(MenuChangeEventArgs args)
+    {
+        // Check which menu item was selected
+        switch (args.Id)
+        {
+            case "Client":
+                Navigation.NavigateTo("/Clients/Create");
+                break;
+            case "Product":
+                await OnMenuAction.InvokeAsync(args.Id);
+                break;
+        }
+    }
+}

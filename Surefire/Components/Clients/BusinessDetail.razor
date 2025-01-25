@@ -1,0 +1,824 @@
+﻿@using Surefire.Domain.OpenAI
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Clients.Services
+@using Syncfusion.Blazor.InPlaceEditor
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Inputs
+@using System.Globalization;
+@using System.Text.Json;
+@using Newtonsoft.Json
+@using OpenAI
+@inject IJSRuntime JS
+@inject ClientService ClientService
+@inject OpenAiService OpenAiService
+@inject StateService StateService
+
+@if (BusinessDetails != null && !massEditMode)
+{
+    <FluentStack Wrap="true" HorizontalGap="30">
+        <div xs="3" Class="pol-section">
+            <!--=====----- BASICS -----=====-->
+            <span class="pol-section-title" style="border-left: 5px solid #046BC4;">Basics</span>
+            <div class="pol-section-container">
+                <!-- Date Started -->
+                <span class="pol-name">Business Started<span class="copy-spcr" /></span>
+                <span class="pol-value">
+                    <SfDatePicker TValue="DateTime?" @bind-Value="BusinessDetails.DateStarted" Placeholder="Date Started" FloatLabelType="FloatLabelType.Never" OnChange="@(args => UpdateBusinessDetails())" />
+                </span><br />
+
+                <!-- Years Experience -->
+                <span class="pol-name">Years of Experience
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.YearsExperience.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.YearsExperience" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="n0" @bind-Value="@BusinessDetails.YearsExperience"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="int?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">FEIN
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.FEIN.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.FEIN" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@BusinessDetails.FEIN"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Lapse History -->
+                <span class="pol-name">Coverage History
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.InsuranceHistory.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.InsuranceHistory" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@BusinessDetails.InsuranceHistory"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Number of Claims -->
+                <span class="pol-name">Number of Claims
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.NumClaims.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.NumClaims" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="n0" @bind-Value="@BusinessDetails.NumClaims"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="int?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </div>
+
+            <!--=====----- CLASSIFICATIONS -----=====-->
+            <div class="pol-column-spacer"></div>
+            <span class="pol-section-title" style="border-left: 5px solid #1B8CE3;">Classifications</span><br />
+            <!-- Legal Entity Type -->
+            <div class="pol-section-container">
+                <span class="pol-name">Legal Entity Type<span class="copy-spcr" /></span>
+                <span class="pol-value">
+                    <SfDropDownList TValue="LegalEntityType?" TItem="EnumData<LegalEntityType>" @bind-Value="@BusinessDetails.LegalEntityType" DataSource="@LegalEntityTypeList"
+                    FloatLabelType="FloatLabelType.Never" AllowFiltering="true" ShowClearButton="true">
+                        <DropDownListEvents TValue="LegalEntityType?" TItem="EnumData<LegalEntityType>" ValueChange="@UpdateBusinessDetails" />
+                        <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList> 
+                </span><br />
+
+                <!-- Business Type -->
+                <span class="pol-name">Business Type<span class="copy-spcr" /></span>
+                <span class="pol-value">
+                    <SfDropDownList TValue="BusinessType?" TItem="EnumData<BusinessType>" @bind-Value="@BusinessDetails.BusinessType" DataSource="@BusinessTypeList"
+                    FloatLabelType="FloatLabelType.Never" AllowFiltering="true" ShowClearButton="true">
+                        <DropDownListEvents TValue="BusinessType?" TItem="EnumData<BusinessType>" ValueChange="@UpdateBusinessDetails" />
+                        <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList> 
+                </span><br />
+
+                <!-- Short Description -->
+                <span class="pol-name">Short Description
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.ShortDescription.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.ShortDescription" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@BusinessDetails.ShortDescription"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Long Description -->
+                <span class="pol-name">Long Description
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.LongDescription.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.LongDescription" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@BusinessDetails.LongDescription" Multiline="true"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Business Industry -->
+                <span class="pol-name">SIC / Industry
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.BusinessIndustry.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.BusinessIndustry" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@BusinessDetails.BusinessIndustry"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Business Specialty -->
+                <span class="pol-name">NCAIS / Specialty
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.BusinessSpecialty.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.BusinessSpecialty" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@BusinessDetails.BusinessSpecialty"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span>
+            </div>
+
+            <!--=====----- CONTRACTORS -----=====-->
+            <span class="pol-section-title" style="border-left: 5px solid #1F1E61;">Contractors</span>
+            <div class="pol-section-container">
+                <!-- License Type -->
+                <span class="pol-name">License Type<span class="copy-spcr" /></span>
+                <span class="pol-value">
+                    <SfDropDownList TValue="LicenseType?" TItem="EnumData<LicenseType>" @bind-Value="@BusinessDetails.LicenseType" DataSource="@LicenseTypeList" 
+                    Placeholder="Select License Type" FloatLabelType="FloatLabelType.Never" AllowFiltering="true" ShowClearButton="true">
+                        <DropDownListEvents TValue="LicenseType?" TItem="EnumData<LicenseType>" ValueChange="@UpdateBusinessDetails" />
+                        <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList> 
+                </span><br />
+
+                <!-- License Number -->
+                <span class="pol-name">License Number
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.LicenseNumber))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.LicenseNumber" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@BusinessDetails.LicenseNumber"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Estimated Subcontracting Expenses -->
+                <span class="pol-name">Sub Costs
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedSubcontractingExpenses.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedSubcontractingExpenses" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c0" @bind-Value="@BusinessDetails.EstimatedSubcontractingExpenses"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </div>
+        </div>
+
+        <div xs="3">
+            <!--=====----- EMPLOYEES -----=====-->
+            <span class="pol-section-title" style="border-left: 5px solid #593294;">Employees</span>
+            <div class="pol-section-container">
+                <!-- Number of Part-Time Employees -->
+                <span class="pol-name">Part-Time
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.NumPartTimeEmployees.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.NumPartTimeEmployees" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="n0" @bind-Value="@BusinessDetails.NumPartTimeEmployees"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="int?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Number of Full-Time Employees -->
+                <span class="pol-name">Full-Time
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.NumFullTimeEmployees.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.NumFullTimeEmployees" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="n0" @bind-Value="@BusinessDetails.NumFullTimeEmployees"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="int?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </div>
+
+
+            <!--=====----- PAYROLL -----=====-->
+            <span class="pol-section-title" style="border-left: 5px solid #745DA1;">Payroll</span><br />
+            <div class="pol-section-container">
+                <span class="pol-name">Next Year
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedAnnualPayroll0.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedAnnualPayroll0" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedAnnualPayroll0"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">Current
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedAnnualPayroll1.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedAnnualPayroll1" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedAnnualPayroll1"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">Previous Year
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedAnnualPayroll2.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedAnnualPayroll2" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedAnnualPayroll2"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">2 Years Ago
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedAnnualPayroll3.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedAnnualPayroll3" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedAnnualPayroll3"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">3 Years Ago
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedAnnualPayroll4.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedAnnualPayroll4" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedAnnualPayroll4"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </div>
+
+            <!--=====----- GROSS SALES -----=====-->
+            <span class="pol-section-title" style="border-left: 5px solid #FF6600;">Gross Sales</span><br />
+            <div class="pol-section-container">
+                <span class="pol-name">Next Year
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedGrossSales0.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedGrossSales0" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedGrossSales0"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">Current Year
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedGrossSales1.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedGrossSales1" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedGrossSales1"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">Last Year
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedGrossSales2.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedGrossSales2" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedGrossSales2"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">2 Years Ago
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedGrossSales3.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedGrossSales3" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedGrossSales3"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">3 Years Ago
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.EstimatedGrossSales4.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.EstimatedGrossSales4" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.EstimatedGrossSales4"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </div>
+        </div>
+
+
+
+        <div xs="3">
+            <!--=====----- PRIMARY BUILDING -----=====-->
+            <span class="pol-section-title" style="border-left: 5px solid #CF4740;">Primary Building</span>
+            <div class="pol-section-container">
+                <!-- Year Built -->
+                <span class="pol-name">Year Built
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.BuildingLocationYearBuilt.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.BuildingLocationYearBuilt" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="n0" @bind-Value="@BusinessDetails.BuildingLocationYearBuilt"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="int?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Square Footage -->
+                <span class="pol-name">Square Footage
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.BuildingLocationSquareFootage.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.BuildingLocationSquareFootage" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="n0" @bind-Value="@BusinessDetails.BuildingLocationSquareFootage"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="int?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Number of Stories -->
+                <span class="pol-name">
+                    Number of Stories
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.BuildingLocationNumberOfStories.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.BuildingLocationNumberOfStories" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="int?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="n0" @bind-Value="@BusinessDetails.BuildingLocationNumberOfStories"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="int?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Sprinklered -->
+                <span class="pol-name">Sprinklered<span class="copy-spcr" /></span>
+                <span class="pol-value">
+                    <SfCheckBox @bind-Checked="@BusinessDetails.BuildingLocationSprinklered" @onchange="@UpdateBusinessDetails"></SfCheckBox>
+                </span><br />
+
+                <!-- Monitored Security -->
+                <span class="pol-name">Monitored Security<span class="copy-spcr" /></span>
+                <span class="pol-value">
+                    <SfCheckBox @bind-Checked="@BusinessDetails.BuildingLocationMonitoredSecurity" @onchange="@UpdateBusinessDetails"></SfCheckBox>
+                </span><br />
+            </div>
+
+            <!--=====----- FINANCIALS -----=====-->
+            <span class="pol-section-title" style="border-left: 5px solid #CF4740;">FINANCIALS</span>
+            <div class="pol-section-container">
+                <!-- Year Built -->
+                <span class="pol-name">
+                    Annual Gross Sales
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.AnnualGrossSalesRevenueReceipts.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.AnnualGrossSalesRevenueReceipts" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" 
+                            EditableOn="EditableType.EditIconClick" Mode="Syncfusion.Blazor.InPlaceEditor.RenderMode.Popup" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.AnnualGrossSalesRevenueReceipts"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Square Footage -->
+                <span class="pol-name">
+                    Annual Payroll
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.AnnualPayrollHazardExposure.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.AnnualPayrollHazardExposure" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.AnnualPayrollHazardExposure"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <!-- Business Property -->
+                <span class="pol-name">
+                    Business Property                
+                    <span class="copy-btn" @onclick="@(x => CopyItem(BusinessDetails.BusinessPersonalPropertyBPP.ToString()))"><FluentIcon Value="@(new Icons.Regular.Size20.Copy())" Slot="start" Color="Color.Custom" CustomColor="#4a4a4a" /></span>
+                </span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@BusinessDetails.BusinessPersonalPropertyBPP" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal?" EditableOn="EditableType.EditIconClick" ShowButtons="false" EmptyText="">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@BusinessDetails.BusinessPersonalPropertyBPP"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdateBusinessDetails())" TValue="decimal?"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </div> 
+        </div>
+        <div style="width: 500px;">
+            <div class="txt-section">POLICY DATA EXTRACTOR</div>
+            <FluentTextField Placeholder="Paste XML here" @bind-Value="xmlContent" Multiline="true" Rows="5" /><br />
+            @*  <FluentButton OnClick="testSet">TestSet</FluentButton>
+            <FluentButton OnClick="toggleMassEditMode">ToggleMode</FluentButton> *@
+            <FluentButton OnClick="@(args => MapSpecificJsonProperties(myRoot.RootElement, BusinessDetails))">RunJson</FluentButton>
+            &nbsp;&nbsp;
+            <FluentButton OnClick="ParseStrict">Strict</FluentButton>
+            <FluentButton OnClick="ParseLoose">Loose</FluentButton>
+            <FluentButton OnClick="ParseSuper">Super</FluentButton>
+            <FluentButton OnClick="ParseGenius">Genius</FluentButton>
+            &nbsp;&nbsp;
+            <FluentButton OnClick="@(args => UpdateBusinessDetails())">SAVE</FluentButton>
+
+            @if (!string.IsNullOrEmpty(jsonResponse))
+            {
+                <div style="max-height: 475px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; color:#959595;">
+                    @((MarkupString)jsonResponse)
+                </div>
+            }
+        </div>
+    </FluentStack>
+}
+<style>
+    .key { color: #cf4740; }
+    .string { color: #593294; }
+    .number { color: #b5cea8; }
+    .brace { color: #bdbdbd; }
+    .colon { color: #1b8ce3; }
+</style>
+
+@code {
+    [Parameter]
+    public int ClientId { get; set; }
+
+    private BusinessDetails BusinessDetails { get; set; }
+
+    // Data sources for enums and dropdowns
+    private IEnumerable<EnumData<LegalEntityType>> LegalEntityTypeList { get; set; }
+    private IEnumerable<EnumData<BusinessType>> BusinessTypeList { get; set; }
+    private IEnumerable<EnumData<LicenseType>> LicenseTypeList { get; set; }
+    private List<string> InsuranceHistoryOptions { get; set; } = new() { "No prior", "1-59 days lapse", "60+ days lapse" };
+    private List<string> LapseHistoryOptions { get; set; } = new() { "No prior", "1-59 days lapse", "60+ days lapse" };
+    private string xmlContent = string.Empty;
+    private string jsonResponse = string.Empty;
+    private bool massEditMode = false;
+    private SfInPlaceEditor<decimal?> myInplaceBpp;
+    private SfNumericTextBox<decimal?> TfieldBpp;
+    public JsonDocument myRoot { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadBusinessDetails();
+        LoadEnumData();
+    }
+    private async Task CopyItem(string? str)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", str);
+    }
+    private async Task LoadBusinessDetails()
+    {
+        BusinessDetails = await ClientService.GetBusinessDetailsByClientId(ClientId);
+
+        if (BusinessDetails == null)
+        {
+            BusinessDetails = new BusinessDetails
+                {
+                    ClientId = ClientId
+                };
+
+            await ClientService.AddBusinessDetailsAsync(BusinessDetails);
+
+            BusinessDetails = await ClientService.GetBusinessDetailsByClientId(ClientId);
+        }
+    }
+
+
+    public async Task UpdateBusinessDetails()
+    {
+        if (BusinessDetails != null)
+        {
+            await ClientService.UpdateBusinessDetailsAsync(BusinessDetails);
+        }
+    }
+
+    private async Task toggleMassEditMode()  
+    {  
+        massEditMode = !massEditMode;
+        await InvokeAsync(StateHasChanged);
+    }  
+
+    private async Task ParseStrict()
+    {
+        StateService.UpdateStatus("Parsing your policy data, please wait...", true);
+        await InvokeAsync(StateHasChanged);
+        var resp = await OpenAiService.ParseXmlToJsonAsync(xmlContent, 1);
+        jsonResponse = "<pre>" + resp + "</pre>";
+        StateService.UpdateStatus("Done...", false);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ParseLoose()
+    {
+        StateService.UpdateStatus("Parsing your policy data, please wait...", true);
+        await InvokeAsync(StateHasChanged);
+        var resp = await OpenAiService.ParseXmlToJsonAsync(xmlContent, 2);
+        jsonResponse = "<pre>" + resp + "</pre>";
+        StateService.UpdateStatus("Done...", false);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ParseSuper()
+    {
+        StateService.UpdateStatus("Parsing your policy data, please wait...", true);
+        await InvokeAsync(StateHasChanged);
+        var resp = await OpenAiService.ParseXmlToJsonAsync(xmlContent, 3);
+        jsonResponse = "<pre>" + resp + "</pre>";
+        StateService.UpdateStatus("Done...", false);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ParseGenius()
+    {
+        StateService.UpdateStatus("Parsing your policy data with function calling, please wait...", true);
+        await InvokeAsync(StateHasChanged);
+
+        // Fetch and parse JSON from the OpenAI service
+        var jresp = await OpenAiService.ParseXmlToBusinessDetailsWithFunction(xmlContent);
+        var jsonDoc = JsonDocument.Parse(jresp);
+        myRoot = jsonDoc;
+        string prettyJson = System.Text.Json.JsonSerializer.Serialize(jsonDoc, new JsonSerializerOptions { WriteIndented = true });
+        jsonResponse = StringHelper.ColorizeJSON(prettyJson);
+
+        // Flatten JSON document to match model properties more flexibly
+        MapSpecificJsonProperties(jsonDoc.RootElement, BusinessDetails);
+
+        massEditMode = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(500);
+        massEditMode = false;
+        await InvokeAsync(StateHasChanged);
+
+        StateService.UpdateStatus("Done...", false);
+        await InvokeAsync(StateHasChanged);
+    }
+    private void MapSpecificJsonProperties(JsonElement jsonElement, BusinessDetails businessDetails)
+    {
+        if (jsonElement.TryGetProperty("BusinessDetails", out var businessDetailsElement))
+        {
+            // Map individual fields with specific conversions
+            int ivar = 0;
+            ivar++;
+            businessDetails.FEIN = GetStringProperty(businessDetailsElement, "FEIN");
+            ivar++;
+            businessDetails.ShortDescription = GetStringProperty(businessDetailsElement, "ShortDescription");
+            ivar++;
+            businessDetails.LongDescription = GetStringProperty(businessDetailsElement, "LongDescription");
+
+            ivar++;
+            businessDetails.BusinessIndustry = GetStringProperty(businessDetailsElement, "BusinessIndustry");
+
+            ivar++;
+            businessDetails.BusinessSpecialty = GetStringProperty(businessDetailsElement, "BusinessSpecialty");
+            ivar++;
+            businessDetails.AnnualGrossSalesRevenueReceipts = GetDecimalProperty(businessDetailsElement, "AnnualGrossSalesRevenueReceipts");
+            ivar++;
+            businessDetails.BusinessPersonalPropertyBPP = GetDecimalProperty(businessDetailsElement, "BusinessPersonalPropertyBPP");
+            ivar++;
+            businessDetails.AnnualPayrollHazardExposure = GetDecimalProperty(businessDetailsElement, "AnnualPayrollHazardExposure");
+
+            ivar++;
+            businessDetails.DateStarted = GetDateTimeProperty(businessDetailsElement, "DateStarted");
+            ivar++;
+            businessDetails.YearsExperience = GetIntProperty(businessDetailsElement, "YearsExperience");
+
+            ivar++;
+            businessDetails.LicenseNumber = GetStringProperty(businessDetailsElement, "LicenseNumber");
+
+            if (businessDetailsElement.TryGetProperty("BuildingLocation", out var buildingLocationElement))
+            {
+                ivar++;
+                businessDetails.BuildingLocationYearBuilt = GetIntProperty(buildingLocationElement, "YearBuilt");
+                ivar++;
+                businessDetails.BuildingLocationSquareFootage = GetIntProperty(buildingLocationElement, "SquareFootage");
+                ivar++;
+                businessDetails.BuildingLocationNumberOfStories = GetIntProperty(buildingLocationElement, "NumberOfStories");
+            }
+
+            ivar++;
+            businessDetails.NumPartTimeEmployees = GetIntProperty(businessDetailsElement, "NumPartTimeEmployees");
+            ivar++;
+            businessDetails.NumFullTimeEmployees = GetIntProperty(businessDetailsElement, "NumFullTimeEmployees");
+        }
+    }
+    // Helper methods to handle specific data extraction and conversions
+    private string GetStringProperty(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var propertyElement))
+        {
+            return propertyElement.ValueKind == JsonValueKind.Array ? propertyElement[0].GetString() : propertyElement.GetString();
+        }
+        return null;
+    }
+    private decimal? GetDecimalProperty(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var propertyElement))
+        {
+            var value = propertyElement.ValueKind == JsonValueKind.Array ? propertyElement[0].GetString() : propertyElement.GetString();
+            if (decimal.TryParse(value, NumberStyles.Currency, CultureInfo.InvariantCulture, out var decimalValue))
+            {
+                return decimalValue;
+            }
+        }
+        return null;
+    }
+    private DateTime? GetDateTimeProperty(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var propertyElement))
+        {
+            var value = propertyElement.ValueKind == JsonValueKind.Array ? propertyElement[0].GetString() : propertyElement.GetString();
+            if (DateTime.TryParse(value, out var dateTimeValue))
+            {
+                return dateTimeValue;
+            }
+        }
+        return null;
+    }
+    private int? GetIntProperty(JsonElement element, string propertyName)
+    {
+        try
+        {
+            if (element.TryGetProperty(propertyName, out var propertyElement))
+            {
+                Console.WriteLine($"ok: {propertyName} :: {propertyElement}");
+
+                // Check if it's an array and get the first element as string if so
+                var value = propertyElement.ValueKind == JsonValueKind.Array
+                    ? propertyElement[0].GetString()
+                    : propertyElement.GetString();
+
+                // Remove non-numeric characters (except minus sign for negative values)
+                if (value != null)
+                {
+                    value = new string(value.Where(c => char.IsDigit(c) || c == '-').ToArray());
+
+                    // Attempt to parse the cleaned string to an integer
+                    if (int.TryParse(value, out var intValue))
+                    {
+                        return intValue;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing {propertyName}: {ex.Message}");
+        }
+        return null;
+    }
+    // SetBusinessDetailsPropertiesFromJson(myRoot, BusinessDetails);
+    private void SetBusinessDetailsPropertiesFromJson(JsonElement jsonElement, object targetObject)
+    {
+        foreach (var prop in targetObject.GetType().GetProperties())
+        {
+            string propName = prop.Name;
+            JsonElement matchedElement;
+
+            try
+            {
+                if (jsonElement.TryGetProperty(propName, out matchedElement))
+                {
+                    // Match property by type, converting if necessary
+                    SetPropertyFromJsonElement(prop, matchedElement, targetObject);
+                }
+                else if (prop.PropertyType.IsClass && prop.PropertyType != typeof(string))
+                {
+                    // Recursively check nested properties
+                    var nestedObject = Activator.CreateInstance(prop.PropertyType);
+                    prop.SetValue(targetObject, nestedObject);
+                    SetBusinessDetailsPropertiesFromJson(jsonElement, nestedObject);
+                }
+                else
+                {
+                    Console.WriteLine($"Property '{propName}' not found in JSON.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error setting property '{propName}' from JSON: {ex.Message}");
+            }
+        }
+    }
+
+    private void SetPropertyFromJsonElement(System.Reflection.PropertyInfo prop, JsonElement jsonElement, object targetObject)
+    {
+        try
+        {
+            object convertedValue = null;
+
+            // Determine the type of the property and handle accordingly
+            if (prop.PropertyType == typeof(int?))
+            {
+                convertedValue = jsonElement.ValueKind == JsonValueKind.Number && jsonElement.TryGetInt32(out var intValue) ? (int?)intValue : null;
+            }
+            else if (prop.PropertyType == typeof(decimal?))
+            {
+                // Handle "$" and commas by parsing as string
+                convertedValue = decimal.TryParse(jsonElement.GetString(), NumberStyles.Currency, CultureInfo.InvariantCulture, out var decimalValue) ? (decimal?)decimalValue : null;
+            }
+            else if (prop.PropertyType == typeof(DateTime?))
+            {
+                convertedValue = DateTime.TryParse(jsonElement.GetString(), out var dateTimeValue) ? (DateTime?)dateTimeValue : null;
+            }
+            else if (prop.PropertyType == typeof(bool?))
+            {
+                // Check if the JSON element is of Boolean kind
+                convertedValue = jsonElement.ValueKind == JsonValueKind.True ? (bool?)true :
+                                 jsonElement.ValueKind == JsonValueKind.False ? (bool?)false : null;
+            }
+            else if (prop.PropertyType.IsEnum)
+            {
+                if (Enum.TryParse(prop.PropertyType, jsonElement.GetString(), true, out var enumValue))
+                {
+                    convertedValue = enumValue;
+                }
+            }
+            else if (prop.PropertyType == typeof(string))
+            {
+                convertedValue = jsonElement.GetString();
+            }
+
+            prop.SetValue(targetObject, convertedValue);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error converting JSON value for '{prop.Name}': {ex.Message}");
+        }
+    }
+
+    private void LoadEnumData()
+    {
+        LegalEntityTypeList = Enum.GetValues(typeof(LegalEntityType)).Cast<LegalEntityType>().Select(e => new EnumData<LegalEntityType> { Value = e, Text = e.ToString().Replace("_", " ") });
+        BusinessTypeList = Enum.GetValues(typeof(BusinessType)).Cast<BusinessType>().Select(e => new EnumData<BusinessType> { Value = e, Text = e.ToString().Replace("_", " ") });
+        LicenseTypeList = Enum.GetValues(typeof(LicenseType)).Cast<LicenseType>().Select(e => new EnumData<LicenseType> { Value = e, Text = e.ToString().Replace("_", " ") });
+    }
+    
+    public class EnumData<T>
+    {
+        public T Value { get; set; }
+        public string Text { get; set; }
+    }
+
+    //Delet later
+    private void testSet()
+    {
+        BusinessDetails.YearsExperience = 5;
+    }
+}

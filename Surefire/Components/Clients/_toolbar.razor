@@ -1,0 +1,144 @@
+﻿@using Syncfusion.Blazor.SplitButtons
+@using Surefire.Domain.Forms.Services
+@using Surefire.Domain.Ember
+@inject FormService FormService
+@inject EmberService EmberService
+@inject StateService _stateService
+
+
+<div class="page-toolbar">
+    <FluentMenuButton ButtonAppearance="Appearance.Accent" Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="Client"><FluentIcon Value="@(new Icons.Regular.Size20.Briefcase())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Client</FluentMenuItem>
+        <FluentMenuItem Id="Contact"><FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Contact</FluentMenuItem>
+        <FluentMenuItem Id="Policy"><FluentIcon Value="@(new Icons.Regular.Size20.Document())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Policy</FluentMenuItem>
+        <FluentMenuItem Id="Certificate"><FluentIcon Value="@(new Icons.Regular.Size20.Certificate())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Certificate</FluentMenuItem>
+    </FluentMenuButton>
+
+    <span class="sf-verthr"></span>
+
+    <a class="toolbar-link @(IsDisabled("Browse") ? "toolbar-disabled" : "")" href="/Clients/@GetClientId()">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Browse</span>
+    </a>
+
+    <a class="toolbar-link @(IsDisabled("List") ? "toolbar-disabled" : "")" href="/Clients/List" style="position:relative; left:-2px;">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+
+    <a class="toolbar-link @(IsEditDisabled("Edit,List,Create") ? "toolbar-disabled" : "")" href="/Clients/Edit/@GetClientId()">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Pen())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+    @if (ClientId != 0 && PageName == "Browse")
+    {
+        <span class="sf-verthr2"></span>
+
+        <div class="group-left-title">
+            Search<br />
+            Outlook
+        </div>
+        <div class="tworowgroup__toprow">
+            <a class="tworowgroup__toprow-button" @onclick="() => OutlookSearchSmart()"><FluentIcon Value="@(new Icons.Regular.Size24.SearchSparkle())" Slot="start" Color="Color.Custom" CustomColor="#5e5e5e" /><span>Quick</span></a>
+            <a class="tworowgroup__toprow-button" @onclick="() => OutlookSearchStrict()"><FluentIcon Value="@(new Icons.Regular.Size24.Mail())" Slot="start" Color="Color.Custom" CustomColor="#5e5e5e" /><span>Strict</span></a>
+            <a class="tworowgroup__toprow-button" @onclick="() => OutlookSearchBroad()"><FluentIcon Value="@(new Icons.Filled.Size24.Fingerprint())" Slot="start" Color="Color.Custom" CustomColor="#5e5e5e" /><span>Broad</span></a>
+        </div>
+    }
+    @if (PageName == "Create")
+    {
+        <span class="sf-verthr2"></span>
+
+        <a href="javascript:void(0);" @onclick="DoShowSmartPaste" class="toolbar-link">
+            <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardPulse())" />
+            <span class="toolbar-text">SmartPaste</span>
+        </a>
+    }
+</div>
+
+
+@code {
+    [Parameter] public int ClientId { get; set; }
+    [Parameter] public bool? ClientLoaded { get; set; }
+    [Parameter] public string ClientName { get; set; }
+    [Parameter] public string PageName { get; set; }
+    [Parameter] public EventCallback OnNewPolicy { get; set; }
+    [Parameter] public EventCallback OnShowSmartPaste { get; set; }
+    [Parameter] public List<string> EmailAddresses { get; set; }
+
+    private async Task HandleOnMenuChanged(MenuChangeEventArgs args)
+    {
+        Console.WriteLine($"ID CLICK: {args.Id}");
+        switch (args.Id)
+        {
+            case "Client":
+                Navigation.NavigateTo($"/Clients/Create");
+                break;
+            case "Contact":
+                Navigation.NavigateTo($"/Contacts/Create?ParentType=Client&ParentId={ClientId}");
+                break;
+            case "Certificate":
+                await NewCertificate();
+                break;
+            case "Policy":
+                await NewPolicy();
+                break;
+        }
+    }
+    public async Task NewPolicy()
+    {
+        if (OnNewPolicy.HasDelegate)
+        {
+            await OnNewPolicy.InvokeAsync();
+        }
+    }
+    public async Task NewCertificate()
+    {
+        int newcertid = await FormService.CreateCertificate(ClientId);
+        Navigation.NavigateTo($"/Forms/Certificate/{newcertid}");
+    }
+    public async Task OutlookSearchBroad()
+    {
+        await EmberService.RunEmberFunction("OutlookSearch_EmailBroad", EmailAddresses);
+    }
+    public async Task OutlookSearchStrict()
+    {
+        await EmberService.RunEmberFunction("OutlookSearch_EmailStrictToFrom", EmailAddresses);
+    }
+    public async Task OutlookSearchSmart()
+    {
+        var nameSearchList = StringHelper.GenerateCompanyNameVariations(ClientName);
+        await EmberService.RunEmberFunction("OutlookSearch_SmartSearch", nameSearchList);
+    }
+    public async Task DoShowSmartPaste()
+    {
+        await OnShowSmartPaste.InvokeAsync();
+    }
+    private bool IsDisabled(string toolbarPageName)
+    {
+        // Return true to disable, false to enable
+        return string.Equals(toolbarPageName, PageName, StringComparison.OrdinalIgnoreCase);
+    }
+    private bool IsEditDisabled(string pageNames)
+    {
+        // Split the comma-separated list into an array
+        var disabledPages = pageNames.Split(',');
+
+        // Check if the current PageName is in the list of disabled pages
+        return disabledPages.Any(p => string.Equals(p.Trim(), PageName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private int GetClientId()
+    {
+        if(ClientId != 0){
+            return ClientId;
+        }else{
+            if (_stateService.ClientId != 0)
+            {
+                return _stateService.ClientId;
+            }else{
+                return 0;
+            }
+        }
+      
+    }
+}

@@ -1,0 +1,61 @@
+﻿@using Surefire.Domain.Forms.Services
+@using Syncfusion.Blazor.SplitButtons
+@inject FormService FormService
+
+<div class="page-toolbar">
+    <FluentButton Appearance="Appearance.Accent" OnClick="NewLead"><FluentIcon Value="@(new Icons.Regular.Size20.Add())" Color="Color.Custom" CustomColor="#fff" Slot="start" /> New Lead</FluentButton>
+    
+    <span class="sf-verthr"></span>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Leads", PageName) ? "toolbar-disabled" : "")" href="/Leads">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Leads</span>
+    </a>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("List", PageName) ? "toolbar-disabled" : "")" href="/Leads/Index">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Edit,Create,List,Leads", PageName) ? "toolbar-disabled" : "")" @onclick="GoToEdit">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Pen())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+
+    @if (ShowSmartPaste)
+    {
+        <span class="sf-verthr2"></span>
+
+        <a href="javascript:void(0);" @onclick="DoShowSmartPaste" class="toolbar-link">
+            <FluentIcon Value="@(new Icons.Regular.Size24.ClipboardPulse())" />
+            <span class="toolbar-text">SmartPaste</span>
+        </a>
+    }
+
+</div>
+
+@code {
+    [Parameter] public int LeadId { get; set; }
+    [Parameter] public bool ShowSmartPaste { get; set; }
+    [Parameter] public EventCallback OnShowSmartPaste { get; set; }
+    [Parameter] public string PageName { get; set; }
+
+    private void NewLead()
+    {
+        Navigation.NavigateTo($"/Leads/Create");
+    }
+
+    private async Task DoShowSmartPaste()
+    {
+        await OnShowSmartPaste.InvokeAsync();
+    }
+
+    private void GoToEdit()
+    {
+        if(LeadId != 0)
+        {
+            Navigation.NavigateTo("Leads/Edit/" + LeadId);
+        }
+    }
+
+}

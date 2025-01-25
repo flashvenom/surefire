@@ -1,0 +1,84 @@
+﻿@using Surefire.Domain.Plugins
+@using Surefire.Domain.Shared.Services
+@using Surefire.Domain.Shared.Helpers
+@using RingCentral
+@inject StateService _stateService
+
+@if (recentCalls == null)
+{
+    <FluentProgressRing Width="30px" Color="#1b8ce3" />
+}
+else if (!recentCalls.Any())
+{
+    <FluentIcon Value="@(new Icons.Regular.Size24.CallDismiss())" CustomColor="#b7b7b7" Color="Color.Custom" />
+    <span class="phone-none">No recent phone conversations.</span>
+}
+else
+{
+    <div class="fluent-data-grid">
+        <FluentDataGrid Items="@recentCalls" ResizableColumns="true" ShowHover="true" Pagination="@pagination" TGridItem="CallLogRecord">
+            <PropertyColumn Property="@(p => p.from.phoneNumber)" Title="From" Sortable="true" />
+            <PropertyColumn Property="@(p => p.to.phoneNumber)" Title="To" Sortable="true" />
+            <PropertyColumn Property="@(p => p.direction)" Title="Direction" Sortable="true" />
+            <PropertyColumn Property="@(p => p.startTime)" Title="Start Time" Sortable="true" />
+            <PropertyColumn Property="@(p => p.duration)" Title="Duration" Sortable="true" />
+        </FluentDataGrid>
+        <div class="fluent-data-grid__bottombar">
+            <div class="fluent-data-grid__pagination">
+                <FluentPaginator State="@pagination" />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IQueryable<CallLogRecord> recentCalls = Enumerable.Empty<CallLogRecord>().AsQueryable(); // Default as IQueryable
+    PaginationState pagination = new PaginationState { ItemsPerPage = 17 };
+    private CancellationTokenSource? _callLogCts;
+
+    [Parameter] public bool ShowAll { get; set; } = false; // Parameter to control "show all" behavior
+    [Parameter] public List<string>? PhoneNumbers { get; set; } = new(); // List of phone numbers
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("Initializing call logs...");
+        await LoadPhoneCallLogsAsync();
+    }
+
+    private async Task LoadPhoneCallLogsAsync()
+    {
+        _callLogCts?.Cancel(); // Cancel any previous task
+        _callLogCts = new CancellationTokenSource();
+        var cancellationToken = _callLogCts.Token;
+
+        try
+        {
+            // Fetch call logs using the StateService
+            var callLogs = await _stateService.GetCallLogsAsync(PhoneNumbers ?? new List<string>(), ShowAll, cancellationToken);
+
+            // Filter out logs where both 'from' and 'to' are null or empty
+            callLogs = callLogs
+                .Where(log => !string.IsNullOrWhiteSpace(log.from?.phoneNumber) || !string.IsNullOrWhiteSpace(log.to?.phoneNumber))
+                .ToList();
+
+            // Convert List to IQueryable and sort
+            recentCalls = callLogs
+                .OrderByDescending(log => log.startTime)
+                .AsQueryable(); // Convert to IQueryable for DataGrid
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("GetCallLogsAsync operation was canceled.");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error fetching call logs: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _callLogCts?.Cancel();
+        _callLogCts?.Dispose();
+    }
+}

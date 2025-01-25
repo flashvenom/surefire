@@ -1,0 +1,157 @@
+﻿@page "/Contacts/Create"
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Contacts.Services
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.OpenAI
+@using Syncfusion.Blazor.Inputs
+@using Microsoft.AspNetCore.WebUtilities
+@inject ContactService ContactService
+
+<_toolbar ShowSmartPaste="true" OnShowSmartPaste="ShowSmartPasteDialog" />
+
+<div class="page-content">
+    <div class="mh1">Create New Contact</div>
+    <EditForm EditContext="@editContext" OnValidSubmit="CreateContact">
+        <DataAnnotationsValidator />
+
+        <div class="mf-flex mf-flex-row mf-row-container">
+            <div class="mf-item-lg">
+                <div class="mb-3">
+                    <SfTextBox id="firstName" Placeholder="First Name" @bind-Value="NewContact.FirstName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.FirstName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="lastName" Placeholder="Last Name" @bind-Value="NewContact.LastName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.LastName" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <SfTextBox id="title" Placeholder="Title / Department" @bind-Value="NewContact.Title" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Title" class="text-danger" />
+                </div>
+                @if (ConfirmedParentType == "Carrier")
+                {
+                    <table>
+                        <tr>
+                            <td>
+                                <div class="cb">
+                                    <FluentCheckbox id="underwriter" Label="Underwriter" @bind-Value="NewContact.Underwriter" />
+                                </div>
+                                <div class="cb">
+                                    <FluentCheckbox id="service" Label="Service" @bind-Value="NewContact.Service" />
+                                </div>
+                            </td>
+                            <td>
+                                <div class="cb">
+                                    <FluentCheckbox id="billing" Label="Billing" @bind-Value="NewContact.Billing" />
+                                </div>
+                                <div class="cb">
+                                    <FluentCheckbox id="rep" Label="Account Rep" @bind-Value="NewContact.Representative" />
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+            <div class="mf-item-lg mf-pad-left">
+                <div class="mb-3">
+                    <SfTextBox id="email" Placeholder="Email" @bind-Value="NewContact.Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Email" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="phone" Placeholder="Phone" @bind-Value="NewContact.Phone" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Phone" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="mobile" Placeholder="Mobile" @bind-Value="NewContact.Mobile" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Mobile" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="notes" Placeholder="Notes" @bind-Value="NewContact.Notes" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => NewContact.Notes" class="text-danger" />
+                </div>
+            </div>
+        </div>
+
+        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Create</FluentButton>
+    </EditForm>
+    <SmartPaste @ref="smartPaste" OnDataExtracted="OnDataExtracted" />
+</div>
+
+
+@code {
+    [Parameter] public string ParentType { get; set; }
+    [Parameter] public int ParentId { get; set; }
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+    public string ConfirmedParentType { get; set; }
+    private Contact NewContact { get; set; } = new Contact();
+    private EditContext editContext;
+    private SmartPaste smartPaste;
+
+    protected override void OnInitialized()
+    {
+        UpdateHeader?.Invoke("Contacts");
+        editContext = new EditContext(NewContact);
+
+        // Retrieve query parameters from the URL
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+
+        if (queryParams.TryGetValue("ParentType", out var parentType))
+        {
+            if (parentType == "Carrier")
+            {
+                ConfirmedParentType = "Carrier";
+                NewContact.CarrierId = int.TryParse(queryParams["ParentId"], out var parentId) ? parentId : (int?)null;
+            }
+            else if (parentType == "Client")
+            {
+                ConfirmedParentType = "Client";
+                NewContact.ClientId = int.TryParse(queryParams["ParentId"], out var parentId) ? parentId : (int?)null;
+            }
+        }
+    }
+
+    private async Task CreateContact()
+    {
+        if (editContext.Validate()) // Check if the form is valid
+        {
+            await ContactService.CreateContactAsync(NewContact);
+            GoBack();
+        }
+    }
+    private async Task ShowSmartPasteDialog()
+    {
+        smartPaste.Show();
+    }
+    private void OnDataExtracted(LeadData data)
+    {
+        NewContact.FirstName = data.FirstName;
+        NewContact.LastName = data.LastName;
+        NewContact.Email = data.Email;
+        NewContact.Title = data.ContactTitle;
+        NewContact.Phone = data.PhoneNumbers != null ? StringHelper.GetBestPhoneNumber(data.PhoneNumbers) : string.Empty;
+        NewContact.Mobile = data.PhoneNumbers?.ContainsKey("Mobile") == true ? data.PhoneNumbers["Mobile"] : string.Empty;
+    }
+
+    public void GoBack()
+    {
+        if (NewContact.CarrierId != null)
+        {
+            // Navigate to the Carrier's details page
+            Navigation.NavigateTo($"/Carriers/Details/{NewContact.CarrierId}");
+        }
+        else if (NewContact.ClientId != null)
+        {
+            // Navigate to the Client's list page
+            Navigation.NavigateTo($"/Clients/{NewContact.ClientId}");
+        }
+        else
+        {
+            // If neither CarrierId nor ClientId is present, navigate to the Contacts page
+            Navigation.NavigateTo("/Contacts");
+        }
+    }
+}

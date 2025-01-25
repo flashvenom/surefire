@@ -1,0 +1,68 @@
+﻿@using Surefire.Domain.Renewals.ViewModels
+@using Surefire.Domain.Renewals.Services
+@using Syncfusion.Blazor.Notifications
+@inject RenewalService RenewalService
+
+<div class="sectiontitletab background-@bgColor">@tabTitle</div>
+<div class="home-box background-@bgColor">
+    <table id="tasktable" cellspacing="0" class="ttable">
+        <thead class="tbg background-@bgColor">
+            <tr>
+                <th>Policy</th>
+                <th width="40%">Client</th>
+                <th>Task</th>
+                <th>Priority</th>
+            </tr>
+        </thead>
+        <tbody class="tbody">
+            @if (tasks == null || isLoading)
+            {
+            
+                for (var i = 0; i < 8; i++)
+                {
+                <tr class="trow">
+                    <td colspan="4"><SfSkeleton Shape=SkeletonType.Rectangle Width="100%" Height="20px" CssClass="e-customize" Visible="true"></SfSkeleton></td>
+                    </tr>
+                }
+
+            }
+            else if (!tasks.Any())
+            {
+                <tr>
+                    <td colspan="4"><div class="nothingfound">Nothing found here.</div></td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var task in tasks)
+                {
+                    <tr class="trow @(task.Highlighted ? "highlighted" : "")">
+                        <td width="85"><span class="hprod hprodbg-@bgColor">@StringHelper.GetSafeSubstring(task.PolicyProduct, 0, 3)</span><span class="hexp">@task.RenewalDate.ToString("MM/dd")</span></td>
+                        <td class="tcname ellipsis"><a href="/Clients/@task.ClientId" class="sf-link">@task.ClientName</a> </td>
+                        <td class="ttname ellipsis"><a class="rentask-link" @onclick="() => HandleRenewalClick(task.RenewalId)">@task.TaskName</a></td>
+                        <td width="100" class="ttpri ellipsis">@((MarkupString)task.Priority)</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+@code {
+    [Parameter]
+    public List<HomePageTasksViewModel> tasks { get; set; }
+
+    [Parameter]
+    public bool isLoading { get; set;  }
+
+    [Parameter]
+    public string tabTitle { get; set; } = "";
+
+    [Parameter]
+    public string bgColor { get; set; } = "default";
+
+    protected async Task HandleRenewalClick(int renewalId)
+    {
+        var ren = await RenewalService.GetRenewalByIdAsync(renewalId);
+        Navigation.NavigateTo($"/Renewals/Details/{renewalId}");
+    }
+}

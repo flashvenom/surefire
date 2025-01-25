@@ -1,0 +1,88 @@
+﻿.home-list {
+    margin: 0px;
+    background-color: #f3f3f3;
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0px 0px 10px #ccc;
+}
+.metrologo {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+.imagecontainer {
+    position:absolute;
+    top:10px;
+    left:0px;
+    width:100%;
+    text-align:center;
+}
+    .imagecontainer img {
+        height:120px;
+    }
+    .systemcontainer {
+        position: relative;
+    }
+
+.systemcontainer{
+    width:1200px;
+    margin-left:auto;
+    margin-right:auto;
+}
+.system-header {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 2.5em;
+    margin-bottom:5px;
+    color:#6d6d6d;
+}
+.system-content {
+    height: calc(100vh - 95px);
+    background-color:#f7f7f7;
+    border-radius:6px;
+    box-shadow:0px 0px 15px #ccc;
+}
+.system-subheader {
+    padding-top:25px;
+    padding-left:3px;
+    color:#949494;
+}
+.log-console {
+    background-color: #000; /* Black background */
+    color: #fff; /* White text */
+    font-family: monospace;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-y: auto; /* Enable vertical scrolling */
+    height: 400px; /* Adjust height as needed */
+    border: 1px solid #333;
+}
+
+.log-content {
+    max-height: 100%; /* Ensure it stays within the console height */
+}
+
+.log-entry {
+    margin-bottom: 5px;
+    word-break: break-word; /* Ensure long messages wrap */
+}
+
+.log-timestamp {
+    color: #1b8ce3; /* Blue for timestamps */
+    margin-right: 5px;
+}
+
+.log-level {
+    color: #e67e22; /* Orange for log levels */
+    margin-right: 5px;
+}
+
+.log-message {
+    color: #fff; /* White for the log message */
+}
+
+.log-empty {
+    color: #b7b7b7;
+    font-style: italic;
+}

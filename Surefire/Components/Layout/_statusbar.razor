@@ -1,0 +1,30 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@inject StateService StateService
+
+<div class="status-bar">
+    @if (StateService.StatusLoading)
+    {
+        <span class="status-ring">
+            <FluentProgressRing Width="20px" Color="#fff" />
+        </span>
+    }
+    <span class="status-update">@StateService.StatusMessage</span> 
+    
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        StateService.OnStatusChanged += HandleStatusChanged;
+    }
+
+    private void HandleStatusChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        StateService.OnStatusChanged -= HandleStatusChanged;
+    }
+}

@@ -1,0 +1,148 @@
+﻿@namespace Surefire.Domain.Policies.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using Surefire.Domain.Policies.Services
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Carriers.Models
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@inject StateService _stateService
+@inject NavigationManager NavigationManager
+@inject PolicyService PolicyService
+
+
+<div class="txt-section">Create a new Policy</div>
+@if (PolicyCreate is null)
+{
+    <SfSpinner Visible="true"></SfSpinner>
+}
+else
+{
+    <EditForm EditContext="editContext" OnValidSubmit="CreatePolicy">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mf-flex mf-flex-row mf-row-container">
+
+            <div class="mf-item-lg">
+                <div class="mb-3">
+                    <SfDropDownList TValue="int" TItem="Product" DataSource="@Products" Placeholder="Line of Business" @bind-Value="PolicyCreate.ProductId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
+                        <DropDownListFieldSettings Text="LineName" Value="ProductId" />
+                    </SfDropDownList>
+                    <ValidationMessage For="()=>PolicyCreate.Product" class="text-danger" />
+                </div>
+
+                <div class="sf-spacer-lg"></div>
+
+                <div class="mb-3">
+                    <SfDatePicker TValue="DateTime" @bind-Value="PolicyCreate.EffectiveDate" Placeholder="Effective Date" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => PolicyCreate.EffectiveDate" class="text-danger" />
+                </div>
+
+                <div class="sf-spacer-lg"></div>
+
+                <div class="mb-3">
+                    <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Carriers" Placeholder="Issuing Carrier" @bind-Value="PolicyCreate.CarrierId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
+                        <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                    </SfDropDownList>
+                    <ValidationMessage For="() => PolicyCreate.CarrierId" class="text-danger" />
+                </div>
+
+                <div class="sf-spacer-lg"></div>
+
+                <div class="mb-3">
+                    <SfNumericTextBox TValue="decimal?" @bind-Value="PolicyCreate.Premium" Placeholder="Premium" FloatLabelType="FloatLabelType.Always" Format="C2" />
+                    <ValidationMessage For="() => PolicyCreate.Premium" class="text-danger" />
+                </div>
+
+            </div>
+
+            <div class="mf-item-lg mf-pad-left">
+                
+                <div class="mb-3">
+                    <SfTextBox id="policynumber" @bind-Value="PolicyCreate.PolicyNumber" Placeholder="Policy Number" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => PolicyCreate.PolicyNumber" class="text-danger" />
+                </div>
+
+                <div class="sf-spacer-lg"></div>
+                
+                <div class="mb-3">
+                    <SfDatePicker TValue="DateTime" @bind-Value="PolicyCreate.ExpirationDate" Placeholder="Expiration Date" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => PolicyCreate.ExpirationDate" class="text-danger" />
+                </div>
+                
+                <div class="sf-spacer-lg"></div>
+
+                <div class="mb-3">
+                    <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Wholesalers" Placeholder="Wholesaler" @bind-Value="PolicyCreate.WholesalerId" AllowFiltering=true PopupHeight="230px" ShowClearButton=true FloatLabelType="FloatLabelType.Always">
+                        <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                    </SfDropDownList>
+                    <ValidationMessage For="() => PolicyCreate.Wholesaler" class="text-danger" />
+                </div>
+
+                <div style="padding-top:51px; text-align:right;">
+                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="CloseCreatePolicy">Cancel</FluentButton>
+                    <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent"> Create Policy</FluentButton>
+                </div>
+            </div>
+
+        </div>
+    </EditForm>
+}
+
+
+@code {
+    [Parameter] public int ClientId { get; set; }
+
+    [Parameter] public EventCallback OnCloseCreatePolicy { get; set; }
+
+    private EditContext editContext;
+    private PolicyCreate PolicyCreate { get; set; } = new PolicyCreate();
+    private List<Product> Products { get; set; }
+    private List<Carrier> Carriers { get; set; }
+    private List<Carrier> Wholesalers { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(PolicyCreate);
+        PolicyCreate.EffectiveDate = DateTime.Now;
+        PolicyCreate.ExpirationDate = DateTime.Now.AddYears(1);
+        Products = await _stateService.AllProducts;
+        Carriers = await _stateService.AllCarriers;
+        Wholesalers = await _stateService.AllWholesalers;
+    }
+
+    private async Task CreatePolicy()
+    {
+        if (!editContext.Validate())
+        {
+            return; // Abort if validation fails
+        }
+
+        int newpolicyid = await PolicyService.CreatePolicyForClientAsync(PolicyCreate, ClientId);
+        NavigationManager.NavigateTo($"/Policies/Details/{newpolicyid}");
+    }
+
+    private async Task CloseCreatePolicy()
+    {
+        if (OnCloseCreatePolicy.HasDelegate)
+        {
+            await OnCloseCreatePolicy.InvokeAsync();
+        }
+    }
+    public void GoBack()
+    {
+        NavigationManager.NavigateTo("/Policies");
+    }
+    public void Dispose()
+    {
+        Products.Clear();
+        Carriers.Clear();
+        Wholesalers.Clear();
+    }
+
+}

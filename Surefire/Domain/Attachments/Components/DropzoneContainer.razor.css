@@ -1,0 +1,34 @@
+﻿/* Hide the uploader buttons and file list */
+.hidden-uploader .e-upload {
+    display: none !important;
+}
+
+/* Completely hide the uploader while keeping it functional */
+.hidden-uploader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    background-color:#ff0000;
+}
+
+    /* Optional: Enhance the drop zone appearance */
+    .hidden-uploader input[type="file"] {
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+.policy-drop-zone {
+
+}
+
+    .policy-drop-zone:hover {
+        
+    }
+    .policy-drop-zone:target {
+        
+    }

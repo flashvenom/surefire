@@ -1,0 +1,880 @@
+﻿@page "/Settlement/{RenewalId:int}"
+@using Newtonsoft.Json
+@using Surefire.Domain.OpenAI
+@using Surefire.Domain.Logs
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Carriers.Models
+@using Surefire.Domain.Clients.Services
+@using Surefire.Domain.Accounting.Models
+@using Surefire.Domain.Attachments.Models
+@using Surefire.Domain.Accounting.Services
+@using Surefire.Domain.Attachments.Services
+@using Surefire.Domain.Attachments.Components
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@using Microsoft.AspNetCore.Components
+@inject StateService _stateService
+@inject OpenAiService OpenAiService
+@inject ClientService ClientService
+@inject NavigationManager Navigation
+@inject AttachmentService AttachmentService
+@inject AccountingService SettlementService
+@inject ILoggingService _log
+
+
+@if(Settlement != null)
+{
+    <FluentStack>
+        <FluentStack Width="375px" Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+            <FluentCard MinimalStyle="true" Class="CardStyle">
+                <div class="header-card">Policy</div>
+                <div style="height:0px;"></div>
+                <FluentStack>
+                    <SfNumericTextBox TValue="decimal?" style="font-weight:bold !important; font-size:1.2em;" @bind-Value="@Settlement.Premium" Format="c2" ShowSpinButton="false" FloatLabelType="FloatLabelType.Always" Placeholder="Premium" OnChange="DoCalculation"></SfNumericTextBox>
+                    <SfNumericTextBox TValue="decimal?" style="font-weight:bold !important; font-size:1.2em;" @bind-Value="@Settlement.CommissionPercentage" ShowSpinButton="false" FloatLabelType="FloatLabelType.Always" Placeholder="Comission %" OnChange="DoCalculation"></SfNumericTextBox>
+                    <SfNumericTextBox TValue="decimal?" style="font-size:1.2em;" @bind-Value="@Settlement.MinEarnedPercentage" ShowSpinButton="false" FloatLabelType="FloatLabelType.Always" Placeholder="Min E&D %" OnChange="DoCalculation"></SfNumericTextBox>
+                </FluentStack>
+            </FluentCard>
+
+            @* ---------------------- BILL TYPE ---------------------- *@
+            <FluentCard MinimalStyle="true" Class="CardStyle">
+                <div class="header-card">Billing</div>
+                <div style="height:0px;"></div>
+
+                <FluentStack>
+
+                    <SfDropDownList TValue="BillType?" TItem="EnumData<BillType>" @bind-Value="@Settlement.BillType" DataSource="@BillTypeList"
+                    FloatLabelType="FloatLabelType.Always" ShowClearButton="true" Width="50%" Placeholder="Bill Type">
+                        <DropDownListEvents TValue="BillType?" TItem="EnumData<BillType>" ValueChange="OnBillTypeChange" />
+                        <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList>
+
+                    <div class="billingswitches">
+                        <div class="financet">
+                            <FluentSwitch Value="@Settlement.IsFullPayment" ValueChanged="OnIsFullPaymentChanged" Class="switchstyle">Full Payment</FluentSwitch>
+                        </div>
+
+                        <div class="financet2">
+                            <FluentSwitch Value="@Settlement.IsFinanced" ValueChanged="OnIsFinancedChanged" Class="switchstyle">Financed</FluentSwitch>
+                        </div>
+
+                    </div>
+
+                </FluentStack>
+
+                @if (Settlement.IsFinanced == true)
+                {
+                    <FluentStack>
+                        <SfNumericTextBox @bind-Value="@Settlement.DownPaymentAmount" Format="C2" Readonly="true" Placeholder="$ Down Pay" FloatLabelType="FloatLabelType.Always" CssClass="e-small e-numsmall e-readonly e-spec" TValue="decimal?" ShowSpinButton="false"></SfNumericTextBox>
+                        @* ---------------------- FINANCED ---------------------- *@
+                        <SfNumericTextBox @bind-Value="@Settlement.FinanceAmount" Placeholder="$ Financed" Format="C2" Readonly="true" TValue="decimal?" ShowSpinButton="false" CssClass="e-small e-numsmall e-readonly" FloatLabelType="FloatLabelType.Always"></SfNumericTextBox>
+                        <SfNumericTextBox @bind-Value="@Settlement.FinanceMonths" Width="50%" Placeholder="# Months" Min="1" Max="12" TValue="int?" ShowSpinButton="false" CssClass="e-small e-numsmall" FloatLabelType="FloatLabelType.Always" OnChange="DoCalculation"></SfNumericTextBox>
+                        <SfNumericTextBox @bind-Value="@Settlement.FinanceChargePercent" Width="50%" Placeholder="% APR" Min="1" Max="100" TValue="decimal?" ShowSpinButton="false" CssClass="e-small e-numsmall" FloatLabelType="FloatLabelType.Always" OnChange="DoCalculation"></SfNumericTextBox>
+                    </FluentStack>
+                }
+            </FluentCard>
+
+            @* ---------------------- TAXES AND FEES ---------------------- *@
+            <FluentCard MinimalStyle="true" Class="CardStyle">
+                <div class="header-card">Taxes & Fees</div>
+                <div style="height:5px;"></div>
+                <table>
+                    <thead class="lbg">
+                        <tr>
+                            <th width="22%">Code</th>
+                            <th width="50%">Description</th>
+                            <th width="22%">Amount</th>
+                            <th width="6%"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Settlement.SettlementItems)
+                        {
+                            <tr>
+                                <td width="22%">
+                                    <SfAutoComplete TValue="string" TItem="EnumData<SettlmentItemCode>" Placeholder="Code" DataSource="@SettlmentItemCodeList" @bind-Value="item.ItemCodeString">
+                                        <AutoCompleteFieldSettings Value="Value" Text="Text" />
+                                        <AutoCompleteEvents TValue="string" TItem="EnumData<SettlmentItemCode>" ValueChange="@(args => OnItemCodeChange(args, item))" />
+                                    </SfAutoComplete>
+                                </td>
+                                <td width="50%">
+                                    <SfTextBox @bind-Value="item.Description" Placeholder="Description" FloatLabelType="FloatLabelType.Never"></SfTextBox>
+                                </td>
+                                <td width="22%">
+                                    <SfNumericTextBox @bind-Value="@item.Amount" Format="c2" Placeholder="Amount" TValue="decimal?" ShowSpinButton="false" FloatLabelType="FloatLabelType.Never" OnChange="DoCalculation"></SfNumericTextBox>
+                                </td>
+                                <td width="6%">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Color.Custom" CustomColor="#036ac4" Class="delbtn" @onclick="() => RemoveSettlementItem(item)" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <a @onclick="AddSettlementItem" class="sf-add-button"><FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Color.Custom" CustomColor="#036ac4" /> Add Item</a>
+            </FluentCard>
+        </FluentStack>
+
+        <FluentStack Width="375px" Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+
+            @* ---------------------- CLIENT PAYMENT ----------------------- *@
+            <FluentCard MinimalStyle="true" Class="CardStyle">
+                <div class="header-card">Client Payment</div>
+                <div style="height:8px;"></div>
+                <FluentStack>
+                    <SfDropDownList TValue="PayType?" TItem="EnumData<PayType>" @bind-Value="@Settlement.PayType" DataSource="@PayTypeList"
+                    FloatLabelType="FloatLabelType.Never" ShowClearButton="true" Width="50%" Placeholder="Payment Type">
+                        <DropDownListEvents TValue="PayType?" TItem="EnumData<PayType>" ValueChange="OnPayTypeChange" />
+                        <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList>
+
+                    <div class="financet">
+                        <FluentSwitch @bind-Value="@Settlement.PayDone">Payment Made</FluentSwitch> 
+                    </div>
+                </FluentStack>
+
+                @if (Settlement.PayDone)
+                {
+                    <FluentDivider Style="margin:8px;"></FluentDivider>
+
+                    <FluentStack>
+                        <SfNumericTextBox @bind-Value="@Settlement.PayAmount" Placeholder="Amount" TValue="decimal?" ShowSpinButton="true" FloatLabelType="FloatLabelType.Always" OnChange="DoCalculation"></SfNumericTextBox>
+                        <SfNumericTextBox @bind-Value="@Settlement.PayFees" Placeholder="Fees" TValue="decimal?" ShowSpinButton="true" FloatLabelType="FloatLabelType.Always" OnChange="DoCalculation"></SfNumericTextBox>
+                    </FluentStack>
+
+                    <FluentStack>
+                        <SfDatePicker @bind-Value="@Settlement.PayDate" Placeholder="Date" TValue="DateTime?" FloatLabelType="FloatLabelType.Always" OnChange="DoCalculation"></SfDatePicker>
+                        <SfDatePicker @bind-Value="@Settlement.PayDepositDate" Placeholder="Cleared" TValue="DateTime?" FloatLabelType="FloatLabelType.Always" OnChange="DoCalculation"></SfDatePicker>
+                    </FluentStack>
+                }
+            </FluentCard>
+
+            @* ----------------- ACCOUNTING USE ONLY -------------------- *@
+            <FluentCard MinimalStyle="true" Class="CardStyle">
+                <div class="header-card header-acc">Accounting Use Only</div>
+                <div style="height:0px;"></div>
+                <FluentStack>
+                    <SfTextBox @bind-Value="@Settlement.AccountingBillingCompany" Placeholder="Payable To" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfTextBox>
+                    <SfDatePicker @bind-Value="@Settlement.AccountingStatementDueDate" Placeholder="Due Date" TValue="DateTime?" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfDatePicker>
+                </FluentStack>
+
+                <FluentStack>
+                    <SfTextBox @bind-Value="@Settlement.AccountingCarrier" Placeholder="Carrier" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfTextBox>
+                    <SfTextBox @bind-Value="@Settlement.AccountingPolicyNumber" Placeholder="Policy Number" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfTextBox>
+                </FluentStack>
+
+                <FluentStack>
+                    <SfTextBox @bind-Value="@Settlement.AccountingStatementNumber" Placeholder="Statement Number" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfTextBox>
+                    <SfNumericTextBox @bind-Value="@Settlement.AccountingPaidToCarrierAmount" Placeholder="Check Amount" TValue="decimal?" ShowSpinButton="true" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfNumericTextBox>
+                </FluentStack>
+
+                <FluentStack>
+                    <SfDatePicker @bind-Value="@Settlement.AccountingPaidOnDate" Placeholder="Paid Date" TValue="DateTime?" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfDatePicker>
+                    <SfDatePicker @bind-Value="@Settlement.AccountingIssueDate" Placeholder="Deposit Date" TValue="DateTime?" FloatLabelType="FloatLabelType.Always" OnChange="SaveSettlementDebounce"></SfDatePicker>
+                </FluentStack>
+
+                <div style="height:5px; padding:0px; margin:0px;"></div>
+                <SfTextArea @bind-Value="Settlement.Notes" Placeholder="Notes or Instructions" Width="100%" OnChange="DoCalculation"></SfTextArea>
+
+                <div style="opacity:.6">
+                    <FluentStack>
+                        <FluentTextField style="width: 100px;" @bind-Value="invoicejson"></FluentTextField>
+                        <FluentButton OnClick="@(() => ProcessJsonField())">iField</FluentButton>
+                        <FluentButton OnClick="@(() => ProcessInvoiceWithAI("C:\\Users\\flash\\Desktop\\Invoice-Arcs.pdf"))">iPath</FluentButton>
+                        <FluentButton OnClick="@(() => InvoiceParseNow())">iAgain</FluentButton>
+                    </FluentStack>
+                </div>
+            </FluentCard>
+        </FluentStack>
+        <FluentStack Width="250px" Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+            <div id="settlementmath" class="jagged-box">
+                <div class="rechead">Totals</div>
+                @((MarkupString)ReceiptContent)
+            </div>
+            <div id="mathhis" class="mhis">
+                @((MarkupString)mathhistory)
+            </div>
+        </FluentStack>
+
+        @* ----------------- Matched Transactions -------------------- *@
+        <div>
+            @if (MatchedTransactions != null && MatchedTransactions.Count > 0)
+            {
+                <div class="txt-alert-box-sm">
+                    <div class="whatever">Matching Payment Found</div>
+                    <span class="txt-bold">We found a matching payment. <a @onclick="ApplyMatchers">Click to apply.</a></span><br />
+                    <div style="height:10px; padding:0px; margin:0px;"></div>
+                    <table class="sf-calltable">
+                        @foreach (var transaction in MatchedTransactions)
+                        {
+                            <tr>
+                                <td class="phone-lognum">
+                                    <span class="pay-lognum">@transaction.Amount?.ToString("C2")</span><br />
+                                    <span class="phonetxt2">@transaction.Payer</span><br />
+                                    <span class="phonetxt2">@transaction.Email</span><br />
+                                </td>
+                                <td class="ellipsis2">
+                                    <span class="phonetxt">@transaction.Comments</span><br />
+                                    <span class="phonetxt">Sale: @transaction.SaleDate</span><br />
+                                    <span class="phonetxt">Batch: @transaction.SettleDate</span>
+                                </td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+            }
+            <div style="width:100%;">
+                <div class="txt-section">Invoices</div>
+                <DropzoneContainer ClientId="ClientId" AutoFolderId="8" RenewalId="RenewalId" OnAttachmentAdded="InvoiceParseNow" FileBrowserButton="Small"><img src="/img/icons/fileupload.png" class="drop-icon"></DropzoneContainer> 
+                <AttachmentIcons AttachmentsList="Invoices" />
+                <div class="top-loader top-loader-@IsProcessing"><SfSpinner Type="SpinnerType.Bootstrap5" Visible="true" Size="100" CssClass="e-spin-overlay"></SfSpinner></div>
+                <FluentButton Appearance="Appearance.Accent" OnClick="CreatePurpleSheet">Create Purple Sheet</FluentButton>
+            </div>
+        </div>
+
+    </FluentStack>
+}else{
+    <span class="txt-alert">Loading...</span>
+}
+<style>
+    .e-numsmall { font-size:.9em; height:27px; }
+    :root .e-readonly { background-color: #eee !important; }
+    .e-spec { max-width: 100px !important; font-weight: bold !important }
+    .CardStyle { background-color: #fefefe !important; overflow: hidden; box-sizing: border-box; margin-right:20px;
+    margin-bottom:5px !important; padding:12px !important; min-width:375px !important; }
+</style>
+@code {
+    [Parameter] public int RenewalId { get; set; }
+    [Parameter] public int? ClientId { get; set; } = 0;
+    [Parameter] public string? ClientName { get; set; } = "";
+    [Parameter] public List<Contact> ContactsList { get; set; }
+
+    private IEnumerable<EnumData<BillType>> BillTypeList { get; set; }
+    private IEnumerable<EnumData<PayType>> PayTypeList { get; set; }
+    private IEnumerable<EnumData<SettlmentItemCode>> SettlmentItemCodeList { get; set; }
+    private ICollection<SettlementItem> SettlementItems { get; set; } = new List<SettlementItem>();
+    private int SelectedCarrierId;
+    private int SelectedWholsalerId;
+    private bool _isUpdating = false;
+    private bool IsProcessing = false;
+    private decimal estimatedMonthlyPayments;
+    private string mathhistory = "";
+    private string invoicejson { get; set; } = "";
+    private string ReceiptContent { get; set; } = string.Empty;
+    private Timer _debounceTimer;
+    private CancellationTokenSource? _ctsPayLog;
+    private List<Attachment> Invoices;
+    private List<Carrier> AllCarriers = new();
+    private List<Carrier> AllWholesalers = new();
+    private List<RecentTransactions> MatchedTransactions;
+    private Settlement Settlement { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Settlement = await SettlementService.GetOrCreateSettlementByRenewalIdAsync(RenewalId);
+        AllCarriers = await _stateService.AllCarriers;
+        AllWholesalers = await _stateService.AllWholesalers;
+        if(ClientId != null && ClientId != 0) {
+            Invoices = await AttachmentService.GetInvoiceAttachmentsByClientAndRenewalIdAsync(ClientId ?? 0, RenewalId);
+        }
+        GetContactsList();
+        LoadEnumData();
+        DoCalculation();
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        Settlement = await SettlementService.GetOrCreateSettlementByRenewalIdAsync(RenewalId);
+        if (ClientId != null && ClientId != 0)
+        {
+            Invoices = await AttachmentService.GetInvoiceAttachmentsByClientAndRenewalIdAsync(ClientId ?? 0, RenewalId);
+        }
+        LoadEnumData();
+    }
+
+    // Database
+    private async Task GetContactsList()
+    {
+        Console.WriteLine("Getting contacts and transactions...");
+        _ctsPayLog = new CancellationTokenSource();
+        try
+        {
+            var recentTransactions = await _stateService.GetRecentPaymentsAsync(_ctsPayLog.Token);
+            var contactsList = await ClientService.GetContactsByRenewalIdAsync(RenewalId);
+
+            if (contactsList != null && contactsList.Any())
+            {
+                MatchedTransactions = recentTransactions
+                    .Where(transaction => contactsList.Any(contact =>
+                        string.Equals(contact.Email, transaction.Email, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(contact.EmailAlternate, transaction.Email, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+            else
+            {
+                MatchedTransactions = new List<RecentTransactions>();
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading recent payments: {ex.Message}");
+            MatchedTransactions = new List<RecentTransactions>();
+        }
+    }
+    private async Task SaveSettlementAsync()
+    {
+        try
+        {
+            await SettlementService.SaveSettlementAsync(Settlement);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving settlement: {ex.Message}");
+        }
+        finally
+        {
+            Console.WriteLine("Saved settlement!");
+        }
+    }
+    private void SaveSettlementDebounce()
+    {
+        try
+        {
+            _debounceTimer?.Dispose();
+
+            // Set a new calculation timer
+            _debounceTimer = new Timer(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    SaveSettlementAsync();
+                    _isUpdating = false;
+                });
+            }, null, 1000, Timeout.Infinite); // 300ms debounce delay for calculations
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving settlement: {ex.Message}");
+        }
+    }
+
+    //Json Processing
+    private async Task ProcessInvoiceWithAI(string filePath)
+    {
+        try
+        {
+            //Prepare to process invoice
+            _stateService.UpdateStatus($"Preparing AI", true);
+            IsProcessing = true;
+            StateHasChanged();
+            string assistantId = "asst_2i39ZmOJKMc9krofClPocBFv";
+
+            // Upload the file
+            var fileId = await OpenAiService.UploadFileAsync(filePath);
+            if (string.IsNullOrEmpty(fileId))
+            {
+                Console.WriteLine("File upload failed.");
+                return;
+            }
+
+            // Create a new Thread
+            var newThreadId = await OpenAiService.CreateNewThreadAsync();
+            if (string.IsNullOrEmpty(newThreadId)) await _log.LogAsync(LogLevel.Error, "Failed to create new thread for invoice processing!", "SettlementScreen"); // Log Error
+
+            // Send message with the file to OpenAI API
+            string messageContent = $"Use the 'extract_invoice_data' function to process the attached invoice file {fileId}. Make sure your final response returns the output data in the defined JSON format.";
+            var messageResponse = await OpenAiService.SendMessageWithFileAsync(newThreadId, fileId, messageContent);
+            if (string.IsNullOrEmpty(messageResponse)) await _log.LogAsync(LogLevel.Error, "Failed to send message to AI thread!", "SettlementScreen"); // Log Error
+
+            // Run the thread
+            var runResponse = await OpenAiService.RunThreadAsync(newThreadId, assistantId, fileId);
+            if (string.IsNullOrEmpty(runResponse)) await _log.LogAsync(LogLevel.Error, "Run response not what we expected", "SettlementScreen"); // Log Error
+
+            // Retrieve the final message and parse the JSON
+            var finalMessage = await OpenAiService.GetLastMessageAsync(newThreadId);
+            var extractedJson = OpenAiService.ExtractJsonFromString(finalMessage); // Custom parsing logic
+            if (!string.IsNullOrEmpty(extractedJson))
+            {
+                invoicejson = extractedJson;
+                _stateService.UpdateStatus("General error happened", false);
+                await ProcessJsonResults(extractedJson);
+            }
+            else
+            {
+                await _log.LogAsync(LogLevel.Error, "No data extracted from the invoice", "SettlementScreen"); // Log Error
+            }
+        }
+        catch (Exception ex)
+        {
+            _stateService.UpdateStatus($"Error processing invoice: {ex.Message}", false);
+            await _log.LogAsync(LogLevel.Error, $"Error processing invoice: {ex.Message}", "SettlementScreen", ex); // Log Error
+        }
+        finally
+        {
+            //Update UI
+            _stateService.UpdateStatus($"Preparing AI", true);
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+    private async Task CreatePurpleSheet()
+    {
+        try
+        {
+            Console.WriteLine("BNid");
+            // Prepare fields for taxes and fees
+            string c1 = "", c2 = "", c3 = "", c4 = "", c5 = "";
+            string d1 = "", d2 = "", d3 = "", d4 = "", d5 = "";
+            string a1 = "", a2 = "", a3 = "", a4 = "", a5 = "";
+
+            // Filter settlement items and assign to fields
+            var taxesAndFees = Settlement.SettlementItems
+                .Where(i => i.ItemCode.HasValue && i.ItemCode != SettlmentItemCode.RBF)
+                .Take(5) // Take only the first 5
+                .ToList();
+
+            for (int i = 0; i < taxesAndFees.Count; i++)
+            {
+                var item = taxesAndFees[i];
+                switch (i)
+                {
+                    case 0:
+                        c1 = item.ItemCode?.ToString() ?? "c1";
+                        d1 = item.Description ?? "";
+                        a1 = item.Amount?.ToString("F2") ?? "";
+                        break;
+                    case 1:
+                        c2 = item.ItemCode?.ToString() ?? "c2";
+                        d2 = item.Description ?? "";
+                        a2 = item.Amount?.ToString("F2") ?? "";
+                        break;
+                    case 2:
+                        c3 = item.ItemCode?.ToString() ?? "c3";
+                        d3 = item.Description ?? "";
+                        a3 = item.Amount?.ToString("F2") ?? "";
+                        break;
+                    case 3:
+                        c4 = item.ItemCode?.ToString() ?? "c4";
+                        d4 = item.Description ?? "";
+                        a4 = item.Amount?.ToString("F2") ?? "";
+                        break;
+                    case 4:
+                        c5 = item.ItemCode?.ToString() ?? "c5";
+                        d5 = item.Description ?? "";
+                        a5 = item.Amount?.ToString("F2") ?? "";
+                        break;
+                }
+            }
+            string checkedFinance = Settlement.IsFinanced ? "Yes" : "Off";
+            string checkFullPayment = Settlement.IsFullPayment ? "Yes" : "Off";
+            string checkedAgencyBill = Settlement.BillType == BillType.Agency ? "Yes" : "Off";
+            string checkedDirectBill = Settlement.BillType == BillType.Direct ? "Yes" : "Off";
+
+            
+
+            Console.WriteLine("BNid");
+            // Build the JSON object
+            var settlementJson = new
+            {
+                insured = Settlement.Renewal?.Client?.Name ?? "",
+                policynumber = Settlement.AccountingPolicyNumber ?? "",
+                effectivedate = Settlement.Renewal?.RenewalDate != null
+                    ? Settlement.Renewal.RenewalDate.ToString("MM/dd/yyyy")
+                    : "",
+                payableto = Settlement.AccountingBillingCompany ?? "",
+                myname = _stateService.CurrentUser?.FirstName ?? "",
+                mydate = DateTime.Now.ToString("yyyy-MM-dd"),
+                abper = Settlement.MinEarnedPercentage.HasValue && Settlement.BillType == BillType.Agency
+                        ? Settlement.MinEarnedPercentage.Value.ToString()
+                        : "",
+                dbper = Settlement.MinEarnedPercentage.HasValue && Settlement.BillType == BillType.Direct
+                        ? Settlement.MinEarnedPercentage.Value.ToString()
+                        : "",
+                checkdbfull = checkFullPayment,
+                checkabfull = checkFullPayment,
+                fullpremium = Settlement.Premium?.ToString("F2") ?? "",
+                depositpercent = Settlement.MinEarnedPercentage.ToString() ?? "",
+                equals = Settlement.DownPaymentAmount?.ToString("F2") ?? "",
+                comissionpercent = Settlement.CommissionPercentage?.ToString("F2") ?? "",
+                comissionnet = Settlement.CommissionAmount?.ToString("F2") ?? "",
+                paymenttype = Settlement.PayType?.ToString() ?? "",
+                paymentcollected = Settlement.PayDate?.ToString("yyyy-MM-dd") ?? "",
+                daterecieved = Settlement.PayDepositDate?.ToString("yyyy-MM-dd") ?? "",
+                carrierpaid = Settlement.AccountingPaidOnDate?.ToString("yyyy-MM-dd") ?? "",
+                issuedate = Settlement.AccountingIssueDate?.ToString("yyyy-MM-dd") ?? "",
+                tarsnferamount = Settlement.AccountingPaidToCarrierAmount?.ToString("F2") ?? "",
+                rbfamount = Settlement.SettlementItems.FirstOrDefault(i => i.ItemCode == SettlmentItemCode.RBF)?.Amount?.ToString("F2") ?? "",
+                rbfcode = "RBF",
+                rbfdesc = "Metro Retail Broker Fee",
+                checkeddinance = checkedFinance,
+                checkagencybill = checkedAgencyBill,
+                checkdirectbill = checkedDirectBill,
+                myinstructions = Settlement.Notes ?? "",
+
+            taxesandfees = new
+                {
+                    c1,
+                    c2,
+                    c3,
+                    c4,
+                    c5,
+                    d1,
+                    d2,
+                    d3,
+                    d4,
+                    d5,
+                    a1,
+                    a2,
+                    a3,
+                    a4,
+                    a5
+                }
+            };
+            var jsonString = JsonConvert.SerializeObject(settlementJson, Formatting.Indented);
+
+            // Call the AccountingService to save the JSON
+            await SettlementService.SavePurpleSheetJson(Settlement.RenewalId.Value, jsonString);
+            Console.WriteLine("Nav");
+            // Navigate to the Purple Sheet form
+            Navigation.NavigateTo($"/Forms/PurpleSheet/{Settlement.RenewalId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating Purple Sheet: {ex.Message}");
+        }
+    }
+
+    private async Task ProcessJsonResults(string rawJson)
+    {
+        try
+        {
+            //After getting the JSON from OpenAI, process and update the UI
+            var invoiceData = JsonConvert.DeserializeObject<InvoiceDataDto>(rawJson);
+            Settlement.Premium = StringHelper.ParseDecimal(invoiceData.BasePremium);
+            Settlement.CommissionPercentage = StringHelper.ParsePercentage(invoiceData.CommissionRate);
+            Settlement.CommissionAmount = StringHelper.ParseDecimal(invoiceData.CommissionNet);
+            Settlement.FullGrandTotalPayment = StringHelper.ParseDecimal(invoiceData.BasePremiumNetAmount);
+            Settlement.AccountingStatementDueDate = StringHelper.ParseDate(invoiceData.DueDate);
+            Settlement.AccountingStatementNumber = invoiceData.PolicyNumber ?? null;
+            Settlement.AccountingCarrier = invoiceData.Carrier ?? null;
+            Settlement.AccountingPolicyNumber = invoiceData.PolicyNumber ?? null;
+            Settlement.AccountingBillingCompany = invoiceData.BillingCompany ?? null;
+
+            Settlement.SettlementItems.Clear();
+            foreach (var fee in invoiceData.Fees)
+            {
+                // Ensure fee.description is treated as a string
+                string description = fee.Description?.ToString() ?? string.Empty;
+
+                // Determine the ItemCode based on the description
+                SettlmentItemCode itemCode = description.Contains("Policy Fee", StringComparison.OrdinalIgnoreCase) || description.Contains("Inspection", StringComparison.OrdinalIgnoreCase)
+                    ? SettlmentItemCode.CFE
+                        : description.Contains("Tax", StringComparison.OrdinalIgnoreCase)
+                    ? SettlmentItemCode.TFE
+                        : description.Contains("Wholesale", StringComparison.OrdinalIgnoreCase)
+                    ? SettlmentItemCode.WBF
+                        : SettlmentItemCode.NOC;
+
+                // Add the settlement item with the determined ItemCode
+                Settlement.SettlementItems.Add(new SettlementItem
+                    {
+                        Description = description,
+                        Amount = StringHelper.ParseDecimal(fee.Amount) ?? 0,
+                        ItemCode = itemCode
+                    });
+            }
+
+            // Save the updated settlement
+            await SettlementService.SaveSettlementAsync(Settlement);
+        }
+        catch (Exception ex)
+        {
+            _stateService.UpdateStatus($"Error processing JSON: {ex.Message}", false);
+            await _log.LogAsync(LogLevel.Error, $"Error processing JSON: {ex.Message}", "SettlementScreen", ex);
+        }
+        finally
+        {
+            Settlement.MinEarnedPercentage ??= 25;
+            Settlement.CommissionPercentage ??= 0;
+            DoCalculation();
+        }
+    }
+    private async Task ProcessJsonField()
+    {
+        string mystr = invoicejson;
+        await ProcessJsonResults(mystr);
+    }
+    private async Task InvoiceParseNow()
+    {
+        //Get the attachment with the highest ID that is part of the renewal ID
+        var mostRecentAttachment = await AttachmentService.GetMostRecentAttachmentByRenewalIdAsync(RenewalId);
+
+        if (mostRecentAttachment != null)
+        {
+            Console.WriteLine($"Most Recent Attachment: {mostRecentAttachment.HashedFileName}");
+        }
+        else
+        {
+            Console.WriteLine("No attachments found for the given RenewalId.");
+        }
+        //string myroot = "C:\\Users\\flash\\source\\devops\\Surefire\\Surefire\\wwwroot\\" + mostRecentAttachment?.LocalPath + "\\" + mostRecentAttachment.HashedFileName;
+        string myroot = "\\\\bizname-web\\" + mostRecentAttachment?.LocalPath + "\\" + mostRecentAttachment.HashedFileName;
+        Console.WriteLine("File: " + myroot);
+        await ProcessInvoiceWithAI(myroot);
+        Invoices = await AttachmentService.GetInvoiceAttachmentsByClientAndRenewalIdAsync(ClientId ?? 0, RenewalId);
+    }
+
+    // Settlements
+    private void AddSettlementItem()
+    {
+        Settlement.SettlementItems.Add(new SettlementItem { ItemCode = null, Description = null, Amount = 0 });
+    }
+    private async Task RemoveSettlementItem(SettlementItem item)
+    {
+        Settlement.SettlementItems.Remove(item);
+        await SettlementService.DeleteSettlementItemAsync(item.SettlementItemId);
+        DoCalculation();
+    }
+    private void OnSearchEnum(OptionsSearchEventArgs<EnumData<SettlmentItemCode>> e, IEnumerable<EnumData<SettlmentItemCode>> options)
+    {
+        e.Items = options.Where(o => o.Text.Contains(e.Text, StringComparison.OrdinalIgnoreCase));
+    }
+    private void LoadEnumData()
+    {
+        BillTypeList = Enum.GetValues(typeof(BillType)).Cast<BillType>().Select(e => new EnumData<BillType> { Value = e, Text = e.ToString().Replace("_", " ") });
+        PayTypeList = Enum.GetValues(typeof(PayType)).Cast<PayType>().Select(e => new EnumData<PayType> { Value = e, Text = e.ToString().Replace("_", " ") });
+        SettlmentItemCodeList = Enum.GetValues(typeof(SettlmentItemCode))
+            .Cast<SettlmentItemCode>()
+            .Select(e => new EnumData<SettlmentItemCode>
+                {
+                    Value = e,
+                    Text = e.ToString()
+                }).ToList(); 
+    }
+    protected void ApplyMatchers()
+    {
+        try
+        {
+            var matchTrans = MatchedTransactions.FirstOrDefault();
+            Settlement.PayType = PayType.Online;
+            Settlement.PayAmount = matchTrans.Amount;
+            Settlement.PayFees = matchTrans.Fee;
+            Settlement.PayDate = matchTrans.SaleDate;
+            Settlement.PayDepositDate = matchTrans.SettleDate;
+            Settlement.PayDone = true;
+        }
+        catch (Exception ex)
+        {
+            _log.LogAsync(LogLevel.Error, $"Could not parse matching transactions: {ex.Message}", "SettlementScreen", ex);
+        }
+        finally
+        {
+            DoCalculation();
+        }
+    }
+
+    // Value Changes and Updates
+    private void OnItemCodeChange(ChangeEventArgs<string, EnumData<SettlmentItemCode>> args, SettlementItem item)
+    {
+        if (args.Value is not null && Enum.TryParse<SettlmentItemCode>(args.Value, out var code))
+        {
+            item.ItemCode = code;
+            item.Description = CodeDescriptionMap.ContainsKey(code.ToString()) ? CodeDescriptionMap[code.ToString()] : string.Empty;
+        }
+        else
+        {
+            item.ItemCode = null;
+            item.Description = string.Empty; // Default to empty if no match
+        }
+        DoCalculation();
+    }
+    private void OnIsFinancedChanged(bool isFinanced)
+    {
+        if (_isUpdating) return;
+        if (Settlement.IsFullPayment == true) Settlement.IsFullPayment = false;
+        Settlement.IsFinanced = isFinanced;
+        DoCalculation();
+    }
+    private void OnBillTypeChange(ChangeEventArgs<BillType?, EnumData<BillType>> args)
+    {
+        if (_isUpdating) return;
+
+        var selectedEnumData = args.Value;
+        if (selectedEnumData != null)
+        {
+            if (selectedEnumData.Value == BillType.Direct)
+            {
+                Settlement.IsFinanced = false;
+            }
+        }
+        DoCalculation();
+    }
+    private void OnPayTypeChange(ChangeEventArgs<PayType?, EnumData<PayType>> args)
+    {
+        if (_isUpdating) return;
+
+        var selectedEnumData = args.Value;
+        if (selectedEnumData != null)
+        {
+            if (selectedEnumData.Value == PayType.Online)
+            {
+                GetContactsList();
+            }
+        }
+        DoCalculation();
+    }
+    private void OnIsFullPaymentChanged(bool isFullPayment)
+    {
+        if (Settlement.IsFinanced == true) Settlement.IsFinanced = false;
+        Settlement.IsFullPayment = isFullPayment;
+        DoCalculation();
+    }
+
+    // Calculations
+    private void DoCalculation()
+    {
+        mathhistory = "";
+        _stateService.UpdateStatus($"Saving...", true);
+        if (_isUpdating) {
+            Console.WriteLine("Half and catch fire 1");
+            return;
+        }
+
+        try
+        {
+            if (Settlement.Premium == null || Settlement.CommissionPercentage == null || Settlement.MinEarnedPercentage == null)
+            {
+                ReceiptContent = "<span class='warn'>Premium, Comission % and Min % Required</span>";
+                Console.WriteLine("Halt And Catch Fire");
+            }else{
+                _isUpdating = true;
+                // Basic Calculations
+                var premium = Settlement.Premium.Value;
+                var commissionPercentage = Settlement.CommissionPercentage.Value * 0.01m; // Convert to decimal
+                var minEarnedPercentage = Settlement.MinEarnedPercentage.Value * 0.01m; // Convert to decimal
+
+                // Total Settlement Items
+                var totalSettlementItems = Settlement.SettlementItems.Sum(item => item.Amount ?? 0);
+
+
+                // Full Payment Calculations
+                Settlement.FullGrandTotalPayment = premium + totalSettlementItems;
+                mathhistory += $"<i>prem + taxes + fees = </i><u>GRAND TOTAL</u><br>{StringHelper.DelNoZeros(premium)}";
+                foreach (var item in Settlement.SettlementItems)
+                {
+                    mathhistory += $"<b>+</b>{StringHelper.DelNoZeros(item.Amount)}";
+                }
+                mathhistory += $"<b>=</b>{StringHelper.DelNoZeros(Settlement.FullGrandTotalPayment)}<br><br>";
+
+                Settlement.CommissionAmount = premium * commissionPercentage;
+                mathhistory += $"<i>prem × comisperc = </i><u>COMISSION</u><br>{StringHelper.DelNoZeros(premium)}<b>×</b>{StringHelper.DelNoZeros(commissionPercentage):P}<b>=</b>{StringHelper.DelNoZeros(Settlement.CommissionAmount)}<br><br>";
+
+                var nonRBFItemsTotal = Settlement.SettlementItems
+                    .Where(item => item.ItemCode != SettlmentItemCode.RBF)
+                    .Sum(item => item.Amount ?? 0);
+
+                Settlement.PayAmountNeededToBind = premium + nonRBFItemsTotal - Settlement.CommissionAmount;
+                mathhistory += $"<i>prem + fees - rbf - comis = </i><u>PAYMENT NEEDED</u><br>{StringHelper.DelNoZeros(premium)}<b>+</b>{nonRBFItemsTotal}<b>-</b>{StringHelper.DelNoZeros(Settlement.CommissionAmount)}<b>=</b>{StringHelper.DelNoZeros(Settlement.PayAmountNeededToBind)}<br><br>";
+
+
+                if (!Settlement.IsFullPayment)
+                {
+                    // Down Payment Calculations
+                    Settlement.DownPaymentAmount = (premium * minEarnedPercentage) + totalSettlementItems;
+                    mathhistory += $"<i>(prem × minearned) + sumtaxfees = </i><u>DOWN PAYMENT</u><br>({StringHelper.DelNoZeros(premium)}<b>×</b>{StringHelper.DelNoZeros(minEarnedPercentage):P})<b>+</b>{StringHelper.DelNoZeros(totalSettlementItems)}<b>=</b>{StringHelper.DelNoZeros(Settlement.DownPaymentAmount)}<br><br>";
+
+
+                    if (Settlement.IsFinanced && Settlement.DownPaymentAmount.HasValue)
+                    {
+                        // Finance Calculations
+                        Settlement.FinanceAmount = Settlement.PayAmountNeededToBind - Settlement.DownPaymentAmount;
+                        mathhistory += $"<i>payneeded - downpayment = </i><u>FINANCED AMOUNT</u><br>{StringHelper.DelNoZeros(Settlement.PayAmountNeededToBind)}<b>-</b>{StringHelper.DelNoZeros(Settlement.DownPaymentAmount)}<b>=</b>{StringHelper.DelNoZeros(Settlement.FinanceAmount)}<br><br>";
+
+                        if (Settlement.FinanceAmount.HasValue && Settlement.FinanceMonths.HasValue && Settlement.FinanceChargePercent.HasValue)
+                        {
+                            var financeAmount = Settlement.FinanceAmount.Value;
+                            var financeChargePercent = Settlement.FinanceChargePercent.Value * 0.01m; // Convert to decimal
+                            var financeMonths = Settlement.FinanceMonths.Value;
+
+                            estimatedMonthlyPayments = (financeAmount * financeChargePercent) / financeMonths;
+                            mathhistory += $"<i>(finamount × finperc) ÷ nummonths = </i><u>EST MONTHLY</u><br>{StringHelper.DelNoZeros(financeAmount)}<b>×</b>{StringHelper.DelNoZeros(financeChargePercent * 100)}%<b>÷</b>{financeMonths} <b>=</b>{StringHelper.DelNoZeros(estimatedMonthlyPayments)}<br><br>";
+                        }
+                    }
+                }
+                // Update Receipt Content
+                UpdateReceipt();
+            }
+
+            _debounceTimer?.Dispose();
+
+            // Set a new calculation timer
+            _debounceTimer = new Timer(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    SaveSettlementAsync();
+                    _isUpdating = false;
+                    _stateService.UpdateStatus($"Done!", false);
+                });
+            }, null, 700, Timeout.Infinite); // 300ms debounce delay for calculations
+        }
+        catch(Exception ex)
+        {
+            _log.LogAsync(LogLevel.Error, $"Settlement Exception: {ex.Message}", "SettlementScreen", ex);
+        }
+    }
+
+    //Reciept Builder
+    private void UpdateReceipt()
+    {
+        // Build the receipt content in parts
+        var commissionSection = BuildCommissionSection();
+        var premiumSection = BuildPremiumSection();
+        var bindingPaymentSection = BuildBindingPaymentSection();
+        var downPaymentSection = Settlement.IsFullPayment ? string.Empty : BuildDownPaymentSection();
+
+        // Combine all sections
+        ReceiptContent = $@"{premiumSection}{commissionSection}{bindingPaymentSection}{downPaymentSection}";
+    }
+    private string BuildPremiumSection()
+    {
+        return $@"
+        <div class='num'>{StringHelper.Del0s(Settlement.FullGrandTotalPayment):C2}</div><div class='desc'>Grand Total</div>
+        <div class='num'>{StringHelper.Del0s(Settlement.SettlementItems.Sum(item => item.Amount ?? 0)):C2}</div><div class='desc'>Taxes & Fees</div>
+        ";
+    }
+    private string BuildCommissionSection()
+    {
+        return $@"<div class='num'>{StringHelper.Del0s(Settlement.CommissionAmount):C2}</div><div class='desc'>{StringHelper.DelP(Settlement.CommissionPercentage)}% Commission</div>";
+    }
+    private string BuildBindingPaymentSection()
+    {
+        return $@"<div class='num'>{StringHelper.Del0s(Settlement.PayAmountNeededToBind):C2}</div><div class='desc'> Binder Payment </div>";
+    }
+    private string BuildDownPaymentSection()
+    {
+        var financedSection = Settlement.IsFinanced ? BuildFinancedSection() : string.Empty;
+
+        return $@"<div class='num'>{StringHelper.Del0s(Settlement.DownPaymentAmount):C2}</div><div class='desc'>Down Payment</div>{financedSection}";
+    }
+    private string BuildFinancedSection()
+    {
+        return $@"
+        <div class='num'>{StringHelper.Del0s(Settlement.FinanceAmount):C2}</div><div class='desc'>Amount Financed</div>
+        <div class='num'>{StringHelper.Del0s(estimatedMonthlyPayments):C2}</div><div class='desc'>Est. Monthly Pay</div>";
+    }
+
+    // Properties
+    private decimal? PercentageDisplay
+    {
+        get => Settlement.CommissionPercentage.HasValue ? Settlement.CommissionPercentage * 100 : null;
+        set => Settlement.CommissionPercentage = value.HasValue ? value / 100 : null;
+    }
+    private Dictionary<string, string> CodeDescriptionMap = new()
+    {
+        { "RBF", "Retail Broker Fee" },
+        { "TFE", "Taxes and Fees" },
+        { "CFE", "Company Fee" },
+        { "WBF", "Wholesale Broker Fee" }
+    };
+}

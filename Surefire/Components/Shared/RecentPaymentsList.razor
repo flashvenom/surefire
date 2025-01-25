@@ -1,0 +1,88 @@
+﻿@namespace Surefire.Components.Shared
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Components.Shared
+@using Surefire.Domain.Plugins
+@using Surefire.Data
+@using Surefire.Domain.Shared.Models
+@using Surefire.Domain.Clients.Models
+@using Newtonsoft.Json
+@inject StateService _stateService
+
+<div>
+    @if (MatchedTransactions == null)
+    {
+        <FluentProgressRing Width="30px" Color="#1b8ce3" />
+    }
+    else if (MatchedTransactions == null || MatchedTransactions.Count == 0)
+    {
+        <FluentIcon Value="@(new Icons.Regular.Size24.ReceiptCube())" CustomColor="#b7b7b7" Color="Color.Custom" />
+        <span class="icon-nonefound-text">No recent payments found. <a href="/Profile/SystemTracking">View All.</a></span>
+    }
+    else
+    {
+        <table class="sf-calltable">
+            @foreach (var transaction in MatchedTransactions)
+            {
+                <tr>
+                    <td class="phone-icon-cell">
+                        <span class="phone-icon">
+                            <FluentIcon Value="@(new Icons.Regular.Size28.Payment())" CustomColor="#0f6cbd" Color="Color.Custom" />
+                        </span>
+                    </td>
+                    <td class="phone-lognum">
+                        <span class="pay-lognum">@transaction.Amount?.ToString("C2")</span>
+                    </td>
+                    <td class="ellipsis2">
+                        <span class="phone-longago">@transaction.Comments</span><br />
+                        <span class="phonetxt"> Sale: @transaction.SaleDate Batch: @transaction.SettleDate</span>
+                    </td>
+                </tr>
+            }
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter] public List<Contact> ContactsList { get; set; }
+    [Parameter] public bool ShowAll { get; set; } = false;
+
+    private List<RecentTransactions> MatchedTransactions;
+    private CancellationTokenSource? _ctsPayLog;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _ctsPayLog = new CancellationTokenSource();
+        try
+        {
+            var recentTransactions = await _stateService.GetRecentPaymentsAsync(_ctsPayLog.Token);
+
+            if (ShowAll)
+            {
+                MatchedTransactions = recentTransactions;
+            }
+            else if (ContactsList != null && ContactsList.Any())
+            {
+                MatchedTransactions = recentTransactions
+                    .Where(transaction => ContactsList.Any(contact =>
+                        string.Equals(contact.Email, transaction.Email, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(contact.EmailAlternate, transaction.Email, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+            else
+            {
+                MatchedTransactions = new List<RecentTransactions>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading recent payments: {ex.Message}");
+            MatchedTransactions = new List<RecentTransactions>();
+        }
+    }
+    public void Dispose()
+    {
+        _ctsPayLog?.Cancel();
+        _ctsPayLog?.Dispose();
+    }
+}

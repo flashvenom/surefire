@@ -1,0 +1,41 @@
+﻿@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Shared.Helpers
+
+@if (selectedClient != null)
+{
+    string fullAddress = $"{selectedClient.Address.AddressLine1} {selectedClient.Address.AddressLine2} {selectedClient.Address.City}, {selectedClient.Address.State} {selectedClient.Address.PostalCode}";
+    <div class="top-rowone">
+        <span class="client-name">@selectedClient.Name</span>
+        <span class="client-phone">
+            <span class="phone-icon"><a href="tel:@StringHelper.FormatTelDialNumber(selectedClient.PhoneNumber)"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#036ac4" Color="Color.Custom" /></a></span>
+            <Trigger Value="@StringHelper.FormatPhoneNumber(selectedClient.PhoneNumber)" Type="Trigger.ClickType.Phone" Class="client-phonenumber" />
+        </span>
+    </div>
+    <div class="top-rowtwo">
+        <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+        <Trigger Value="@fullAddress" Type="Trigger.ClickType.StreetAddress" Class="client-data" />
+        @if (!string.IsNullOrEmpty(selectedClient.Email))
+        {
+            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+            <Trigger Value="@selectedClient.Email" Type="Trigger.ClickType.Email" Class="client-data" />
+        }
+        @if (!string.IsNullOrEmpty(selectedClient.Website))
+        {
+            <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+            <Trigger Value="@selectedClient.Website" Type="Trigger.ClickType.Url" Class="client-data" />
+        }
+    </div>
+}
+else
+{
+    <div class="top-rowone">
+        <FluentSkeleton Shimmer="true" Width="100%" Height="50px"></FluentSkeleton>
+    </div>
+    <div class="top-rowtwo">
+        <FluentSkeleton Shimmer="true" Width="100%" Height="25px"></FluentSkeleton>
+    </div>
+}
+
+@code {
+    [Parameter] public Client selectedClient { get; set; }
+}

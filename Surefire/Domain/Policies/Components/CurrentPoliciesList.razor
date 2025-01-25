@@ -1,0 +1,55 @@
+﻿@namespace Surefire.Domain.Policies.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Spinner
+@using Microsoft.AspNetCore.Components.Routing
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Shared.Helpers
+@inject NavigationManager NavigationManager
+
+@if(currentPolicies is null)
+{
+    <SfSpinner Visible="true"></SfSpinner>
+}
+else
+{
+    <div class="txt-section">Current Policies</div>
+    <table width="100%">
+        <thead>
+            <tr class="txt-small">
+                <th width="15%">Policy</th>
+                <th width="10%">Number</th>
+                <th width="10%">Carrier</th>
+                <th width="10%">Wholesaler</th>
+                <th width="10%">Effective Date</th>
+                <th width="10%">Expiration Date</th>
+                <th width="10%">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var policy in currentPolicies)
+            {
+                <tr style="font-size:1.1rem;">
+                    <td class="sf-pp">@policy.eType</td>
+                    <td>@policy.PolicyNumber</td>
+                    <td>@StringHelper.CropCarrierName(policy.Carrier?.CarrierName)</td>
+                    <td>@StringHelper.CropCarrierName(@policy.Wholesaler?.CarrierName)</td>
+                    <td class="sf-da">@policy.EffectiveDate.ToString("MM/dd/yy")</td>
+                    <td class="sf-da">@policy.ExpirationDate.ToString("MM/dd/yy")</td>
+                    <td><a href="/Policies/Edit/@policy.PolicyId">Edit</a> <a href="/Policies/Details/@policy.PolicyId">View</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public List<Policy> currentPolicies { get; set; }
+
+    public void Dispose()
+    {
+        currentPolicies.Clear();
+    }
+}

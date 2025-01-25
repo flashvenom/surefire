@@ -1,0 +1,49 @@
+﻿@page "/Account/Logout"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Logout> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+@inject StateService _stateService
+
+<PageTitle>Logging out...</PageTitle>
+
+<div class="page-content">
+    <section style="width:300px; padding-left:40px;">
+        <h2>Logging out...</h2>
+    </section>
+</div>
+
+@code {
+    private bool _isLoggedOut;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("logout");
+        try
+        {
+            await SignInManager.SignOutAsync();
+            Logger.LogInformation("User logged out.");
+            _isLoggedOut = true;
+            NavigationManager.NavigateTo("/Account/Login", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error occurred during logout.");
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        Console.WriteLine("logout2");
+        if (_isLoggedOut)
+        {
+            _isLoggedOut = false; // Prevent multiple navigations
+            NavigationManager.NavigateTo("/Account/Login", forceLoad: true);
+        }
+    }
+}
+

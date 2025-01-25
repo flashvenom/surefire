@@ -1,0 +1,122 @@
+﻿@page "/Profile/SystemTracking"
+@using Surefire.Domain.Ember
+@using Surefire.Domain.Logs
+@inject EmberService EmberService
+
+<div class="systemcontainer">
+    <div class="system-header">System Interface</div>
+    <div class="system-content">
+        <FluentTabs Size="TabSize.Large">
+            <FluentTab Id="tab-1" Label="Profile" Class="sys-tab">
+                <SystemSettings />
+            </FluentTab>
+            <FluentTab Id="tab-2" Label="Transactions" Class="sys-tab">
+                <RecentPaymentsList ShowAll="true" />
+            </FluentTab>
+            <FluentTab Id="tab-3" Label="Call Log" Class="sys-tab">
+                <RecentPhoneCallsAll />
+            </FluentTab>
+            <FluentTab Id="tab-4" Label="Users" Class="sys-tab">
+                <div class="system-subheader">All registered users.</div>
+                <Users />
+            </FluentTab>
+            <FluentTab Id="tab-5" Label="Console" Class="sys-tab">
+                <div class="log-console">
+                    @if (logs == null)
+                    {
+                        <FluentProgressRing Width="30px" Color="#1b8ce3" />
+                    }
+                    else if (!logs.Any())
+                    {
+                        <span class="log-empty">No log entries available for the current user.</span>
+                    }
+                    else
+                    {
+                        <div class="log-content">
+                            @foreach (var log in logs)
+                            {
+                                <div class="log-entry">
+                                    <span class="log-timestamp">[@log.Timestamp]</span>
+                                    <span class="log-level">@log.LogLevel:</span>
+                                    <span class="log-message">@log.Message</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <FluentButton @onclick="RunEmailStrictSearch">Email Strict Search</FluentButton>
+                <FluentButton @onclick="RunEmailBroadSearch">Email Broad Search</FluentButton>
+                <FluentButton @onclick="RunPolicySearch">Policy Search</FluentButton>
+                <FluentButton @onclick="RunSmartSearch">Smart Search</FluentButton>
+                <FluentButton @onclick="RunCarrierSearch">Carrier Search</FluentButton>
+            </FluentTab>
+            <FluentTab Id="tab-6" Label="Account Settings" Class="sys-tab">
+                <div class="system-subheader">Manage your account settings and security.</div>
+                <UserProfileManager />
+            </FluentTab>
+        </FluentTabs>
+    </div>
+</div>
+
+@code {
+    [Inject] private ILoggingService LoggingService { get; set; }
+
+    private List<Log> logs = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        logs = await GetLogsForCurrentUserAsync();  // Load logs on initialization
+    }
+
+    private async Task<List<Log>> GetLogsForCurrentUserAsync()
+    {
+        try
+        {
+            return await LoggingService.GetLogsForCurrentUserAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading logs: {ex.Message}");
+            return new List<Log>();
+        }
+    }
+
+    public async Task RunEmailStrictSearch()
+    {
+        List<string> emailAddresses = new List<string> { "cynthia@asolarp.com", "edwin@asolarp.com" };
+        await EmberService.RunEmberFunction("OutlookSearch_EmailStrictToFrom", emailAddresses);
+    }
+
+    public async Task RunEmailBroadSearch()
+    {
+        List<string> emailAddresses = new List<string> { "cynthia@asolarp.com", "edwin@asolarp.com" };
+        await EmberService.RunEmberFunction("OutlookSearch_EmailBroad", emailAddresses);
+    }
+
+    public async Task RunPolicySearch()
+    {
+        List<string> policies = new List<string> { "PolicyNumber1", "PolicyNumber2" };
+        await EmberService.RunEmberFunction("OutlookSearch_Policy", policies);
+    }
+
+    public async Task RunSmartSearch()
+    {
+        // Combine all necessary parameters
+        List<string> parameters = new List<string>
+        {
+            "email1@example.com",
+            "email2@example.com",
+            "ClientCode",
+            "ClientName",
+            "PolicyNumber1",
+            "PolicyNumber2"
+        };
+        await EmberService.RunEmberFunction("OutlookSearch_SmartSearch", parameters);
+    }
+
+    public async Task RunCarrierSearch()
+    {
+        List<string> parameters = new List<string> { "CarrierSpecificParameter1", "CarrierSpecificParameter2" };
+        await EmberService.RunEmberFunction("OutlookSearch_Carrier", parameters);
+    }
+}

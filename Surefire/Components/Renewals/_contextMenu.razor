@@ -1,0 +1,28 @@
+﻿@if (IsOpen)
+{
+    <div class="custom-menu" style="position: absolute; top: @(Y)px; left: @(X)px;">
+        <ul>
+            @foreach (var item in MenuItems)
+            {
+                <li @onclick="() => item.Action.Invoke(ItemId)" class="menu-item">
+                    <FluentIcon Value="@item.IconValue" Class="menu-icon" /> @item.Text
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter] public int ItemId { get; set; } // The id of the associated item
+    [Parameter] public List<MenuItem> MenuItems { get; set; } = new();
+    [Parameter] public int X { get; set; } // X-coordinate
+    [Parameter] public int Y { get; set; } // Y-coordinate
+    [Parameter] public bool IsOpen { get; set; } // Visibility toggle
+
+    public class MenuItem
+    {
+        public string Text { get; set; }
+        public Icon IconValue { get; set; } // Use FluentIcon value
+        public Action<int> Action { get; set; } // Accepts the item id
+    }
+}

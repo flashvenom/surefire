@@ -1,0 +1,170 @@
+﻿@page "/Policies/Details/{PolicyId:int}"
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Policies.Services
+@using Surefire.Components.Policies.Coverages
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.InPlaceEditor
+@inject PolicyService PolicyService
+
+<_toolbar PolicyId="@PolicyId" PageName="Details" />
+
+@if (Policy is null || Policy.Product is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="sf-header">
+        <span class="default-header">
+            @Policy.Product.LineName <br />
+            <span class="default-subheader" @onclick="GoToClient">
+                @Policy.Client.Name
+            </span>
+        </span>
+    </div>
+    <div class="page-content">
+        <FluentGrid>
+            <FluentGridItem xs="3">
+                <span class="pol-name">Policy Number</span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@Policy.PolicyNumber" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Text" TValue="string" PrimaryKey="@Policy.PolicyNumber" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                        <EditorComponent>
+                            <SfTextBox @bind-Value="@Policy.PolicyNumber" Placeholder="Policy Number" FloatLabelType="FloatLabelType.Never"></SfTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdatePolicyNow(Policy))" TValue="string"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">Premium</span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@Policy.Premium" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Numeric" TValue="decimal" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                        <EditorComponent>
+                            <SfNumericTextBox Format="c2" @bind-Value="@Policy.Premium"></SfNumericTextBox>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdatePolicyNow(Policy))" TValue="decimal"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </FluentGridItem>
+            <FluentGridItem xs="3">
+                <span class="pol-name">Effective Date</span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@Policy.EffectiveDate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Date" TValue="DateTime" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                        <EditorComponent>
+                            <SfDatePicker @bind-Value="@Policy.EffectiveDate"></SfDatePicker>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdatePolicyNow(Policy))" TValue="DateTime"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+
+                <span class="pol-name">Expiration Date</span>
+                <span class="pol-value">
+                    <SfInPlaceEditor @bind-Value="@Policy.ExpirationDate" Type="Syncfusion.Blazor.InPlaceEditor.InputType.Date" TValue="DateTime" EditableOn="EditableType.EditIconClick" ShowButtons="false">
+                        <EditorComponent>
+                            <SfDatePicker @bind-Value="@Policy.ExpirationDate"></SfDatePicker>
+                        </EditorComponent>
+                        <InPlaceEditorEvents OnActionBegin="@(args => UpdatePolicyNow(Policy))" TValue="DateTime"></InPlaceEditorEvents>
+                    </SfInPlaceEditor>
+                </span><br />
+            </FluentGridItem>
+            <FluentGridItem xs="3">
+                <span class="pol-name">Carrier</span>
+                <span class="pol-value">
+                    <span class="pol-static">@Policy.Carrier?.CarrierName</span>
+                </span><br />
+
+
+                <span class="pol-name">Wholesaler</span>
+                <span class="pol-value">
+                    <span class="pol-static">
+                        @Policy.Wholesaler?.CarrierName
+                    </span>
+                </span><br />
+            </FluentGridItem>
+        </FluentGrid>
+
+        <div style="width:100%; height:1px; background-color:#ccc; margin-top:10px; margin-bottom:10px;"></div>
+        
+        @if (Policy.GeneralLiabilityCoverage is not null)
+        {
+            <GeneralLiabilityCoverages GeneralLiabilityCoverage="@Policy.GeneralLiabilityCoverage" Policy="@Policy" />
+        }
+
+        @if (Policy.WorkCompCoverage is not null)
+        {
+            <WorkCompCoverages WorkCompCoverage="@Policy.WorkCompCoverage" Policy="@Policy" />
+        }
+
+        @if (Policy.AutoCoverage is not null)
+        {
+            <AutoCoverages AutoCoverage="@Policy.AutoCoverage" Policy="@Policy" />
+        }
+
+        @if (Policy.PropertyCoverage is not null)
+        {
+            <PropertyCoverages PropertyCoverage="@Policy.PropertyCoverage" Policy="@Policy" />
+        }
+
+        @if (Policy.UmbrellaCoverage is not null)
+        {
+            <UmbrellaCoverages UmbrellaCoverage="@Policy.UmbrellaCoverage" Policy="@Policy" />
+        }
+        
+        
+
+        <div style="width:100%; height:1px; background-color:#ccc; margin-top:10px; margin-bottom:10px;"></div>
+
+        <RatingBasisComponent Policy="@Policy" RatingBases="@Policy.RatingBases" />
+
+        <div style="width:100%; height:1px; background-color:#ccc; margin-top:10px; margin-bottom:10px;"></div>
+
+        <span style="font-size:.6em">@Policy.PolicyId : @Policy.ePolicyId : @Policy.ePolicyLineId</span>
+        
+    </div>
+
+}
+
+<style>
+    .sf-ti {
+        width: 200px;
+    }
+
+    .e-inplaceeditor .e-editable-value-wrapper .e-editable-value {
+        border-bottom: 2px dotted green;
+        color: red;
+        font-size: 12px;
+        font-family: Segoe UI;
+    }
+
+    .e-inplaceeditor .e-editable-value-container {
+        width: 190px !important;
+        position: relative;
+        top: 4px;
+        left: 1px;
+    }
+</style>
+@code {
+    [Parameter]
+    public int PolicyId { get; set; }
+
+    private Policy Policy { get; set; }
+    public SfInPlaceEditor<string> inline1 { get; set; }
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Policies");
+        Policy = await PolicyService.GetPolicyByIdAsync(PolicyId);
+    }
+
+    public void GoToClient()
+    {
+        Navigation.NavigateTo($"/Clients/{Policy.Client.ClientId}");
+    }
+
+    private async Task UpdatePolicyNow(Policy Policy)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(Policy);
+    }
+
+}

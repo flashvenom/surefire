@@ -1,0 +1,130 @@
+﻿@using Syncfusion.Blazor.SplitButtons
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Contacts.Services
+@inject ContactService ContactService
+
+<div class="page-toolbar">
+    <FluentMenuButton Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="Carrier"><FluentIcon Value="@(new Icons.Regular.Size20.BuildingBank())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Carrier</FluentMenuItem>
+        <FluentMenuItem Id="Contact"><FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Contact</FluentMenuItem>
+    </FluentMenuButton>
+
+    <span class="sf-verthr"></span>
+   
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Carriers", PageName) ? "toolbar-disabled" : "")" href="Carriers">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Browse</span>
+    </a>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Carriers,Edit", PageName) ? "toolbar-disabled" : "")" href="@("Carriers/Edit/" + CarrierId)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Carriers,View,Details", PageName) ? "toolbar-disabled" : "")" href="@("Carriers/Details/" + CarrierId)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+        <span class="toolbar-text">Details</span>
+    </a>
+    
+    @if (OnSearchTermChanged.HasDelegate)
+    {
+        <span class="sf-verthr"></span>
+
+        <div class="toolbar-search">
+            <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+        </div>
+    }
+    
+    <FluentDialog Hidden="@(!ShowContactDialog)" Id="contactDialog" @ref="newContactDialog">
+        <FluentDialogHeader>
+            <h3>Create New Contact</h3>
+        </FluentDialogHeader>
+        <FluentDialogBody>
+            <div class="mf-flex mf-flexrowspaced dialog-content">
+                <div>
+                    <FluentTextField Label="First Name" @bind-Value="NewContact.FirstName" />
+                    <FluentTextField Label="Last Name" @bind-Value="NewContact.LastName" />
+                    <FluentTextField Label="Title" @bind-Value="NewContact.Title" />
+                    <FluentTextField Label="Email" @bind-Value="NewContact.Email" />
+                </div>
+                <div style="margin-left:15px;">
+                    <FluentTextField Label="Phone" @bind-Value="NewContact.Phone" />
+                    <FluentTextField Label="Fax" @bind-Value="NewContact.Fax" />
+                    <FluentTextField Label="Mobile" @bind-Value="NewContact.Mobile" />
+                    <FluentTextField Label="Notes" @bind-Value="NewContact.Notes" />
+                </div>
+            </div>
+        </FluentDialogBody>
+        <FluentDialogFooter>
+            <FluentButton OnClick="@SaveContact">Save</FluentButton>
+            <FluentButton OnClick="@CloseContactDialog">Cancel</FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+</div>
+
+<style>
+    .e-plus-icon::before {
+        content: '\e805';
+    }
+    .disabled-button {
+        opacity: 0.5;
+        pointer-events: none; /* Ensures it's not clickable */
+    }
+
+    .browsebtn {
+        position:relative;
+        top:3px;
+    }
+</style>
+
+@code {
+    [Parameter] public int CarrierId { get; set; }
+    [Parameter] public string CarrierName { get; set; } = "";
+    [Parameter] public EventCallback<Contact> OnSaveContact { get; set; }
+    [Parameter] public EventCallback<string> OnSearchTermChanged { get; set; }
+    [Parameter] public string PageName { get; set; }
+
+    public string SearchTerm { get; set; } = string.Empty;
+    private FluentDialog newContactDialog;
+    private bool ShowContactDialog { get; set; } = false;
+    private ContactDto NewContact { get; set; } = new ContactDto();
+
+    private void CreateCarrier()
+    {
+        Navigation.NavigateTo("/Carriers/Create");
+    }
+    private void HandleOnMenuChanged(MenuChangeEventArgs args)
+    {
+        switch (args.Id)
+        {
+            case "Carrier":
+                Navigation.NavigateTo("/Carriers/Create");
+                break;
+            case "Contact":
+                ShowContactDialog = true;
+                break;
+        }
+    }
+    private void HandleSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        Console.WriteLine("type");
+        if (e.Value is string searchTerm)
+        {
+            Console.WriteLine("sss");
+            SearchTerm = searchTerm;
+            OnSearchTermChanged.InvokeAsync(searchTerm);
+        }
+    }
+    private void CloseContactDialog()
+    {
+        ShowContactDialog = false;
+        NewContact = new ContactDto();
+    }
+
+    private async Task SaveContact()
+    {
+        var contact = await ContactService.QuickAddContactToCarrierAsync(NewContact, CarrierId);
+        ShowContactDialog = false;
+        await OnSaveContact.InvokeAsync(contact);
+    }
+}

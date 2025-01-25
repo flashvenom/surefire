@@ -1,0 +1,111 @@
+﻿@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Renewals.Services
+@using Surefire.Domain.Attachments.Components
+@inject RenewalService RenewalService
+
+<div class="txt-section">Current Policies</div>
+@if (selectedClient != null)
+{
+    <div class="policy-container">
+        @foreach (var policy in currentPolicies)
+        {
+            <DropzoneContainer PolicyId="policy?.PolicyId ?? 0" ClientId="selectedClient?.ClientId ?? 0" FileBrowserButton="Hidden">
+                <div class="@GetPolicyClass(policy.PolicyId)">
+                <span @onclick="() => ToggleExpand(policy.PolicyId)">
+                <FluentStack>
+                    <div class="ff1">
+                        <div>
+                            <FluentIcon Class="@(expandedPolicies.Contains(policy.PolicyId) ? "smallicon rotate-90" : "smallicon rotate-0")" Value="@(new Icons.Regular.Size16.ChevronRight())" Color="Color.Fill" @onclick="() => ToggleExpand(policy.PolicyId)" />
+                            <span class="policy-linename">@policy.Product?.LineName</span>
+                        </div>
+                    </div>
+                    <div class="ff2">
+                        <span class="edate">@policy.EffectiveDate.ToShortDateString() -&nbsp;</span>
+                        <span class="xdate">@policy.ExpirationDate.ToShortDateString()</span>
+                    </div>
+
+                </FluentStack>
+                </span>
+
+                <div class="policy-carriers">
+
+                    @if (!string.IsNullOrEmpty(policy.Carrier?.CarrierName))
+                    {
+                        <span class="carrier-name"><a href="/Carriers/Details/@policy.Carrier?.CarrierId">@StringHelper.CropCarrierName(policy.Carrier?.CarrierName)</a></span>
+                    }
+                    @if (!string.IsNullOrEmpty(policy.Wholesaler?.CarrierName))
+                    {
+                        <span class="lighter">|</span>
+                        <span class="carrier-name"><a href="/Carriers/Details/@policy.Wholesaler?.CarrierId">@StringHelper.CropCarrierName(policy.Wholesaler?.CarrierName)</a></span>
+                    }
+                    @if (!string.IsNullOrEmpty(policy.PolicyNumber))
+                    {
+                        <span class="lighter">|</span>
+                        <span class="carrier-name">@policy.PolicyNumber</span>
+                    }
+                    @if (policy.Premium > 0)
+                    {
+                        <span class="lighter">|</span>
+                        <span class="carrier-name">@policy.Premium.ToString("C0")</span>
+                    }
+
+                </div>
+                <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
+                    <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
+                    <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Fill" />Edit Policy</a>
+                    <a class="smalltool" @onclick="@((e) => CreateAndRedirectToRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Renewal</a>
+                    <a class="smalltool" @onclick="@(() => OnOutlookSearchForPolicy.InvokeAsync(policy.PolicyNumber))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Search())" Color="Color.Fill" />Search Outlook</a>
+                </div>
+            </div>
+            </DropzoneContainer>
+        }
+    </div>
+
+    
+}
+
+@code {
+    [Parameter]
+    public Client selectedClient { get; set; }
+
+    [Parameter]
+    public List<Policy> currentPolicies { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<string> OnOutlookSearchForPolicy { get; set; }
+
+    private HashSet<int> expandedPolicies = new HashSet<int>();
+
+    private string GetPolicyClass(int policyId)
+    {
+        return expandedPolicies.Contains(policyId) ? "policy expanded" : "policy";
+    }
+
+    private string GetLinksStyle(int policyId)
+    {
+        return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
+    }
+
+    private void ToggleExpand(int policyId)
+    {
+        if (expandedPolicies.Contains(policyId))
+        {
+            expandedPolicies.Remove(policyId);
+        }
+        else
+        {
+            expandedPolicies.Add(policyId);
+        }
+    }
+
+    private async Task CreateAndRedirectToRenewal(int policyid)
+    {
+        // Redirect to renewal or create new renewal if one doesn't exist
+        var renewalId = await RenewalService.CreateRenewalFromPolicyAsync(policyid);
+        if (renewalId != 0)
+        {
+            Navigation.NavigateTo($"/Renewals/Details/{renewalId}");
+        }
+    }
+}

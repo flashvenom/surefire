@@ -1,0 +1,237 @@
+﻿@page "/Clients/Create"
+@using Surefire.Domain.OpenAI
+@using Microsoft.EntityFrameworkCore
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Clients.Services
+@using Syncfusion.Blazor.Inputs
+@inject ClientService ClientService
+
+<_toolbar ClientLoaded="true" OnShowSmartPaste="ShowSmartPasteDialog" PageName="Create" />
+
+<div class="page-content">
+    <div class="mh1" style="font-weight:600; padding-left:5px; color:#6b6b6bff !important;">Create New Client</div>
+
+    <EditForm Model="clientForm" OnValidSubmit="CreateClient" OnInvalidSubmit="OnInvalidSubmit" FormName="create">
+        <DataAnnotationsValidator />
+        <div class="mf-flex mf-flex-row mf-row-container">
+            <div class="mf-item-lg">
+                <div class="txt-section">Company</div>
+
+                <SfTextBox id="clientName" @bind-Value="clientForm.Name" Placeholder="Client Name" FloatLabelType="FloatLabelType.Always" />
+                <ValidationMessage For="() => clientForm.Name" class="text-danger" />
+
+                <SfTextBox id="lookupCode" @bind-Value="clientForm.LookupCode" Placeholder="Lookup Code" FloatLabelType="FloatLabelType.Always" />
+                <ValidationMessage For="() => clientForm.LookupCode" class="text-danger" />
+
+                <SfTextBox id="phoneNumber" @bind-Value="clientForm.PhoneNumber" Placeholder="Phone Number" FloatLabelType="FloatLabelType.Always" />
+                <ValidationMessage For="() => clientForm.PhoneNumber" class="text-danger" />
+
+                <SfTextBox id="email" @bind-Value="clientForm.Email" Placeholder="Email" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.Email" class="text-danger" />
+
+                <SfTextBox id="website" @bind-Value="clientForm.Website" Placeholder="Website" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.Website" class="text-danger" />
+                @* 
+                <SfTextBox id="comments" @bind-Value="client.Comments" Placeholder="Comments" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => client.Comments" class="text-danger" />
+                *@
+            </div>
+
+            <div class="mf-item-lg mf-pad-left">
+                <div class="txt-section">Address</div>
+                <SfTextBox id="addressLine1" @bind-Value="clientForm.AddressLine1" Placeholder="Address Line 1" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.AddressLine1" class="text-danger" />
+
+                <SfTextBox id="addressLine2" @bind-Value="clientForm.AddressLine2" Placeholder="Address Line 2" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+
+                <SfTextBox id="city" @bind-Value="clientForm.City" Placeholder="City" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.City" class="text-danger" />
+
+                <SfTextBox id="state" @bind-Value="clientForm.State" Placeholder="State" FloatLabelType="FloatLabelType.Always" />
+                <ValidationMessage For="() => clientForm.State" class="text-danger" />
+
+                <SfTextBox id="postalCode" @bind-Value="clientForm.PostalCode" Placeholder="Postal Code" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.PostalCode" class="text-danger" />
+
+            </div>
+
+            <div class="mf-item-lg mf-pad-left">
+                <div class="txt-section">Contact</div>
+                <SfTextBox id="firstname" @bind-Value="clientForm.ContactFirstName" Placeholder="First Name" FloatLabelType="FloatLabelType.Always" />
+                <ValidationMessage For="() => clientForm.ContactFirstName" class="text-danger" />
+
+                <SfTextBox id="lastname" @bind-Value="clientForm.ContactLastName" Placeholder="Last Name" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.ContactLastName" class="text-danger" />
+
+                <SfTextBox id="contactemail" @bind-Value="clientForm.ContactEmail" Placeholder="Email" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.ContactEmail" class="text-danger" />
+
+                <SfTextBox id="contactphone" @bind-Value="clientForm.ContactPhone" Placeholder="Phone" FloatLabelType="FloatLabelType.Always" CssClass="e-custom" />
+                <ValidationMessage For="() => clientForm.ContactPhone" class="text-danger" />
+            </div>
+        </div>
+
+        <br />
+
+        <SfButton Content="Cancel" CssClass="e-secondary" type="button" @onclick="CancelCreate"></SfButton>&nbsp;
+        <SfButton Content="Create Client" CssClass="e-primary" type="submit"></SfButton>
+    </EditForm>
+    <SmartPaste @ref="smartPaste" OnDataExtracted="OnDataExtracted" />
+</div>
+
+<style>
+    :root .e-custom {
+        background-color: #ffffff99 !important;
+    }
+</style>
+@code {
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    private SmartPaste smartPaste;
+    private EditContext _editContext;
+    private ValidationMessageStore _messageStore;
+    private NewClientForm clientForm = new NewClientForm();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Clients");
+        _editContext = new EditContext(clientForm);
+        _editContext.OnValidationRequested += (sender, args) => ValidateFields();
+        _messageStore = new ValidationMessageStore(_editContext);
+    }
+   
+    private void ValidateFields()
+    {
+        _messageStore.Clear();
+
+        // Manually check for required fields in Address
+        if (string.IsNullOrEmpty(clientForm.State))
+        {
+            _messageStore.Add(() => clientForm.State, "State is required.");
+        }
+
+        if (string.IsNullOrEmpty(clientForm.ContactFirstName))
+        {
+            _messageStore.Add(() => clientForm.ContactFirstName, "First name is required.");
+        }
+
+        _editContext.NotifyValidationStateChanged();
+    }
+    private void OnInvalidSubmit()
+    {
+        // Handle what happens when the form is invalid.
+        Console.WriteLine("Form is invalid.");
+    }
+    private async Task CreateClient()
+    {
+        if (_editContext.Validate()) // Proceed only if validation passes
+        {
+            try
+            {
+                // Map NewClientForm to entities
+                var newClient = new Client
+                    {
+                        Name = clientForm.Name,
+                        PhoneNumber = clientForm.PhoneNumber,
+                        Email = clientForm.Email,
+                        Website = clientForm.Website,
+                        LookupCode = ValidateLookupCode(clientForm.LookupCode),
+                        Address = new Address
+                        {
+                            AddressLine1 = clientForm.AddressLine1,
+                            AddressLine2 = clientForm.AddressLine2,
+                            City = clientForm.City,
+                            State = clientForm.State,
+                            PostalCode = clientForm.PostalCode
+                        },
+                        PrimaryContact = new Contact
+                        {
+                            FirstName = clientForm.ContactFirstName,
+                            LastName = clientForm.ContactLastName,
+                            Email = clientForm.ContactEmail,
+                            Phone = clientForm.ContactPhone
+                        }
+                    };
+
+                int clientId = await ClientService.CreateNewClientAsync(newClient);
+                Navigation.NavigateTo($"/Clients/{clientId}");
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"Error creating client: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ShowSmartPasteDialog()
+    {
+        smartPaste.Show();
+    }
+    private void OnDataExtracted(LeadData data)
+    {
+        if (data != null)
+        {
+            if (!string.IsNullOrEmpty(data.CompanyName))
+                clientForm.Name = data.CompanyName;
+
+            if (data.PhoneNumbers != null && !string.IsNullOrEmpty(StringHelper.GetBestPhoneNumber(data.PhoneNumbers)))
+                clientForm.PhoneNumber = StringHelper.GetBestPhoneNumber(data.PhoneNumbers);
+
+            if (!string.IsNullOrEmpty(data.Email))
+                clientForm.Email = data.Email;
+
+            if (!string.IsNullOrEmpty(data.Website))
+                clientForm.Website = data.Website;
+
+            if (!string.IsNullOrEmpty(data.Address))
+                clientForm.AddressLine1 = data.Address;
+
+            if (!string.IsNullOrEmpty(data.City))
+                clientForm.City = data.City;
+
+            if (!string.IsNullOrEmpty(data.State))
+                clientForm.State = data.State;
+
+            if (!string.IsNullOrEmpty(data.Zip))
+                clientForm.PostalCode = data.Zip;
+
+            if (!string.IsNullOrEmpty(data.FirstName))
+                clientForm.ContactFirstName = data.FirstName;
+
+            if (!string.IsNullOrEmpty(data.LastName))
+                clientForm.ContactLastName = data.LastName;
+
+            if (!string.IsNullOrEmpty(data.Email))
+                clientForm.ContactEmail = data.Email;
+
+            if (data.PhoneNumbers != null && !string.IsNullOrEmpty(StringHelper.GetBestMobileNumber(data.PhoneNumbers)))
+                clientForm.ContactPhone = StringHelper.GetBestMobileNumber(data.PhoneNumbers);
+        }
+    }
+    private void CancelCreate()
+    {
+        Navigation.NavigateTo("/");
+    }
+    private string ValidateLookupCode(string lookupCode)
+    {
+        if (string.IsNullOrWhiteSpace(lookupCode))
+        {
+            if (!string.IsNullOrWhiteSpace(clientForm.Name) && clientForm.Name.Length >= 5)
+            {
+                return clientForm.Name.Substring(0, 5).ToUpper() + "-01";
+            }
+            else if (!string.IsNullOrWhiteSpace(clientForm.Name))
+            {
+                // If the name is shorter than 5 characters, use the whole name
+                return clientForm.Name.ToUpper() + "-01";
+            }
+            else
+            {
+                // Fallback for missing name
+                throw new InvalidOperationException("Client Name is required to generate a Lookup Code.");
+            }
+        }
+        return lookupCode;
+    }
+}

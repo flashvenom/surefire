@@ -1,0 +1,89 @@
+﻿@using Surefire.Domain.Plugins
+@using Surefire.Domain.Shared.Services
+@using Surefire.Domain.Shared.Helpers
+@using Surefire.Domain.Shared.Models
+@using Newtonsoft.Json
+@using RingCentral
+@inject StateService _stateService
+
+@if (callLogs == null)
+{
+    <FluentProgressRing Width="30px" Color="#1b8ce3" />
+}
+else if (callLogs.Count == 0)
+{
+    <FluentIcon Value="@(new Icons.Regular.Size24.CallDismiss())" CustomColor="#b7b7b7" Color="Color.Custom" />
+    <span class="phone-none">No recent phone conversations.</span>
+}
+else
+{
+    <table class="sf-calltable">
+        @foreach (var log in callLogs)
+        {
+            <tr>
+                <td class="phone-icon-cell">
+                    <span class="phone-icon">
+                        @if (log.direction == "Inbound")
+                        {
+                            <FluentIcon Value="@(new Icons.Regular.Size28.CallInbound())" CustomColor="#0f6cbd" Color="Color.Custom" />
+                        }
+                        else if (log.direction == "Outbound")
+                        {
+                            <FluentIcon Value="@(new Icons.Regular.Size28.CallOutbound())" CustomColor="#e9776f" Color="Color.Custom" />
+                        }else{
+                            <FluentIcon Value="@(new Icons.Regular.Size28.CallMissed())" CustomColor="#1a4d16" Color="Color.Custom" />
+                        }
+                    </span>
+                </td>
+                <td class="phone-lognum">
+                    @if (log.direction == "Inbound")
+                    {
+                        <span class="phone-lognum-in">@StringHelper.FormatPhoneNumber(log.from.phoneNumber)</span>
+                    }
+                    @if (log.direction == "Outbound")
+                    {
+                        <span class="phone-lognum-out">@StringHelper.FormatPhoneNumber(log.to.phoneNumber)</span>
+                    }
+
+                </td>
+                <td class="ellipsis2">
+                    <span class="phone-longago">@StringHelper.FormatDateDifference(log.startTime)</span> @log.to.extensionNumber<br />
+                    <span class="phonetxt"> Call lasted @StringHelper.FormatSeconds(log.duration ?? 0).</span> @log.from.extensionNumber
+                </td>
+            </tr>
+        }
+    </table>
+}
+@code {
+    [Parameter] public List<string>? PhoneNumbers { get; set; } = new();
+    [Parameter] public bool ShowAll { get; set; } = false;
+
+    private List<CallLogRecord> callLogs = new();
+    private CancellationTokenSource? _ctsCallLog;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            _ctsCallLog?.Cancel();
+            _ctsCallLog = new CancellationTokenSource();
+
+            callLogs = await _stateService.GetCallLogsAsync(PhoneNumbers ?? new List<string>(), ShowAll, _ctsCallLog.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Call log fetching was canceled.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while fetching call logs: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _ctsCallLog?.Cancel();
+        _ctsCallLog?.Dispose();
+    }
+}
+

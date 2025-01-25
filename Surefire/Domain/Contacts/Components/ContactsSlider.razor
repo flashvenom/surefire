@@ -1,0 +1,211 @@
+﻿@namespace Surefire.Components.Shared
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Components.Shared
+@using Surefire.Domain.Shared.Helpers
+@using Surefire.Domain.Renewals.Services
+@implements IDisposable
+@inject ISubmissionService SubmissionService
+
+<div class="contact-navigation">
+    <FluentIcon Value="@(new Icons.Regular.Size24.ChevronLeft())"
+                CustomColor="#5e5e5e" Color="Color.Custom"
+                @onclick="() => ShowPreviousContact()" Disabled="@(Contacts == null || Contacts.Count <= 1)" />
+    <div class="contact-display">
+        <div class="contact-card @animationClass">
+            @if (Contacts == null || Contacts.Count == 0)
+            {
+                <p>No contacts found for this parent.</p>
+            }
+            else
+            {
+                if (currentIndex >= 0 && currentIndex < Contacts.Count)
+                {
+                    var item = Contacts[currentIndex];
+                    string fullName = $"{item.FirstName} {item.LastName}";
+                    string nameInitials = $"{item.FirstName?[0]}{item.LastName?[0]}";
+
+                    string headshotImage = !string.IsNullOrEmpty(item.HeadshotFilename) ? "/uploads/headshots/" + item.HeadshotFilename : null;
+
+                    <FluentStack Class="m-contact-small">
+                        <!-- Existing contact display code -->
+                        <div>
+                            <FluentPersona Initials="@nameInitials" ImageSize="45px" Class="txt-persona" Image="@headshotImage" />
+                        </div>
+
+                        <div>
+                            <span class="m-name">
+                                @item.FirstName @item.LastName
+                            </span>
+                            @if (item.Title != null)
+                            {
+                                <span class="m-title">, @item.Title</span>
+                            }
+                            <br />
+
+                            @if (item.Email != null)
+                            {
+                                <div class="m-email"><a class="teldialphone" href="mailto:@item.Email">@item.Email</a></div>
+                            }
+                            @if (item.Phone != null)
+                            {
+                                <span class="m-phone m-padafter">
+                                    <a class="teldialphone" href="tel:@StringHelper.FormatTelDialNumber(item.Phone)">@StringHelper.FormatPhoneNumber(item.Phone)</a>
+                                    <span class="m-phonetype">ph.</span>
+                                </span>
+                            }
+                            @if (item.Mobile != null)
+                            {
+                                <span class="m-phone m-padafter">
+                                    <a class="teldialphone" href="tel:@StringHelper.FormatTelDialNumber(item.Mobile)">@StringHelper.FormatPhoneNumber(item.Mobile)</a>
+                                    <span class="m-phonetype">cell</span>
+                                </span>
+                            }
+                        </div>
+                    </FluentStack>
+                }
+                else
+                {
+                    <p>Invalid contact index.</p>
+                }
+            }
+        </div>
+    </div>
+    <FluentIcon Value="@(new Icons.Regular.Size24.ChevronRight())"
+                CustomColor="#5e5e5e" Color="Color.Custom"
+                @onclick="() => ShowNextContact()" Disabled="@(Contacts == null || Contacts.Count <= 1)" />
+</div>
+
+@code {
+    [Parameter]
+    public List<Contact> Contacts { get; set; }
+
+    [Parameter]
+    public string ParentType { get; set; }
+
+    [Parameter]
+    public int ParentId { get; set; }
+
+    [Parameter]
+    public bool IsPrimary { get; set; }
+
+    [Parameter]
+    public int? DefaultContactId { get; set; }
+
+    private int currentIndex = 0; // Index of the currently displayed contact
+    private string animationClass = "";
+    private Timer debounceTimer;
+
+    protected override void OnParametersSet()
+    {
+        // Dispose the debounce timer when parameters change
+        debounceTimer?.Dispose();
+        debounceTimer = null;
+
+        if (Contacts != null && Contacts.Count > 0)
+        {
+            if (DefaultContactId.HasValue)
+            {
+                // Find the index of the contact with the DefaultContactId
+                int index = Contacts.FindIndex(c => c.ContactId == DefaultContactId.Value);
+                if (index >= 0)
+                {
+                    currentIndex = index;
+                }
+                else
+                {
+                    // If DefaultContactId is not found, reset to first contact
+                    currentIndex = 0;
+                }
+            }
+            else
+            {
+                // If DefaultContactId is not set, reset currentIndex to 0
+                currentIndex = 0;
+            }
+
+            // Ensure currentIndex is within the bounds of Contacts
+            if (currentIndex >= Contacts.Count)
+            {
+                currentIndex = 0;
+            }
+        }
+        else
+        {
+            // If Contacts is null or empty, reset currentIndex
+            currentIndex = 0;
+        }
+    }
+
+    private async void ShowPreviousContact()
+    {
+        if (Contacts != null && Contacts.Count > 0)
+        {
+            currentIndex = (currentIndex - 1 + Contacts.Count) % Contacts.Count;
+            animationClass = "slide-in-left";
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(400);
+            animationClass = "";
+            await InvokeAsync(StateHasChanged);
+            StartDebounceSave();
+        }
+    }
+
+    private async void ShowNextContact()
+    {
+        if (Contacts != null && Contacts.Count > 0)
+        {
+            currentIndex = (currentIndex + 1) % Contacts.Count;
+            animationClass = "slide-in-right";
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(400);
+            animationClass = "";
+            await InvokeAsync(StateHasChanged);
+            StartDebounceSave();
+        }
+    }
+
+    private void StartDebounceSave()
+    {
+        debounceTimer?.Dispose();
+
+        // Only start the debounce timer if Contacts has items
+        if (Contacts != null && Contacts.Count > 0)
+        {
+            debounceTimer = new Timer(async _ => await SavePrimaryContactId(), null, 250, Timeout.Infinite);
+        }
+    }
+
+    private async Task SavePrimaryContactId()
+    {
+        Console.Write("Saving primary contact");
+        if (Contacts != null && Contacts.Count > 0 && currentIndex >= 0 && currentIndex < Contacts.Count)
+        {
+            var selectedContactId = Contacts[currentIndex].ContactId;
+
+            if (ParentType == "submissioncarrier")
+            {
+                var submission = await SubmissionService.GetSubmissionByIdAsync(ParentId);
+                submission.PrimaryCarrierContactId = selectedContactId;
+                await SubmissionService.UpdateSubmissionAsync(submission);
+                await SubmissionService.UpdateSubmissionPrimaryContactAsync(ParentId, selectedContactId);
+            }
+            else if (ParentType == "submissionwholesaler")
+            {
+                var submission = await SubmissionService.GetSubmissionByIdAsync(ParentId);
+                submission.PrimaryWholesalerContactId = selectedContactId;
+                await SubmissionService.UpdateSubmissionAsync(submission);
+            }
+            // Add other parent types as needed
+        }
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+        debounceTimer = null;
+        Contacts = null;
+    }
+}

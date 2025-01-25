@@ -1,0 +1,177 @@
+﻿@implements IDisposable
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Surefire.Domain.Shared.Services
+@using Surefire.Domain.Renewals.Services
+@using Surefire.Domain.Renewals.Models
+@inject NavigationManager NavigationManager
+@inject SharedService SharedService
+@inject RenewalService RenewalService
+@inject StateService _stateService
+
+
+<!-- Render dynamic containers -->
+@foreach (var item in navItems)
+{
+    <div class="ro-container ro-@(item.Name.ToLower()) @(item.RolloverClass)">
+        <span class="ro-mi-name">@item.Name</span>
+    </div>
+}
+
+<!-- Render dynamic sidebar navbar items -->
+<div class="sidebar">
+    @foreach (var item in navItems)
+    {
+        <div class="sfnav @(GetNavItemClass(item.Href))" @onmouseenter="@(e => NavRollOver("over", item.Name))" @onmouseleave="@(e => NavRollOver("out", item.Name))" @onclick="@(e => NavTo(item.Href))">
+            <div class="nb-blueline@(GetNavItemClass(item.Href))"></div>
+            <NavLink Id="@($"btn{item.Name}")" class="nav-link" href="@item.Href" Match="NavLinkMatch.Prefix">
+                @if (GetNavItemClass(item.Href) == "nb-active")
+                {
+                    <FluentIcon Value="@(item.ActiveIcon())" />
+                }
+                else
+                {
+                    var roClass = "inactive-icon-" + item.RolloverClass;
+                    <FluentIcon Value="@(item.InactiveIcon())" Class="@roClass" />
+                }
+            </NavLink>
+        </div>
+        <br />
+        @if (item.Name == "Renewals")
+        {
+            <text><hr><br /></text>
+        }
+    }
+</div>
+
+<style>
+    :root .nav-link {
+        padding: 0px !important;
+        margin-left: 11px;
+        margin-bottom: 2px;
+    }
+</style>
+@code {
+    private string? currentUrl;
+    private List<NavItem> navItems;
+
+    public string ClientsRolloverClass { get; set; } = "ro-off";
+    public string PoliciesRolloverClass { get; set; } = "ro-off";
+    public string LocationsRolloverClass { get; set; } = "ro-off";
+    public string ContactsRolloverClass { get; set; } = "ro-off";
+    public string CarriersRolloverClass { get; set; } = "ro-off";
+    public string RenewalsRolloverClass { get; set; } = "ro-off";
+    public string LeadsRolloverClass { get; set; } = "ro-off";
+    public string HomeRolloverClass { get; set; } = "ro-off";
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+
+        navItems = new List<NavItem>
+        {
+            new NavItem("Home", "Home", () => new Icons.Filled.Size24.Home(), () => new Icons.Regular.Size24.Home()),
+            new NavItem("Clients", "Clients", () => new Icons.Filled.Size24.Briefcase(), () => new Icons.Regular.Size24.Briefcase()),
+            new NavItem("Renewals", "Renewals", () => new Icons.Filled.Size24.ApprovalsApp(), () => new Icons.Regular.Size24.ApprovalsApp()),
+            new NavItem("Leads", "Leads", () => new Icons.Filled.Size24.TargetArrow(), () => new Icons.Regular.Size24.TargetArrow()),
+            new NavItem("Carriers", "Carriers", () => new Icons.Filled.Size24.BuildingRetailShield(), () => new Icons.Regular.Size24.BuildingRetailShield()),
+            new NavItem("Contacts", "Contacts", () => new Icons.Filled.Size24.People(), () => new Icons.Regular.Size24.People()),
+            new NavItem("Locations", "Locations", () => new Icons.Filled.Size24.Location(), () => new Icons.Regular.Size24.Location()),
+            new NavItem("Policies", "Policies", () => new Icons.Filled.Size24.DocumentMultiple(), () => new Icons.Regular.Size24.DocumentMultiple())
+        };
+    }
+    public void NavRollOver(string whichway, string whatItem)
+    {
+        string rollclass = whichway == "over" ? "ro-on" : "ro-off";
+
+        var navItem = navItems.FirstOrDefault(item => item.Name == whatItem);
+        if (navItem != null)
+        {
+            navItem.RolloverClass = rollclass;
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    private string GetNavItemClass(string href)
+    {
+        if (string.IsNullOrEmpty(currentUrl) && href == "/")
+        {
+            return "";
+        }
+        else
+        {
+            if (currentUrl != null)
+            {
+                if (currentUrl.Contains(href, StringComparison.OrdinalIgnoreCase) || (currentUrl == "" && href == "Home"))
+                {
+                    return "nb-active";
+                }
+                else
+                {
+                    return "nb-inactive";
+                }
+            }
+            else
+            {
+                return "nb-inactive";
+            }
+        }
+    }
+    private async Task NavTo(string whereto)
+    {
+        if(whereto == "Clients")
+        {
+            NavigationManager.NavigateTo($"/Clients/{_stateService.ClientId}");
+        }
+        else if (whereto == "Renewals")
+        {
+            if (_stateService.HtmlView == "details")
+            {
+                if (_stateService.HtmlRenewalId != 0)
+                {
+                    // Redirect to the renewal details page
+                    NavigationManager.NavigateTo($"/Renewals/Details/{_stateService.HtmlRenewalId}");
+                }
+                else
+                {
+                    NavigationManager.NavigateTo("/Renewals");
+                }
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/Renewals");
+            }
+        }
+        else
+        {
+            NavigationManager.NavigateTo(whereto);
+        }
+    }
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
+    // Define a class to represent navigation items
+    public class NavItem
+    {
+        public string Name { get; set; }
+        public string Href { get; set; }
+        public Func<Icon> ActiveIcon { get; set; }
+        public Func<Icon> InactiveIcon { get; set; }
+        public string RolloverClass { get; set; } = "ro-off";
+
+        public NavItem(string name, string href, Func<Icon> activeIcon, Func<Icon> inactiveIcon)
+        {
+            Name = name;
+            Href = href;
+            ActiveIcon = activeIcon;
+            InactiveIcon = inactiveIcon;
+        }
+    }
+}

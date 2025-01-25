@@ -1,0 +1,338 @@
+﻿@page "/Forms/Editor/{FormDocId:int}"
+@using System.IO
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Syncfusion.Pdf
+@using Syncfusion.Pdf.Parsing
+@using Syncfusion.Blazor.SfPdfViewer
+@using Surefire.Domain.Forms.Models
+@using Surefire.Domain.Forms.Services
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Clients.Services
+@using Surefire.Domain.Policies.Models
+@using Surefire.Domain.Policies.Services
+@inject FormService FormService
+@inject ClientService ClientService
+@inject PolicyService PolicyService
+@inject IWebHostEnvironment Environment
+@inject IHttpClientFactory _http
+@inject IJSRuntime JS
+
+<div class="page-toolbar">
+    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Certificate</SfButton>
+
+    <span class="sf-verthr2"></span>
+
+    @* Policies *@
+    <a class="toolbar-link" id="myPopoverButtonr" @onclick="() => _policiesVisible = !_policiesVisible"> 
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentBulletList())" />
+        <span class="toolbar-text">Prefill</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myPopoverButtonr" @bind-Open="_policiesVisible">
+        <Header>Prefill Templates</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                <text>Coming soon.</text>
+                @foreach (var policy in PolicyList)
+                {
+                    <FluentCheckbox>
+                        @policy.PolicyNumber (@policy.Product.LineNickname)
+                    </FluentCheckbox>
+                }
+            </FluentStack>
+        </Body>
+    </FluentPopover>
+
+    <a class="toolbar-link" id="myAttachButtonr" @onclick="() => _attachmentsVisible = !_attachmentsVisible">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Attach())" />
+        <span class="toolbar-text">Attachments</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myAttachButtonr" @bind-Open="_attachmentsVisible">
+        <Header>Attachment Options</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                Coming soon.
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => SaveToDatabase(false)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Reset" class="toolbar-link" @onclick="ResetForm">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eraser())" />
+        <span class="toolbar-text">Reset</span>
+    </a>
+
+    <a id="Duplicate" class="toolbar-link" @onclick="DuplicateForm">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentCopy())" />
+        <span class="toolbar-text">Duplicate</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Email" class="toolbar-link" @onclick="() => ExportForm(true, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.OpenFolder())" />
+        <span class="toolbar-text">Open</span>
+    </a>
+
+    <a id="Save" class="toolbar-link" @onclick="() => ExportForm(false, false, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
+        <span class="toolbar-text">Save</span>
+    </a>
+
+    <a id="Print" class="toolbar-link" @onclick="() => ExportForm(false, true, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
+        <span class="toolbar-text">Print</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Approve" class="toolbar-link" @onclick="() => SaveToDatabase(true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Checkmark())" />
+        <span class="toolbar-text">Approve</span>
+    </a>
+
+    <a id="Cancel" class="toolbar-link" @onclick="NavCancel">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
+        <span class="toolbar-text">Cancel</span>
+    </a>
+</div>
+
+<div class="control-section" style="height:784px;">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath"  Height="784px" Width="90%">
+        <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+    </SfPdfViewer2>
+</div>
+
+@code {
+    [Parameter] public int FormDocId { get; set; }
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    public FormPdf FormPdf { get; set; } = new FormPdf();
+    public FormDoc FormDoc { get; set; } = new FormDoc();
+    public Client Client { get; set; } = new Client();
+    public Lead Lead { get; set; } = new Lead();
+    public List<Policy> PolicyList { get; set; } = new List<Policy>();
+    private string DocumentPath { get; set; } = "";
+    private SfPdfViewer2 pdfViewer;
+    private Stream stream;
+    private bool _policiesVisible = false;
+    private bool _attachmentsVisible = false;
+    private List<Policy> selectedpolicies = new List<Policy>();
+   
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Forms");
+        FormDoc = await FormService.GetFormDocByIdAsync(FormDocId);
+        FormPdf = FormDoc.FormPdf;
+        DocumentPath = Path.Combine(Environment.WebRootPath, "forms", FormPdf.Filepath);
+        if(FormDoc.Client != null)
+        {
+            Client = FormDoc.Client;
+            PolicyList = await PolicyService.GetCurrentPoliciesByClientIdAsync(Client.ClientId);
+        }
+        else
+        {
+            Lead = FormDoc.Lead;
+        }
+
+    }
+
+    //Methods
+    private async Task LoadJsonDataIntoPdfAsync()
+    {
+        if (string.IsNullOrEmpty(FormDoc.JSONData) || FormDoc.JSONData.Length < 10)
+        {
+            Console.WriteLine("No JSON data available to load into the PDF.");
+            return;
+        }
+
+        // Parse the JSON data into a JObject for easy manipulation
+        JObject jsonData = JObject.Parse(FormDoc.JSONData);
+
+        // Check if the FormDocId is 14
+        if (FormDoc.FormPdfId == 14)
+        {
+            // Update the JSON fields if FormDocId is 14
+            jsonData["Name of Insured"] = Client.Name;
+
+            // Update Insurer dates to today's month/year formatted as "MM/yyyy"
+            string currentDate = DateTime.Now.ToString("MM/yyyy");
+            jsonData["Insurer 1 Date"] = currentDate;
+            jsonData["Insurer 2 Date"] = currentDate;
+            jsonData["Insurer 3 Date"] = currentDate;
+        }
+
+        // Convert the updated JObject back to a JSON string
+        FormDoc.JSONData = jsonData.ToString();
+
+        // Load the updated JSON data into the PDF form
+        byte[] byteArray = System.Text.Encoding.UTF8.GetBytes(FormDoc.JSONData);
+        using (MemoryStream jsonStream = new MemoryStream(byteArray))
+        {
+            await pdfViewer.ImportFormFieldsAsync(jsonStream, FormFieldDataFormat.Json);
+        }
+    }
+    public async Task SaveToDatabase(bool? exit)
+    {
+        var jsondata = await ExtractJson();
+
+        if (!string.IsNullOrEmpty(jsondata))
+        {
+            FormDoc.JSONData = jsondata;
+            await FormService.UpdateFormDoc(FormDoc);
+
+            var success = true;
+        }
+        else
+        {
+            Console.WriteLine("Failed to extract JSON data.");
+        }
+        if (exit == true)
+        {
+            if (Client != null && Client.ClientId > 0)
+            {
+                Navigation.NavigateTo($"/Clients/{Client.ClientId}");
+            }
+            else
+            {
+                Navigation.NavigateTo($"/Leads/{Lead.LeadId}");
+            }
+        }
+
+    }
+    public async Task<string> ExtractJson()
+    {
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        using (StreamReader reader = new StreamReader(stream))
+        {
+            // Read the stream into a JSON string
+            string jsonString = await reader.ReadToEndAsync();
+
+            try
+            {
+                // Parse or return the raw JSON string (depending on your needs)
+                return jsonString;
+            }
+            catch (JsonException ex)
+            {
+                // Handle JSON parsing errors
+                Console.WriteLine($"Error parsing JSON: {ex.Message}");
+                return null;
+            }
+        }
+    }
+    public async Task<string> ExportForm(bool? openNewWindow, bool? printNow, bool? saveToDisk)
+    {
+        await SaveToDatabase(false);
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+
+        data = FormService.FlattenPdf(data);
+
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+            using (MemoryStream pdfStream = new MemoryStream())
+            {
+                originalDocument.Save(pdfStream);
+
+                // Convert the PDF to a base64 string
+                byte[] pdfBytes = pdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(pdfBytes);
+
+                // Handle options like print, save, or opening a new window
+                if (printNow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+
+                if (saveToDisk == true)
+                {
+                    string certname = (Client != null ? Client.Name : Lead.CompanyName) + "form.pdf";
+                    await JS.InvokeVoidAsync("downloadPdf", base64Pdf, certname);
+                }
+
+                if (openNewWindow == true)
+                {
+                    await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+                }
+            }
+
+            // Close the document
+            originalDocument.Close(true);
+        }
+
+        return string.Empty;
+    }
+    public async Task<string> ExportForm2(bool? openNewWindow, bool? printNow, bool? attachToEmail, bool? saveToDisk)
+    {
+        await SaveToDatabase(false);
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        data = FormService.FlattenPdf(data);
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+            originalDocument.Save(originalPdfStream);
+
+            byte[] combinedPdfBytes = originalPdfStream.ToArray();
+            string base64Pdf = Convert.ToBase64String(combinedPdfBytes);
+
+
+
+            if (printNow == true)
+            {
+                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+            }
+
+            if (saveToDisk == true)
+            {
+                string certname = StringHelper.GenerateCertificateName(Client != null ? Client.Name : Lead.CompanyName, FormDoc.Title);
+                await JS.InvokeVoidAsync("downloadPdf", base64Pdf, certname);
+            }
+
+            @if (openNewWindow == true)
+            {
+                await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+            }
+
+            originalDocument.Close(true);
+        }
+        return string.Empty;
+    }
+    public async Task DuplicateForm()
+    {
+        int newdocid = await FormService.DuplicateFormDocAsync(FormDoc);
+        Navigation.NavigateTo($"/Forms/Editor/{newdocid}");
+
+    }
+    public async Task ResetForm()
+    {
+        Navigation.NavigateTo($"/Forms/Editor/{FormDoc.FormDocId}");
+
+    }
+    public async void FlattenForm()
+    {
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        byte[] flattenedPdfBytes = FormService.FlattenPdf(data);
+        string base64Pdf = Convert.ToBase64String(flattenedPdfBytes);
+        await JS.InvokeVoidAsync("openPdfInNewWindow", base64Pdf);
+    }
+    public void NavCancel()
+    {
+        if (Client != null && Client.ClientId > 0)
+        {
+            Navigation.NavigateTo($"/Clients/{Client.ClientId}");
+        }
+        else
+        {
+            Navigation.NavigateTo($"/Leads/{Lead.LeadId}");
+        }
+    }
+}

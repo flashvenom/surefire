@@ -1,0 +1,193 @@
+{
+  "type": "object",
+  "properties": {
+    "Client": {
+      "type": "object",
+      "properties": {
+        "Name": { "type": "string" },
+        "PhoneNumber": { "type": "string" },
+        "Email": { "type": "string" },
+        "Website": { "type": "string" }
+      }
+    },
+    "BusinessDetails": {
+      "type": "object",
+      "properties": {
+        "FEIN": { "type": "string" },
+        "LegalEntityType": { "type": "string" },
+        "ShortDescription": { "type": "string" },
+        "LongDescription": { "type": "string" },
+        "BusinessIndustry": { "type": "string" },
+        "BusinessSpecialty": { "type": "string" },
+        "BusinessType": { "type": "string" },
+        "AnnualGrossSalesRevenueReceipts": { "type": "string" },
+        "BusinessPersonalPropertyBPP": { "type": "string" },
+        "AnnualPayrollHazardExposure": { "type": "string" },
+        "EstimatedGrossSales": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "EstimatedAnnualPayroll": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "DateStarted": {
+          "type": "string",
+          "format": "date"
+        },
+        "YearsExperience": { "type": "integer" },
+        "NumClaims": { "type": "integer" },
+        "LicenseType": { "type": "string" },
+        "LicenseNumber": { "type": "string" },
+        "EstimatedSubcontractingExpenses": { "type": "string" },
+        "BuildingLocation": {
+          "type": "object",
+          "properties": {
+            "YearBuilt": { "type": "integer" },
+            "SquareFootage": { "type": "integer" },
+            "NumberOfStories": { "type": "integer" },
+            "Sprinklered": { "type": "boolean" },
+            "MonitoredSecurity": { "type": "boolean" }
+          }
+        },
+        "NumPartTimeEmployees": { "type": "integer" },
+        "NumFullTimeEmployees": { "type": "integer" }
+      }
+    },
+    "Policy": {
+      "type": "object",
+      "properties": {
+        "PolicyNumber": { "type": "string" },
+        "EffectiveDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ExpirationDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Premium": { "type": "string" },
+        "Drivers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "FirstName": { "type": "string" },
+              "LastName": { "type": "string" },
+              "DateOfBirth": {
+                "type": "string",
+                "format": "date"
+              },
+              "LicenseNumber": { "type": "string" },
+              "LicenseExpiryDate": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        },
+        "Vehicles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Year": { "type": "string" },
+              "Make": { "type": "string" },
+              "Model": { "type": "string" },
+              "VIN": { "type": "string" },
+              "LicensePlate": { "type": "string" },
+              "RegistrationDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "CountryOfRegistration": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "WorkCompCoverage": {
+      "type": "object",
+      "properties": {
+        "EachAccident": { "type": "string" },
+        "DiseaseEachEmployee": { "type": "string" },
+        "DiseasePolicyLimit": { "type": "string" },
+        "OwnersOfficersExcluded": { "type": "boolean" },
+        "PerStatute": { "type": "boolean" },
+        "PerOther": { "type": "boolean" },
+        "WaiverOfSub": { "type": "boolean" }
+      }
+    },
+    "UmbrellaCoverage": {
+      "type": "object",
+      "properties": {
+        "IsUmbrella": { "type": "boolean" },
+        "IsExcess": { "type": "boolean" },
+        "ClaimsMade": { "type": "boolean" },
+        "Occurrence": { "type": "boolean" },
+        "HasRetention": { "type": "boolean" },
+        "HasDeductible": { "type": "boolean" },
+        "EachOccurrence": { "type": "string" },
+        "GeneralAggregate": { "type": "string" },
+        "DeductibleRetentionAmount": { "type": "string" }
+      }
+    },
+    "RatingBasis": {
+      "type": "object",
+      "properties": {
+        "ClassCode": { "type": "string" },
+        "ClassDescription": { "type": "string" },
+        "BaseRate": { "type": "string" },
+        "NetRate": { "type": "string" },
+        "Premium": { "type": "string" },
+        "Payroll": { "type": "string" },
+        "Basis": { "type": "string" },
+        "Exposure": { "type": "string" }
+      }
+    },
+    "PropertyCoverage": {
+      "type": "object",
+      "properties": {
+        "BusinessPersonalProperty": { "type": "string" },
+        "Equipment": { "type": "string" }
+      }
+    },
+    "GeneralLiabilityCoverage": {
+      "type": "object",
+      "properties": {
+        "EachOccurrence": { "type": "string" },
+        "DamageToPremises": { "type": "string" },
+        "MedicalExpenses": { "type": "string" },
+        "PersonalInjury": { "type": "string" },
+        "GeneralAggregate": { "type": "string" },
+        "ProductsAggregate": { "type": "string" }
+      }
+    },
+    "AutoCoverage": {
+      "type": "object",
+      "properties": {
+        "CombinedLimit": { "type": "string" },
+        "BodilyInjuryPerPerson": { "type": "string" },
+        "BodilyInjuryPerAccident": { "type": "string" },
+        "PropertyDamage": { "type": "string" },
+        "ForAny": { "type": "boolean" },
+        "ForOwned": { "type": "boolean" },
+        "ForHired": { "type": "boolean" },
+        "ForScheduled": { "type": "boolean" },
+        "ForNonOwned": { "type": "boolean" }
+      }
+    },
+    "Contact": {
+      "type": "object",
+      "properties": {
+        "FirstName": { "type": "string" },
+        "MiddleName": { "type": "string" },
+        "LastName": { "type": "string" },
+        "Title": { "type": "string" },
+        "Email": { "type": "string" },
+        "Phone": { "type": "string" }
+      }
+    }
+  },
+  "required": [ "Client", "BusinessDetails", "Policy" ]
+}

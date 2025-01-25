@@ -1,0 +1,105 @@
+﻿@inherits AppComponentBase
+@inject StateService StateService
+@inject IDialogService DialogService
+@inject ILogger<SystemSettings> Logger
+@inject IToastService ToastService
+<FluentMessageBarProvider Section="SYSTEM_SETTINGS" Format="MessageFormat.Notification" />
+
+
+    <EditForm Model="@Settings" OnValidSubmit="SaveSettings">
+        <DataAnnotationsValidator />
+        <div class="system-settings-container">
+            <h2>General Settings</h2>
+            <FluentStack>
+                <div>
+                    <FluentTextField @bind-Value="Settings.OpenAiApiKey" Placeholder="OpenAI API Key" Label="OpenAI API Key" />
+                </div>
+                <div>
+                    <FluentTextField @bind-Value="Settings.PayLinkStringTemplate" Placeholder="PayLink String Template" Label="PayLink String Template" />
+                </div>
+                <div>
+                    <FluentCheckbox @bind-Checked="Settings.DisablePlugins" Label="Disable Plugins" />
+                </div>
+            </FluentStack>
+        </div>
+        
+        <div class="system-settings-container">
+            <h2>Database</h2>
+            <FluentStack>
+                <div>
+                    <FluentCombobox @bind-Value="Settings.DbType" Label="Database Type" TOption="string">
+                        <FluentOption Value="SQL Server">SQL Server</FluentOption>
+                        <FluentOption Value="SQLite">SQLite</FluentOption>
+                    </FluentCombobox>
+                </div>
+                <div>
+                    <FluentTextField @bind-Value="Settings.DbConnectionString" Placeholder="Database Connection String" Label="Database Connection String" />
+                </div>
+            </FluentStack>
+        </div>
+
+        <div class="system-settings-container">
+            <h2>File Storage</h2>
+            <FluentStack>
+                <div>
+                    <FluentCombobox Value="Local" Label="File Store Type" TOption="string">
+                        <FluentOption Value="Local">Local</FluentOption>
+                        <FluentOption Value="AzureBlob">Azure Blob</FluentOption>
+                        <FluentOption Value="FileServer">File Server</FluentOption>
+                    </FluentCombobox>
+                </div>
+                <div>
+                    @if (Settings.FileStore == FileStoreType.AzureBlob)
+                    {
+                        <FluentTextField @bind-Value="Settings.AzureBlobConnectionString" Placeholder="Azure Blob Connection String" Label="Azure Blob Connection String" />
+                        <FluentTextField @bind-Value="Settings.AzureBlobContainerName" Placeholder="Azure Blob Container Name" Label="Azure Blob Container Name" />
+                    }
+
+                    <!-- File Server Path -->
+                    @if (Settings.FileStore == FileStoreType.FileServer)
+                    {
+                        <FluentTextField @bind-Value="Settings.FileServerMappedPath" Placeholder="File Server Mapped Path" Label="File Server Mapped Path" />
+                    }
+                </div>
+            </FluentStack>
+        </div>
+        
+        <FluentValidationSummary />
+
+        <!-- Save Button -->
+        <div class="settings-actions">
+            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">Save</FluentButton>
+        </div>
+    </EditForm>
+
+
+@code {
+    public Settings Settings { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Load current settings
+            Settings = await StateService.GetSystemSettingsAsync() ?? new Settings();
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error loading settings: {ex.Message}");
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+       
+            await StateService.SaveSystemSettingsAsync(Settings);
+            ShowToast();
+       
+    }
+    void ShowToast()
+    {
+        Console.WriteLine("Saved settings...");
+        ToastService.ShowInfo($"Settings saved!", 2000);
+    }
+}

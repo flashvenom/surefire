@@ -1,0 +1,43 @@
+﻿@namespace Surefire.Components.Shared
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Surefire.Domain.Shared.Models
+@using Newtonsoft.Json
+
+<div>
+    @if (!_hasLoaded)
+    {
+        <FluentProgressRing Width="30px" Color="#1b8ce3" />
+    }
+    else if (Transactions == null)
+    {
+        <FluentIcon Value="@(new Icons.Regular.Size24.ReceiptCube())" CustomColor="#b7b7b7" Color="Color.Custom" />
+        <span class="icon-nonefound-text">No transactions found.</span>
+    }
+    else
+    {
+        //Display Datagrid
+        <div class="fluent-data-grid">
+            <FluentDataGrid Items="@Transactions" ResizableColumns="true" ShowHover="true" Pagination="@pagination" TGridItem="RecentTransactions">
+                <PropertyColumn Property="@(p => p.TransactionId)" Title="Transaction Id" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Payer)" Title="Client" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Email)" Title="Email" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Amount)" Title="Amount" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Fee)" Title="Fee" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Comments)" Title="Comments" Sortable="true" />
+                <PropertyColumn Property="@(p => p.SaleDate)" Title="Sale Date" Sortable="true" />
+                <PropertyColumn Property="@(p => p.SettleDate)" Title="Settle Date" Sortable="true" />
+            </FluentDataGrid>
+            <div class="fluent-data-grid__bottombar">
+                <div class="fluent-data-grid__pagination">
+                    <FluentPaginator State="@pagination" />
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private IQueryable<RecentTransactions> Transactions { get; set; } = Enumerable.Empty<RecentTransactions>().AsQueryable();
+    private bool _hasLoaded = false;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 17 };
+}

@@ -1,0 +1,104 @@
+﻿@page "/Leads"
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Clients.Services
+@inject ClientService ClientService
+
+<_toolbar PageName="Leads" />
+
+<div class="page-content">
+    <div class="home-list">
+        @* Group Leads by Stages *@
+        @foreach (var stage in Enum.GetValues(typeof(LeadStage)).Cast<LeadStage>())
+        {
+            if (stage == LeadStage.Archive || stage == LeadStage.Trash || stage == LeadStage.Converted)
+            {
+                continue;
+            }
+
+            <table class="lead-table">
+                <thead>
+                    <tr @onclick="() => ToggleExpand((int)stage)">
+                        <th width="20%" class="lead-stage">
+                            <FluentIcon Class="@(expandedStages.Contains((int)stage) ? "smallicon rotate-90" : "smallicon rotate-0")" Value="@(new Icons.Regular.Size16.ChevronRight())" Color="Color.FillInverse" @onclick="() => ToggleExpand((int)stage)" />
+                            <span class="stage-@stage">@stage</span>
+                        </th>
+                        <th width="10%">Contact</th>
+                        <th width="20%">Email</th>
+                        <th width="10%">Phone</th>
+                        <th width="100px">Product</th>
+                        <th width="100px">Source</th>
+                        <th width="75px">Created</th>
+                        <th width="75px">Opened</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @* Only display the rows if the stage is expanded *@
+                    @if (expandedStages.Contains((int)stage))
+                    {
+                        @foreach (var lead in AllLeads.Where(l => l.Stage == (int)stage))
+                        {
+                            <tr @onclick="() => NavToLead(lead.LeadId)" style="cursor: pointer;">
+                                <td>@lead.CompanyName</td>
+                                <td>@lead.ContactName</td>
+                                <td>@(lead.Email ?? "--")</td>
+                                <td>@(lead.PhoneNumber ?? "--")</td>
+                                <td>@lead.Product?.LineNickname</td>
+                                <td>@lead.Source</td>
+                                <td>@StringHelper.FormatDateTimeDifference(lead.CreatedDate)</td>
+                                <td>@StringHelper.FormatDateTimeDifference(lead.LastOpened)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            @if (!AllLeads.Any(l => l.Stage == (int)stage))
+            {
+                <div class="nonefound">Nothing here.</div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    public List<Lead> AllLeads { get; set; } = new List<Lead>();
+    private HashSet<int> expandedStages = new HashSet<int>();
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AllLeads = await ClientService.GetAllLeadsAsync();
+        // Expand all stages except Archive, Trash, and Converted by default
+        foreach (var stage in Enum.GetValues(typeof(LeadStage)).Cast<LeadStage>())
+        {
+            if (stage != LeadStage.Archive && stage != LeadStage.Trash && stage != LeadStage.Converted)
+            {
+                expandedStages.Add((int)stage);
+            }
+        }
+        UpdateHeader?.Invoke("Leads");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleExpand(int stageNum)
+    {
+        if (expandedStages.Contains(stageNum))
+        {
+            expandedStages.Remove(stageNum);
+        }
+        else
+        {
+            expandedStages.Add(stageNum);
+        }
+    }
+
+    private void NavToCreate()
+    {
+        Navigation.NavigateTo("/Leads/Create");
+    }
+
+    private void NavToLead(int leadId)
+    {
+        Navigation.NavigateTo($"/Leads/{leadId}");
+    }
+}

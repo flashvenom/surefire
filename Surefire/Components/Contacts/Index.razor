@@ -1,0 +1,135 @@
+﻿@page "/Contacts"
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Domain.Contacts.Services
+@using Microsoft.EntityFrameworkCore
+@inject ContactService ContactService
+
+<div class="page-toolbar">
+    <FluentButton Appearance="Appearance.Accent" Disabled="true" OnClick="NavigateToContactCreate"><FluentIcon Value="@(new Icons.Regular.Size20.Add())" Color="Color.Custom" CustomColor="#fff" Slot="start" /> New Contact</FluentButton>
+
+    <span class="sf-verthr2"></span>
+
+    @if (ContactId != 0)
+    {
+        <NavLink class="toolbar-link" href="@("Contacts/Edit/" + ContactId)" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+            <span class="toolbar-text">Edit @ContactName</span>
+        </NavLink>
+    }
+
+    <span class="sf-verthr2"></span>
+
+    <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+</div>
+
+<div class="page-content-datagrid">
+    <div class="fluent-data-grid">
+        <FluentDataGrid Items="@FilteredContacts" ResizableColumns="true" Pagination="@pagination" ShowHover="true"
+                        OnRowDoubleClick="@((FluentDataGridRow<Contact> row) => HandleRowDoubleClick(row))"
+                        OnRowClick="@((FluentDataGridRow<Contact> row) => HandleRowClick(row))">
+            <PropertyColumn Property="@(p => p.ContactId)" Title="Contact Id" Width="60px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.FirstName)" Title="First Name" Width="200px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.LastName)" Title="Last Name" Width="200px" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Title)" Title="Title" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Email)" Title="Email" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Phone)" Title="Phone" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Mobile)" Title="Mobile" Sortable="true" />
+            <PropertyColumn Property="@(p => p.DateCreated)" Title="Date Created" Sortable="true" />
+        </FluentDataGrid>
+        <div class="fluent-data-grid__bottombar">
+            <div class="fluent-data-grid__pagination">
+                <FluentPaginator State="@pagination" />
+            </div>
+
+            <div class="fluent-data-grid__search">
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public IQueryable<Contact> ContactData { get; set; }
+    public IQueryable<Contact> FilteredContacts { get; set; }
+    public int ContactId { get; set; }
+    public string SelectedContactName { get; set; } = "";
+    public string SearchTerm { get; set; } = string.Empty;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
+    private System.Timers.Timer debounceTimer;
+    bool SelectFromEntireRow = true;
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+    public string ContactName { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Contacts");
+        ContactData = ContactService.GetAllContacts();
+        FilteredContacts = ContactData;
+        debounceTimer = new System.Timers.Timer(300); // Debounce for 300ms
+        debounceTimer.AutoReset = false; // Prevent multiple triggers
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            await InvokeAsync(ApplySearchFilter); // Apply the search filter after the debounce period
+        };
+    }
+
+    private void HandleSearchInput(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        if (e.Value is string searchTerm)
+        {
+            SearchTerm = searchTerm;
+            debounceTimer.Stop();
+            debounceTimer.Start(); // Start the debounce timer
+        }
+    }
+
+    private void ApplySearchFilter()
+    {
+        FilteredContacts = string.IsNullOrWhiteSpace(SearchTerm)
+        ? ContactData
+        : ContactData.Where(c =>
+              EF.Functions.Like(c.FirstName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.LastName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Email.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Phone.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Mobile.ToLower(), $"%{SearchTerm.ToLower()}%"));
+
+        InvokeAsync(StateHasChanged); // Trigger UI refresh after filtering
+    }
+
+    private void HandleRowDoubleClick(FluentDataGridRow<Contact> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedContact = row.Item;
+            ContactId = selectedContact.ContactId;
+            Navigation.NavigateTo($"/Contacts/Details/{ContactId}");
+        }
+    }
+
+    private void HandleRowSelected(FluentDataGridRow<Contact> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedContact = row.Item;
+            ContactId = selectedContact.ContactId;
+            Navigation.NavigateTo($"/Contacts/Details/{ContactId}");
+        }
+    }
+
+    private void HandleRowClick(FluentDataGridRow<Contact> row)
+    {
+        if (row != null && row.Item != null)
+        {
+            var selectedContact = row.Item;
+            row.Class = "selected-row";
+            SelectedContactName = $"{row.Item.FirstName} {row.Item.LastName}";
+            ContactId = selectedContact.ContactId;
+            StateHasChanged();
+        }
+    }
+    private void NavigateToContactCreate()
+    {
+        Navigation.NavigateTo("/Contacts/Create");
+    }
+}

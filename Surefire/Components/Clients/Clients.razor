@@ -1,0 +1,201 @@
+﻿@page "/Clients/{LoadClientId:int}"
+@inherits ClientsBase
+@using Surefire.Domain.Attachments.Components
+@using Surefire.Domain.Policies.Components
+@using Surefire.Domain.Forms.Components
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.Lists
+
+<_toolbar ClientId="@(selectedClient?.ClientId ?? 0)" OnNewPolicy="@SetShowCreatePolicy" ClientLoaded="@(selectedClient != null)" EmailAddresses="@GetAllEmailAddresses()" ClientName="@(selectedClient?.Name ?? "Unknown Client")" PageName="Browse" />
+
+<div class="page-content-client">
+    <div class="@dynamicClass">
+        <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Custom" CustomColor="#cf4640" />
+        </FluentTextField>
+        <div class="client-list">
+            @foreach (var item in filteredClients)
+            {
+                <div class="client-list-item" @onclick="async () => await LoadClientClickHandler(item.ClientId)">
+                    @item.Name
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="sf-selected">
+        <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
+        <div class="client-top">
+            <ClientHeader selectedClient="@selectedClient" />
+        </div>
+        <div class="client-main">
+            <FluentTabs @ref="tabInterface" @bind-ActiveTabId="_stateService.ClientTab" Size="TabSize.Large">
+                <FluentTab Id="tab-1" Label="Overview" Class="sf-tab-client">
+                    <div class="sf-col-container">
+                        <div class="sf-col sf-col-1">
+                            <CurrentPolicies selectedClient="@selectedClient" currentPolicies="@currentPolicies" OnOutlookSearchForPolicy="OutlookSearchForThisPolicy" />
+                        </div>
+
+                        <div class="sf-col sf-col-2">
+                            <div class="txt-section">Contacts</div>
+                            @if (selectedClient != null)
+                            {
+                                @if (selectedClient.PrimaryContact != null)
+                                {
+                                    <ContactsList Contacts="@primaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="true" />
+                                }
+                                <ContactsList Contacts="@secondaryContactList" ParentType="Client" ParentId="@selectedClient.ClientId" IsPrimary="false" />
+
+                                <div style="height:30px;"></div>
+                                <div class="txt-section">RECENT PAYMENTS</div>
+                                <RecentPaymentsList ContactsList="selectedClient.Contacts.ToList()" />
+
+                                <div style="height:30px;"></div>
+                                <div class="txt-section">RECENT CALLS</div>
+                                <RecentPhoneCallsList PhoneNumbers="@phoneNumbers" />
+                            }
+                        </div>
+
+                        <div class="sf-col sf-col-3">
+                            @if (selectedClient != null && !string.IsNullOrEmpty(selectedClient.LogoFilename))
+                            {
+                                <img src="/uploads/logos/@selectedClient.LogoFilename" class="img-fluid" />
+                            }
+                        </div>
+                    </div>
+                </FluentTab>
+                <FluentTab Id="tab-2" Label="Policies" Class="sf-tab-client">
+                    <div class="tabcontentsnopad">
+                        @if (selectedClient != null)
+                        {
+                            @if (showCreatePolicy)
+                            {
+                                <CreatePolicyForClient ClientId="selectedClient.ClientId" OnCloseCreatePolicy="@SetHideCreatePolicy" />
+                            }
+                            else
+                            {
+                                <PolicyListGrid policyList="selectedClient?.Policies.AsQueryable()" />
+                            }
+                        }
+                    </div>
+                </FluentTab>
+                <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab">
+                    <div class="tabcontents">
+                        <div class="txt-section">Attachments</div>
+                        @if (selectedClient != null)
+                        {
+                            <DropzoneContainer ClientId="selectedClient?.ClientId ?? 0" OnAttachmentAdded="HandleAttachmentAdded">
+                                <AttachmentListGrid ClientId="selectedClient?.ClientId ?? 0" />
+                            </DropzoneContainer>
+                        }
+                    </div>
+                </FluentTab>
+                <FluentTab Id="tab-4" Label="Forms" Class="sf-tab">
+                    <div class="tabcontents">
+                        <div class="txt-section">Certificates</div>
+                        @if (selectedClient != null)
+                        {
+                            <CertificateList certList="selectedClient.Certificates.ToList()" />
+                        }
+                        <div style="height:25px;"></div>
+                        <div class="txt-section">Applications</div>
+                        @if (selectedClient != null)
+                        {
+                            <FormDocList formDocList="selectedClient.FormDocs.ToList()" />
+                        }
+                        <br /><br />Create New:
+                        @foreach (var item in allFormPdfs)
+                        {
+                            <FluentButton @onclick="() => CreateNewForm(item.FormPdfId)">@item.Title</FluentButton>
+                        }
+                    </div>
+                </FluentTab>
+
+                <FluentTab Id="tab-4b" Label="Details" Class="sf-tab">
+                    @if (selectedClient != null)
+                    {
+                        <BusinessDetail ClientId="selectedClient.ClientId" />
+                    }
+                </FluentTab>
+                <FluentTab Id="tab-6" Label="Utilities" Class="sf-tab-client">
+                    @if (selectedClient != null)
+                    {
+                        <FluentStack Class="tabcontents">
+                            <div style="width:600px; padding-top:20px; padding-left:10px;">
+
+                                <PaylinkBuilder Client="selectedClient" Policy="currentPolicies.FirstOrDefault()" />
+
+                                <div class="sf-spacer"></div>
+
+                                <span class="txt-section-bar">TOOLS & DATA</span>
+                                <div class="div-section">
+                                    @if (selectedClient != null)
+                                    {
+                                        <FluentStack>
+                                            <div style="margin-bottom:10px;">
+                                                <div class="txt-small">Client Code</div>
+                                                <div class="txt-small-sub">@selectedClient.LookupCode</div>
+                                            </div>
+                                            <div style="margin-bottom:10px;">
+                                                <div class="txt-small">Client Id</div>
+                                                <div class="txt-small-sub">@selectedClient.ClientId</div>
+                                            </div>
+                                            <div style="margin-bottom:10px;">
+                                                <div class="txt-small">eClient Id</div>
+                                                <div class="txt-small-sub">@selectedClient.eClientId</div>
+                                            </div>
+                                            <div style="margin-bottom:10px;">
+                                                <div class="txt-small">API Status</div>
+                                                @if (utilityLoading)
+                                                {
+                                                    <div class="txt-small-sub">@utilityLoading.ToString()</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="txt-small-sub">Loading...</div>
+                                                }
+                                            </div>
+                                        </FluentStack>
+                                    }
+                                    <div class="sf-hr"></div>
+
+                                    @if (selectedClient?.eClientId == null)
+                                    {
+                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="@(() => ForceImportPolicies())">Load Policies</FluentButton>
+                                    }
+                                    else
+                                    {
+                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" Disabled="true">Load Policies</FluentButton>
+                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" Disabled="true">Update Sync Policies</FluentButton>
+                                    }
+
+                                    <div class="sf-spacer-sm"></div>
+                                    <div style="width:100%; text-align:center;">@utilityStatus</div>
+                                    <div class="sf-spacer-sm"></div>
+                                    @if (utilityLoading)
+                                    {
+                                        <FluentProgressRing Visible="true" Size="ProgressRingSize.Large" Width="50" />
+                                    }
+                                </div>
+                            </div>
+                            <div style="min-width:900px; padding-top:20px;">
+                                <span class="txt-section-bar">IMPORT CONTACTS</span>
+                                <div class="div-section">
+                                    <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="UtilImportContacts">Import Contacts</FluentButton>
+
+                                    @if (loadedContacts.Count > 0)
+                                    {
+                                        <ContactsListImport Contacts="@loadedContacts" ParentType="Client" ParentId="@selectedClient.ClientId" />
+                                        <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddLoadedContactsToClient">Import Contacts</FluentButton>
+                                    }
+                                </div>
+                            </div>
+                        </FluentStack>
+                    }
+                </FluentTab>
+            </FluentTabs>
+        </div>
+        <div class="top-loader top-loader-@isLoading"><SfSpinner Type="SpinnerType.Bootstrap5" Visible="true" Size="100" CssClass="e-spin-overlay"></SfSpinner></div>
+    </div>
+    <div style="clear:both;"></div>
+</div>

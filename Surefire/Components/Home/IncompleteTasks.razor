@@ -1,0 +1,58 @@
+﻿@using Surefire.Domain.Renewals.ViewModels
+@using Surefire.Domain.Renewals.Services
+@using Syncfusion.Blazor.Notifications
+@inject RenewalService RenewalService
+
+<div class="sectiontitletab">Incomplete Tasks</div>
+<div class="incomplete-container">
+    <table id="incomplete-table" cellspacing="0">
+        <tbody>
+            @if (incompletetasks == null || isLoading)
+            {
+                for (var i = 0; i < 7; i++)
+                {
+                    <tr>
+                        <td><SfSkeleton Shape=SkeletonType.Rectangle Width="100%" Height="15px" CssClass="e-customize" Visible="true"></SfSkeleton></td>
+                    </tr>
+                }
+            }
+            else if (!incompletetasks.Any())
+            {
+                <tr>
+                    <td class="nothingfound">Nothing found here.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var task in incompletetasks)
+                {
+                    <tr class="trow2 ellipsis">
+                        <td class="intd"><span class="prodmeme">@StringHelper.GetSafeSubstring(task.PolicyProduct, 0, 3)</span><span class="hexp2">@task.RenewalDate.ToString("MM/dd")</span></td>
+                        <td class="ellipsis">
+                            <FluentStack>
+                                <div class="inco infill"><a @onclick="() => HandleRenewalClick(task.RenewalId)">@task.ClientName</a></div>
+                                <div class="inco">@task.TaskName</div>
+                            </FluentStack>
+                            
+                        
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public List<HomePageTasksViewModel> incompletetasks { get; set; }
+
+    [Parameter]
+    public bool isLoading { get; set; }
+
+    protected async Task HandleRenewalClick(int renewalId)
+    {
+        var ren = await RenewalService.GetRenewalByIdAsync(renewalId);
+        Navigation.NavigateTo($"/Renewals/Details/{renewalId}");
+    }
+}

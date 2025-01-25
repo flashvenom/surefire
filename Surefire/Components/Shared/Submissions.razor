@@ -1,0 +1,267 @@
+﻿@using Surefire.Domain.Renewals.Models
+@using Surefire.Domain.Carriers.Models
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Navigations
+@using Surefire.Domain.Attachments.Components
+@inherits SubmissionsBase
+
+<div class="sf-navlist">
+    <div class="navlist-btns">
+        <span class="navlistbtngo" @onclick="() => ShowAddScreen()"><FluentIcon Value="@(new Icons.Filled.Size24.AddSquare())" Color="Color.FillInverse" /></span>
+        <span class="navlistbtngo" @onclick="() => ShowSummaryScreen()"><FluentIcon Class="navlistbtn" Value="@(new Icons.Filled.Size24.AppsList())" Color="Color.FillInverse" /></span>
+    </div>
+
+    @if (SubmissionsList != null)
+    {
+        @foreach (var item in SubmissionsList)
+        {
+            <div class="subm @(SelectedSubmission != null && item.SubmissionId == SelectedSubmission.SubmissionId ? "selected-submission" : "")" @onclick="() => LoadSubmission(item.SubmissionId)">
+                <div class="subm-title">
+                    @if (item.Wholesaler != null && item.Carrier != null)
+                    {
+                        <span class="subm-title__listing">@item.Wholesaler.CarrierNickname</span>
+                        <FluentIcon Class="subm-arrow" Value="@(new Icons.Regular.Size16.ChevronDoubleRight())" Color="Color.FillInverse" />
+                        <span>@StringHelper.CropCarrierName(item.Carrier.CarrierName)</span>
+                    }
+                    @if (item.Carrier != null && item.Wholesaler == null)
+                    {
+                        <span class="subm-title__listing">@StringHelper.CropCarrierName(item.Carrier.CarrierName)</span>
+                    }
+                    @if (item.Wholesaler != null && item.Carrier == null)
+                    {
+                        <span class="subm-title__listing">@StringHelper.CropCarrierName(item.Wholesaler.CarrierName)</span>
+                    }
+                </div>
+                <div class="subm-byline">
+                    <span class="subm-byline__bold">Status:</span> @StringHelper.GetStyledSubmissionStatus(item.StatusInt)
+                    @if (item.Premium != null)
+                    {
+                        <span class="subm-byline__special">@item.Premium?.ToString("C0")</span>
+                    }
+                </div>
+                <div class="subm-preview">
+                    @((item.SubmissionNotes.OrderByDescending(a => a.DateCreated).FirstOrDefault() is SubmissionNote latestNote && latestNote != null)
+                            ? latestNote.Note
+                            : "(No notes yet)")
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<div class="sf-viewpanel">
+    @if (ViewPanelView == "submissions")
+    {
+        @if(SelectedSubmission != null)
+        {
+
+            <div class="mf-flextwocolumn">
+                @if (SelectedSubmission.Wholesaler != null)
+                {
+                    <div class="mf-flextwocolumn-col">
+
+                        <div class="carrier">
+                            <div class="txt-section">Wholesaler</div>
+                            <div class="carriertitle"><a href="/Carriers/Details/@SelectedSubmission.Wholesaler.CarrierId" class="sf-link">@SelectedSubmission.Wholesaler.CarrierName</a></div>
+                            <div class="contentflex">
+                                <ContactsSlider Contacts="SelectedSubmission.Wholesaler.Contacts.ToList()" ParentType="submissionwholesaler" ParentId="SelectedSubmission.SubmissionId" DefaultContactId="SelectedSubmission.PrimaryWholesalerContactId" />
+                                @if (!string.IsNullOrEmpty(SelectedSubmission.Wholesaler.QuotingWebsite))
+                                {
+                                    <div>
+                                        <a href="@StringHelper.FormatUrl(SelectedSubmission.Wholesaler.QuotingWebsite)" class="weblink" target="_blank"><FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.FillInverse" /></a>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(SelectedSubmission.Wholesaler.QuotingWebsite))
+                                {
+                                    <div>
+                                        <a href="mailto:@SelectedSubmission.Wholesaler.NewSubmissionEmail" class="weblink"><FluentIcon Value="@(new Icons.Regular.Size48.Mail())" Color="Color.FillInverse" /></a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (SelectedSubmission.Carrier != null)
+                {
+                    <div class="mf-flextwocolumn-col">
+                        <div class="carrier">
+                            <div class="txt-section">Carrier</div>
+                            <div class="carriertitle"><a href="/Carriers/Details/@SelectedSubmission.Carrier.CarrierId" class="sf-link">@SelectedSubmission.Carrier.CarrierName</a></div>
+                            <div class="contentflex">
+                                <ContactsSlider Contacts="SelectedSubmission.Carrier.Contacts.ToList()" ParentType="submissioncarrier" ParentId="SelectedSubmission.SubmissionId" DefaultContactId="SelectedSubmission.PrimaryCarrierContactId" />
+                                @if (!string.IsNullOrEmpty(SelectedSubmission.Carrier.QuotingWebsite))
+                                {
+                                    <div>
+                                        <a href="@StringHelper.FormatUrl(SelectedSubmission.Carrier.QuotingWebsite)" class="weblink" target="_blank"><FluentIcon Value="@(new Icons.Regular.Size48.Globe())" Color="Color.FillInverse" /></a>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(SelectedSubmission.Carrier.QuotingWebsite))
+                                {
+                                    <div>
+                                        <a href="mailto:@SelectedSubmission.Carrier.NewSubmissionEmail" class="weblink"><FluentIcon Value="@(new Icons.Regular.Size48.Mail())" Color="Color.FillInverse" /></a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div><!--/flexcolumn-->
+            <div style="height:20px;"></div>
+
+            <div class="mf-flextwocolumnls">
+                <div class="mf-flextwocolumnls-col mf-flextwocolumnrs-col--first">
+                    <div class="status-container">
+                        <span class="txt-section">STATUS</span>
+                        <div style="height:10px;"></div>
+                        <div class="sf-stepper-container">
+                            <SfStepper Orientation="StepperOrientation.Horizontal" LabelPosition="StepperLabelPosition.Bottom" ID="main-stepper" @bind-ActiveStep="SelectedSubmission.StatusInt"
+                            StepClicked="@(args => OnStepperClicked(args))" Linear="false" @key="SelectedSubmission?.SubmissionId">
+                                <StepperSteps>
+                                    <StepperStep IconCss="e-icons x-plus-icon" Label="Starting"></StepperStep>
+                                    <StepperStep IconCss="e-icons x-pencil-icon" Label="Submitted"></StepperStep>
+                                    <StepperStep IconCss="e-icons x-changes-icon" Label="Underwriting"></StepperStep>
+                                    <StepperStep IconCss="e-icons x-send-icon" Label="Quoting"></StepperStep>
+                                    <StepperStep IconCss="e-icons x-signature-icon" Label="Proposed"></StepperStep>
+                                    <StepperStep IconCss="e-icons x-trash-icon" Label="Declined"></StepperStep>
+                                    <StepperStep IconCss="e-icons x-check-icon" Label="Accepted"></StepperStep>
+                                </StepperSteps>
+                            </SfStepper>
+                        </div>
+                    </div>
+                </div>
+                <div class="mf-flextwocolumnls-col" style="text-align: center;">
+                    <span class="txt-section">PREMIUM</span><br />
+                    <div style="height:25px;"></div>
+                    @if (SelectedSubmission.Premium == 0 || SelectedSubmission.Premium == null)
+                    {
+                        <span class="txt-premium">TBD</span>
+                    }
+                    else
+                    {
+                        <span class="txt-premium">@SelectedSubmission.Premium?.ToString("C0")</span>
+                    }
+                </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="mf-flextwocolumnls">
+                <div class="mf-flextwocolumnls-col" style="border-right: 1px solid #eeeeee;">
+                    <span class="txt-section">NOTES</span><br />
+                    <div style="height:8px;"></div>
+                    <div class="ninetyten">
+                        <FluentTextField Id="newTaskInput" Placeholder="Add a new to-do item..." @bind-Value="NewSubmissionNoteText" @onkeyup="OnKeyUp" Style="width:100% !important;">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="end" Color="Color.Neutral" @onclick="AddSubmissionNote" />
+                        </FluentTextField>
+                    </div>
+                    <div style="height:10px;"></div>
+
+                    @foreach (var note in SelectedSubmission.SubmissionNotes.OrderByDescending(n => n.DateCreated))
+                    {
+                        <div class="note">
+                            <span class="note__date">@note.DateCreated.ToString("MM/dd/yyyy") - </span>
+                            <span class="note__content">@note.Note</span>
+                        </div>
+                    }
+
+                </div>
+                <div class="mf-flextwocolumnls-col" style="border-right: 1px solid #eeeeee;">
+                    <DropzoneContainer SubmissionId="SelectedSubmission.SubmissionId" ClientId="SelectedRenewal?.ClientId" RenewalId="RenewalId" FileBrowserButton="Small"><img src="/img/icons/fileupload.png" class="drop-icon"></DropzoneContainer>
+                    <AttachmentIcons AttachmentsList="SelectedSubmission.Attachments.ToList()" />
+                    
+                    <div class="hr"></div>
+                    <span class="txt-section">UPDATE DETAILS</span><span class="delete-btn" @onclick="DeleteSelectedSubmission">Delete</span>
+                    <FluentStack>
+                        <div class="ninetyten">
+                            <SfNumericTextBox TValue="int" @bind-Value="PremiumSave" Format="c2" Placeholder="Premium" FloatLabelType="@FloatLabelType.Always" CssClass="prembox"></SfNumericTextBox>
+                        </div>
+                        <div @onclick="SavePremium" class="ittydisk">
+                            <FluentIcon Value="@(new Icons.Filled.Size24.Save())" Color="Color.Accent" />
+                        </div>
+                    </FluentStack>
+                    <FluentStack>
+                        <div class="ninetyten">
+                            <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Carrier" DataSource="@AllCarriers" AllowFiltering="true" FilterType="FilterType.Contains"
+                            FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="CarrierSaveId">
+                                <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </div>
+                        <div @onclick="SaveCarrier" class="ittydisk">
+                            <FluentIcon Value="@(new Icons.Filled.Size24.Save())" Color="Color.Accent" />
+                        </div>
+                    </FluentStack>
+                    <FluentStack>
+                        <div class="ninetyten">
+                            <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Wholesaler" DataSource="@AllWholesalers" AllowFiltering="true" FilterType="FilterType.Contains"
+                            FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="WholesalerSaveId">
+                                <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </div>
+                        <div @onclick="SaveWholesaler" class="ittydisk">
+                            <FluentIcon Value="@(new Icons.Filled.Size24.Save())" Color="Color.Accent" />
+                        </div>
+                    </FluentStack>
+                </div>
+            </div>
+        }
+        else
+        {
+            if(SubmissionsList != null)
+            {
+                if (SubmissionsList.Count == 0 && SType == "renewal")
+                {
+                    <div class="txt-alert-box">
+                        <span class="txt-alert">This renewal has no submissions yet. Do you want to create one for the incumbant?</span><br /><br />
+                        <FluentButton OnClick="CreateIncumbantSubmission" Appearance="Appearance.Accent">CREATE SUBMISSION</FluentButton>
+                    </div>
+                }
+            }
+
+            <span class="txt-bold">Please select or <a @onclick="ShowAddScreen">create a submission</a>.</span>
+        }
+    } 
+
+    @if (ViewPanelView == "add")
+    {
+        <div class="view-panel-inner">
+            <div class="txt-section">NEW SUBMISSION</div>
+            @if (AllCarriers != null)
+            {
+                <div class="sf-newsubmission">
+                    <div class="subcol">
+                        <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Select Carrier" DataSource="@AllCarriers" AllowFiltering="true" FilterType="FilterType.Contains" FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="SelectedCarrierId">
+                            <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                    </div>
+                    <div style="height:20px;"></div>
+                    <div class="subcol">
+                        <SfDropDownList TValue="int" TItem="Carrier" Placeholder="Select Wholesaler" DataSource="@AllWholesalers" AllowFiltering="true" FilterType="FilterType.Contains" FloatLabelType="FloatLabelType.Always" ShowClearButton="true" @bind-Value="SelectedWholsalerId">
+                            <DropDownListFieldSettings Value="CarrierId" Text="CarrierName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                    </div>
+                    <div style="height:20px;"></div>
+                    <div class="subcol">
+                        <SfButton Content="Add Submission" CssClass="e-primary" OnClick="CreateSubmission" class="tweaker2"></SfButton>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    @if (ViewPanelView == "summary")
+    {
+        <div class="view-panel-inner">
+            <div class="txt-section">SUBMISSIONS SUMMARY</div>
+
+            @if (SubmissionsList != null && SubmissionsList.Count > 0)
+            {
+                foreach (var item in SubmissionsList)
+                {
+                    <span>@item.Carrier?.CarrierName - @StringHelper.GetSubmissionStatus(item.StatusInt) - @item.Premium?.ToString("C0")</span><br />
+                }
+            }
+        </div>
+    }
+</div>
+
+<style> :root .x-plus-icon::before {content: '\e805';}.x-pencil-icon::before {content: '\e740';}.x-changes-icon::before {content: '\e7a8';}:root .x-send-icon::before {content: '\e71d';}:root .x-trash-icon::before {content: '\e820';}:root .x-check-icon::before {content: '\e727';}.x-signature-icon::before {content: '\e897';}</style>

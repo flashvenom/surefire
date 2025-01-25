@@ -1,0 +1,141 @@
+﻿@namespace Surefire.Domain.Attachments.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Surefire.Domain.Attachments.Services
+@using Surefire.Domain.Attachments.Models
+@using Surefire.Domain.Shared.Helpers
+@using Surefire.Domain.Shared.Services
+@inject NavigationManager NavigationManager
+@inject AttachmentService AttachmentService
+@inject StateService StateService
+
+<div class="mf-flexatt">
+    <div class="mf-flexcol-att1">
+        <FluentDataGrid @ref="@attachmentDataGrid" Items="attachmentListQueryable" ResizableColumns="true" TGridItem="Attachment" ShowHover="true" OnRowClick="@((FluentDataGridRow<Attachment> row) => HandleRowClick(row))">
+            <PropertyColumn Property="@(p => p.Description ?? "")" Title="File" Sortable="true" />
+            <PropertyColumn Property="@(p => p.DateCreated)" Title="Created" Sortable="true" Format="MM-dd-yyyy" />
+            <PropertyColumn Property="@(p => p.Folder != null ? p.Folder.Name : "")" Title="Folder" Sortable="true" />
+            <PropertyColumn Property="@(p => p.OriginalFileName ?? "")" Title="Filename" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Policy != null ? p.Policy.PolicyNumber : "")" Title="Policy" Sortable="true" />
+            <PropertyColumn Property="@(p => StringHelper.RemoveHashedFileName(p.LocalPath, p.HashedFileName))" Title="Path" Sortable="true" />
+            <PropertyColumn Property="@(p => StringHelper.FormatSize(p.FileSize))" Title="Size" Sortable="true" />
+            <PropertyColumn Property="@(p => p.UploadedBy != null ? p.UploadedBy.FirstName : "")" Title="User" Sortable="true" />
+        </FluentDataGrid>
+    </div>
+    <div class="mf-flexcol-att2">
+        <AttachmentPreview attachmentId="selectedAttachmentId" />
+    </div>
+</div>
+<div style="text-align: center; margin-top: 10px;">
+    <FluentButton OnClick="RefreshAttachmentList">Load Data</FluentButton>
+</div>
+@code {
+
+    [Parameter] public int ClientId { get; set; }
+    private List<Attachment> attachmentList;
+    private IQueryable<Attachment> attachmentListQueryable;
+    private int? selectedAttachmentId { get; set; }
+    private string currentSortColumn = "Description";
+    private bool isAscending = true;
+    private FluentDataGrid<Attachment> attachmentDataGrid;
+
+    protected override void OnInitialized()
+    {
+        StateService.OnAttachmentListUpdated += RefreshAttachmentListOnEvent;
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        await RefreshAttachmentList();
+    }
+
+    private async void RefreshAttachmentListOnEvent()
+    {
+        await RefreshAttachmentList();
+    }
+
+    private void HandleRowClick(FluentDataGridRow<Attachment> row)
+    {
+        if (row?.Item?.AttachmentId == null)
+        {
+            // Return if there's no valid attachment
+            selectedAttachmentId = null;
+            return;
+        }
+
+        selectedAttachmentId = row.Item.AttachmentId;
+    }
+    private async Task LoadAttachmentsAsync()
+    {
+        attachmentList = await AttachmentService.GetAttachmentsByClientIdAsync(ClientId);
+        attachmentListQueryable = attachmentList.AsQueryable();
+    }
+    private async Task RefreshAttachmentList()
+    {
+        await LoadAttachmentsAsync();
+        if (attachmentDataGrid != null)
+        {
+            try
+            {
+                await attachmentDataGrid.RefreshDataAsync();
+            }
+            catch
+            {
+                Console.WriteLine("Can't update attachment list");
+            }
+        }
+        else
+        {
+            Console.WriteLine("attachmentDataGrid is null.");
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+    private void ApplySorting()
+    {
+        attachmentListQueryable = currentSortColumn switch
+        {
+            "Description" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.Description ?? "")
+                : attachmentListQueryable.OrderByDescending(a => a.Description ?? ""),
+            "DateCreated" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.DateCreated)
+                : attachmentListQueryable.OrderByDescending(a => a.DateCreated),
+            "Folder" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.Folder != null ? a.Folder.Name : "")
+                : attachmentListQueryable.OrderByDescending(a => a.Folder != null ? a.Folder.Name : ""),
+            "OriginalFileName" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.OriginalFileName ?? "")
+                : attachmentListQueryable.OrderByDescending(a => a.OriginalFileName ?? ""),
+            "PolicyNumber" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.Policy != null ? a.Policy.PolicyNumber : "")
+                : attachmentListQueryable.OrderByDescending(a => a.Policy != null ? a.Policy.PolicyNumber : ""),
+            "LocalPath" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.LocalPath ?? "")
+                : attachmentListQueryable.OrderByDescending(a => a.LocalPath ?? ""),
+            "FileSize" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.FileSize)
+                : attachmentListQueryable.OrderByDescending(a => a.FileSize),
+            "UploadedBy" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.UploadedBy != null ? a.UploadedBy.FirstName : "")
+                : attachmentListQueryable.OrderByDescending(a => a.UploadedBy != null ? a.UploadedBy.FirstName : ""),
+            _ => attachmentListQueryable
+        };
+    }
+
+    private void ToggleSortOrder(string columnName)
+    {
+        if (currentSortColumn == columnName)
+            isAscending = !isAscending;
+        else
+        {
+            currentSortColumn = columnName;
+            isAscending = true;
+        }
+        ApplySorting();
+        // StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        StateService.OnAttachmentListUpdated -= RefreshAttachmentListOnEvent;
+    }
+}

@@ -1,0 +1,273 @@
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Microsoft.AspNetCore.Components.Web
+@using Surefire.Domain.Clients.Models
+@using Surefire.Domain.Shared.Models
+@using Surefire.Domain.Shared.Services
+@inject SearchService SearchService
+@inject NavigationManager NavigationManager
+@inject StateService _stateService
+@inject IJSRuntime JS
+@inject IKeyCodeService KeyCodeService
+@implements IAsyncDisposable
+
+<div class="fsearch-container">
+    <div class="fsearch-bar">
+        <FluentTextField @ref="fireSearch" Id="fSearcher" @bind-Value="mainSearchString" @oninput="OnInputChanged" @onblur="OnBlur" @onfocusout="OnBlur" Placeholder="Search everything..." Class="fsearch-quick" AutoComplete="off" @onkeydown="HandleKeyDown">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Neutral" />
+        </FluentTextField>
+    </div>
+
+
+    <div class="search-popper @( isPopperVisible ? "fsearch-on" : "fsearch-off") @( isPopperOpened ? "fsearch-show" : "fsearch-hide")">
+            @{
+                string dataType = "";
+            }
+        @if (searchResults != null)
+        {
+            string currentDataType = null;
+
+            @foreach (var item in searchResults.Select((item, index) => new { Item = item, Index = index }))
+            {
+                // Only display the DataType header when it changes
+                if (item.Item.DataType != currentDataType)
+                {
+                    currentDataType = item.Item.DataType;
+                    <div class="search-category">@item.Item.DataType</div>
+                }
+
+                <div class="search-item @(selectedIndex == item.Index ? "fsearch-selecteditem" : "")" @onclick="() => GoLink(item.Item)">
+                    @item.Item.Primary
+                </div>
+
+                @if (!string.IsNullOrEmpty(item.Item.Parent))
+                {
+                    <div class="search-item-parent">@item.Item.Parent</div>
+                }
+            }
+        }
+        </div>
+</div>
+
+@code {
+    private string mainSearchString { get; set; } = "";
+    private List<FireSearchResultViewModel> searchResults;
+    private CancellationTokenSource cts;
+    private bool isPopperVisible = false;
+    private bool isPopperOpened = false;
+    private int selectedIndex = -1;
+    private bool IncludeKeyUp = false;
+    private List<(string Key, string Event)> KeyPressed = new();
+    public FluentTextField fireSearch { get; set; }
+
+    protected override void OnInitialized()
+    {
+        cts = new CancellationTokenSource();
+        KeyCodeService.RegisterListener(OnKeyHandleAsync, OnKeyHandleAsync);
+    }
+
+    private async Task OnInputChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        mainSearchString = e.Value?.ToString();
+        isPopperVisible = true;
+        isPopperOpened = true;
+        cts.Cancel();
+        cts.Dispose();
+        cts = new CancellationTokenSource();
+
+        var currentToken = cts.Token;
+
+        try
+        {
+            // Debounce delay
+            await Task.Delay(150, currentToken); // Adjust the delay as needed
+
+            // Check if the operation was cancelled
+            if (currentToken.IsCancellationRequested)
+                return;
+
+            await UpdateSearch(currentToken);
+        }
+        catch (TaskCanceledException)
+        {
+            // Operation was cancelled, do nothing
+        }
+    }
+
+    private async Task UpdateSearch(CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(mainSearchString))
+        {
+            searchResults = null;
+            isPopperVisible = false;
+            selectedIndex = -1;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        searchResults = await SearchService.SearchAllUsingSPAsync(mainSearchString, cancellationToken);
+
+        // Check if the operation was cancelled
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        selectedIndex = 0;
+        isPopperVisible = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnBlur()
+    {
+        _ = Task.Run(async () =>
+       {
+           await Task.Delay(200);
+           isPopperVisible = false;
+           searchResults = null;
+           mainSearchString = "";
+           await InvokeAsync(StateHasChanged);
+       });
+    }
+
+    public void GoLink(FireSearchResultViewModel item)
+    {
+        string url = "";
+
+        switch (item.DataType)
+        {
+            case "Client":
+                url = $"/Clients/{item.Id}";
+                break;
+            case "Carrier":
+                url = $"/Carriers/Details/{item.Id}";
+                break;
+            case "Contact":
+                url = $"/Contacts/Details/{item.Id}";
+                break;
+            case "Policy":
+                url = $"/Policies/Details/{item.Id}"; // Assuming you navigate to the client page
+                break;
+            case "Renewal":
+                url = $"/Renewals/Details/{item.Id}"; // Assuming you navigate to the client page
+                break;
+            case "Address":
+                if (item.AddressType == "Client")
+                {
+                    url = $"/Clients/{item.Id}";
+                }
+                else if (item.AddressType == "Carrier")
+                {
+                    url = $"/Carriers/Details/{item.Id}";
+                }
+                else
+                {
+                    url = "/";
+                }
+                break;
+            default:
+                url = "/";
+                break;
+        }
+        var currentBaseUrl = new Uri(NavigationManager.Uri).AbsolutePath.Split('/')[1];
+        var selectedBaseUrl = url.Split('/')[1];
+
+        if (currentBaseUrl.Equals(selectedBaseUrl, StringComparison.OrdinalIgnoreCase))
+        {
+            if(item.DataType == "Client")
+            {
+                if (_stateService.LoadClientFromSearch != null)
+                {
+                    //Since we're already on the client page, do a loadClient instead of navigation
+                    _stateService.LoadClientFromSearch.Invoke(item.Id);
+                }
+                else
+                {
+                    NavigationManager.NavigateTo($"/Clients/{item.Id}");
+                }
+            }
+            else
+            {
+                //Since we're going to the same component, force the reload
+                NavigationManager.NavigateTo(url, forceLoad: true);
+            }
+        }
+        else
+        {
+            //Since we're going to a new page, navigate to url
+            NavigationManager.NavigateTo(url);
+        }
+        //searchResults = null;
+        isPopperVisible = false;
+        selectedIndex = -1;
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (searchResults == null || !searchResults.Any())
+            return;
+
+        if (e.Key == "Escape")
+        {
+            await JS.InvokeVoidAsync("blurField", "fSearcher");
+            //mainSearchString = "";
+            return;
+        }
+
+        if (e.Key == "ArrowDown")
+        {
+            // Move selection down
+            selectedIndex = (selectedIndex + 1) % searchResults.Count;
+            StateHasChanged();
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            // Move selection up
+            selectedIndex = (selectedIndex - 1 + searchResults.Count) % searchResults.Count;
+            StateHasChanged();
+        }
+        else if (e.Key == "Enter" && selectedIndex >= 0)
+        {
+            // Navigate to the selected result
+            await JS.InvokeVoidAsync("blurField", "fSearcher");
+            GoLink(searchResults[selectedIndex]);
+        }
+    }
+
+    private Task OnKeyHandleAsync(FluentKeyCodeEventArgs args)
+    {
+        if (!IncludeKeyUp && args.Name == "keyup")
+        {
+            return Task.CompletedTask;
+        }
+
+        if(args.ToString() == "Ctrl + Shift + F")
+        {
+            fireSearch.FocusAsync();
+        }
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+    
+    public ValueTask DisposeAsync()
+    {
+        KeyCodeService.UnregisterListener(OnKeyHandleAsync, OnKeyHandleAsync);
+        cts.Cancel();
+        cts.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    //This is part of the searchfieldfocus on window focus
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         await JS.InvokeVoidAsync("registerBlazorInstance", DotNetObjectReference.Create(this));
+    //     }
+    // }
+    // [JSInvokable]
+    // public Task FocusSearch()
+    // {
+    //     fireSearch.FocusAsync();
+    //     return Task.CompletedTask;
+    // }
+}

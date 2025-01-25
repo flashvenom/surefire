@@ -1,0 +1,124 @@
+﻿@namespace Surefire.Components.Shared
+@using Surefire
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@using Surefire.Domain.Contacts.Models
+@using Surefire.Components.Shared
+@using Surefire.Domain.Shared.Helpers
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<div>
+    @if (Contacts == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (!Contacts.Any())
+    {
+        <p>No contacts found for this parent.</p>
+    }
+    else
+    {
+        foreach (var item in Contacts)
+        {
+            // Ensure FirstName and LastName are not null
+            string fullName = (item?.FirstName ?? "") + " " + (item?.LastName ?? "");
+
+            string nameInitials;
+            if (!string.IsNullOrEmpty(item?.FirstName) && !string.IsNullOrEmpty(item?.LastName))
+            {
+                nameInitials = $"{item.FirstName[0]}{item.LastName[0]}";
+            }
+            else
+            {
+                nameInitials = "??";
+            }
+
+            string headshotImage = !string.IsNullOrEmpty(item?.HeadshotFilename) ? "/uploads/headshots/" + item.HeadshotFilename : null;
+
+            <FluentStack Class="@("m-contact-" + IsPrimary)">
+                <div>
+                    <FluentPersona Initials="@nameInitials" ImageSize="55px" Class="txt-persona" Image="@headshotImage" />
+                </div>
+
+                <div>
+                    <Trigger Type="Trigger.ClickType.String" Value="@fullName" Class="m-name" />
+                    @if (!string.IsNullOrEmpty(item?.Title))
+                    {
+                        <span class="m-title">, @item.Title</span>
+                    }
+                    <br />
+
+                    @if (!string.IsNullOrEmpty(item?.Email))
+                    {
+                        <Trigger Type="Trigger.ClickType.Email" Value="@item.Email" Class="m-email teldialphone" />
+                        <br />
+                    }
+                    @if (!string.IsNullOrEmpty(item?.Phone))
+                    {
+                        <span class="m-phone m-padafter">
+                            <Trigger Type="Trigger.ClickType.Phone" Value="@StringHelper.FormatPhoneNumber(item.Phone)" Class="teldialphone" />
+                            <span class="m-phonetype">ph.</span>
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(item?.Mobile))
+                    {
+                        <span class="m-phone m-padafter">
+                            <Trigger Type="Trigger.ClickType.Phone" Value="@StringHelper.FormatPhoneNumber(item.Mobile)" Class="teldialphone" />
+                            <span class="m-phonetype">cell</span>
+                        </span>
+                    }
+                </div>
+                <div style="margin-left: auto;">
+                    @if (IsPrimary == true)
+                    {
+                        <div>
+                            <FluentIcon Value="@(new Icons.Filled.Size24.Star())" Color="Color.Accent" />
+                        </div>
+                    }
+                    else
+                    {
+                        <ToggleBookmark IsStarred="@item.IsStarred" OnStarChanged="@((bool isStarred) => ToggleStar(item.ContactId, isStarred))" />
+                    }
+                    <a href="/Contacts/Edit/@(item.ContactId)">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Pen())" CustomColor="#6b6b6b" Color="Color.Custom" />
+                    </a>
+                </div>
+            </FluentStack>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ICollection<Contact> Contacts { get; set; }
+
+    [Parameter]
+    public string ParentType { get; set; }
+
+    [Parameter]
+    public int ParentId { get; set; }
+
+    [Parameter]
+    public bool IsPrimary { get; set; }
+
+    private void ToggleStar(int contactId, bool isStarred)
+    {
+
+    }
+    private void Dispose()
+    {
+        Contacts = null;
+    }
+
+    public enum ClickType
+    {
+        Email,
+        Phone,
+        Url,
+        String
+    }
+}

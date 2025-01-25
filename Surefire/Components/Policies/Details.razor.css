@@ -1,0 +1,31 @@
+﻿.pol-name {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .8em;
+    width: 130px;
+    display: inline-block;
+    font-weight: bold;
+    color: #484848;
+    height: 30px;
+    text-align:right;
+    position:relative;
+    top:4px;
+}
+.pol-value {
+    width: 200px;
+    display: inline-block;
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    color: #000;
+    height: 30px;
+}
+.pol-static {
+    position:relative;
+    top:4px;
+    left:5px;
+}
+.default-subheader {
+    color:#036ac4;
+}
+.default-subheader:hover {
+    cursor:pointer;
+}

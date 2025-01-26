@@ -1,13 +1,10 @@
-# Surefire
+# Surefire AMS
+An insurance agency management system for independant P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as an advanced plugin system for consolodating APIs, writing custom integrations and providing a platform to use your data with your own AI prompts.
 
-## Overview
-Surefire: an insurance agency management system for independant P&C brokers designed with speed and efficiency in mind.
+## Download
+**Alpha Preview v1.0.1**
 
-**ALPHA PREVIEW 1.0.0 RELEASED - Happy New Year**
-https://youtu.be/4MuP97-Afqo
-
-**Demo App**
-[Available Soon to Download Here](https://surefireams.com/)
+[Take a Quick Video Tour](https://youtu.be/4MuP97-Afqo) or [Download the Windows x64 Standalone Installer](https://surefireams.com/)
 
 ![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
 
@@ -19,7 +16,7 @@ https://youtu.be/4MuP97-Afqo
 - Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
 - Set goal dates and assign sub-tasks to other employees. The homepage tells you what tasks you have to complete next for upcoming renewals and when they're due.
 - Store basic policy data like limits, rates and coverages. Attach endorsements to be included in certificates.
-- Issue, store and manage certificates quickly and easily
+- Issue, store and manage certificates, PDF and applications quickly and easily with a built-in PDF editor
  
 ## Technologies Used
 - **ASP.NET Core 9**
@@ -27,7 +24,14 @@ https://youtu.be/4MuP97-Afqo
 - **Entity Framework Core**
 - **Microsoft FluentUI**
 - **SyncFusion Blazor**
-- **Outlook Inerop**
+- **Outlook Interop**
+- **SQL Server and SQLite**
+
+## Plugins Available
+- **RingCentral API**
+- **ePayPolicy API**
+- **AppliedEpic API**
+- **AMS360 SDK API**
 
 ### Version History
 **.1.0.1 - 2025-01-24**
@@ -103,83 +107,28 @@ https://youtu.be/4MuP97-Afqo
 - Master task editor to add tasks to be copied as workflow templates for renewals
 - Much more...
 
-
-
-## High Priority Bugs
-
-## Low Priority Tasks
-- CLIENT      = New Client form needs additional validation
-- LOCATIONS   = Needs work to finish
-
-## Enhancements
-- CARRIERS    = Add a webchat link field for carrier and add icons to renewal and carrier screens
-- SUBMISSIONS = Renewals: Put submission summary and list of all recent notes
-- CALL HUB    = Enhance with persona and icons
-- RENEWAL     = Edit screen should have "archive" bool, when checked mark all tasks complete, hide from renewal lists
-
-### Phase 0
-- PROFILE: User Profile Stuff (Change Password, etc)
-- PLUGINS: Settings and Embedded razor views (ePay link builder))
-- SMS/RingCentral CHAT
-- Move OpenAI to Plugin
-
-### Phase 1
-- Master Task Groups / Create Renewal Settings
-- FORMS REVISIONS STORAGE
-- LEADS INBOX (Connect to website)
-- Attachments Enhancements - Embedded PDF Viewer
-
-### Phase 2
-- MARKETING
-- REPORTS
-- AI-Assisted Search
-- Universal Notes (Add notes model, clientid nav, associatedType associatedId fields. When clicking phone icon, add note icon attaches to client and phone call in phone call log)
-
-### Phase 3 - Accounting
-- PURPLE SHEET / ACCOUNTING SYSTEM
-
-## Features Roadmap
-### Productivity
-- **Microsoft Graph API - For sending emails, searching for client and policy correspondances, etc**
-- **Client Portal - Provide clients with a way to access basic policy data, request a certificate, and update renewal information.**
-
-### Crucial Functionality
-- **Profile Pages - For Identity users to change password, email, name, etc.
-- **Proper Register - With roles and permissions. Confirmation emails and Microsoft OAuth authorizations logic
-
-### General
-- **Settings - Add settings page (gear icon in the upper right top menu) to assign a subemployee/assistant, enter API credentials and store UI preferences.**
-
-### Carriers
-- **Carrier Data: Provide system for storing target markets, AmBest rating, acceptable risks, ratings and IVANs data to provide more. 
-
-### AI/LLM
-- **Side Panel - Create side panel to provide UI to interactive with OpenAI for common tasks**
-- Tool: Get JSON data for locations/address
-- Tool: Get JSON data for clients and policies
-- Tool: Fetch and suggest images for client logo and contact headshots
-
-### DONE
-
-
 ## Installation
 ### Steps
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/Surefire.git
-    cd mantis
+    git clone https://github.com/flashvenom/surefire.git
+    cd Surefire
     ```
 
-2. **Set up the database (optional):**
+2. **Set up your database (optional):**
     Create a `.env` file with your database connection string. Not providing a string will default the system to use a local SQLite database.
     ```txt
-    DEFAULTCONNECTION={YOURSTRING}
+    DEFAULTCONNECTION={CONNECTIONSTRING}
     ```
+    You must exclude either the Data/Migrations (SQL Server) or the Data/MigrationsLocal (SQLite) folder in your solution.
 
-2. **Enter a SyncFusion License:**
-    Register at syncfusion.com and update the `Program.cs` file with your SyncFusion license key (free).
-
+2. **Enter a SyncFusion License Key and OpenAI API Secret:**
+    Register at syncfusion.com and get your free SyncFusion license key, then add your sync function license and OpenAI Secret key to the .env file.
+    ```txt
+    SYNCFUSION={LICENSESTRING}
+    OPENAI={APIKEY}
+    ```
 
 3. **Apply Migrations:**
     ```bash

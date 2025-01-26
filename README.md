@@ -3,14 +3,14 @@
 ## Primer
 Surefire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
 
-## Shots Fired
+## Ammo
 **January 25th, 2025 - Release Preview v1.0.1-alpha**
 
 [Take a Quick Video Tour](https://youtu.be/4MuP97-Afqo) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
 ![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
 
-## Features/Arsenal
+## Scope
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
 - Bring all your APIs together to track payments, phone calls, leads, signed documents, forms and more
 - Leverage OpenAI integration to make custom prompts to process your data and get work done faster
@@ -20,7 +20,7 @@ Surefire is an insurance agency management system for independent P&C brokers. D
 - Store basic policy data like limits, rates and coverages. Attach endorsements to be included in certificates.
 - Issue, store and manage certificates, PDF and applications quickly and easily with a built-in PDF editor
  
-## Ammunition
+## Loadout
 - **ASP.NET Core 9**
 - **Blazor (Server Side Interactivity)**
 - **Entity Framework Core**
@@ -35,7 +35,7 @@ Surefire is an insurance agency management system for independent P&C brokers. D
 - **AppliedEpic API**
 - **AMS360 SDK API**
 
-### Hot Streak (Version History)
+### Line of Fire (Version History)
 **v1.0.1-alpha - 2025-01-24**
 - ALPHA preview release is a massive merge from my personal branch and includes tons of new features and updates
 - Complete restructure of solution and projects
@@ -109,8 +109,8 @@ Surefire is an insurance agency management system for independent P&C brokers. D
 - Master task editor to add tasks to be copied as workflow templates for renewals
 - Much more...
 
-## Ignition Sequence
-### Steps
+## Triggerfinger
+### Ready, Aim, Fire...
 
 1. **Clone the repository:**
     ```bash

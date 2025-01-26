@@ -1,14 +1,16 @@
 # Surefire AMS
-An insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as an advanced plugin system for consolidating APIs, writing custom integrations and providing a platform to use your data with your own AI prompts.
 
-## Download
-**Alpha Preview v1.0.1**
+## Primer
+Surefire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
+
+## Shots Fired
+**January 25th, 2025 - Release Preview v1.0.1-alpha**
 
 [Take a Quick Video Tour](https://youtu.be/4MuP97-Afqo) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
 ![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
 
-## Features
+## Features/Arsenal
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
 - Bring all your APIs together to track payments, phone calls, leads, signed documents, forms and more
 - Leverage OpenAI integration to make custom prompts to process your data and get work done faster
@@ -18,7 +20,7 @@ An insurance agency management system for independent P&C brokers. Designed with
 - Store basic policy data like limits, rates and coverages. Attach endorsements to be included in certificates.
 - Issue, store and manage certificates, PDF and applications quickly and easily with a built-in PDF editor
  
-## Technologies Used
+## Ammunition
 - **ASP.NET Core 9**
 - **Blazor (Server Side Interactivity)**
 - **Entity Framework Core**
@@ -27,14 +29,14 @@ An insurance agency management system for independent P&C brokers. Designed with
 - **Outlook Interop**
 - **SQL Server and SQLite**
 
-## Plugins Available
+## Plugin Lockbox
 - **RingCentral API**
 - **ePayPolicy API**
 - **AppliedEpic API**
 - **AMS360 SDK API**
 
-### Version History
-**.1.0.1 - 2025-01-24**
+### Hot Streak (Version History)
+**v1.0.1-alpha - 2025-01-24**
 - ALPHA preview release is a massive merge from my personal branch and includes tons of new features and updates
 - Complete restructure of solution and projects
 - SQLite Database for local and Desktop app use
@@ -70,7 +72,7 @@ An insurance agency management system for independent P&C brokers. Designed with
 - Reorganization of file structure with a focus on components and services with a new root namespace
 - ...AND MUCH MUCH MORE...
 
-**.0.1.0 - 2024-10-17**
+**v.0.1.0 - 2024-10-17**
 - Leads Management - Take the layout of Carriers and create a new page for tracking leads and collecting information.
 - Ring Central API - Implement a webhook that monitors incoming phone calls and displays a toast notification with the caller's name and number**
 - CRUD - Confirm there is a way to safely crud all the things.
@@ -79,26 +81,26 @@ An insurance agency management system for independent P&C brokers. Designed with
 - Homepage Layout Polished and Wrapping Correctly
 - - save order of tasks on homepage
 
-**.0.0.4 - 2024-09-08**
+**v.0.0.4 - 2024-09-08**
 - Implemented BaseUrl and IConfigure logic for environment variables for easy development and publishing
 - Many UI/UX/Style/Performance enhancements with a focus on Clients and NavMenu
 - Added upload functionality for contact headshots and client logos
 - Enhanced the client primary contact logic including several bugs
 
-**.0.0.3 - 2024-09-05**
+**v.0.0.3 - 2024-09-05**
 - Renewal filter save state using browser session
 - Enhanced renewal task lists
 - Fast Search now has keyboard control
 - File organization and Quality of Life fixes
 - Misc bug fixes
 
-**.0.0.2 - 2024-08-28**
+**v.0.0.2 - 2024-08-28**
 - Enhanced client browsing
 - Policy coverage details screens for GL, WC and Auto
 - Certificate editor using SfPdfViewer2
 - Store endorsements as attachments and include them with certificates
 
-**.0.0.1 - 2024-08-20**
+**v.0.0.1 - 2024-08-20**
 - Initial Release
 - Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
 - Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
@@ -107,7 +109,7 @@ An insurance agency management system for independent P&C brokers. Designed with
 - Master task editor to add tasks to be copied as workflow templates for renewals
 - Much more...
 
-## Installation
+## Ignition Sequence
 ### Steps
 
 1. **Clone the repository:**

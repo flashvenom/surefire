@@ -375,5 +375,6 @@ MigrationBackup/
 /Surefire/Plugins/flashvenom.AppliedEpic/net9.0
 /Surefire/Plugins/flashvenom.RingCentral/net9.0
 /Plugins/*
+!/Plugins/Instructions.txt
 
 # Fody - auto-generated XML schema

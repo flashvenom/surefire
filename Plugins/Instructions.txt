@@ -1,0 +1,11 @@
+Place your plugin projects here.
+
+To configure a plugin to use custom functions:
+
+1. Set your plugin project to use Surefire\Plugins as the output folder
+
+2. Register the plugin for the required services using
+public static void RegisterPlugin(IServiceCollection services, IConfiguration configuration)
+
+3. Make calls for your methods using
+public async Task<PluginMethodResponse> ExecuteAsync(string methodName, object[] parameters, CancellationToken cancellationToken)

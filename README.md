@@ -35,7 +35,41 @@ Surefire is an insurance agency management system for independent P&C brokers. D
 - **AppliedEpic API**
 - **AMS360 SDK API**
 
-### Line of Fire (Version History)
+## Triggerfinger
+**Ready, Aim, Fire...**
+
+1. **Clone the repository:**
+    ```bash
+    git clone https://github.com/flashvenom/surefire.git
+    cd Surefire
+    ```
+
+2. **Set up your database (optional):**
+    Create a `.env` file with your database connection string. Not providing a string will default the system to use a local SQLite database.
+    ```txt
+    DEFAULTCONNECTION={CONNECTIONSTRING}
+    ```
+    You must exclude either the Data/Migrations (SQL Server) or the Data/MigrationsLocal (SQLite) folder in your solution.
+
+2. **Enter a SyncFusion License Key and OpenAI API Secret:**
+    Register at syncfusion.com and get your free SyncFusion license key, then add your sync function license and OpenAI Secret key to the .env file.
+    ```txt
+    SYNCFUSION={LICENSESTRING}
+    OPENAI={APIKEY}
+    ```
+
+3. **Apply Migrations:**
+    ```bash
+    dotnet ef database update
+    ```
+
+4. **Run the application to seed initial data:**
+    ```bash
+    dotnet run
+    ```
+
+
+## Line of Fire / Version History
 **v1.0.1-alpha - 2025-01-24**
 - ALPHA preview release is a massive merge from my personal branch and includes tons of new features and updates
 - Complete restructure of solution and projects
@@ -108,36 +142,3 @@ Surefire is an insurance agency management system for independent P&C brokers. D
 - Renewal Center with submission tracking
 - Master task editor to add tasks to be copied as workflow templates for renewals
 - Much more...
-
-## Triggerfinger
-### Ready, Aim, Fire...
-
-1. **Clone the repository:**
-    ```bash
-    git clone https://github.com/flashvenom/surefire.git
-    cd Surefire
-    ```
-
-2. **Set up your database (optional):**
-    Create a `.env` file with your database connection string. Not providing a string will default the system to use a local SQLite database.
-    ```txt
-    DEFAULTCONNECTION={CONNECTIONSTRING}
-    ```
-    You must exclude either the Data/Migrations (SQL Server) or the Data/MigrationsLocal (SQLite) folder in your solution.
-
-2. **Enter a SyncFusion License Key and OpenAI API Secret:**
-    Register at syncfusion.com and get your free SyncFusion license key, then add your sync function license and OpenAI Secret key to the .env file.
-    ```txt
-    SYNCFUSION={LICENSESTRING}
-    OPENAI={APIKEY}
-    ```
-
-3. **Apply Migrations:**
-    ```bash
-    dotnet ef database update
-    ```
-
-4. **Run the application to seed initial data:**
-    ```bash
-    dotnet run
-    ```

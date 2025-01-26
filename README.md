@@ -6,7 +6,7 @@ Surefire is an insurance agency management system for independent P&C brokers. D
 ## Ammo
 **January 25th, 2025 - Release Preview v1.0.1-alpha**
 
-[Take a Quick Video Tour](https://youtu.be/4MuP97-Afqo) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
+[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
 ![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
 

@@ -1,5 +1,5 @@
 # Surefire AMS
-An insurance agency management system for independant P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as an advanced plugin system for consolodating APIs, writing custom integrations and providing a platform to use your data with your own AI prompts.
+An insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as an advanced plugin system for consolidating APIs, writing custom integrations and providing a platform to use your data with your own AI prompts.
 
 ## Download
 **Alpha Preview v1.0.1**

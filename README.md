@@ -4,7 +4,7 @@ An insurance agency management system for independant P&C brokers. Designed with
 ## Download
 **Alpha Preview v1.0.1**
 
-[Take a Quick Video Tour](https://youtu.be/4MuP97-Afqo) or [Download the Windows x64 Standalone Installer](https://surefireams.com/)
+[Take a Quick Video Tour](https://youtu.be/4MuP97-Afqo) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
 ![Surefire MVP Progress](https://files.flashvenom.com/surefireflyer.jpg)
 

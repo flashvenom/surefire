@@ -10,6 +10,9 @@ using System.Security.Claims;
 using System.Collections.Concurrent;
 using RingCentral;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Surefire.Domain.Shared.Services
 {
@@ -30,7 +33,7 @@ namespace Surefire.Domain.Shared.Services
         //=============================================
         //             ** STATIC DATA **              //
         //=============================================
-        
+
         private bool _isInitialized = false;
         public bool IsInitialized => _isInitialized;
         public string DatabaseProvider { get; private set; } = string.Empty;
@@ -109,7 +112,7 @@ namespace Surefire.Domain.Shared.Services
         }
         // CurrentUser Props -----------------------------------------------------------------//
         public ApplicationUser? CurrentUser { get; private set; }
-        
+
 
 
         //=============================================
@@ -131,7 +134,7 @@ namespace Surefire.Domain.Shared.Services
         //=============================================
         public event Action? OnAttachmentListUpdated;
         public void NotifyAttachmentListUpdated() => OnAttachmentListUpdated?.Invoke();
-        public Func<int, Task> LoadClientFromSearch { get; set; }
+        public Func<int, Task>? LoadClientFromSearch { get; set; }
         public string ClientTab { get; set; } = "tab-1";
         public int ClientId { get; set; }
         public async Task SetMostRecentlyOpenedClientIdAsync()
@@ -143,6 +146,18 @@ namespace Surefire.Domain.Shared.Services
                 .Select(c => (int?)c.ClientId)
                 .FirstOrDefaultAsync() ?? 0;
         }
+        public async Task LoadClient(int clientId)
+        {
+            ClientId = clientId;
+            // Notify any components that need to refresh their client data
+            if (OnClientUpdated != null)
+            {
+                await OnClientUpdated.Invoke(clientId);
+            }
+        }
+
+        // Add an event that components can subscribe to
+        public event Func<int, Task>? OnClientUpdated;
 
         //=============================================
         //                 CALL LOGS                  //
@@ -158,7 +173,7 @@ namespace Surefire.Domain.Shared.Services
             {
                 await RefreshCallLogsAsync(cancellationToken);
             }
-            if(showAll)
+            if (showAll)
             {
                 return _callLogCache.Values.SelectMany(logs => logs).ToList();
             }
@@ -262,7 +277,7 @@ namespace Surefire.Domain.Shared.Services
                 Console.Error.WriteLine($"Failed to refresh recent payments: {ex.Message}");
             }
         }
-        
+
         //=============================================
         //               STATUS MESSAGE               //
         //=============================================
@@ -323,7 +338,7 @@ namespace Surefire.Domain.Shared.Services
         public async Task<List<PluginMethodResponse>> RunPluginMethodAsync(string methodName, object[] parameters, CancellationToken cancellationToken)
         {
             var plugins = _serviceProvider.GetServices<IPlugin>().Where(plugin => plugin.IsActive).ToList();
-            
+
             if (!plugins.Any())
             {
                 Console.Error.WriteLine("PLUGIN: No active plugins available.");

@@ -11,6 +11,7 @@ using Surefire.Domain.Shared.Helpers;
 using Surefire.Domain.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.FluentUI.AspNetCore.Components;
+using System.Data;
 
 namespace Surefire.Components.Clients
 {
@@ -62,6 +63,7 @@ namespace Surefire.Components.Clients
         {
             UpdateHeader?.Invoke("Clients");
             _stateService.LoadClientFromSearch = LoadClientFromSearchBar;
+            _stateService.OnClientUpdated += HandleClientUpdate;
 
             var formPdfsTask = FormService?.GetAllFormPdfs();
             var clientsTask = ClientService?.GetClientListAsync();
@@ -69,15 +71,24 @@ namespace Surefire.Components.Clients
             allFormPdfs = await formPdfsTask;
             clients = await clientsTask;
             filteredClients = clients.Take(50).ToList();
-            
+
             //Check if database is empty
-            if(clients.Count == 0)
+            if (clients.Count == 0)
             {
                 NavigationManager.NavigateTo($"/Clients/Create", false);
             }
             else
             {
                 await LoadClient(LoadClientId);
+            }
+        }
+
+        private async Task HandleClientUpdate(int clientId)
+        {
+            if (clientId == selectedClient?.ClientId)
+            {
+                await ReloadSelectedClient();
+                await InvokeAsync(StateHasChanged);
             }
         }
 
@@ -298,7 +309,7 @@ namespace Surefire.Components.Clients
                 }
 
                 _stateService.UpdateStatus(utilityStatus, true);
-                if(selectedClient == null)
+                if (selectedClient == null)
                 {
                     NavigationManager.NavigateTo("/");
                 }
@@ -318,6 +329,8 @@ namespace Surefire.Components.Clients
             {
                 await _logs.LogAsync(LogLevel.Error, ex.Message, "Clients.razor - RunDataSync");
                 Console.Error.WriteLine($"Error running DataSync plugins: {ex.Message}");
+                _stateService.UpdateStatus($"Error running DataSync plugins: {ex.Message}", false);
+                return;
             }
             finally
             {
@@ -326,7 +339,6 @@ namespace Surefire.Components.Clients
                 selectedClient.DateOpened = DateTime.Now;
                 filteredClients = clients.OrderByDescending(c => c.DateOpened).Take(40).ToList();
 
-                // Update UI after completion
                 UpdatePolicyLists();
 
                 utilityStatus = "";
@@ -397,7 +409,6 @@ namespace Surefire.Components.Clients
                     await LoadClient(selectedClient.ClientId);
                     await tabInterface.GoToTabAsync("tab-1");
                     NavigationManager.NavigateTo($"/Clients/{selectedClient.ClientId}", false);
-                    await InvokeAsync(StateHasChanged); // Update the UI
                 }
                 catch (Exception ex)
                 {
@@ -407,25 +418,53 @@ namespace Surefire.Components.Clients
         }
         private async Task ReloadSelectedClient()
         {
-            Console.WriteLine("Reloading selected");
+            Console.WriteLine("Reloading selected client and all related data");
             try
             {
-                // Re-fetch the client from the database to get updated policies
+                // Re-fetch the client from the database with all related data
                 selectedClient = await ClientService.GetClientById(selectedClient.ClientId);
 
-                // Update contact lists if necessary
+                // Update primary contact list
                 if (selectedClient?.PrimaryContact != null)
                 {
                     primaryContactList = new List<Contact> { selectedClient.PrimaryContact };
                 }
+                else
+                {
+                    primaryContactList.Clear();
+                }
 
+                // Update secondary contact list
                 secondaryContactList = selectedClient?.Contacts
                     .Where(c => c.ContactId != selectedClient.PrimaryContact?.ContactId)
                     .ToList() ?? new List<Contact>();
+
+                // Update phone numbers
+                phoneNumbers = GetClientAndContactPhoneNumbers(selectedClient);
+
+                // Update policy lists
+                var today = DateTime.Today;
+                currentPolicies = selectedClient?.Policies
+                    .Where(p => p.EffectiveDate <= p.ExpirationDate && p.ExpirationDate >= today)
+                    .OrderByDescending(p => p.EffectiveDate)
+                    .ToList() ?? new List<Policy>();
+
+                pastPolicies = selectedClient?.Policies
+                    .Where(p => p.ExpirationDate < today)
+                    .OrderByDescending(p => p.EffectiveDate)
+                    .ToList() ?? new List<Policy>();
+
+                // Update client list if needed
+                var updatedClient = clients.FirstOrDefault(c => c.ClientId == selectedClient.ClientId);
+                if (updatedClient != null)
+                {
+                    updatedClient.DateOpened = selectedClient.DateOpened;
+                    filteredClients = clients.OrderByDescending(c => c.DateOpened).Take(40).ToList();
+                }
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Error updating selected client policies: {ex.Message}");
+                Console.Error.WriteLine($"Error updating selected client data: {ex.Message}");
             }
         }
         protected async void HandleAttachmentAdded()
@@ -471,6 +510,10 @@ namespace Surefire.Components.Clients
             _clientListCts?.Cancel();
             _dataSyncCts?.Dispose();
             _clientListCts?.Dispose();
+            if (_stateService != null)
+            {
+                _stateService.OnClientUpdated -= HandleClientUpdate;
+            }
         }
     }
 }

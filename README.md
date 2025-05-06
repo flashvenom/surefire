@@ -5,7 +5,7 @@ Surefire is an insurance agency management system for independent P&C brokers. D
 
 ## Ammo
 **May 5th, 2025 - Quick Update**
-So many new features are written, but I haven't had a single minute to devote to merging them into the public version. Contact me if you want a one-off build. 
+So many new features are written, but I haven't had a single minute to devote to merging them into the public version. Next version is going to have a lot of AI-based features like call summaries (using RingCentral phone recordings) client summaries (using recent emails with GraphAPI and client notes) and a ton more. Contact me if you want a one-off build. 
 
 **January 25th, 2025 - Release Preview v1.0.1-alpha**
 

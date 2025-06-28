@@ -4,6 +4,9 @@
 Surefire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
 
 ## Ammo
+**June 28th, 2025 - Quick Update**
+I have a stable build I've been demoing around town and have started to merge into the public changeset. I started with the models and viewmodels and will be adding database services next. Then the other methods and services and finally the razor pages. Exciting things in the months ahead.
+
 **May 5th, 2025 - Quick Update**
 So many new features are written, but I haven't had a single minute to devote to merging them into the public version. Next version is going to have a lot of AI-based features like call summaries (using RingCentral phone recordings) client summaries (using recent emails with GraphAPI and client notes) and a ton more. Contact me if you want a one-off build. 
 

@@ -13,14 +13,17 @@ namespace Surefire.Domain.Renewals.Models
         public string? SubmissionStatus { get; set; }
         public int StatusInt { get; set; } = 1;
         public string? Notes { get; set; }
-        
+
         public int? Premium { get; set; }
         public int? PrimaryCarrierContactId { get; set; }
         public int? PrimaryWholesalerContactId { get; set; }
         public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
         public DateTime? DateModified { get; set; } = DateTime.UtcNow;
         public DateTime? DateDeleted { get; set; } = DateTime.UtcNow;
-        public List<SubmissionNote> SubmissionNotes { get; set; } = new List<SubmissionNote>();
+
+        public RejectedStatus? RejectedStatus { get; set; }
+
+        public List<SubmissionTask> SubmissionTasks { get; set; } = new List<SubmissionTask>();
         //Navigation
         public Product Product { get; set; }
         public Carrier? Carrier { get; set; }
@@ -31,24 +34,36 @@ namespace Surefire.Domain.Renewals.Models
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
     }
 
-    public class SubmissionNote
+    public enum RejectedStatus
     {
-        public int SubmissionNoteId { get; set; }
-        public DateTime DateCreated { get; set; }
-        public string Note { get; set; }
-        public Submission Submission { get; set; }
+        Declined,       // Declined by the carrier
+        Rejected,       // Rejected by the client
+        NonRenewed      // A huge problem!
+    }
+
+    public class SubmissionTask
+    {
+        public int SubmissionTaskId { get; set; }
+        public string TaskName { get; set; }
+        public string Description { get; set; }
+        public DateTime? DueDate { get; set; }
+        public bool IsCompleted { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+        public DateTime? DateModified { get; set; }
+
         public int SubmissionId { get; set; }
-        public bool Deleted { get; set; }
+        public Submission Submission { get; set; }
     }
 
     public enum SubmissionStatus
     {
+        Created,
         Started,
         Submitted,
-        Underwriting,
         Quoted,
         Proposed,
-        Declined,
-        Accepted
+        Bound,
+        Issued
     }
 }

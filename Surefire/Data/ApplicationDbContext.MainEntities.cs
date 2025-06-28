@@ -37,7 +37,6 @@ public partial class ApplicationDbContext
     public DbSet<TrackTask> TrackTasks { get; set; }
     public DbSet<DailyTask> DailyTasks { get; set; }
     public DbSet<Submission> Submissions { get; set; }
-    public DbSet<SubmissionNote> SubmissionNotes { get; set; }
 
 
     // Policies

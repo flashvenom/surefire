@@ -41,6 +41,13 @@ namespace Surefire.Domain.Clients.Models
         public LicenseType? LicenseType { get; set; }
         public string? LicenseNumber { get; set; }
         public decimal? EstimatedSubcontractingExpenses { get; set; }
+        public string? PercentResidential { get; set; }
+        public string? PercentCommercial { get; set; }
+        public string? PercentPublic { get; set; }
+        public string? PercentNewConstruction { get; set; }
+        public string? PercentRemodelRepair { get; set; }
+        public string? PercentInterior { get; set; }
+        public string? PercentExterior { get; set; }
 
         //PrimaryBuilding
         public int? BuildingLocationYearBuilt { get; set; }

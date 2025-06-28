@@ -6,6 +6,7 @@ using Surefire.Domain.Attachments.Models;
 using Syncfusion.Blazor.Data;
 using Microsoft.AspNetCore.Components;
 using Surefire.Domain.Accounting.Models;
+using System.Text;
 
 namespace Surefire.Domain.Shared.Helpers
 {
@@ -230,25 +231,82 @@ namespace Surefire.Domain.Shared.Helpers
 
             return thumbnailPath;
         }
-        public static string BuildWindowsPath(Attachment attachment, bool? returnFolder)
+
+        // <summary>
+        // Builds a Windows or URL path for an attachment.
+        // </summary>
+        // <param name="attachment">The attachment to build the path for.</param>
+        // <param name="returnFolder">Whether to return the base path or the full path.</param>
+        // <param name="returnAbsolute">Whether to return the absolute path of the file on the server.</param>
+        // <returns>The Surefire mapped network drive path for the attachment or it's containing folder.</returns>
+        public static string BuildWindowsPath(
+            Attachment attachment,
+            bool returnFolder = false,
+            bool returnUrl = false,
+            bool returnAbsolute = false
+        )
         {
-            if (attachment == null || string.IsNullOrEmpty(attachment.LocalPath) || string.IsNullOrEmpty(attachment.HashedFileName))
-            {
+
+            if (attachment?.LocalPath is null || attachment.HashedFileName is null)
                 throw new ArgumentException("Invalid attachment information provided.");
+
+            // Split & normalize
+            var segments = attachment.LocalPath
+                .Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries)
+                .ToList();
+
+            // For folder/default, drop a leading "uploads"
+            bool hasUploads = segments.FirstOrDefault()?.Equals("uploads", StringComparison.OrdinalIgnoreCase) == true;
+            var fsSegments = hasUploads ? segments.Skip(1) : segments;
+            // For URL and absolute, keep everything
+            var urlSegments = segments;
+            var absoluteSegments = segments;
+#if DEBUG
+            const string baseNetwork = @"C:\source\devops\Surefire\Surefire\wwwroot\uploads\";
+#else
+    const string baseNetwork = @"S:\Surefiles\";
+#endif
+
+            const string iisRoot = @"C:\inetpub\surefire\wwwroot\";
+
+            // 1) URL
+            if (returnUrl)
+            {
+                var urlPath = string.Join("/", urlSegments);
+                return $"https://surefire.local/{urlPath}/{attachment.HashedFileName}";
             }
 
-            // Construct the base path
-            string basePath = $"\\\\bizname-web\\{attachment.LocalPath}\\";
+            // 2) Absolute server file path under wwwroot
+            if (returnAbsolute)
+            {
+                // C:\inetpub\surefire\wwwroot\uploads\images\2025\05\abcdef123.jpg
+                var absPath = Path.Combine(new[] { iisRoot }
+                    .Concat(absoluteSegments)
+                    .Concat(new[] { attachment.HashedFileName })
+                    .ToArray());
+                return absPath;
+            }
 
-            if (returnFolder == true)
+            // 3) Just the folder on the mapped drive
+            if (returnFolder)
             {
-                return basePath;
+                // S:\Surefiles\images\2025\05\
+                var folder = Path.Combine(new[] { baseNetwork }
+                    .Concat(fsSegments)
+                    .ToArray()) + Path.DirectorySeparatorChar;
+                return folder;
             }
-            else
-            {
-                return $"{basePath}{attachment.HashedFileName}";
-            }
+
+            // 4) Default: full file on the mapped drive
+            var fullPath = Path.Combine(new[] { baseNetwork }
+                .Concat(fsSegments)
+                .Concat(new[] { attachment.HashedFileName })
+                .ToArray());
+            return fullPath;
         }
+
+
+
         public static string GenerateFiveCharacterHash(string input)
         {
             using (var sha256 = System.Security.Cryptography.SHA256.Create())
@@ -363,11 +421,29 @@ namespace Surefire.Domain.Shared.Helpers
         }
         public static string FormatDateDifference(string dateString)
         {
-            if (!DateTime.TryParseExact(dateString, "yyyy-MM-ddTHH:mm:ss.fffZ", null, System.Globalization.DateTimeStyles.AdjustToUniversal, out DateTime date))
+            // Try multiple date formats to handle different input formats
+            DateTime date;
+
+            // First try the original strict format
+            if (DateTime.TryParseExact(dateString, "yyyy-MM-ddTHH:mm:ss.fffZ", null, System.Globalization.DateTimeStyles.AdjustToUniversal, out date))
             {
-                return "Invalid Date";
+                // Success with original format
+            }
+            // Try standard DateTime.Parse which handles most common formats
+            else if (DateTime.TryParse(dateString, out date))
+            {
+                // Success with standard parsing
+            }
+            else
+            {
+                return "(None)";
             }
 
+            return FormatDateDifference(date);
+        }
+
+        public static string FormatDateDifference(DateTime date)
+        {
             var now = DateTime.Now;
             var timeDifference = now - date;
             var totalSeconds = timeDifference.TotalSeconds;
@@ -419,7 +495,7 @@ namespace Surefire.Domain.Shared.Helpers
                 return $"In {daysAhead} Days at {date.ToString("h:mmtt")}";
             }
         }
-        public static string FormatPhoneNumber(string phoneNumber)
+        public static string FormatPhoneNumber2(string phoneNumber)
         {
             if (string.IsNullOrEmpty(phoneNumber))
             {
@@ -554,6 +630,34 @@ namespace Surefire.Domain.Shared.Helpers
             html += "";
             return html;
         }
+        public static string ToTitleCase(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            return char.ToUpper(text[0]) + text.Substring(1);
+        }
+        public static string GetFirstName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+                return string.Empty;
+
+            try
+            {
+                var words = fullName
+                    .Trim()
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (words.Length == 0)
+                    return string.Empty;
+
+                return words[0];
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
 
 
         // Cleaners
@@ -609,6 +713,33 @@ namespace Surefire.Domain.Shared.Helpers
             int index = localPath.LastIndexOf(hashedFileName, StringComparison.OrdinalIgnoreCase);
             return index >= 0 ? localPath.Substring(0, index) : localPath;
         }
+        public static string GetDomainName(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return string.Empty;
+
+            // Prepend "http://" if no scheme is found
+            if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                url = "http://" + url;
+            }
+
+            // Attempt to create a Uri instance
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
+            {
+                return string.Empty;
+            }
+
+            // Extract the host and remove "www." if needed
+            string domain = uri.Host;
+            if (domain.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            {
+                domain = domain.Substring(4);
+            }
+
+            return domain;
+        }
         public static string FormatUrl(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -620,11 +751,11 @@ namespace Surefire.Domain.Shared.Helpers
                 ? url
                 : $"http://{url}";
         }
-        public static string CleanUrl(string url)
+        public static string CleanUrl(string? url)
         {
             if (string.IsNullOrWhiteSpace(url))
             {
-                return string.Empty; // Return empty string if the input is null or whitespace
+                return string.Empty;
             }
 
             // Remove both "http://" and "https://" from the URL
@@ -656,6 +787,97 @@ namespace Surefire.Domain.Shared.Helpers
             }
             return name;
         }
+        /// <summary>
+        /// Cleans and formats a phone number string based on a mask.
+        /// </summary>
+        /// <param name="rawPhoneNumber">The input phone number string, potentially containing non-digit characters.</param>
+        /// <param name="mask">raw=return cleaned numbees, standard=return valid phone number, +1=return with +1, 1=return with 1, or use a custom mask like (###) ###-####</param>
+        /// <returns>The formatted phone number string, or an empty string if inputs are invalid.</returns>
+        ///
+        public static string FormatPhoneNumber(string phoneNumber, string? mask = null)
+        {
+            // Some simple null and default handling
+            if (mask == null) mask = "(###) ###-####";
+            if (string.IsNullOrWhiteSpace(phoneNumber)) return "(None)";
+
+            // Extract the raw phone number with no country code or symbols
+            string digits = new string(phoneNumber.Where(char.IsDigit).ToArray());
+            string mainNumber;
+            if (digits.Length < 10)
+            {
+                mainNumber = new string('0', 10);
+            }
+            else if (digits.Length == 10)
+            {
+                mainNumber = digits;
+            }
+            else if (digits.Length == 11 && digits[0] == '1')
+            {
+                // If there's a country code '1', strip it off.
+                mainNumber = digits.Substring(1, 10);
+            }
+            else if (digits.Length > 11)
+            {
+                // More than 11 digits (likely due to an extension)
+                mainNumber = digits[0] == '1'
+                    ? digits.Substring(1, 10)
+                    : digits.Substring(0, 10);
+            }
+            else
+            {
+                // Halt and Catch Fire
+                mainNumber = digits;
+            }
+
+            // Process the mask.
+            if (mask.Equals("raw", StringComparison.OrdinalIgnoreCase))
+            {
+                // 'raw' returns the full cleaned digits.
+                return digits;
+            }
+            else if (mask.Equals("standard", StringComparison.OrdinalIgnoreCase))
+            {
+                // 'standard' returns just the main number.
+                return mainNumber;
+            }
+            else if (mask.Equals("+1", StringComparison.OrdinalIgnoreCase))
+            {
+                // '+1' returns the main number with a +1 prefix.
+                return "+1" + mainNumber;
+            }
+            else if (mask.Equals("1", StringComparison.OrdinalIgnoreCase))
+            {
+                // '1' returns the main number with a 1 prefix.
+                return "1" + mainNumber;
+            }
+            else
+            {
+                // For custom masks, replace each '#' with a digit from the main number.
+                var result = new System.Text.StringBuilder();
+                int digitIndex = 0;
+                foreach (char c in mask)
+                {
+                    if (c == '#' && digitIndex < mainNumber.Length)
+                    {
+                        result.Append(mainNumber[digitIndex]);
+                        digitIndex++;
+                    }
+                    else
+                    {
+                        result.Append(c);
+                    }
+                }
+                if (result.ToString() == "")
+                {
+                    return String.Empty;
+                }
+                else
+                {
+                    return result.ToString();
+                }
+            }
+        }
+
         public static string CleanPhoneNumber(string phoneNumber)
         {
             if (string.IsNullOrEmpty(phoneNumber))
@@ -724,6 +946,133 @@ namespace Surefire.Domain.Shared.Helpers
                 return "Unknown Status"; // Fallback for undefined status values
             }
         }
+        public static string GetSubmissionStatusPillText(int? statusInt)
+        {
+            if (!statusInt.HasValue)
+            {
+                return new string("NONE");
+            }
+
+            string statusText;
+
+            switch (statusInt.Value)
+            {
+                case 0:
+                    statusText = "CREATED";
+                    break;
+                case 1:
+                    statusText = "STARTED";
+                    break;
+                case 2:
+                    statusText = "SUBM'D";
+                    break;
+                case 3:
+                    statusText = "QUOTED";
+                    break;
+                case 4:
+                    statusText = "PROPSLD";
+                    break;
+                case 5:
+                    statusText = "BOUND";
+                    break;
+                case 6:
+                    statusText = "ISSUED";
+                    break;
+                default:
+                    statusText = "UNKNOWN";
+                    break;
+            }
+
+            return new string(statusText);
+        }
+
+        public static string GetSubmissionStatusPillClass(int? statusInt)
+        {
+            if (!statusInt.HasValue)
+            {
+                return new string("status-none");
+            }
+
+            string cssClass;
+
+            switch (statusInt.Value)
+            {
+                case 0:
+                    cssClass = "status-created";
+                    break;
+                case 1:
+                    cssClass = "status-started";
+                    break;
+                case 2:
+                    cssClass = "status-submitted";
+                    break;
+                case 3:
+                    cssClass = "status-quoted";
+                    break;
+                case 4:
+                    cssClass = "status-proposed";
+                    break;
+                case 5:
+                    cssClass = "status-bound";
+                    break;
+                case 6:
+                    cssClass = "status-issued";
+                    break;
+                default:
+                    cssClass = "status-unknown";
+                    break;
+            }
+
+            return new string(cssClass);
+        }
+        public static MarkupString GetSubmissionStatusPill(int? statusInt)
+        {
+            if (!statusInt.HasValue)
+            {
+                return new MarkupString("<span class=\"status-pill status-none\">NONE</span>");
+            }
+
+            string statusText;
+            string cssClass;
+
+            switch (statusInt.Value)
+            {
+                case 0:
+                    statusText = "CREATED";
+                    cssClass = "status-created";
+                    break;
+                case 1:
+                    statusText = "STARTED";
+                    cssClass = "status-started";
+                    break;
+                case 2:
+                    statusText = "SUBM'D";
+                    cssClass = "status-submitted";
+                    break;
+                case 3:
+                    statusText = "QUOTED";
+                    cssClass = "status-quoted";
+                    break;
+                case 4:
+                    statusText = "PROPOSE";
+                    cssClass = "status-proposed";
+                    break;
+                case 5:
+                    statusText = "BOUND";
+                    cssClass = "status-bound";
+                    break;
+                case 6:
+                    statusText = "ISSUED";
+                    cssClass = "status-issued";
+                    break;
+                default:
+                    statusText = "UNKNOWN";
+                    cssClass = "status-unknown";
+                    break;
+            }
+
+            return new MarkupString($"<span class=\"status-pill {cssClass}\">{statusText}</span>");
+        }
         public static string GetBestPhoneNumber(Dictionary<string, string> phoneNumbers)
         {
             // Prioritize Direct, Cell/Mobile, Office, and Desk in this order
@@ -780,6 +1129,77 @@ namespace Surefire.Domain.Shared.Helpers
 
             // Return the requested substring
             return input.Substring(startIndex, length);
+        }
+
+        /// <summary>
+        /// Converts a string representing a number of days (late/early) into a readable due phrase wrapped in a span with a class.
+        /// </summary>
+        /// <param name="daysString">The string representing the number of days (negative = late, positive = due in future, 0 = today).</param>
+        /// <returns>HTML span with readable phrase and class.</returns>
+        public static MarkupString FormatDuePhrase(string daysString, bool? futureTense = false)
+        {
+            if (!int.TryParse(daysString, out int days))
+            {
+                return new MarkupString(""); // Return empty if invalid
+            }
+            string tenseWord = futureTense == true ? "In" : "Due in";
+            string phrase;
+            string cssClass;
+
+            if (days <= -11)
+            {
+                phrase = $"{Math.Abs(days)} Days Late";
+                cssClass = "pricrazy";
+            }
+            else if (days <= -1)
+            {
+                phrase = days == -1 ? "1 Day Late" : $"{Math.Abs(days)} Days Late";
+                cssClass = "prilate";
+            }
+            else if (days == 0)
+            {
+                phrase = "Due Today";
+                cssClass = "pritoday";
+            }
+            else if (days == 1)
+            {
+                phrase = "Due Tomorrow";
+                cssClass = "prinormal";
+            }
+            else if (days >= 2 && days <= 6)
+            {
+                phrase = $"{tenseWord} {days} Days";
+                cssClass = "prinormal";
+            }
+            else if (days >= 7 && days <= 16)
+            {
+                if (days <= 13)
+                {
+                    phrase = $"{tenseWord} {days} Days";
+                }
+                else // days is 14, 15, or 16
+                {
+                    phrase = $"{tenseWord} 2 Weeks";
+                }
+                cssClass = "prilow";
+            }
+            else if (days >= 17 && days <= 45)
+            {
+                phrase = $"{tenseWord} 3+ Weeks";
+                cssClass = "prino";
+            }
+            else if (days > 45)
+            {
+                phrase = "Next Month";
+                cssClass = "prino";
+            }
+            else
+            {
+                phrase = "Due";
+                cssClass = "prino";
+            }
+
+            return new MarkupString($"<span class='{cssClass}'>{phrase}</span>");
         }
 
     }

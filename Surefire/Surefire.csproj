@@ -12,6 +12,7 @@
 
 	<ItemGroup>
 	  <Compile Remove="bin\**" />
+	  <Compile Remove="Data\MigrationsLocal\**" />
 	  <Compile Remove="Plugins\AppliedEpic\**" />
 	  <Compile Remove="Plugins\ePayPolicy\**" />
 	  <Compile Remove="Plugins\RingCentral\**" />
@@ -20,6 +21,7 @@
 	  <Compile Remove="wwwroot\uploads\policies\1843\**" />
 	  <Compile Remove="wwwroot\vbscript\**" />
 	  <Content Remove="bin\**" />
+	  <Content Remove="Data\MigrationsLocal\**" />
 	  <Content Remove="Plugins\AppliedEpic\**" />
 	  <Content Remove="Plugins\ePayPolicy\**" />
 	  <Content Remove="Plugins\RingCentral\**" />
@@ -28,6 +30,7 @@
 	  <Content Remove="wwwroot\uploads\policies\1843\**" />
 	  <Content Remove="wwwroot\vbscript\**" />
 	  <EmbeddedResource Remove="bin\**" />
+	  <EmbeddedResource Remove="Data\MigrationsLocal\**" />
 	  <EmbeddedResource Remove="Plugins\AppliedEpic\**" />
 	  <EmbeddedResource Remove="Plugins\ePayPolicy\**" />
 	  <EmbeddedResource Remove="Plugins\RingCentral\**" />
@@ -36,6 +39,7 @@
 	  <EmbeddedResource Remove="wwwroot\uploads\policies\1843\**" />
 	  <EmbeddedResource Remove="wwwroot\vbscript\**" />
 	  <None Remove="bin\**" />
+	  <None Remove="Data\MigrationsLocal\**" />
 	  <None Remove="Plugins\AppliedEpic\**" />
 	  <None Remove="Plugins\ePayPolicy\**" />
 	  <None Remove="Plugins\RingCentral\**" />

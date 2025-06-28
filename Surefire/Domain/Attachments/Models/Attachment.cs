@@ -37,7 +37,13 @@ namespace Surefire.Domain.Attachments.Models
         public bool IsEndorsement { get; set; }
         public bool IsBinder { get; set; }
         public bool IsQuote { get; set; }
+        public bool IsAcord { get; set; }
+        public bool IsSupplemental { get; set; }
+        public bool IsInvoice { get; set; }
         public bool IsProposal { get; set; }
+        public bool IsRefinedProposal { get; set; }
+        public bool IsEnclosure { get; set; }
+        public bool IsSL2 { get; set; }
 
         // Navigation properties
         public AttachmentGroup? AttachmentGroup { get; set; }

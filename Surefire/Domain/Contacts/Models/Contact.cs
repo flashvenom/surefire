@@ -1,7 +1,8 @@
-﻿using Surefire.Domain.Shared.Models;
+﻿using Surefire.Domain.Carriers.Models;
 using Surefire.Domain.Clients.Models;
-using Surefire.Domain.Carriers.Models;
+using Surefire.Domain.Shared.Models;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Surefire.Domain.Contacts.Models
 {
@@ -14,11 +15,7 @@ namespace Surefire.Domain.Contacts.Models
         public string? LastName { get; set; }
         public string FullName => $"{FirstName ?? string.Empty} {LastName ?? string.Empty}".Trim();
         public string? Title { get; set; }
-        public string? Email { get; set; }
-        public string? EmailAlternate { get; set; }
-        public string? Phone { get; set; }
-        public string? Fax { get; set; }
-        public string? Mobile { get; set; }
+
         public string? Notes { get; set; }
         public string? HeadshotFilename { get; set; }
         public bool IsStarred { get; set; } = false;
@@ -26,11 +23,23 @@ namespace Surefire.Domain.Contacts.Models
         public bool Service { get; set; }
         public bool Billing { get; set; }
         public bool Representative { get; set; }
-        public bool Owner { get; set; }
         public bool IsInactive { get; set; }
         public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
         public DateTime? DateModified { get; set; } = DateTime.UtcNow;
         public Address? Address { get; set; }
+
+        // Collections for PhoneNumbers and EmailAddresses
+        public ICollection<PhoneNumber> PhoneNumbers { get; set; } = new List<PhoneNumber>();
+        public ICollection<EmailAddress> EmailAddresses { get; set; } = new List<EmailAddress>();
+
+        // Fields for primary phone and email
+        [ForeignKey(nameof(PrimaryPhone))]
+        public int? PrimaryPhoneId { get; set; }
+        public PhoneNumber? PrimaryPhone { get; set; }
+        [ForeignKey(nameof(PrimaryEmail))]
+        public int? PrimaryEmailId { get; set; }
+        public EmailAddress? PrimaryEmail { get; set; }
+
         //Navigation Properties
         public int? ClientId { get; set; }
         public Client? Client { get; set; }
@@ -53,5 +62,4 @@ namespace Surefire.Domain.Contacts.Models
         public string AssociatedWith { get; set; } // This property will hold either Client Name or Carrier Name
         public int AssociatedWithId { get; set; }
     }
-
 }

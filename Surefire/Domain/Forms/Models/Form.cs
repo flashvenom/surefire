@@ -1,4 +1,5 @@
 using Surefire.Domain.Clients.Models;
+using Surefire.Domain.Renewals.Models;
 using Surefire.Data;
 using System.Net;
 using Surefire.Domain.Policies.Models;
@@ -25,6 +26,13 @@ namespace Surefire.Domain.Forms.Models
         public int? ClientId { get; set; }
         public Lead? Lead { get; set; }
         public int? LeadId { get; set; }
+        // New navigation properties
+        public Submission? Submission { get; set; }
+        public int? SubmissionId { get; set; }
+        public Policy? Policy { get; set; }
+        public int? PolicyId { get; set; }
+        public Renewal? Renewal { get; set; }
+        public int? RenewalId { get; set; }
     }
 
     public class FormDocRevision
@@ -54,24 +62,6 @@ namespace Surefire.Domain.Forms.Models
         public string? JSONFields { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime DateModified { get; set; }
-        public string? CreatedById { get; set; }
-        public ApplicationUser? CreatedBy { get; set; }
-        public string? ModifiedById { get; set; }
-        public ApplicationUser? ModifiedBy { get; set; }
-    }
-
-    public class FormDocDTO
-    {
-        public int FormDocId { get; set; }
-        public string? Title { get; set; }
-        public string? Description { get; set; }
-        public DateTime DateCreated { get; set; }
-        public DateTime DateModified { get; set; }
-
-        // Navigation properties
-        public int FormPdfId { get; set; }
-        public FormPdf FormPdf { get; set; }
-        public ICollection<FormDocRevision> FormDocRevisions { get; set; } = new List<FormDocRevision>();
         public string? CreatedById { get; set; }
         public ApplicationUser? CreatedBy { get; set; }
         public string? ModifiedById { get; set; }

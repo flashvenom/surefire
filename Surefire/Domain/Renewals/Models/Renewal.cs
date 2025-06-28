@@ -18,6 +18,10 @@ namespace Surefire.Domain.Renewals.Models
         public DateTime? DateCreated { get; set; } = DateTime.UtcNow;
         public DateTime? DateModified { get; set; } = DateTime.UtcNow;
 
+        // Added properties for status tracking
+        public string RenewalStatus { get; set; } = "In Progress";
+        public string BillType { get; set; } = "Direct Bill";
+
         public Carrier? Carrier { get; set; }
         public int? CarrierId { get; set; }
         public Carrier? Wholesaler { get; set; }
@@ -36,6 +40,42 @@ namespace Surefire.Domain.Renewals.Models
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
         public ICollection<Settlement> Settlements { get; set; } = new List<Settlement>();
     }
+
+    public class RenewalNote
+    {
+        public int RenewalNoteId { get; set; }
+        public int RenewalId { get; set; }
+        public int? SubmissionId { get; set; } // New: note can be for a specific Submission
+        public int? TrackTaskId { get; set; } // Optional: note can be for a specific TrackTask
+        public string Note { get; set; }
+        public DateTime DateCreated { get; set; } = DateTime.Now;
+        public string CreatedById { get; set; }
+        public ApplicationUser CreatedBy { get; set; }
+        public bool Deleted { get; set; }
+        public RenewalNoteType NoteType { get; set; } = RenewalNoteType.UserEntry;
+
+        // Navigation properties
+        public Renewal Renewal { get; set; }
+        public Submission? Submission { get; set; } // New: navigation to Submission
+        public TrackTask? TrackTask { get; set; } // Optional: navigation to TrackTask
+    }
+
+    /// <summary>
+    /// Types of notes for renewal activity log
+    /// </summary>
+    public enum RenewalNoteType
+    {
+        UserEntry,         // 0 General user note (legacy)
+        RenewalUpdate,     // 1 System/automated renewal update
+        SubmissionUpdate,  // 2 System/automated submission update
+        SubmissionLog,     // 3 System log for submission events
+        SubmissionUserNote,// 4 User note for a submission
+        SystemLog,         // 5 System log (task/subtask check/uncheck)
+        UserTaskNote,      // 6 User note for a main task
+        UserSubtaskNote    // 7 User note for a subtask
+    }
+
+
     public class RenewalListItemViewModel
     {
         public int RenewalId { get; set; }
@@ -47,6 +87,7 @@ namespace Surefire.Domain.Renewals.Models
         public string? PolicyNumber { get; set; }
         public decimal? Premium { get; set; }
         public int? Submits { get; set; }
+        public int? MaxSubmissionStatus { get; set; }
         public int ClientId { get; set; }
         public int? PolicyId { get; set; }
         public ICollection<TrackTask>? TrackTasks { get; set; }

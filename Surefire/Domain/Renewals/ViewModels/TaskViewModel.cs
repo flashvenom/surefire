@@ -43,13 +43,4 @@ namespace Surefire.Domain.Renewals.ViewModels
         public string CsrAssigned { get; set; }
         public bool Highlighted { get; set; }
     }
-    //public class TaskItemViewModel
-    //{
-    //    public int Id { get; set; }
-    //    public string TaskName { get; set; }
-    //    public string Note { get; set; }
-    //    public DateTime? GoalDate { get; set; }
-    //    public bool Completed { get; set; }
-    //    public bool Highlighted { get; set; }
-    //}
 }

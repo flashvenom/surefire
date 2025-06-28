@@ -24,9 +24,13 @@ namespace Surefire.Domain.Carriers.Models
         public string? ServicingWebsite { get; set; }
         public string? NewSubmissionEmail { get; set; }
         public string? ServicingEmail { get; set; }
+        public string? LossRunsNote { get; set; }
         public string? LossRunsEmail { get; set; }
+        public string? LossRunsURL { get; set; }
         public bool IssuingCarrier { get; set; }
         public bool Wholesaler { get; set; } = false;
+        public bool Admitted { get; set; } = false;
+        public bool IsPEO { get; set; } = false;
         public bool QuickLink { get; set; } = false;
         public string? AppetiteJson { get; set; }
         public string? QuotelinesJson { get; set; }
@@ -39,6 +43,12 @@ namespace Surefire.Domain.Carriers.Models
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
         public Address? Address { get; set; }
         public ApplicationUser? CreatedBy { get; set; }
+
+        // Navigation property for wholesaler access to issuing carriers
+        public ICollection<WholesalerCarrier> WholesalerAccess { get; set; } = new List<WholesalerCarrier>(); // When this carrier is a wholesaler with access to other carriers
+
+        // Navigation property for carrier-product relationships
+        public ICollection<CarrierProduct> CarrierProducts { get; set; } = new List<CarrierProduct>(); // Products this carrier offers
     }
 
     public class Credential
@@ -53,5 +63,12 @@ namespace Surefire.Domain.Carriers.Models
         public ApplicationUser? CreatedBy { get; set; }
         public Carrier Carrier { get; set; }
         public int CarrierId { get; set; }
+    }
+
+    public class CarrierListItem
+    {
+        public int CarrierId { get; set; }
+        public string Name { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 }

@@ -81,8 +81,6 @@ namespace Surefire.Domain.Renewals.Services
                     .Include(r => r.Submissions)
                         .ThenInclude(s => s.Wholesaler)
                             .ThenInclude(w => w.Contacts)
-                    .Include(r => r.Submissions)
-                        .ThenInclude(s => s.SubmissionNotes)
                     .Include(r => r.Attachments)
                     .AsSplitQuery()
                     .FirstOrDefaultAsync(r => r.RenewalId == renewalId);
@@ -236,7 +234,6 @@ namespace Surefire.Domain.Renewals.Services
                 var trackTask = new TrackTask
                 {
                     Renewal = renewal,
-                    OrderNumber = taskMaster.OrderNumber,
                     TaskName = taskMaster.TaskName,
                     GoalDate = goalDate,
                     Status = "Pending",
@@ -306,7 +303,6 @@ namespace Surefire.Domain.Renewals.Services
                 var trackTask = new TrackTask
                 {
                     Renewal = renewal,
-                    OrderNumber = taskMaster.OrderNumber,
                     TaskName = taskMaster.TaskName,
                     GoalDate = goalDate,
                     Status = "Pending",
@@ -562,12 +558,6 @@ namespace Surefire.Domain.Renewals.Services
         }
 
         // NOTES -------------------------------------------------------------------------//
-        public async Task AddSubmissionNoteAsync(SubmissionNote newNote)
-        {
-            using var context = _dbContextFactory.CreateDbContext();
-            context.SubmissionNotes.Add(newNote);
-            await context.SaveChangesAsync();
-        }
         public async Task UpdateNotesAndPremiumAsync(Submission submission)
         {
             using var context = _dbContextFactory.CreateDbContext();

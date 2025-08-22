@@ -1,7 +1,7 @@
-# Surefire AMS
+# Quickfire AMS
 
 ## Primer
-Surefire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
+Quickfire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
 
 ## Ammo
 **June 28th, 2025 - Quick Update**
@@ -12,9 +12,9 @@ So many new features are written, but I haven't had a single minute to devote to
 
 **January 25th, 2025 - Release Preview v1.0.1-alpha**
 
-[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
+[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Quickfire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
-![Surefire MVP Progress](http://surefireams.com/images/about/surefireflyer.jpg)
+![Quickfire MVP Progress](http://Quickfireams.com/images/about/Quickfireflyer.jpg)
 
 ## Scope
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
@@ -46,8 +46,8 @@ So many new features are written, but I haven't had a single minute to devote to
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/flashvenom/surefire.git
-    cd Surefire
+    git clone https://github.com/flashvenom/Quickfire.git
+    cd Quickfire
     ```
 
 2. **Set up your database (optional):**
@@ -106,7 +106,7 @@ So many new features are written, but I haven't had a single minute to devote to
 - Added custom component: "Trigger" which handles tel, mailto, and hyperlink tags. Click to launch, Ctrl+Click to copy, Ctrl+Shift+Click to search in Outlook
 - Major overhaul of dbcontext and code cleanup and refactoring
 - Better error handling on FireSearch (universal search bar at the top)
-- Added custom SmartPaste component to Lead and Client create and edit forms so you can paste a block of text and have Surefire fill in the appropriate fields automatically
+- Added custom SmartPaste component to Lead and Client create and edit forms so you can paste a block of text and have Quickfire fill in the appropriate fields automatically
 - Migrated to .net9
 - BETA: Added Plugin System for custom components
 - Reorganization of file structure with a focus on components and services with a new root namespace

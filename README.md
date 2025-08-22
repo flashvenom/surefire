@@ -12,9 +12,9 @@ So many new features are written, but I haven't had a single minute to devote to
 
 **January 25th, 2025 - Release Preview v1.0.1-alpha**
 
-[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Quickfire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
+[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
-![Quickfire MVP Progress](http://Quickfireams.com/images/about/Quickfireflyer.jpg)
+![Quickfire MVP Progress](https://surefireams.com/images/about/Quickfireflyer.jpg)
 
 ## Scope
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface

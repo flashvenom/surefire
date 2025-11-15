@@ -1,5 +1,5 @@
 # Quickfire AMS
-
+![Quickfire](https://quickfireams.com/images/github/homepage.png)
 ## Primer
 Quickfire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
 

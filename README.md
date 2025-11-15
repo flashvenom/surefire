@@ -17,6 +17,8 @@ So many new features are written, but I haven't had a single minute to devote to
 
 [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
+
+![Quickfire](https://quickfireams.com/images/github/qf-header2.png)
 ## Scope
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
 - Bring all your APIs together to track payments, phone calls, leads, signed documents, forms and more
@@ -41,7 +43,7 @@ So many new features are written, but I haven't had a single minute to devote to
 - **ePayPolicy API**
 - **AppliedEpic API**
 - **AMS360 SDK API**
-
+![Quickfire](https://quickfireams.com/images/github/outreach-short-2.png)
 ## Triggerfinger
 **Ready, Aim, Fire...**
 

@@ -1,9 +1,12 @@
 # Quickfire AMS
-
+![Quickfire](https://quickfireams.com/images/github/home-small.png)
 ## Primer
 Quickfire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
 
 ## Ammo
+**November 11th, 2025 - Get Ready For Fire**
+Desktop build is solid, open source repo is nearly clean. Massive update coming by the end of the year.
+
 **June 28th, 2025 - Quick Update**
 I have a stable build I've been demoing around town and have started to merge into the public changeset. I started with the models and viewmodels and will be adding database services next. Then the other methods and services and finally the razor pages. Exciting things in the months ahead.
 

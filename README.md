@@ -2,7 +2,7 @@
 ![Quickfire](https://quickfireams.com/images/github/home-small.png)
 ## Primer
 Quickfire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
-
+[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4)
 ## Ammo
 **November 11th, 2025 - Get Ready For Fire**
 Desktop build is solid, open source repo is nearly clean. Massive update coming by the end of the year. Check out the wiki for a preview.
@@ -15,9 +15,7 @@ So many new features are written, but I haven't had a single minute to devote to
 
 **January 25th, 2025 - Release Preview v1.0.1-alpha**
 
-[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4) or [Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
-
-![Quickfire MVP Progress](https://surefireams.com/images/about/Quickfireflyer.jpg)
+[Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
 
 ## Scope
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface

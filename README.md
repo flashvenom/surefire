@@ -38,11 +38,14 @@ So many new features are written, but I haven't had a single minute to devote to
 - **Outlook Interop**
 - **SQL Server and SQLite**
 
+![Quickfire](https://quickfireams.com/images/github/renewals-small.png)
+
 ## Plugin Lockbox
 - **RingCentral API**
 - **ePayPolicy API**
 - **AppliedEpic API**
 - **AMS360 SDK API**
+- 
 ![Quickfire](https://quickfireams.com/images/github/outreach-short-2.png)
 ## Triggerfinger
 **Ready, Aim, Fire...**

@@ -5,7 +5,7 @@ Quickfire is an insurance agency management system for independent P&C brokers. 
 
 ## Ammo
 **November 11th, 2025 - Get Ready For Fire**
-Desktop build is solid, open source repo is nearly clean. Massive update coming by the end of the year.
+Desktop build is solid, open source repo is nearly clean. Massive update coming by the end of the year. Check out the wiki for a preview.
 
 **June 28th, 2025 - Quick Update**
 I have a stable build I've been demoing around town and have started to merge into the public changeset. I started with the models and viewmodels and will be adding database services next. Then the other methods and services and finally the razor pages. Exciting things in the months ahead.

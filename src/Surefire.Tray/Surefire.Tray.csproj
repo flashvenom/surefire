@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5A5B9286-22B3-47B5-B0DE-2B21D095BCD1}</ProjectGuid>
+    <ProjectGuid>{B82021D6-9034-44F0-BBF5-EDB7D65F41EB}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>SurefireTray</RootNamespace>
     <AssemblyName>SurefireTray</AssemblyName>

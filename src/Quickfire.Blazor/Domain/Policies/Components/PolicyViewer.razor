@@ -1,0 +1,157 @@
+﻿@using System.IO
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Syncfusion.Pdf
+@using Syncfusion.Pdf.Parsing
+@using Syncfusion.Blazor.SfPdfViewer
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@inject FormService FormService
+@inject IWebHostEnvironment Environment
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath"  Height="784px" Width="100%">
+    <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+</SfPdfViewer2>
+
+@code {
+    [Parameter] public FormDoc? FormDoc { get; set; }
+
+    public FormPdf FormPdf { get; set; } = new FormPdf();
+    public List<FormDocRevision> Revisions { get; set; } = new List<FormDocRevision>();
+    private string DocumentPath { get; set; } = "";
+    private SfPdfViewer2 pdfViewer;
+    private Stream stream;
+    private bool disposed = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (FormDoc != null)
+        {
+            // Load the data
+            if (FormDoc.FormPdf != null)
+            {
+                FormPdf = FormDoc.FormPdf;
+            }
+            else
+            {
+                // Load FormPdf if not included
+                var fullFormDoc = await FormService.GetFormDocByIdAsync(FormDoc.FormDocId);
+                FormPdf = fullFormDoc.FormPdf;
+                FormDoc = fullFormDoc; // Update with full data
+            }
+            
+            DocumentPath = Path.Combine(Environment.WebRootPath, "forms", FormPdf.Filepath);
+            Revisions = await FormService.GetFormDocRevisionsAsync(FormDoc.FormDocId);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (FormDoc != null)
+        {
+            await OnInitializedAsync();
+        }
+    }
+
+    //Methods
+    private async Task LoadJsonDataIntoPdfAsync()
+    {
+        if (FormDoc == null || string.IsNullOrEmpty(FormDoc.JSONData) || FormDoc.JSONData.Length < 10)
+        {
+            Console.WriteLine("No JSON data available to load into the PDF.");
+            return;
+        }
+
+        JObject jsonData = JObject.Parse(FormDoc.JSONData);
+
+        // TESTING: Check if the FormDocId is 14 and if so fill in some fields
+        if (FormDoc.FormPdfId == 14)
+        {
+            string currentDate = DateTime.Now.ToString("MM/yyyy");
+            jsonData["Insurer 1 Date"] = currentDate;
+            jsonData["Insurer 2 Date"] = currentDate;
+            jsonData["Insurer 3 Date"] = currentDate;
+        }
+
+        // Convert updated JSON back to string and load into the PDF form
+        FormDoc.JSONData = jsonData.ToString();
+        byte[] byteArray = System.Text.Encoding.UTF8.GetBytes(FormDoc.JSONData);
+        using (MemoryStream jsonStream = new MemoryStream(byteArray))
+        {
+            await pdfViewer.ImportFormFieldsAsync(jsonStream, FormFieldDataFormat.Json);
+        }
+    }
+
+    public async Task SaveToDatabase(bool? exit = null)
+    {
+        if (FormDoc == null || disposed) return;
+        
+        try
+        {
+            var jsondata = await ExtractJson();
+
+            if (!string.IsNullOrEmpty(jsondata))
+            {
+                FormDoc.JSONData = jsondata;
+                await FormService.UpdateFormDoc(FormDoc);
+
+                // Refresh revisions list
+                Revisions = await FormService.GetFormDocRevisionsAsync(FormDoc.FormDocId);
+            }
+            else
+            {
+                Console.WriteLine("Failed to extract JSON data.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving form data: {ex.Message}");
+        }
+    }
+
+    public async Task<string> ExtractJson()
+    {
+        if (disposed || pdfViewer == null) return null;
+
+        try
+        {
+            stream?.Dispose(); // Dispose previous stream if exists
+            stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                // Read the stream into a JSON string
+                string jsonString = await reader.ReadToEndAsync();
+                return jsonString;
+            }
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine($"Error parsing JSON: {ex.Message}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error extracting JSON: {ex.Message}");
+            return null;
+        }
+        finally
+        {
+            stream?.Dispose();
+            stream = null;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (!disposed)
+        {
+            // Dispose resources only - auto-save is now handled by parent component
+            stream?.Dispose();
+            disposed = true;
+        }
+    }
+}
+

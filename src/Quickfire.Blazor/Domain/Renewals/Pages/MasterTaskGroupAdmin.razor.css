@@ -1,0 +1,260 @@
+﻿.page-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.admin-header {
+    margin-bottom: 30px;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+.task-hierarchy {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 40px; /* Add padding at bottom for scroll space */
+}
+
+.master-task-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.master-task-card {
+    border: 2px solid #b6b6b6;
+    border-radius: 8px;
+    background-color: #fafafa;
+    box-shadow: 0px 0px 10px #ccc;
+    padding:9px 0px 20px 0px;
+
+}
+
+.subtask-card {
+    border: 1px solid var(--neutral-stroke-rest);
+    border-radius: 6px;
+    margin-left: 40px;
+    background-color: #efefef;
+    padding: 0px;
+}
+
+.master-card {
+    padding: 10px;
+    overflow-y: scroll;
+    max-height: calc(100vh - 250px);
+}
+
+.mycard {
+    max-height: calc(100vh - 200px);
+    overflow-y: scroll;
+}
+.subtasks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 2px solid var(--neutral-stroke-rest);
+}
+
+.task-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+}
+.task-header-sub {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 10px;
+}
+.task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+}
+
+.task-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.task-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.task-field-name {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width:250px;
+}
+.task-field-name-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 250px;
+}
+.task-field-desc {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width:500px;
+}
+.task-actions {
+    display: flex;
+    gap: 2px;
+    margin-top: 20px;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Print View Styles */
+.print-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--neutral-stroke-divider);
+}
+
+.print-task-list {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.4;
+    max-width: 100%;
+}
+
+.print-task-item {
+    margin-bottom: 15px;
+    break-inside: avoid;
+}
+
+.print-task-main {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.print-task-number {
+    font-weight: 600;
+    color: var(--accent-fill-rest);
+    min-width: 20px;
+    flex-shrink: 0;
+}
+
+.print-task-content {
+    flex: 1;
+}
+
+.print-task-title {
+    font-weight: 600;
+    font-size: 1em;
+    margin-bottom: 3px;
+    color: var(--neutral-foreground-rest);
+}
+
+.print-task-details {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+
+.print-detail {
+    font-size: 0.85em;
+    color: var(--neutral-foreground-rest);
+}
+
+.print-detail strong {
+    color: var(--neutral-foreground-rest);
+    font-weight: 500;
+}
+
+.print-task-description {
+    font-size: 0.8em;
+    color: var(--neutral-foreground-rest);
+    font-style: italic;
+    margin-top: 3px;
+    padding-left: 0;
+}
+
+/* Subtasks */
+.print-subtasks {
+    margin-left: 20px;
+    margin-top: 8px;
+}
+
+.print-subtask-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    break-inside: avoid;
+}
+
+.print-subtask-number {
+    font-weight: 500;
+    color: var(--accent-fill-rest);
+    min-width: 30px;
+    flex-shrink: 0;
+    font-size: 0.9em;
+}
+
+.print-subtask-content {
+    flex: 1;
+}
+
+.print-subtask-title {
+    font-weight: 500;
+    font-size: 0.9em;
+    margin-bottom: 2px;
+    color: var(--neutral-foreground-rest);
+}
+
+/* Print media queries for actual printing */
+@media print {
+    .print-task-list {
+        font-size: 12pt;
+        line-height: 1.3;
+    }
+    
+    .print-task-item {
+        margin-bottom: 10pt;
+    }
+    
+    .print-task-title {
+        font-size: 11pt;
+    }
+    
+    .print-detail {
+        font-size: 9pt;
+    }
+    
+    .print-task-description {
+        font-size: 9pt;
+    }
+    
+    .print-subtask-title {
+        font-size: 10pt;
+    }
+}
+
+/* Compact spacing for print view */
+.print-task-list * {
+    margin-top: 0;
+}
+
+.print-task-list .print-task-item:last-child {
+    margin-bottom: 0;
+}

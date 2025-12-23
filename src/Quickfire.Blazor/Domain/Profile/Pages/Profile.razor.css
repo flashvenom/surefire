@@ -1,0 +1,38 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    grid-auto-flow: row;
+    grid-template-areas:
+        "grid-profile grid-homepagelayout"
+        "grid-prefs grid-homepagelayout";
+}
+
+.grid-profile {
+    justify-self: stretch;
+    grid-area: grid-profile;
+}
+
+.grid-prefs {
+    grid-area: grid-prefs;
+}
+
+.grid-homepagelayout {
+    align-self: start;
+    grid-area: grid-homepagelayout;
+    height: 100%;
+}
+
+.grid-card {
+    background-color: var(--neutral-fill-secondary-rest);
+    border: 1px solid var(--neutral-stroke-layer-rest);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+}
+
+.page-content {
+    height: calc(100vh - 125px);
+    padding: 0px;
+}

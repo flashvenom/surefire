@@ -1,0 +1,122 @@
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.Notifications
+@inject FormService FormService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<div class="sectiontitletab">
+    Certificate Requests
+    <a href="/Forms/CertificateRequests" class="section-link" title="View all certificate requests">
+        <span class="fluent-icon">›</span>
+    </a>
+</div>
+<div class="cert-box-inner">
+    <table id="certtable" cellspacing="0" class="ltable">
+        <thead class="lbg">
+            <tr>
+                <th class="mid-a">Client</th>
+                <th class="mid-b">Holder</th>
+                <th class="mid-c">Date</th>
+                <th class="mid-d">Status</th>
+            </tr>
+        </thead>
+        <tbody class="lbody">
+            @if (isLoading)
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    <tr>
+                        <td colspan="5">
+                            <SfSkeleton Shape=SkeletonType.Rectangle Width="570px" Height="13px" CssClass="e-customize" Visible="true"></SfSkeleton>
+                        </td>
+                    </tr>
+                }
+            }
+            else if (requests == null || !requests.Any())
+            {
+                <tr>
+                    <td colspan="5" class="no-taskssub">No pending certificate requests</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var request in requests)
+                {
+                    <tr class="main">
+                        <td class="mid-a mid-name ellipsis" @onclick="() => NavigateToCertificateRequest(request.CertificateRequestId)">@request.ClientCompany</td>
+                        <td class="mid-b mid-color ellipsis">@request.HolderName</td>
+                        <td class="mid-c mid-date ellipsis">@request.RequestDate.ToString("M/d/yyyy")</td>
+                        <td class="mid-d ellipsis">
+                            <span class="dot dot-2"></span>
+                            <span class="mid-dotname">new</span>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <div style="height:7px;"></div>
+</div>
+
+
+@code {
+    private List<CertificateRequest> requests;
+    private List<CertificateRequest> pendingRequests;
+    private bool isLoading = true;
+
+    private CertificateRequest selectedRequest;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            // Get internal certificate requests
+            requests = await FormService.GetAllCertificateRequestsAsync();
+            
+            // Filter for only pending requests
+            pendingRequests = requests.Where(r => r.Status == "Pending").ToList();
+            
+            // Use pending requests for display
+            requests = pendingRequests;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching certificate requests: {ex.Message}");
+            requests = new List<CertificateRequest>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    
+    private void ShowDetails(CertificateRequest request)
+    {
+        selectedRequest = request;
+        StateHasChanged();
+    }
+    
+    private void CloseDetailsModal()
+    {
+        StateHasChanged();
+    }
+    
+    private void NavigateToCertificateRequest(int requestId)
+    {
+        NavigationManager.NavigateTo($"/Forms/CertificateRequest/{requestId}");
+    }
+    private int GetStatusClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => 2,
+            "completed" => 1,
+            "sent" => 1,
+            "signed" => 1,
+            _ => 0
+        };
+    }
+} 

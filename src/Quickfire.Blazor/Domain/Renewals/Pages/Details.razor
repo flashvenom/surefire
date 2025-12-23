@@ -1,0 +1,357 @@
+@page "/Renewals/Details/{renewalId:int}"
+@inherits RenewalsBase
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Renewals.ViewModels
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Renewals.Components
+@using Quickfire.Blazor.Domain.Renewals.Dialogs
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Carriers.Services
+@using Quickfire.Blazor.Domain.Utilities
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Syncfusion.Blazor.RichTextEditor
+@using Syncfusion.Blazor.Notifications
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.Inputs
+@using System.Globalization
+@inject NavigationManager NavigationManager
+@inject StateService _stateService
+
+<div class="page-toolbar">
+    <FluentMenuButton ButtonAppearance="Appearance.Accent" Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="NewMasterTaskBtn">
+            <FluentIcon Value="@(new Icons.Regular.Size20.TaskListAdd())" Color="Color.Custom" CustomColor="#000" Slot="start" />
+            Master Task
+        </FluentMenuItem>
+        <FluentMenuItem Id="NewTaskGroupBtn">
+            <FluentIcon Value="@(new Icons.Regular.Size20.GroupList())" Color="Color.Custom" CustomColor="#000" Slot="start" />
+            Task Group
+        </FluentMenuItem>
+        <FluentMenuItem Id="NewSubmissionBtn">
+            <FluentIcon Value="@(new Icons.Regular.Size20.DocumentAdd())" Color="Color.Custom" CustomColor="#000" Slot="start" />
+            Submission
+        </FluentMenuItem>
+    </FluentMenuButton>
+
+    <span class="sf-verthr"></span>
+    <span class="sftb">
+        <NavLink class="toolbar-link" @onclick="BackToCalendar" Match="NavLinkMatch.Prefix">
+            <FluentIcon Value="@(new Icons.Regular.Size24.TaskListLtr())" />
+            <span class="toolbar-text">Renewals</span>
+        </NavLink>
+    </span>
+
+    <span class="sf-verthr2"></span>
+    <a class="sf-chevron @(CanNavigateToPrevious ? "" : "sftb-disabled")" @onclick="NavigateToPreviousRenewal">
+        <FluentIcon Value="@(new Icons.Filled.Size24.ChevronLeft())" Color="Color.Custom" CustomColor="#636363" Slot="start" />
+        @if (!CanNavigateToPrevious)
+        {
+            <span class="chevron-indicator">!</span>
+        }
+    </a>
+    <NavLink class="toolbar-link-cal" @onclick="BackToCalendar" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Calendar())" />
+    </NavLink>
+
+    <span class="toolbar-text-cal sftb-disabled">@htmlMonth</span>
+
+    <a class="sf-chevron @(CanNavigateToNext ? "" : "sftb-disabled")" @onclick="NavigateToNextRenewal">
+        <FluentIcon Value="@(new Icons.Filled.Size24.ChevronRight())" Slot="start" Color="Color.Custom" CustomColor="#636363" />
+        @if (!CanNavigateToNext)
+        {
+            <span class="chevron-indicator">!</span>
+        }
+    </a>
+
+    <span class="spcr"></span>
+    <span class="toolbar-link-cal sftb-disabled">
+        <FluentIcon Value="@(new Icons.Filled.Size24.Person())" Color="Color.FillInverse" Slot="start" />
+    </span>
+    <select class="e-input e-dropdownlist sftb-disabled">
+        <option value="Everyone">@htmlUser</option>
+    </select>
+
+    <span class="spcr"></span>
+    <span class="sf-verthr2"></span>
+    <a class="toolbar-link" href="Renewals/List">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+    <a class="toolbar-link" href="@("Renewals/Edit/" + renewalId)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Pen())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+    <a class="toolbar-link" href="/Tasks">
+        <FluentIcon Value="@(new Icons.Regular.Size24.TasksApp())" />
+        <span class="toolbar-text">Task Admin</span>
+    </a>
+</div>
+
+<div class="sf-content">
+    <div class="sf-head">
+        @if (renewalDetails != null)
+        {
+            <div class="sf-header-col-name">
+                <span class="sf-clientname"><a href="/Clients/@renewalDetails.Client.ClientId">@renewalDetails.Client.Name</a></span><br>
+                <span class="sf-linecode">@renewalDetails.Product.LineName</span>
+            </div>
+            <div class="sf-header-col-tab">
+                <div class="sf-header-col-tab__leftcol">
+                    <span class="sf-rent">RENEWS</span><br />
+                    <span class="sf-renewaldate">@(renewalDetails.RenewalDate.ToString("M/d") ?? "")</span>
+                </div>
+
+                <div class="sf-header__vertline"></div>
+
+                <div class="sf-header-col-tab__col">
+                    @if (renewalDetails.Policy != null)
+                    {
+                        <span class="sf-runt">EXPIRING POLICY NO.</span>
+                
+                        <br />
+                        <span class="sf-rekt sf-header-col__spacer">
+                            <Trigger Value="@renewalDetails.Policy.PolicyNumber" Type="Trigger.ClickType.PolicyNumber" EntityId="@renewalDetails.Policy.PolicyId" Class="sf-rekt sf-header-col__spacer" />
+                        </span>
+                        <br />
+                        <span class="sf-runt">PREMIUM</span>
+
+                        <br />
+                        <span class="sf-rekt">@renewalDetails.Policy.Premium.ToString("C")</span>
+                    }
+                </div>
+
+                <div class="sf-header__spacer"></div>
+
+                <div class="sf-header-col-tab__col">
+                    @if (renewalDetails.Carrier != null || renewalDetails.Wholesaler != null)
+                    {
+                        @if (renewalDetails.Carrier != null)
+                        {
+                            <span class="sf-runt">CARRIER</span>
+                
+                            <br />
+                            <span class="sf-rekt sf-header-col__spacer"><a href="/Carriers/@renewalDetails.Carrier?.CarrierId">@(renewalDetails.Carrier?.CarrierName)</a></span>
+
+                            <br />
+                        }
+                        @if (renewalDetails.Wholesaler != null)
+                        {
+                            <span class="sf-runt">WHOLESALER</span>
+                
+                            <br />
+                            <span class="sf-rekt"><a href="/Carriers/@renewalDetails.Wholesaler?.CarrierId">@(renewalDetails.Wholesaler?.CarrierName)</a></span>
+                        }
+                    }
+                </div>
+
+                <div class="sf-header__spacer"></div>
+                @if (renewalDetails.Carrier != null && renewalDetails.AssignedTo != null)
+                {
+                    <div class="sf-header__vertline"></div>
+                    <div class="sf-header-col-tab__col">
+                        <span class="sf-rekt">
+                            <img src="@StaffPhotoHelper.BuildUrl(renewalDetails.AssignedTo?.PictureUrl)" alt="User Image" style="width: 65px; height: 65px; border-radius: 50%; margin-right: 4px; margin-top:5px;" />
+                        </span>
+                    </div>
+                    <div class="sf-header__spacer"></div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="sf-col-1">
+                <SfSkeleton Shape=SkeletonType.Rectangle Width="500px" Height="75px" Visible="true"></SfSkeleton>
+            </div>
+            <div class="sf-rendate">
+                <SfSkeleton Shape=SkeletonType.Rectangle Width="90px" Height="75px" Visible="true"></SfSkeleton>
+            </div>
+            <div class="sf-rendate-2">
+                <div class="innersep"><SfSkeleton Shape=SkeletonType.Rectangle Width="300px" Height="75px" Visible="true"></SfSkeleton> </div>
+                <div class="innersep leftpad">
+                    <span class="sf-rekt" style="padding-top:5px;">
+                        <SfSkeleton Shape=SkeletonType.Circle Width="60px" Visible="true"></SfSkeleton>
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="det-loader-container">
+        <FluentTabs @ref="renewalTabs" Class="sf-fluenttabs sf-extrapad" Size="TabSize.Medium" Style="padding:0;" OnTabChange="SetRenewalsDetailsTab">
+            <FluentTab Id="tab-1" Label="Tasks" Class="sf-tab-pad-rd">
+                <div class="task-activity-container">
+                    <div class="task-list-container">
+                        <table class="table" border="0" cellpadding="0" cellspacing="0">
+                            <tbody>
+                                @if (renewalDetails != null)
+                                {
+                                    foreach (var task in taskList)
+                                    {
+                                        <tr class="@GetRowClass(task)">
+
+                                            <td class="sf-leftcell">
+                                                <a id="myId-@(task.TaskItemId)" class="sf-threedot" @onclick="(e) => OpenContextMenu(e, task.TaskItemId)">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size24.MoreVertical())" Color="Color.Fill" />
+                                                </a>
+                                                <input type="checkbox" class="sf-completedcheckbox" checked="@task.IsCompleted"
+                                                       data-task-id="@task.TaskItemId"
+                                                       @onchange="@(args => OnCompletedChanged(task.TaskItemId, ((Microsoft.AspNetCore.Components.ChangeEventArgs)args).Value))" />
+                                            </td>
+
+                                            <td class="sf-taskname-cell @GetCellClass(task)" @onclick="() => OnSubtaskCountClicked(task.TaskItemId)">
+                                                <span id="@($"task-note-{task.TaskItemId}")">@task.TaskItemName</span>
+                                            </td>
+
+                                            <td class="sf-status-cell @GetCellClass(task)" @onclick="() => OnSubtaskCountClicked(task.TaskItemId)">
+                                                @((MarkupString)StringHelper.FormatRenewalStatus(task.TaskGoalDate, task.IsCompleted, task.TaskCompletedDate))
+                                            </td>
+
+                                            <td class="sf-rightcell @GetCellClass(task, false, true)" @onclick="() => OnSubtaskCountClicked(task.TaskItemId)">
+                                                @if (task.AssignedSubUser != null)
+                                                {
+                                                    <div class="sf-assigned-container">
+                                                        <span class="sf-assigned-initials">@((MarkupString)UserHelper.GetInitials(task.AssignedSubUser.FirstName, task.AssignedSubUser.LastName))</span>
+                                                        <img class="sf-assigned-headshot" src="@StaffPhotoHelper.BuildUrl(task.AssignedSubUser?.PictureUrl)" alt="User Image" />
+                                                        <span class="sf-subtask-count">
+                                                            <span class="sf-tot">@GetSubtaskCompletedCount(task.TaskItemId)</span>
+                                                            <span class="sf-sla">/</span>
+                                                            <span class="sf-com">@GetSubtaskCount(task.TaskItemId)</span>
+                                                        </span>
+                                                    </div>
+                                                }
+                                            </td>
+
+                                            <td class="sf-connector-cell @GetCellClass(task, true)"></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    for (int i = 0; i < 10; i++)
+                                    {
+                                        <tr>
+                                            <td colspan="5" style="padding-bottom:8px;">
+                                                <SfSkeleton Shape=SkeletonType.Rectangle Width="750px" Height="23px" Visible="true"></SfSkeleton>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+
+
+                        <!-- Renewal Status Dropdown -->
+                        @if (renewalDetails != null)
+                        {
+                            <div class="renewal-status-container @GetRenewalStatusContainerClass(renewalDetails.RenewalStatus)">
+                                <div class="renstatusdd-container">
+                                    <span class="renstatusdd-label">Tagged:</span>
+                                    <SfDropDownList TValue="string" TItem="KeyValuePair<string, string>"
+                                                    ID="renewalStatusDropdown"
+                                                    @bind-Value="renewalDetails.RenewalStatus"
+                                                    DataSource="@RenewalStatusOptions"
+                                                    Placeholder="Select Status"
+                                                    FloatLabelType="FloatLabelType.Never"
+                                                    CssClass="renewal-status-dropdown"
+                                                    @onchange="OnRenewalStatusChanged">
+                                        <DropDownListEvents TItem="KeyValuePair<string, string>" TValue="string" 
+                                                          ValueChange="OnRenewalStatusChanged" 
+                                                          Opened="AddRenewalStatusColors" />
+                                        <DropDownListFieldSettings Text="Value" Value="Key" />
+                                    </SfDropDownList>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="subtask-middle-container">
+                        @if (SelectedParentTaskId.HasValue)
+                        {
+                            <SubTaskList RenewalId="@renewalId" ParentTaskId="SelectedParentTaskId.Value" OnActivityAdded="OnSubtaskActivityAdded" />
+                        }
+                    </div>
+                    <div class="notepady-@(activityLogToggle)">
+                        <div class="notepady-container notepady-expand-@(activityLogToggle)">
+                            <div class="notepady-title">Notepad</div>
+                            @if (renewalDetails != null)
+                            {
+                                <SfRichTextEditor @bind-Value="@renewalDetails.Notes" Height="500" />
+                                <FluentStack>
+                                    <SfButton Content="Expand" CssClass="e-secondary e-block" OnClick="ToggleActivityLog"></SfButton>
+                                    <SfButton Content="Save Notes" CssClass="e-primary e-block" OnClick="UpdateNotepad"></SfButton>
+                                </FluentStack>
+                            }
+                            else
+                            {
+                                <SfSpinner Visible="true"></SfSpinner>
+                            }
+                        </div>
+                    </div>
+                    <div class="activity-log-visible-@(activityLogToggle)">
+                        <ActivityLog @ref="activityLogComponent" RenewalId="@renewalId" OnActivityAdded="OnActivityAdded" />
+                    </div>
+                </div>
+
+                <!-- Context Menu -->
+                <span @onmouseleave="CloseMenu">
+                    <_contextMenu ItemId="@activeTaskId" MenuItems="@menuItems" ToolbarItems="@menuToolbarItems" X="@menuX" Y="@menuY" IsOpen="@isMenuOpen" OnNewSubtask="HandleNewSubtask" />
+
+                    <!-- User Submenu for Assign To... -->
+                    <_userSubmenu TaskId="@userSubmenuTaskId" Users="@AllUsers" X="@userSubmenuX" Y="@userSubmenuY"
+                                  IsOpen="@isUserSubmenuOpen" UserSelected="@HandleUserSelected" />
+                </span>
+            </FluentTab>
+            <FluentTab Id="tab-2" Label="Submissions" Class="sf-tab">
+                @if (_stateService.HtmlTab == "tab-2")
+                {
+                    <Submissions @ref="submissionsRedesignedComponent" RenewalId="@renewalId" />
+                }
+            </FluentTab>
+            <FluentTab Id="tab-3" Label="Files" Class="sf-tab">
+                @if (_stateService.HtmlTab == "tab-5")
+                {
+                    <div class="qf-empty-state">Attachment utilities are unavailable in this build.</div>
+                }
+            </FluentTab>
+            <FluentTab id="tab-4" Label="Utilities" class="sf-tab-pad">
+                <Utilities RenewalId="@renewalId" ClientId="@renewalDetails?.ClientId" PolicyId="@(renewalDetails?.PolicyId)" />
+            </FluentTab>
+        </FluentTabs>
+        <div class="det-loader det-loader-@isLoading"><SfSpinner Type="SpinnerType.Bootstrap5" Visible="true" Size="100" CssClass="e-spin-overlay"></SfSpinner></div>
+    </div>
+</div>
+
+<FluentDialog Hidden="@dialogHidden" Id="deleteDialog" @ref="editGoalDateDialog">
+    <div>
+        <h3>Edit Goal Date</h3>
+        <SfDatePicker TValue="DateTime" @bind-Value="EditGoalDate" Placeholder="Goal Date" FloatLabelType="FloatLabelType.Always" />
+    </div>
+    <FluentDialogFooter>
+        <SfButton IsPrimary="true" OnClick="SaveGoalDate">Save Date</SfButton>
+        <SfButton OnClick="ClearGoalDate">Clear Date</SfButton>
+        <SfButton OnClick="CancelDialog">Cancel</SfButton>
+    </FluentDialogFooter>
+</FluentDialog>
+<FluentPopover Style="width: 600px;" VerticalThreshold="400" AnchorId="@noteAnchorId" @bind-Open="_noteVis">
+    <Header>Task Details</Header>
+    <Body>
+        @if (!string.IsNullOrEmpty(currentTaskDescription))
+        {
+            @((MarkupString)currentTaskDescription)
+        }
+        else
+        {
+            <span>No description available for this task.</span>
+        }
+    </Body>
+</FluentPopover>
+@if (ShowSubtaskDialog && SubtaskDialogParentId.HasValue)
+{
+    <SubTaskCreateDialog ParentTaskId="@SubtaskDialogParentId.Value" OnSubtaskCreated="OnSubtaskCreatedFromMenu" OnCancel="OnSubtaskDialogCancel" />
+}

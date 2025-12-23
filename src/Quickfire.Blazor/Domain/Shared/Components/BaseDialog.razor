@@ -1,0 +1,49 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Shared.Services
+
+@* Only render the dialog after it has been requested to show *@
+@if (isInitialized)
+{
+    <FluentDialog @bind-Hidden="Hidden" @ref="DialogRef" TrapFocus="true" Modal="true" Title="@Title">
+        <div class="dialog-content">
+            @ChildContent
+        </div>
+        <FluentDialogFooter>
+            @FooterContent
+        </FluentDialogFooter>
+    </FluentDialog>
+}
+
+@code {
+    [Parameter] public string DialogId { get; set; }
+    [Parameter] public string Title { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public RenderFragment FooterContent { get; set; }
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+    [Inject] public SurefireDialogService DialogService { get; set; }
+    
+    public FluentDialog DialogRef { get; set; }
+    
+    // Track if dialog has been initialized (shown at least once)
+    private bool isInitialized = false;
+
+    protected override void OnParametersSet()
+    {
+        // Initialize the dialog only when it's first requested to be shown
+        if (!Hidden && !isInitialized)
+        {
+            isInitialized = true;
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Only register after the dialog is actually rendered
+        if (isInitialized && !string.IsNullOrEmpty(DialogId) && DialogRef != null)
+        {
+            DialogService.RegisterDialog(DialogId, DialogRef);
+        }
+    }
+}

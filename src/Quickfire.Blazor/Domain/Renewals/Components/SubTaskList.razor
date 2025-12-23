@@ -1,0 +1,649 @@
+﻿@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Renewals.Dialogs
+@using Quickfire.Blazor.Domain.Users.Services
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Buttons
+@inject TaskService TaskService
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+@inject StateService StateService
+@inject RenewalService RenewalService
+@inject IMessageService MessageService
+
+<div class="stl-container">
+    <div class="stl-subtasklist">
+        @if (SelectedParentTask != null)
+        {
+            @if (!string.IsNullOrEmpty(SelectedParentTask.Notes))
+            {
+                <div class="tftxt">@SelectedParentTask.Notes</div>
+            }
+
+            @foreach (var subtask in Subtasks)
+            {
+                <div class="stl-item">
+                    <table class="subtask-table">
+                        <tr>
+                            <td class="stl-cb-cell">
+                                <input type="checkbox" checked="@subtask.Completed" @onchange="async (e) => await OnSubtaskCompletedChanged(subtask, e.Value as bool?)" class="stl-checkbox" />
+                            </td>
+                            <td class="stl-task-cell">
+                                <div class="stl-item-title">
+                                    @subtask.TaskName
+                                </div>
+                                <div class="stl-item-due-date">
+                                    @if (subtask.Completed && subtask.CompletedDate.HasValue)
+                                    {
+                                        <span>Completed on @subtask.CompletedDate.Value.ToString("M/d") at @subtask.CompletedDate.Value.ToString("h:mmtt").ToLower()</span>
+                                    }
+                                    else
+                                    {
+                                        @Quickfire.Blazor.Domain.Shared.Helpers.StringHelper.FormatDateDifference(subtask.GoalDate?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"))
+                                    }
+                                </div>
+                            </td>
+                            <td class="stl-user-cell">
+                                @{
+                                    ApplicationUser? assignedUser = null;
+                                    if (!string.IsNullOrEmpty(subtask.AssignedToId))
+                                    {
+                                        UserCache.TryGetValue(subtask.AssignedToId, out assignedUser);
+                                    }
+                                }
+                                @if (!string.IsNullOrEmpty(assignedUser?.PictureUrl))
+                                {
+                                    <img class="sf-assigned-headshot" src="@Quickfire.Blazor.Domain.Shared.Helpers.StaffPhotoHelper.BuildUrl(assignedUser.PictureUrl)" alt="User Image" onerror="this.onerror=null;this.src='/uploads/headshots/default.jpg';" />
+                                }
+                                else if (assignedUser != null)
+                                {
+                                    <div class="sf-assigned-headshot sf-initials">
+                                        @((assignedUser.FirstName?.Substring(0, 1) ?? "") + (assignedUser.LastName?.Substring(0, 1) ?? ""))
+                                    </div>
+                                }
+                            </td>
+                            <td class="stl-context-cell">
+                                <a id="myId-@(subtask.Id)" class="sf-threedot" @onclick="(e) => OpenContextMenu(e, subtask.Id)">
+                                    <FluentIcon Value="@(new Icons.Filled.Size24.MoreVertical())" Color="Color.Custom" CustomColor="rgba(4, 115, 206, 0.6)" />
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            }
+            <div class="add-subtask-container">
+                <button class="add-subtask-btn" @onclick="ShowNewSubtaskDialog">
+                    <FluentIcon Value="@(new Icons.Filled.Size24.AddCircle())" Color="Color.Custom" CustomColor="#0473ce" Class="add-btn-icon" />
+                    <span class="add-btn-text">Add Task</span>
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="subtask-empty">No subtasks for this item.</div>
+        }
+    </div>
+
+    <div class="aa-top">
+        <FluentMessageBarProvider />
+    </div>
+</div>
+
+<span @onmouseleave="CloseMenu">
+    <_contextMenu ItemId="@activeSubtaskId"
+                  MenuItems="@subtaskMenuItems"
+                  ToolbarItems="@subtaskToolbarItems"
+                  X="@subtaskMenuX"
+                  Y="@subtaskMenuY"
+                  IsOpen="@isSubtaskMenuOpen" />
+    <_userSubmenu TaskId="@userSubmenuTaskId"
+                  Users="@AllUsers"
+                  X="@userSubmenuX"
+                  Y="@userSubmenuY"
+                  IsOpen="@isUserSubmenuOpen"
+                  UserSelected="@HandleUserSelected" />
+</span>
+
+@if (ShowDialog)
+{
+    <SubTaskCreateDialog ParentTaskId="ParentTaskId" OnSubtaskCreated="OnSubtaskCreated" OnCancel="HideNewSubtaskDialog" />
+}
+@if (showGoalDateDialog)
+{
+    <FluentDialog Hidden="false">
+        <div>
+            <h3>Edit Goal Date</h3>
+            <FluentDatePicker @bind-Value="editGoalDate" />
+        </div>
+        <FluentDialogFooter>
+            <FluentButton OnClick="@SaveGoalDate" Appearance="Appearance.Accent">Save</FluentButton>
+            <FluentButton OnClick="@CancelGoalDateDialog" Appearance="Appearance.Neutral">Cancel</FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+}
+
+@code {
+    [Parameter] public int RenewalId { get; set; }
+    [Parameter] public int ParentTaskId { get; set; }
+    [Parameter] public EventCallback OnActivityAdded { get; set; }
+    private bool _disposed;
+    private int? _lastFetchedTaskId = null;
+    private bool IsLoading { get; set; } = true;
+    private bool ShowDialog { get; set; } = false;
+    private bool _payLinkDialogHidden = true;
+    private string? _taskMasterDescription = null;
+    private List<TrackTask> ParentTasks { get; set; } = new();
+    private List<TrackTask> Subtasks { get; set; } = new();
+    private Dictionary<string, ApplicationUser> UserCache { get; set; } = new();
+    private List<(string ParentName, List<TrackTask> Subtasks)> AllSubtasksGrouped { get; set; } = new();
+    private TrackTask? SelectedParentTask => ParentTasks.FirstOrDefault(t => t.Id == ParentTaskId);
+
+    // ====                                                      ====|
+    // ==== PRIMARY FUNCTIONS ---------------------------------------|
+    // ====                                                      ====|
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadParentTasksAndSubtasks();
+        await LoadSubtasks();
+        await LoadAllSubtasksGrouped();
+        // await LoadTaskMasterDescription();
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        AllUsers = await UserService.GetAllUsersAsync();
+    }
+    private async Task LoadParentTasksAndSubtasks()
+    {
+        // Fetch all parent tasks for the renewal
+        ParentTasks = (await TaskService.GetTasksForRenewalAsync(RenewalId))
+            .Where(t => t.ParentTaskId == null)
+            .ToList();
+    }
+    private async Task LoadSubtasks()
+    {
+        IsLoading = true;
+        if (ParentTaskId != 0)
+        {
+            Subtasks = await TaskService.GetSubtasksForTask(ParentTaskId);
+        }
+        else
+        {
+            Subtasks = new List<TrackTask>();
+        }
+        // Fetch users for all AssignedToId
+        var userIds = Subtasks.Select(st => st.AssignedToId).Where(id => !string.IsNullOrEmpty(id)).Distinct();
+        foreach (var userId in userIds)
+        {
+            if (!UserCache.ContainsKey(userId))
+            {
+                var user = (await UserService.GetAllUsersAsync()).FirstOrDefault(u => u.Id == userId);
+                if (user != null)
+                    UserCache[userId] = user;
+            }
+        }
+        IsLoading = false;
+        if (!_disposed)
+            StateHasChanged();
+    }
+    private async Task LoadAllSubtasksGrouped()
+    {
+        // Group all subtasks by parent
+        var allSubtasks = new List<TrackTask>();
+        foreach (var parent in ParentTasks)
+        {
+            var subtasks = await TaskService.GetSubtasksForTask(parent.Id);
+            allSubtasks.AddRange(subtasks.Where(st => !st.Completed));
+        }
+        AllSubtasksGrouped = ParentTasks
+            .Select(parent => (parent.TaskName, allSubtasks.Where(st => st.ParentTaskId == parent.Id).ToList()))
+            .Where(g => g.Item2.Any())
+            .Select(g => (g.TaskName, g.Item2))
+            .ToList();
+    }
+
+    private async Task OnSubtaskCompletedChanged(TrackTask subtask, bool? isChecked, bool isManual = true)
+    {
+        if (isChecked == null) return;
+        bool completed = isChecked.Value;
+        subtask.Completed = completed;
+        var user = StateService.CurrentUser;
+        var userFirstName = user != null ? user.FirstName : "System";
+        var now = DateTime.Now;
+        subtask.CompletedDate = completed ? now : (DateTime?)null;
+
+        // Update the subtask in the database
+        await TaskService.UpdateSubtaskEntityAsync(subtask);
+
+        // Add a single activity note for the subtask change
+        if (isManual)
+        {
+            string noteText = completed
+                ? $"<strong>{subtask.TaskName}</strong> was completed."
+                : $"<strong>{subtask.TaskName}</strong> was marked incomplete.";
+            await RenewalService.AddRenewalNoteForTrackTaskAsync(subtask.RenewalId, subtask.Id, noteText, RenewalNoteType.SystemLog);
+            if (OnActivityAdded.HasDelegate)
+            {
+                await OnActivityAdded.InvokeAsync(null);
+            }
+
+        }
+        if (!_disposed)
+            StateHasChanged();
+    }
+
+    // ---- Context menu state for subtasks--------------------------|
+    private int activeSubtaskId;
+    private int subtaskMenuX, subtaskMenuY;
+    private bool isSubtaskMenuOpen;
+    private List<_contextMenu.MenuItem> subtaskMenuItems = new();
+    private List<_contextMenu.ToolbarItem> subtaskToolbarItems = new();
+
+    // ---- User submenu state --------------------------------------|
+    private bool isUserSubmenuOpen = false;
+    private int userSubmenuX, userSubmenuY;
+    private int userSubmenuTaskId;
+    private List<ApplicationUser> AllUsers = new();
+
+    // ---- Context Menu Logic --------------------------------------|
+    private DateTime? editGoalDate;
+    private int goalDateEditSubtaskId;
+    private bool showGoalDateDialog = false;
+    private void OpenContextMenu(MouseEventArgs e, int subtaskId)
+    {
+        activeSubtaskId = subtaskId;
+        subtaskMenuX = (int)e.ClientX - 560;
+        subtaskMenuY = (int)e.ClientY - 280;
+        isSubtaskMenuOpen = true;
+        isUserSubmenuOpen = false;
+
+        // Define toolbar items for quick goal date actions
+        subtaskToolbarItems = new List<_contextMenu.ToolbarItem>
+        {
+            new() { Text = "Clear Goal Date", IconValue = new Icons.Regular.Size24.CalendarEmpty(), Action = ClearGoalDate },
+            new() { Text = "Set Goal Date to Tomorrow", IconValue = new Icons.Regular.Size24.CalendarWeekNumbers(), Action = SetGoalDateTomorrow },
+            new() { Text = "Set Goal Date to A Week from Today", IconValue = new Icons.Regular.Size24.CalendarWeekStart(), Action = SetGoalDateNextWeek },
+            new() { Text = "Set Goal Date to Two Weeks from Today", IconValue = new Icons.Regular.Size24.CalendarArrowCounterclockwise(), Action = SetGoalDateTwoWeeks }
+        };
+
+        subtaskMenuItems = new List<_contextMenu.MenuItem>
+        {
+            new() { Text = "Set Goal Date", IconValue = new Icons.Regular.Size24.CalendarEdit(), Action = ShowGoalDateDialog },
+            new() { Text = "Set Assigned", IconValue = new Icons.Regular.Size24.PersonSupport(), Action = ShowUserSubmenu },
+            new() { Text = "Edit", IconValue = new Icons.Regular.Size24.PenSparkle(), Action = EditSubtask },
+            new() { Text = "Delete", IconValue = new Icons.Regular.Size24.Delete(), Action = DeleteSubtask }
+        };
+        Console.WriteLine($"Context menu state: isSubtaskMenuOpen={isSubtaskMenuOpen}, activeSubtaskId={activeSubtaskId}, subtaskMenuX={subtaskMenuX}, subtaskMenuY={subtaskMenuY}");
+        StateHasChanged();
+    }
+    private void ShowUserSubmenu(int subtaskId)
+    {
+        Console.WriteLine($"ShowUserSubmenu called for subtaskId={subtaskId}");
+        userSubmenuTaskId = subtaskId;
+        userSubmenuX = subtaskMenuX + 550;
+        userSubmenuY = subtaskMenuY + 300; // Adjust as needed for menu item position
+        isUserSubmenuOpen = true;
+        StateHasChanged();
+    }
+    private void CloseMenu()
+    {
+        Console.WriteLine("CloseMenu called");
+        isSubtaskMenuOpen = false;
+        isUserSubmenuOpen = false;
+        StateHasChanged();
+    }
+    private void EditSubtask(int subtaskId)
+    {
+        NavigationManager.NavigateTo($"/Renewals/EditTrackTask/{subtaskId}");
+        CloseMenu();
+    }
+    private void ShowGoalDateDialog(int subtaskId)
+    {
+        goalDateEditSubtaskId = subtaskId;
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == subtaskId);
+        editGoalDate = subtask?.GoalDate ?? DateTime.Now;
+        showGoalDateDialog = true;
+        CloseMenu();
+    }
+    private void CancelGoalDateDialog()
+    {
+        showGoalDateDialog = false;
+    }
+    private async void DeleteSubtask(int subtaskId)
+    {
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == subtaskId);
+
+        // Add activity note
+        var user = StateService.CurrentUser;
+        var userName = user != null ? user.FirstName : "System";
+        var note = new RenewalNote {
+            RenewalId = subtask?.RenewalId ?? RenewalId,
+            Note = $"Subtask <strong>{subtask?.TaskName ?? subtaskId.ToString()}</strong> was deleted.",
+            DateCreated = DateTime.Now,
+            CreatedById = user?.Id,
+            NoteType = RenewalNoteType.UserSubtaskNote
+        };
+        await RenewalService.AddRenewalNoteAsync(note);
+        await TaskService.DeleteTrackTaskAsync(subtaskId);
+        if (OnActivityAdded.HasDelegate)
+            await OnActivityAdded.InvokeAsync(null);
+        await LoadSubtasks();
+        await LoadAllSubtasksGrouped();
+        CloseMenu();
+    }
+    private async Task SaveGoalDate()
+    {
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == goalDateEditSubtaskId);
+        if (subtask != null)
+        {
+            subtask.GoalDate = editGoalDate;
+            var model = new Quickfire.Blazor.Domain.Renewals.ViewModels.TaskItemViewModel
+                {
+                    TaskItemId = subtask.Id,
+                    TaskItemName = subtask.TaskName,
+                    IsCompleted = subtask.Completed,
+                    IsHighlighted = subtask.Highlighted,
+                    IsHidden = subtask.Hidden,
+                    Status = subtask.Status,
+                    Notes = subtask.Notes,
+                    TaskGoalDate = subtask.GoalDate,
+                    TaskCompletedDate = subtask.CompletedDate,
+                    AssignedSubUser = subtask.AssignedTo,
+                    ParentTaskId = subtask.ParentTaskId
+                };
+            await TaskService.UpdateTrackTaskModelAsync(model);
+            // Add activity note
+            var user = StateService.CurrentUser;
+            var userName = user != null ? user.FirstName : "System";
+            var note = new RenewalNote {
+                RenewalId = subtask.RenewalId,
+                Note = $"Goal date for subtask <strong>{subtask.TaskName}</strong> set to {editGoalDate:MM/dd/yyyy}.",
+                DateCreated = DateTime.Now,
+                CreatedById = user?.Id,
+                NoteType = RenewalNoteType.UserSubtaskNote
+            };
+            await RenewalService.AddRenewalNoteAsync(note);
+            if (OnActivityAdded.HasDelegate)
+                await OnActivityAdded.InvokeAsync(null);
+            await LoadSubtasks();
+            await LoadAllSubtasksGrouped();
+        }
+        showGoalDateDialog = false;
+    }
+
+    // ---- Quick Goal Date Action Methods --------------------------|
+    private async void ClearGoalDate(int subtaskId)
+    {
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == subtaskId);
+        if (subtask != null)
+        {
+            subtask.AssignedToId = StateService.CurrentUser.Id;
+            subtask.GoalDate = null;
+            await UpdateSubtaskGoalDate(subtask, "cleared");
+        }
+        CloseMenu();
+    }
+    private async void SetGoalDateTomorrow(int subtaskId)
+    {
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == subtaskId);
+        if (subtask != null)
+        {
+            subtask.AssignedToId = StateService.CurrentUser.Id;
+            subtask.GoalDate = DateTime.Today.AddDays(1);
+            await UpdateSubtaskGoalDate(subtask, DateTime.Today.AddDays(1).ToString("MM/dd/yyyy"));
+        }
+        CloseMenu();
+    }
+    private async void SetGoalDateNextWeek(int subtaskId)
+    {
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == subtaskId);
+        if (subtask != null)
+        {
+            subtask.AssignedToId = StateService.CurrentUser.Id;
+            subtask.GoalDate = DateTime.Today.AddDays(7);
+            await UpdateSubtaskGoalDate(subtask, DateTime.Today.AddDays(7).ToString("MM/dd/yyyy"));
+        }
+        CloseMenu();
+    }
+    private async void SetGoalDateTwoWeeks(int subtaskId)
+    {
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == subtaskId);
+        if (subtask != null)
+        {
+            subtask.AssignedToId = StateService.CurrentUser.Id;
+            subtask.GoalDate = DateTime.Today.AddDays(14);
+            await UpdateSubtaskGoalDate(subtask, DateTime.Today.AddDays(14).ToString("MM/dd/yyyy"));
+        }
+        CloseMenu();
+    }
+    private async Task UpdateSubtaskGoalDate(TrackTask subtask, string dateDescription)
+    {
+        var model = new Quickfire.Blazor.Domain.Renewals.ViewModels.TaskItemViewModel
+        {
+            TaskItemId = subtask.Id,
+            TaskItemName = subtask.TaskName,
+            IsCompleted = subtask.Completed,
+            IsHighlighted = subtask.Highlighted,
+            IsHidden = subtask.Hidden,
+            Status = subtask.Status,
+            Notes = subtask.Notes,
+            TaskGoalDate = subtask.GoalDate,
+            TaskCompletedDate = subtask.CompletedDate,
+            AssignedSubUser = subtask.AssignedTo,
+            ParentTaskId = subtask.ParentTaskId
+        };
+        await TaskService.UpdateTrackTaskModelAsync(model);
+
+        // Add activity note
+        var user = StateService.CurrentUser;
+        var userName = user != null ? user.FirstName : "System";
+        var noteText = dateDescription == "cleared" 
+            ? $"Goal date for subtask <strong>{subtask.TaskName}</strong> was cleared."
+            : $"Goal date for subtask <strong>{subtask.TaskName}</strong> set to {dateDescription}.";
+        
+        var note = new RenewalNote 
+        {
+            RenewalId = subtask.RenewalId,
+            Note = noteText,
+            DateCreated = DateTime.Now,
+            CreatedById = user?.Id,
+            NoteType = RenewalNoteType.SystemLog
+        };
+        await RenewalService.AddRenewalNoteAsync(note);
+        
+        if (OnActivityAdded.HasDelegate)
+            await OnActivityAdded.InvokeAsync(null);
+        await LoadSubtasks();
+        await LoadAllSubtasksGrouped();
+    }
+    private async Task HandleUserSelected(_userSubmenu.UserAssignmentInfo info)
+    {
+        await TaskService.AssignToSpecificUser(info.TaskId, info.UserId);
+        // Add activity note
+        var subtask = Subtasks.FirstOrDefault(st => st.Id == info.TaskId);
+        var user = StateService.CurrentUser;
+        var userName = user != null ? user.FirstName : "System";
+        var assignedUser = subtask?.AssignedTo != null ? $"{subtask.AssignedTo.FirstName} {subtask.AssignedTo.LastName}" : info.UserId;
+        var note = new RenewalNote {
+            RenewalId = subtask?.RenewalId ?? RenewalId,
+            Note = $"Subtask <strong>{subtask?.TaskName ?? info.TaskId.ToString()}</strong> assigned to {assignedUser}.",
+            DateCreated = DateTime.Now,
+            CreatedById = user?.Id,
+            NoteType = RenewalNoteType.SystemLog
+        };
+        await RenewalService.AddRenewalNoteAsync(note);
+        if (OnActivityAdded.HasDelegate)
+            await OnActivityAdded.InvokeAsync(null);
+        await LoadSubtasks();
+        await LoadAllSubtasksGrouped();
+        CloseMenu();
+    }
+
+    // ---- Dialog Functions ---------------------------------------|
+    private void ShowNewSubtaskDialog()
+    {
+        ShowDialog = true;
+    }
+    private async Task OnSubtaskCreated()
+    {
+        ShowDialog = false;
+        await LoadSubtasks();
+        await LoadAllSubtasksGrouped();
+        // Add activity note for new subtask
+        var newSubtask = Subtasks.OrderByDescending(st => st.DateCreated).FirstOrDefault();
+        if (newSubtask != null)
+        {
+            var user = StateService.CurrentUser;
+            var userName = user != null ? user.FirstName : "System";
+            var note = new RenewalNote {
+                RenewalId = newSubtask.RenewalId,
+                Note = $"Subtask <strong>{newSubtask.TaskName}</strong> was created.",
+                DateCreated = DateTime.Now,
+                CreatedById = user?.Id,
+                NoteType = RenewalNoteType.SystemLog
+            };
+            await RenewalService.AddRenewalNoteAsync(note);
+            if (OnActivityAdded.HasDelegate)
+                await OnActivityAdded.InvokeAsync(null);
+        }
+    }
+    private void HideNewSubtaskDialog()
+    {
+        ShowDialog = false;
+    }
+
+    
+
+    private async Task DisplayCarrierMessageGroup(dynamic group)
+    {
+        await Task.Run(() =>
+        {
+            MessageService.ShowMessageBar(options =>
+            {
+                options.Title = group.Title?.ToString();
+                options.Body = group.Body?.ToString();
+                options.Intent = group.Intent?.ToString() switch
+                {
+                    "Success" => MessageIntent.Success,
+                    "Warning" => MessageIntent.Warning,
+                    "Error" => MessageIntent.Error,
+                    _ => MessageIntent.Info
+                };
+                options.ClearAfterNavigation = false;
+
+                // Add links if available
+                var links = group.Links as IEnumerable<dynamic>;
+                if (links != null && links.Any())
+                {
+                    var firstLink = links.First();
+                    options.Link = new ActionLink<Microsoft.FluentUI.AspNetCore.Components.Message>
+                    {
+                        Text = firstLink.Text?.ToString() ?? "Open Link",
+                        Href = firstLink.Href?.ToString() ?? "#",
+                        OnClick = (e) => Task.CompletedTask
+                    };
+                }
+
+                // Add actions if available
+                var actions = group.Actions as IEnumerable<dynamic>;
+                if (actions != null && actions.Any())
+                {
+                    var actionsList = actions.ToList();
+                    
+                    if (actionsList.Count > 0)
+                    {
+                        var firstAction = actionsList[0];
+                        options.PrimaryAction = new ActionButton<Microsoft.FluentUI.AspNetCore.Components.Message>
+                        {
+                            Text = firstAction.Text?.ToString() ?? "Action",
+                            OnClick = (e) => HandleCarrierAction(firstAction)
+                        };
+                    }
+                    
+                    if (actionsList.Count > 1)
+                    {
+                        var secondAction = actionsList[1];
+                        options.SecondaryAction = new ActionButton<Microsoft.FluentUI.AspNetCore.Components.Message>
+                        {
+                            Text = secondAction.Text?.ToString() ?? "Action",
+                            OnClick = (e) => HandleCarrierAction(secondAction)
+                        };
+                    }
+                }
+            });
+        });
+    }
+    private async Task HandleCarrierAction(dynamic action)
+    {
+        try
+        {
+            var actionType = action.ActionType?.ToString();
+
+            switch (actionType)
+            {
+                case "OpenOutlook":
+                    MessageService.ShowMessageBar(options =>
+                    {
+                        options.Title = "📧 Outlook Action";
+                        options.Body = "Opening Outlook to review email drafts...";
+                        options.Intent = MessageIntent.Info;
+                        options.ClearAfterNavigation = false;
+                    });
+                    break;
+
+                case "ViewCarrierContacts":
+                    MessageService.ShowMessageBar(options =>
+                    {
+                        options.Title = "📞 Contact Information";
+                        options.Body = "Feature coming soon: View carrier contact details";
+                        options.Intent = MessageIntent.Info;
+                        options.ClearAfterNavigation = false;
+                    });
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error silently
+        }
+
+        await Task.CompletedTask;
+    }
+    private async Task CreatePayLink()
+    {
+        try
+        {
+            _payLinkDialogHidden = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await MessageService.ShowMessageBarAsync($"Error opening payment link dialog: {ex.Message}", MessageIntent.Error);
+        }
+    }
+    private async Task ClosePayLinkDialog()
+    {
+        _payLinkDialogHidden = true;
+        StateHasChanged();
+    }
+   
+    private async Task RequestUpdate()
+    {
+        // TODO: Implement Request Update functionality
+        await MessageService.ShowMessageBarAsync("Update requested!", MessageIntent.Success);
+    }
+    private async Task EmailUnderwriter()
+    {
+        // TODO: Implement Email Underwriter functionality
+        await MessageService.ShowMessageBarAsync("Email sent to underwriter!", MessageIntent.Success);
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
+}

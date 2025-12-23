@@ -1,0 +1,407 @@
+@page "/Users/{UserId}"
+@using System.IO
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Hosting
+@using Quickfire.Blazor.Domain.Users.Services
+@using Quickfire.Blazor.Domain.Profile.Components
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@inject UserService UserService
+@inject IWebHostEnvironment WebHostEnvironment
+
+<_Toolbar currentView="_Toolbar.ViewMode.Users" />
+
+<div class="qf-scroll-panel user-editor">
+    <div class="qf-scroll-panel__alt-container">
+        <div class="user-editor__header">
+            <FluentButton Appearance="Appearance.Lightweight" OnClick="NavigateBack">
+                <FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Slot="start" />
+                Back to Users
+            </FluentButton>
+            <div class="user-editor__title">
+                <h3 class="qf-container__title">@GetDisplayName()</h3>
+                <p class="qf-container__subtitle">Update contact info, desktop username, and the photo used across Quickfire.</p>
+            </div>
+        </div>
+
+        <FluentMessageBar Intent="MessageIntent.Info" Class="user-editor__desktop-tip" AllowDismiss="false">
+            <strong>Desktop Username instructions:</strong> This must match the Windows account name exactly (find it on the lock screen, in Task Manager → Users, or by running <code>whoami</code> on the workstation).
+            Quickfire.Blazor.Tray and the Quickfire ↔ Outlook interop depend on this value to connect activity to the right person.
+        </FluentMessageBar>
+
+        @if (isLoading)
+        {
+            <div class="user-editor__loading">
+                <FluentProgressRing Width="40px" />
+                <span>Loading user...</span>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(loadError) || user == null)
+        {
+            <FluentMessageBar Intent="MessageIntent.Error">@loadError</FluentMessageBar>
+            <FluentButton Appearance="Appearance.Accent" OnClick="NavigateBack">
+                <FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Slot="start" />
+                Return to Users
+            </FluentButton>
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(successMessage))
+            {
+                <FluentMessageBar Intent="MessageIntent.Success" OnDismiss="@(() => successMessage = null)">
+                    @successMessage
+                </FluentMessageBar>
+            }
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <FluentMessageBar Intent="MessageIntent.Error" OnDismiss="@(() => errorMessage = null)">
+                    @errorMessage
+                </FluentMessageBar>
+            }
+            if (!string.IsNullOrEmpty(passwordResetSuccess))
+            {
+                <FluentMessageBar Intent="MessageIntent.Success" OnDismiss="@(() => passwordResetSuccess = null)">
+                    Password reset complete. Share this temporary password with the user: <code>@passwordResetSuccess</code>
+                </FluentMessageBar>
+            }
+            if (!string.IsNullOrEmpty(passwordResetError))
+            {
+                <FluentMessageBar Intent="MessageIntent.Warning" OnDismiss="@(() => passwordResetError = null)">
+                    @passwordResetError
+                </FluentMessageBar>
+            }
+
+            <div class="user-editor__layout">
+                <div class="user-editor__aside">
+                    <div class="user-editor__card">
+                        <div class="user-editor__card-header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Image())" />
+                            <div>
+                                <h4>Profile photo</h4>
+                                <p>Shown on chats, approvals, and automations.</p>
+                            </div>
+                        </div>
+                        <div class="user-editor__photo-preview">
+                            <img src="@GetPhotoPath()" alt="Profile photo" />
+                        </div>
+                        <label class="user-editor__upload">
+                            <span>@(isUploadingPhoto ? "Uploading..." : "Upload new photo")</span>
+                            <InputFile class="user-editor__upload-input"
+                                       OnChange="OnHeadshotSelected"
+                                       accept=".png,.jpg,.jpeg"
+                                       disabled="@isUploadingPhoto" />
+                        </label>
+                        <FluentButton Appearance="Appearance.Lightweight"
+                                      OnClick="ResetPhotoAsync"
+                                      Disabled="@(IsUsingDefaultPhoto || isUploadingPhoto)">
+                            Use default photo
+                        </FluentButton>
+                        @if (!string.IsNullOrEmpty(photoError))
+                        {
+                            <span class="user-editor__error">@photoError</span>
+                        }
+                    </div>
+
+                    <div class="user-editor__card">
+                        <div class="user-editor__card-header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Key())" />
+                            <div>
+                                <h4>Security</h4>
+                                <p>Issue a new temporary password at any time.</p>
+                            </div>
+                        </div>
+                        <FluentButton Appearance="Appearance.Accent"
+                                      OnClick="ResetPasswordFromEditor"
+                                      Disabled="@isResettingPassword">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.ArrowClockwise())" Slot="start" />
+                            @(isResettingPassword ? "Resetting..." : "Reset password")
+                        </FluentButton>
+                    </div>
+                </div>
+
+                <div class="user-editor__main user-editor__card">
+                    <EditForm Model="@user" OnValidSubmit="SaveUserAsync">
+                        <DataAnnotationsValidator />
+                        <FluentValidationSummary />
+                        <div class="user-editor__form-grid">
+                            <FluentTextField @bind-Value="user.FirstName" Label="First name" Required="true" />
+                            <FluentTextField @bind-Value="user.LastName" Label="Last name" Required="true" />
+                            <FluentTextField @bind-Value="user.Email" Label="Email" />
+                            <FluentTextField @bind-Value="user.PhoneNumber" Label="Phone" />
+                            <FluentTextField @bind-Value="user.DesktopUsername"
+                                             Label="Desktop Username"
+                                             Placeholder="EXAMPLE: corp\\jsmith"
+                                             Required="true" />
+                        </div>
+                        <p class="user-editor__field-hint">
+                            Match Windows exactly — it powers Quickfire.Blazor.Tray presence and the Outlook interop connection.
+                        </p>
+                        <div class="user-editor__form-actions">
+                            <FluentButton Appearance="Appearance.Accent"
+                                          Type="ButtonType.Submit"
+                                          Disabled="@isSaving">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Save())" Slot="start" />
+                                @(isSaving ? "Saving..." : "Save changes")
+                            </FluentButton>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    private ApplicationUser? user;
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool isUploadingPhoto;
+    private bool isResettingPassword;
+    private string? loadError;
+    private string? successMessage;
+    private string? errorMessage;
+    private string? photoError;
+    private string? passwordResetSuccess;
+    private string? passwordResetError;
+
+    private static readonly HashSet<string> AllowedPhotoExtensions = new(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg" };
+    private const long PhotoUploadLimit = 4 * 1024 * 1024; // 4 MB
+    private const string DefaultStaffPhoto = "default.jpg";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadUserAsync();
+    }
+
+    private async Task LoadUserAsync()
+    {
+        isLoading = true;
+        loadError = null;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            user = await UserService.GetUserByIdAsync(UserId);
+            if (user == null)
+            {
+                loadError = "We couldn't find that user record.";
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = $"Unable to load user details: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveUserAsync()
+    {
+        if (user == null)
+        {
+            return;
+        }
+
+        isSaving = true;
+        successMessage = null;
+        errorMessage = null;
+
+        try
+        {
+            await UserService.UpdateUserAsync(user);
+            successMessage = "Saved updates to this user.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Unable to save changes: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task OnHeadshotSelected(InputFileChangeEventArgs args)
+    {
+        if (user == null)
+        {
+            return;
+        }
+
+        var file = args.File;
+        if (file == null)
+        {
+            photoError = "Select a PNG or JPG file.";
+            return;
+        }
+
+        var extension = Path.GetExtension(file.Name);
+        if (!AllowedPhotoExtensions.Contains(extension))
+        {
+            photoError = "Please upload a PNG or JPG image.";
+            return;
+        }
+
+        photoError = null;
+        isUploadingPhoto = true;
+
+        try
+        {
+            await using var readStream = file.OpenReadStream(PhotoUploadLimit);
+            MemoryStream resized;
+
+            if (extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                resized = await ImageResizer.ResizeImagePngAsync(readStream, 500);
+            }
+            else
+            {
+                resized = await ImageResizer.ResizeImageAsync(readStream, 500);
+            }
+
+            using (resized)
+            {
+                resized.Seek(0, SeekOrigin.Begin);
+                var staffFolder = Path.Combine(WebHostEnvironment.WebRootPath, "uploads", "headshots");
+                Directory.CreateDirectory(staffFolder);
+
+                var fileName = BuildUserPhotoName(user, extension);
+                var filePath = Path.Combine(staffFolder, fileName);
+
+                await using (var output = File.Create(filePath))
+                {
+                    await resized.CopyToAsync(output);
+                }
+
+                RemoveExistingPhotoFile(staffFolder, user.PictureUrl, fileName);
+
+                user.PictureUrl = fileName;
+                await UserService.UpdateUserAsync(user);
+                successMessage = "Updated the profile photo.";
+            }
+        }
+        catch (Exception ex)
+        {
+            photoError = $"Unable to upload the photo: {ex.Message}";
+        }
+        finally
+        {
+            isUploadingPhoto = false;
+        }
+    }
+
+    private async Task ResetPhotoAsync()
+    {
+        if (user == null || IsUsingDefaultPhoto)
+        {
+            return;
+        }
+
+        try
+        {
+            var staffFolder = Path.Combine(WebHostEnvironment.WebRootPath, "uploads", "headshots");
+            RemoveExistingPhotoFile(staffFolder, user.PictureUrl, DefaultStaffPhoto);
+
+            user.PictureUrl = DefaultStaffPhoto;
+            await UserService.UpdateUserAsync(user);
+            successMessage = "Reverted to the default photo.";
+        }
+        catch (Exception ex)
+        {
+            photoError = $"Unable to reset the photo: {ex.Message}";
+        }
+    }
+
+    private async Task ResetPasswordFromEditor()
+    {
+        if (user == null)
+        {
+            return;
+        }
+
+        passwordResetSuccess = null;
+        passwordResetError = null;
+        isResettingPassword = true;
+
+        try
+        {
+            var (success, tempPassword, errors) = await UserService.ResetPasswordAsync(user.Id);
+            if (success)
+            {
+                passwordResetSuccess = tempPassword;
+            }
+            else
+            {
+                passwordResetError = errors != null
+                    ? string.Join("; ", errors)
+                    : "Unable to reset the password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            passwordResetError = $"Unable to reset the password: {ex.Message}";
+        }
+        finally
+        {
+            isResettingPassword = false;
+        }
+    }
+
+    private void RemoveExistingPhotoFile(string staffFolder, string? existingFile, string newFile)
+    {
+        if (string.IsNullOrWhiteSpace(existingFile) ||
+            StaffPhotoHelper.ResolveFileName(existingFile).Equals(DefaultStaffPhoto, StringComparison.OrdinalIgnoreCase) ||
+            existingFile.Equals(newFile, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var currentPath = Path.Combine(staffFolder, existingFile);
+        if (File.Exists(currentPath))
+        {
+            File.Delete(currentPath);
+        }
+    }
+
+    private static string BuildUserPhotoName(ApplicationUser user, string extension)
+    {
+        var safeName = StringHelper.SanitizeFileName(user.FirstName, user.LastName);
+        var suffix = Guid.TryParse(user.Id, out var guid)
+            ? guid.ToString("N")[..8]
+            : Guid.NewGuid().ToString("N")[..8];
+
+        var normalizedExtension = extension.StartsWith(".", StringComparison.Ordinal) ? extension : $".{extension}";
+        return $"{safeName}-{suffix}{normalizedExtension}".ToLowerInvariant();
+    }
+
+    private bool IsUsingDefaultPhoto =>
+        user == null ||
+        string.IsNullOrWhiteSpace(user.PictureUrl) ||
+        StaffPhotoHelper.ResolveFileName(user.PictureUrl).Equals(DefaultStaffPhoto, StringComparison.OrdinalIgnoreCase);
+
+    private string GetPhotoPath()
+    {
+        return StaffPhotoHelper.BuildUrl(user?.PictureUrl);
+    }
+
+    private string GetDisplayName()
+    {
+        if (user == null)
+        {
+            return "User details";
+        }
+
+        var name = user.FullName?.Trim();
+        return string.IsNullOrWhiteSpace(name) ? user.Email ?? "User details" : name;
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/Users");
+    }
+}

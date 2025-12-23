@@ -1,0 +1,115 @@
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.IO
+
+<FluentIcon Value="@GetIconForFileType()" Color="@GetColorForFileType()" />
+
+@code {
+    [Parameter] public string FileName { get; set; }
+    
+    private Microsoft.FluentUI.AspNetCore.Components.Icon GetIconForFileType()
+    {
+        if (string.IsNullOrEmpty(FileName))
+            return new Icons.Regular.Size20.Document();
+            
+        string ext = Path.GetExtension(FileName).ToLowerInvariant();
+        
+        switch (ext)
+        {
+            // Document types
+            case ".pdf":
+                return new Icons.Regular.Size20.DocumentPdf();
+            case ".doc":
+            case ".docx":
+                return new Icons.Regular.Size20.DocumentText();
+            case ".xls":
+            case ".xlsx":
+            case ".csv":
+                return new Icons.Regular.Size20.DocumentData();
+                
+            // Image types
+            case ".jpg":
+            case ".jpeg":
+            case ".png":
+            case ".gif":
+            case ".bmp":
+            case ".tiff":
+                return new Icons.Regular.Size20.ImageMultiple();
+                
+            // Archive types
+            case ".zip":
+            case ".rar":
+            case ".7z":
+            case ".tar":
+            case ".gz":
+                return new Icons.Regular.Size20.FolderZip();
+                
+            // Code/text types
+            case ".txt":
+            case ".rtf":
+            case ".md":
+                return new Icons.Regular.Size20.TextClearFormatting();
+            case ".html":
+            case ".xml":
+            case ".css":
+            case ".js":
+                return new Icons.Regular.Size20.Code();
+                
+            // Email types
+            case ".eml":
+            case ".msg":
+                return new Icons.Regular.Size20.Mail();
+                
+            // Presentation types
+            case ".ppt":
+            case ".pptx":
+                return new Icons.Regular.Size20.SlideSettings();
+                
+            // Default
+            default:
+                return new Icons.Regular.Size20.Document();
+        }
+    }
+    
+    private Color GetColorForFileType()
+    {
+        if (string.IsNullOrEmpty(FileName))
+            return Color.Neutral;
+            
+        string ext = Path.GetExtension(FileName).ToLowerInvariant();
+        
+        switch (ext)
+        {
+            // Document types
+            case ".pdf":
+                return Color.Error;
+            case ".doc":
+            case ".docx":
+                return Color.Accent;
+            case ".xls":
+            case ".xlsx":
+            case ".csv":
+                return Color.Success;
+                
+            // Image types
+            case ".jpg":
+            case ".jpeg":
+            case ".png":
+            case ".gif":
+            case ".bmp":
+            case ".tiff":
+                return Color.Accent;
+                
+            // Archive types
+            case ".zip":
+            case ".rar":
+            case ".7z":
+            case ".tar":
+            case ".gz":
+                return Color.Warning;
+                
+            // Default
+            default:
+                return Color.Neutral;
+        }
+    }
+} 

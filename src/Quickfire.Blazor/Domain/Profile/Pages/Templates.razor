@@ -1,0 +1,427 @@
+@page "/Templates"
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Profile.Components
+@using Syncfusion.Blazor.RichTextEditor
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Interfaces
+@using Quickfire.Blazor.Data
+@using Quickfire.Blazor.Components
+@using Quickfire.Blazor.Components.Layout
+@using Quickfire.Blazor.Domain.Ember
+@inject AppJsInterop JsInterop
+@inject IEmailTemplateService EmailTemplateService
+@inject EmberService EmberService
+
+<_Toolbar currentView="_Toolbar.ViewMode.Templates" />
+
+<div class="template-manager-v2">
+    @if (templates == null)
+    {
+        <div class="loading-container">
+            <FluentProgressRing Width="40px" Color="#1b8ce3" />
+            <span>Loading templates...</span>
+        </div>
+    }
+    else
+    {
+        <div class="three-column-layout">
+            <!-- LEFT COLUMN: Template List -->
+            <div class="left-column">
+                <div class="column-header">
+                    <div class="col-tweak">
+                        <span class="qf-container__icon"><FluentIcon Value="@(new Icons.Regular.Size48.Form())" Color="Color.Custom" CustomColor="#a0a0a0" /></span>
+                        <h3>Templates</h3>
+                    </div>
+                    <FluentButton Appearance="Appearance.Accent" OnClick="CreateNewTemplate" Title="Create New Template">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Color="Color.Custom" CustomColor="#ffffff" />
+                    </FluentButton>
+                </div>
+                
+                <div class="search-box">
+                    <FluentSearch @bind-Value="searchQuery" 
+                                  @bind-Value:after="FilterTemplates"
+                                  Placeholder="Search templates..."
+                                  Immediate="true" />
+                </div>
+
+                <div class="template-list">
+                    @if (!filteredTemplates.Any())
+                    {
+                        <div class="no-results">
+                            <FluentIcon Value="@(new Icons.Regular.Size24.Mail())" />
+                            <p>@(string.IsNullOrWhiteSpace(searchQuery) ? "No templates found. Create one to get started." : "No templates match your search.")</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var template in filteredTemplates)
+                        {
+                            <div class="template-item @(selectedTemplate?.EmailTemplateId == template.EmailTemplateId ? "selected" : "")"
+                                 @onclick="() => SelectTemplate(template)">
+                                <div class="template-item-header">
+                                    <span class="template-name">@template.Name</span>
+                                    <span class="status-indicator @(template.IsActive ? "active" : "inactive")" 
+                                          title="@(template.IsActive ? "Active" : "Inactive")"></span>
+                                </div>
+                                <div class="template-subject">@template.Subject</div>
+                                @if (!string.IsNullOrWhiteSpace(template.Description))
+                                {
+                                    <div class="template-description">@template.Description</div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- MIDDLE COLUMN: Editor -->
+            <div class="middle-column">
+                @if (selectedTemplate == null)
+                {
+                    <div class="empty-state">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Mail())" />
+                        <h3>Select a template to edit</h3>
+                        <p>Choose a template from the list or create a new one</p>
+                        <FluentButton Appearance="Appearance.Accent" OnClick="CreateNewTemplate">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Add())" />
+                            Create New Template
+                        </FluentButton>
+                    </div>
+                }
+                else
+                {
+                    <div class="editor-section">
+                        <div class="editor-header">
+                            <h4>@(selectedTemplate.EmailTemplateId == 0 ? "New Template" : selectedTemplate.Name)</h4>
+                            <div class="editor-actions">
+                                <FluentButton Appearance="Appearance.Accent" OnClick="SaveTemplate">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Save())" Color="Color.Custom" CustomColor="#ffffff" />
+                                </FluentButton>
+                                @if (selectedTemplate.EmailTemplateId != 0)
+                                {
+                                    <FluentButton Appearance="Appearance.Outline" OnClick="() => DeleteTemplate(selectedTemplate)">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" />
+                                    </FluentButton>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="subject-editor">
+                            <label>Subject Line</label>
+                            <FluentTextField @bind-Value="selectedTemplate.Subject" 
+                                           Placeholder="Enter email subject..."
+                                           Style="width: 100%;" />
+                        </div>
+
+                        <div class="body-editor">
+                            <div class="editor-toolbar-wrapper">
+                                <label>Email Body</label>
+                            </div>
+                            <div class="rte-wrapper">
+                                <SfRichTextEditor @ref="rteObj" 
+                                                @bind-Value="selectedTemplate.Body" 
+                                                Height="calc(100vh - 380px)"
+                                                Placeholder="Enter your email template content here...">
+                                    <RichTextEditorToolbarSettings Items="@Tools">
+                                        <RichTextEditorCustomToolbarItems>
+                                            <RichTextEditorCustomToolbarItem Name="InsertVariable">
+                                                <Template>
+                                                    <div class="variable-inserter">
+                                                        <FluentButton Appearance="Appearance.Lightweight" 
+                                                                    OnClick="() => showVariableMenu = !showVariableMenu"
+                                                                    Title="Insert Variable">
+                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Braces())" />
+                                                            Variables
+                                                        </FluentButton>
+                                                        @if (showVariableMenu)
+                                                        {
+                                                            <div class="variable-menu">
+                                                                @foreach (var variable in availableVariables)
+                                                                {
+                                                                    <div class="variable-menu-item" @onclick="() => InsertVariable(variable.Key)">
+                                                                        <span class="variable-key">{@variable.Key}</span>
+                                                                        <span class="variable-desc">@variable.Value</span>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </Template>
+                                            </RichTextEditorCustomToolbarItem>
+                                        </RichTextEditorCustomToolbarItems>
+                                    </RichTextEditorToolbarSettings>
+                                </SfRichTextEditor>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- RIGHT COLUMN: Properties -->
+            <div class="right-column">
+                @if (selectedTemplate != null)
+                {
+                    <div class="properties-section">
+                        <h4>Template Properties</h4>
+                        
+                        <div class="property-group">
+                            <label>Template Name</label>
+                            <FluentTextField @bind-Value="selectedTemplate.Name" 
+                                           Placeholder="Enter template name"
+                                           Style="width: 100%;" />
+                        </div>
+
+                        <div class="property-group">
+                            <label>Description</label>
+                            <FluentTextArea @bind-Value="selectedTemplate.Description" 
+                                          Placeholder="Optional description"
+                                          Rows="3"
+                                          Style="width: 100%;" />
+                        </div>
+
+                        <div class="property-group">
+                            <FluentCheckbox @bind-Value="selectedTemplate.IsActive" Label="Active Template" />
+                            <span class="property-help">Inactive templates won't appear in selection lists</span>
+                        </div>
+
+                        <hr class="property-divider" />
+
+                        <h5>Template Requirements</h5>
+                        <div class="requirements-group">
+                            <FluentCheckbox @bind-Value="selectedTemplate.NeedsPolicy" Label="Requires Policy" />
+                            <FluentCheckbox @bind-Value="selectedTemplate.NeedsContact" Label="Requires Contact" />
+                            <FluentCheckbox @bind-Value="selectedTemplate.NeedsProduct" Label="Requires Product" />
+                            <FluentCheckbox @bind-Value="selectedTemplate.NeedsPayment" Label="Requires Payment" />
+                            <FluentCheckbox @bind-Value="selectedTemplate.NeedsDownPayment" Label="Requires Down Payment" />
+                        </div>
+
+                        <hr class="property-divider" />
+
+                        <div class="property-group">
+                            <label>Custom Function</label>
+                            <FluentTextField @bind-Value="selectedTemplate.CustomFunction" 
+                                           Placeholder="e.g., LossRunRequester"
+                                           Style="width: 100%;" />
+                            <span class="property-help">Leave blank for standard templates</span>
+                        </div>
+
+                        @if (selectedTemplate.EmailTemplateId != 0)
+                        {
+                            <hr class="property-divider" />
+                            <div class="metadata">
+                                <div class="metadata-item">
+                                    <span class="metadata-label">Created:</span>
+                                    <span class="metadata-value">@selectedTemplate.CreatedAt.ToLocalTime().ToString("g")</span>
+                                </div>
+                                @if (selectedTemplate.UpdatedAt.HasValue)
+                                {
+                                    <div class="metadata-item">
+                                        <span class="metadata-label">Updated:</span>
+                                        <span class="metadata-value">@selectedTemplate.UpdatedAt.Value.ToLocalTime().ToString("g")</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="properties-empty">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Settings())" />
+                        <p>Select a template to view properties</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<EmailTemplate> templates;
+    private List<EmailTemplate> filteredTemplates = new();
+    private EmailTemplate selectedTemplate;
+    private string searchQuery = "";
+    private bool showVariableMenu = false;
+    private SfRichTextEditor rteObj;
+
+    private Dictionary<string, string> availableVariables = new()
+    {
+        { "PolicyType", "Policy type name" },
+        { "PolicyType64", "Policy type (base64 encoded)" },
+        { "PolicyNumber", "Policy number" },
+        { "ExpirationDate", "Policy expiration date" },
+        { "ClientName", "Client full name" },
+        { "ClientName64", "Client name (base64 encoded)" },
+        { "ClientEmail", "Client email address" },
+        { "ClientEmail64", "Client email address (URL encoded)" },
+        { "PrimaryAddress", "Client primary address" },
+        { "ContactFirstName", "Contact first name" },
+        { "ContactEmail", "Contact email address" },
+        { "PaymentAmount", "Payment amount" },
+        { "DownPaymentAmount", "Down payment amount" }
+    };
+
+    private List<ToolbarItemModel> Tools = new List<ToolbarItemModel>()
+    {
+        new ToolbarItemModel() { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel() { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel() { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel() { Command = ToolbarCommand.StrikeThrough },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.FontColor },
+        new ToolbarItemModel() { Command = ToolbarCommand.BackgroundColor },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Formats },
+        new ToolbarItemModel() { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.OrderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.UnorderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel() { Command = ToolbarCommand.Image },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Name = "InsertVariable", TooltipText = "Insert Variable" },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Undo },
+        new ToolbarItemModel() { Command = ToolbarCommand.Redo },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.ClearFormat },
+        new ToolbarItemModel() { Command = ToolbarCommand.SourceCode }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplates();
+    }
+
+    private async Task LoadTemplates()
+    {
+        templates = await EmailTemplateService.GetAllTemplatesAsync();
+        FilterTemplates();
+    }
+
+    private void FilterTemplates()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredTemplates = templates.OrderBy(t => t.Name).ToList();
+        }
+        else
+        {
+            var query = searchQuery.ToLower();
+            filteredTemplates = templates
+                .Where(t => t.Name.ToLower().Contains(query) || 
+                           (t.Subject?.ToLower().Contains(query) ?? false) ||
+                           (t.Description?.ToLower().Contains(query) ?? false))
+                .OrderBy(t => t.Name)
+                .ToList();
+        }
+    }
+
+    private void CreateNewTemplate()
+    {
+        selectedTemplate = new EmailTemplate
+        {
+            IsActive = true,
+            Name = "New Template",
+            Subject = "",
+            Body = ""
+        };
+        showVariableMenu = false;
+    }
+
+    private void SelectTemplate(EmailTemplate template)
+    {
+        selectedTemplate = new EmailTemplate
+        {
+            EmailTemplateId = template.EmailTemplateId,
+            Name = template.Name,
+            Subject = template.Subject,
+            Body = template.Body,
+            Description = template.Description,
+            IsActive = template.IsActive,
+            NeedsPolicy = template.NeedsPolicy,
+            NeedsContact = template.NeedsContact,
+            NeedsProduct = template.NeedsProduct,
+            NeedsPayment = template.NeedsPayment,
+            NeedsDownPayment = template.NeedsDownPayment,
+            CustomFunction = template.CustomFunction,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt
+        };
+        showVariableMenu = false;
+    }
+
+    private async Task InsertVariable(string variableKey)
+    {
+        if (rteObj != null)
+        {
+            await rteObj.ExecuteCommandAsync(CommandName.InsertHTML, $"{{{variableKey}}}");
+        }
+        showVariableMenu = false;
+    }
+
+    private async Task SaveTemplate()
+    {
+        if (string.IsNullOrWhiteSpace(selectedTemplate.Name))
+        {
+            await JsInterop.AlertAsync("Please enter a template name.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectedTemplate.Subject))
+        {
+            await JsInterop.AlertAsync("Please enter an email subject.");
+            return;
+        }
+
+        try
+        {
+            if (selectedTemplate.EmailTemplateId == 0)
+            {
+                var created = await EmailTemplateService.CreateTemplateAsync(selectedTemplate);
+                selectedTemplate.EmailTemplateId = created.EmailTemplateId;
+                selectedTemplate.CreatedAt = created.CreatedAt;
+            }
+            else
+            {
+                selectedTemplate.UpdatedAt = DateTime.UtcNow;
+                await EmailTemplateService.UpdateTemplateAsync(selectedTemplate);
+            }
+
+            await LoadTemplates();
+            
+            // Re-select the template to refresh the view
+            var savedTemplate = templates.FirstOrDefault(t => t.EmailTemplateId == selectedTemplate.EmailTemplateId);
+            if (savedTemplate != null)
+            {
+                SelectTemplate(savedTemplate);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JsInterop.AlertAsync($"Error saving template: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteTemplate(EmailTemplate template)
+    {
+        var confirmed = await JsInterop.ConfirmAsync($"Are you sure you want to delete '{template.Name}'?");
+        if (confirmed)
+        {
+            try
+            {
+                await EmailTemplateService.DeleteTemplateAsync(template.EmailTemplateId);
+                await LoadTemplates();
+                selectedTemplate = null;
+            }
+            catch (Exception ex)
+            {
+                await JsInterop.AlertAsync($"Error deleting template: {ex.Message}");
+            }
+        }
+    }
+}

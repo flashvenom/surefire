@@ -1,0 +1,493 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Ember
+@inject PolicyService PolicyService
+@inject EmberService EmberService
+@inject IToastService ToastService
+@inject AppJsInterop JsInterop
+
+<div class="loss-runs-requester">
+
+    <div class="product-selection">
+        <div class="form-group">
+            @if (uniqueProductLines != null && uniqueProductLines.Any())
+            {
+                <FluentSelect TOption="string"
+                Label="Line of Business"
+                Items="@productLineOptions"
+                Value="@selectedProductLine"
+                ValueChanged="@(val => OnProductLineSelected(val))"
+                OptionText="@(p => p)"
+                OptionValue="@(p => p)" />
+            }
+            else
+            {
+                <p>No policy types found for this client.</p>
+            }
+        </div>
+    </div>
+
+
+    @if (showPoliciesTable && groupedPolicies != null && groupedPolicies.Any())
+    {
+        <div class="policies-table">
+            <h3 class="section-title">Policies by Carrier</h3>
+            <p class="section-subtitle">Select a carrier to generate a loss runs request email</p>
+
+            @foreach (var carrierGroup in groupedPolicies)
+            {
+                <div class="carrier-policy-group">
+                    <div class="carrier-header">
+                        <div class="carrier-info">
+                            <h4>@carrierGroup.Key</h4>
+                            @if (carrierGroup.Value.FirstOrDefault()?.Carrier?.LossRunsEmail != null || 
+                                carrierGroup.Value.FirstOrDefault()?.Wholesaler?.LossRunsEmail != null)
+                            {
+                                <span class="carrier-email">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" />
+                                    @(GetLossRunsEmail(carrierGroup.Value))
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(GetLossRunURL(carrierGroup.Value)))
+                            {
+                                <span class="carrier-url">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" />
+                                    <a href="javascript:void(0);" @onclick="() => OpenLossRunURL(carrierGroup.Value)">Loss Runs Portal</a>
+                                </span>
+                            }
+                        </div>
+                        <div class="action-buttons">
+                            @if (!string.IsNullOrEmpty(GetLossRunURL(carrierGroup.Value)))
+                            {
+                                <FluentButton Appearance="Appearance.Accent" OnClick="() => OpenLossRunURL(carrierGroup.Value)"><FluentIcon Value="@(new Icons.Regular.Size16.Globe())" Color="Color.Custom" CustomColor="#fff" /> Access Portal</FluentButton>
+                            }
+                            <FluentButton Appearance="Appearance.Accent" OnClick="() => SendEmailForCarrier(carrierGroup.Key, carrierGroup.Value)">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" Color="Color.Custom" CustomColor="#fff" />
+                                Send Email
+                            </FluentButton>
+                            <a class="fluent-button" style="display: flex; align-items: center; gap: 0.25rem; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; background: var(--accent-fill-rest); color: #fff; font-weight: 500;" href="@GetMailtoLink(carrierGroup.Key, carrierGroup.Value)" target="_blank" title="Use your default email client">
+                                <span style="display: flex; align-items: center;"><FluentIcon Value="@(new Icons.Regular.Size16.Mail())" Color="Color.Custom" CustomColor="#fff" /></span>
+                                Fallback Email
+                            </a>
+                        </div>
+                    </div>
+                    <FluentDataGrid TGridItem="Policy" Items="@(carrierGroup.Value.AsQueryable())" GridTemplateColumns="minmax(150px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(150px, 1fr) minmax(150px, 1fr)">
+                        <PropertyColumn Property="@(p => p.PolicyNumber)" Title="Policy Number" />
+                        <PropertyColumn Property="@(p => p.EffectiveDate)" Title="Effective Date" Format="MM/dd/yyyy" />
+                        <PropertyColumn Property="@(p => p.ExpirationDate)" Title="Expiration Date" Format="MM/dd/yyyy" />
+                        <TemplateColumn Title="Carrier">
+                            <p>@(context.Carrier?.CarrierName ?? "N/A")</p>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Wholesaler">
+                            <p>@(context.Wholesaler?.CarrierName ?? "N/A")</p>
+                        </TemplateColumn>
+                    </FluentDataGrid>
+                </div> 
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<Policy> CurrentPolicies { get; set; }
+
+    [Parameter]
+    public List<Policy> PastPolicies { get; set; }
+
+    [Parameter]
+    public string ClientName { get; set; }
+
+    private List<string> uniqueProductLines = new List<string>();
+    private List<string> productLineOptions = new List<string>();
+    private string selectedProductLine;
+    private bool showPoliciesTable = false;
+    private Dictionary<string, List<Policy>> groupedPolicies = new Dictionary<string, List<Policy>>();
+    private List<Policy> allPolicies = new List<Policy>();
+    private readonly string SELECT_ONE_OPTION = "--Select One--";
+
+    protected override void OnParametersSet()
+    {
+        // Combine current and past policies
+        allPolicies.Clear();
+
+        if (CurrentPolicies != null)
+        {
+            allPolicies.AddRange(CurrentPolicies);
+        }
+
+        if (PastPolicies != null)
+        {
+            allPolicies.AddRange(PastPolicies);
+        }
+
+        // Generate unique list of product lines from combined policies
+        if (allPolicies.Any())
+        {
+            uniqueProductLines = allPolicies
+                .Where(p => p.Product != null)
+                .Select(p => p.Product.LineName)
+                .Distinct()
+                .OrderBy(name => name)
+                .ToList();
+
+            // Create the dropdown options with "Select One" as the first option
+            productLineOptions = new List<string> { SELECT_ONE_OPTION };
+            productLineOptions.AddRange(uniqueProductLines);
+
+            // Set default selection to "Select One"
+            selectedProductLine = SELECT_ONE_OPTION;
+        }
+    }
+
+    private void OnProductLineSelected(string value)
+    {
+        Console.WriteLine($"Selection changed to: {value}");
+        selectedProductLine = value;
+        
+        // Only generate request if a real option (not "Select One") was selected
+        if (!string.IsNullOrEmpty(value) && value != SELECT_ONE_OPTION)
+        {
+            GenerateLossRunsRequest();
+        }
+        else
+        {
+            // Clear any displayed results if "Select One" is chosen
+            showPoliciesTable = false;
+        }
+    }
+
+    private void GenerateLossRunsRequest()
+    {
+        if (string.IsNullOrEmpty(selectedProductLine) || selectedProductLine == SELECT_ONE_OPTION || !allPolicies.Any())
+        {
+            return;
+        }
+
+        // Filter policies by selected product line
+        var filteredPolicies = allPolicies
+            .Where(p => p.Product != null && p.Product.LineName == selectedProductLine)
+            .ToList();
+
+        if (!filteredPolicies.Any())
+        {
+            showPoliciesTable = false;
+            ToastService.ShowWarning("No policies found for the selected line of business.");
+            return;
+        }
+
+        try
+        {
+            // Group policies by carrier name to consolidate the same carriers that might appear 
+            // as both a carrier and a wholesaler
+            groupedPolicies = filteredPolicies
+                .GroupBy(p => GetCarrierName(p))
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Show the policies table
+            showPoliciesTable = true;
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error grouping policies: {ex.Message}");
+            Console.WriteLine($"Error in GenerateLossRunsRequest: {ex}");
+        }
+    }
+
+    private string GetCarrierName(Policy policy)
+    {
+        // Create a placeholder carrier name for unknown carriers
+        const string unknownCarrierName = "Unknown Carrier";
+
+        try
+        {
+            // Check if Wholesaler exists and is marked as Wholesaler
+            if (policy.Wholesaler != null && policy.Wholesaler.Wholesaler)
+            {
+                return policy.Wholesaler.CarrierName;
+            }
+            
+            // Check if Carrier exists and is marked as Carrier (or IssuingCarrier)
+            if (policy.Carrier != null && (policy.Carrier.IssuingCarrier || !policy.Carrier.Wholesaler))
+            {
+                return policy.Carrier.CarrierName;
+            }
+            
+            // If none of the above, return the placeholder
+            return unknownCarrierName;
+        }
+        catch
+        {
+            // In case of any error accessing properties, return the placeholder
+            return unknownCarrierName;
+        }
+    }
+
+    private string GetLossRunsEmail(List<Policy> policies)
+    {
+        // Try to find a loss runs email from any policy in the group
+        foreach (var policy in policies)
+        {
+            // Check wholesaler first if it exists and was used for grouping
+            if (policy.Wholesaler != null && 
+                policy.Wholesaler.Wholesaler && 
+                !string.IsNullOrEmpty(policy.Wholesaler.LossRunsEmail))
+            {
+                return policy.Wholesaler.LossRunsEmail;
+            }
+            
+            // Then check carrier if it exists and was used for grouping
+            if (policy.Carrier != null && 
+                (policy.Carrier.IssuingCarrier || !policy.Carrier.Wholesaler) &&
+                !string.IsNullOrEmpty(policy.Carrier.LossRunsEmail))
+            {
+                return policy.Carrier.LossRunsEmail;
+            }
+        }
+        
+        // If no email found, return empty string
+        return string.Empty;
+    }
+
+    private string GetLossRunURL(List<Policy> policies)
+    {
+        // Try to find a loss run URL from any policy in the group
+        foreach (var policy in policies)
+        {
+            // Check wholesaler first if it exists and was used for grouping
+            if (policy.Wholesaler != null && 
+                policy.Wholesaler.Wholesaler)
+            {
+                if (!string.IsNullOrEmpty(policy.Wholesaler.LossRunsURL))
+                {
+                    return policy.Wholesaler.LossRunsURL;
+                }
+            }
+            
+            // Then check carrier if it exists and was used for grouping
+            if (policy.Carrier != null && 
+                (policy.Carrier.IssuingCarrier || !policy.Carrier.Wholesaler))
+            {
+                if (!string.IsNullOrEmpty(policy.Carrier.LossRunsURL))
+                {
+                    return policy.Carrier.LossRunsURL;
+                }
+            }
+        }
+        
+        // If no URL found, return empty string
+        return string.Empty;
+    }
+
+    private async Task OpenLossRunURL(List<Policy> policies)
+    {
+        string url = GetLossRunURL(policies);
+        if (!string.IsNullOrEmpty(url))
+        {
+            // Make sure the URL has a protocol
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
+                url = "https://" + url;
+            }
+            
+            // Open the URL in a new tab
+            await JsInterop.OpenWindowAsync(url, "_blank");
+            
+            // Show a success message
+            ToastService.ShowInfo("Opening carrier's loss runs portal in a new tab.");
+        }
+    }
+
+    private string GetClientNameForPolicies(List<Policy> policies)
+    {
+        // Try to get client name from the first policy
+        string policyClientName = policies.FirstOrDefault()?.Client?.Name;
+        
+        // If we have a client name from policies, use it
+        if (!string.IsNullOrEmpty(policyClientName))
+        {
+            return policyClientName;
+        }
+        
+        // Otherwise, use the client name passed to the component
+        if (!string.IsNullOrEmpty(ClientName))
+        {
+            return ClientName;
+        }
+        
+        // If all else fails, use "Our Client"
+        return "Our Client";
+    }
+
+    private async Task SendEmailForCarrier(string carrierName, List<Policy> policies)
+    {
+        if (policies == null || !policies.Any())
+        {
+            return;
+        }
+
+        // Get a representative policy to use in the subject
+        var firstPolicy = policies.First();
+        
+        // Get the client name
+        string clientName = GetClientNameForPolicies(policies);
+        
+        // Create subject with client name
+        string subject = $"Loss Run Request - {clientName} - {selectedProductLine} ({firstPolicy.PolicyNumber})";
+        
+        // Build email body with client name
+        string body = $"<p>Please send us the current valued loss runs for <strong>{clientName}</strong>'s {selectedProductLine} policies from {carrierName}:</p>";
+        
+        // Add policy details to body
+        body += "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse: collapse; width: 100%;'>";
+        body += "<tr style='background-color: #f2f2f2;'><th>Policy Number</th><th>Effective Date</th><th>Expiration Date</th><th>Carrier</th><th>Wholesaler</th></tr>";
+        
+        foreach (var policy in policies)
+        {
+            string carrierValue = policy.Carrier?.CarrierName ?? "N/A";
+            string wholesalerValue = policy.Wholesaler?.CarrierName ?? "N/A";
+            
+            body += $"<tr><td>{policy.PolicyNumber}</td><td>{policy.EffectiveDate.ToShortDateString()}</td><td>{policy.ExpirationDate.ToShortDateString()}</td><td>{carrierValue}</td><td>{wholesalerValue}</td></tr>";
+        }
+        
+        body += "</table>";
+        body += "<p>Thank you for your assistance.</p>";
+        
+        // Get recipient email
+        string toEmail = GetLossRunsEmail(policies);
+            
+        try 
+        {
+            // Create the email using Ember service
+            await CreateNewEmail(toEmail, subject, body);
+            
+            // Show success toast
+            ToastService.ShowSuccess("Email created successfully!");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error creating email: {ex.Message}");
+            Console.WriteLine($"Error in SendEmailForCarrier: {ex}");
+        }
+    }
+    
+    private async Task CreateNewEmail(string toEmail, string subject, string body)
+    {
+        var parameters = new List<string> { toEmail, subject, body };
+        await EmberService.RunEmberFunction("OutlookEmail_CreateNew", parameters);
+    }
+
+    // Add a method to generate a mailto: link for fallback email
+    private string GetMailtoLink(string carrierName, List<Policy> policies)
+    {
+        if (policies == null || !policies.Any())
+        {
+            return "#";
+        }
+        var firstPolicy = policies.First();
+        string clientName = GetClientNameForPolicies(policies);
+        string subject = $"Loss Run Request - {clientName} - {selectedProductLine} ({firstPolicy.PolicyNumber})";
+        string body = $"Please send us the current valued loss runs for {clientName}'s {selectedProductLine} policies from {carrierName}:\n\n";
+        foreach (var policy in policies)
+        {
+            string carrierValue = policy.Carrier?.CarrierName ?? "N/A";
+            string wholesalerValue = policy.Wholesaler?.CarrierName ?? "N/A";
+            body += $"Policy Number: {policy.PolicyNumber}\nEffective Date: {policy.EffectiveDate.ToShortDateString()}\nExpiration Date: {policy.ExpirationDate.ToShortDateString()}\nCarrier: {carrierValue}\nWholesaler: {wholesalerValue}\n---\n";
+        }
+        body += "\nThank you for your assistance.";
+        string toEmail = GetLossRunsEmail(policies);
+        // URL encode subject and body
+        string encodedSubject = Uri.EscapeDataString(subject);
+        string encodedBody = Uri.EscapeDataString(body);
+        return $"mailto:{toEmail}?subject={encodedSubject}&body={encodedBody}";
+    }
+}
+
+<style>
+    .loss-runs-requester {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .product-selection {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .section-title {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        color: var(--accent-foreground-rest);
+    }
+    
+    .section-subtitle {
+        margin-top: -0.5rem;
+        margin-bottom: 1rem;
+        color: var(--neutral-foreground-hint);
+        font-size: 0.9rem;
+    }
+
+    .policies-table {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .carrier-policy-group {
+        margin-bottom: 1rem;
+    }
+
+    .carrier-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .carrier-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .carrier-header h4 {
+        margin: 0;
+        color: var(--accent-foreground-rest);
+    }
+    
+    .carrier-email {
+        font-size: 0.9rem;
+        color: var(--neutral-foreground-hint);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .carrier-url {
+        font-size: 0.9rem;
+        color: var(--neutral-foreground-hint);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .mr-2 {
+        margin-right: 0.5rem;
+    }
+</style> 

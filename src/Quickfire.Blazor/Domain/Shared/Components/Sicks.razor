@@ -1,0 +1,217 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using Microsoft.AspNetCore.Components
+@implements IDisposable
+
+<div class="firebar-container" style="@ContainerStyle">
+    <div class="sicks-animation-container">
+        <!-- Unfilled portion (PNG sequence) -->
+        <div class="sicks-sequence" style="display: @(AnimatedProgress >= 100 ? "none" : "block")">
+            <img src="/img/home/sickq/sickq@(CurrentFrame.ToString("00000")).png" alt="Sicks Animation" />
+        </div>
+
+        <!-- Filled portion -->
+        <div class="sicks-filled">
+            <div class="fill-bar" style="height: @(AnimatedProgress)%">
+                <div class="fill-color" style="background: linear-gradient(to top, @SolidColor, @SolidColorEnd);"></div>
+            </div>
+            <div class="fill-shadow" style="bottom: @(AnimatedProgress)%"></div>
+        </div>
+    </div>
+
+    @if (ShowPercentage)
+    {
+        <div class="firebar-percentage">@AnimatedProgress.ToString("F0")%</div>
+    }
+</div>
+
+<style>
+    .firebar-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .sicks-animation-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .sicks-sequence {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        mask-image: url('/img/home/sickq/sickq00040.png');
+        mask-size: contain;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        -webkit-mask-image: url('/img/home/sickq/sickq00040.png');
+        -webkit-mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+    }
+
+    .sicks-sequence img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .sicks-filled {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        mask-image: url('/img/home/sickq/sickq00040.png');
+        mask-size: contain;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        -webkit-mask-image: url('/img/home/sickq/sickq00040.png');
+        -webkit-mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+    }
+
+    .fill-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .fill-color {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .fill-shadow {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 20px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 1), transparent);
+        pointer-events: none;
+    }
+
+    .firebar-percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: bold;
+        font-size: 1.2em;
+        color: @TextColor;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        pointer-events: none;
+    }
+</style>
+
+@code {
+    [Parameter] public double Progress { get; set; } = 0;
+    [Parameter] public string Width { get; set; } = "150px";
+    [Parameter] public string Height { get; set; } = "150px";
+    [Parameter] public string SolidColor { get; set; } = "#28a745";
+    [Parameter] public string SolidColorEnd { get; set; } = "#20c997";
+    [Parameter] public string TextColor { get; set; } = "#fff";
+    [Parameter] public bool ShowPercentage { get; set; } = true;
+
+    private double AnimatedProgress { get; set; } = 0;
+    private double PreviousProgress { get; set; } = 0;
+    private DateTime AnimationStartTime { get; set; }
+    private bool IsAnimating { get; set; } = false;
+    private Timer? AnimationTimer { get; set; }
+    private Timer? SequenceTimer { get; set; }
+    private int CurrentFrame { get; set; } = 0;
+    private const int TotalFrames = 41; // 00000 to 00040
+    private const int FramesPerSecond = 30;
+
+    private string ContainerStyle => $"width: {Width}; height: {Height};";
+
+    protected override void OnParametersSet()
+    {
+        // Ensure progress is between 0 and 100
+        var newProgress = Math.Max(0, Math.Min(100, Progress));
+        
+        if (Math.Abs(newProgress - AnimatedProgress) > 0.01) // Only animate if there's a meaningful change
+        {
+            StartAnimation(newProgress);
+        }
+    }
+
+    private void StartAnimation(double targetProgress)
+    {
+        PreviousProgress = AnimatedProgress;
+        AnimationStartTime = DateTime.Now;
+        IsAnimating = true;
+
+        // Stop any existing timers
+        AnimationTimer?.Dispose();
+        SequenceTimer?.Dispose();
+
+        // Create a timer that updates every 16ms (roughly 60fps)
+        AnimationTimer = new Timer(UpdateAnimation, targetProgress, 0, 16);
+
+        // Create a timer for the PNG sequence animation
+        SequenceTimer = new Timer(UpdateSequence, null, 0, 1000 / FramesPerSecond);
+    }
+
+    private void UpdateAnimation(object? state)
+    {
+        if (state is not double targetProgress || !IsAnimating)
+            return;
+
+        var elapsed = DateTime.Now - AnimationStartTime;
+        var duration = TimeSpan.FromSeconds(2); // 2 second animation
+
+        if (elapsed >= duration)
+        {
+            // Animation complete
+            AnimatedProgress = targetProgress;
+            IsAnimating = false;
+            AnimationTimer?.Dispose();
+            AnimationTimer = null;
+        }
+        else
+        {
+            // Calculate progress using ease-in-out curve
+            var t = elapsed.TotalSeconds / duration.TotalSeconds;
+            var easedT = EaseInOut(t);
+            
+            AnimatedProgress = PreviousProgress + (targetProgress - PreviousProgress) * easedT;
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateSequence(object? state)
+    {
+        CurrentFrame = (CurrentFrame + 1) % TotalFrames;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static double EaseInOut(double t)
+    {
+        // Cubic ease-in-out function
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.Pow(-2 * t + 2, 3) / 2;
+    }
+
+    protected override void OnInitialized()
+    {
+        AnimatedProgress = Math.Max(0, Math.Min(100, Progress));
+    }
+
+    public void Dispose()
+    {
+        AnimationTimer?.Dispose();
+        SequenceTimer?.Dispose();
+    }
+} 

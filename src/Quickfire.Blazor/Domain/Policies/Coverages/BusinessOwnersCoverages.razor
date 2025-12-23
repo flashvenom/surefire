@@ -1,0 +1,336 @@
+@namespace Quickfire.Blazor.Components.Policies.Coverages
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject PolicyService PolicyService
+
+@if (BusinessOwnersCoverage is null)
+{
+    <div class="loading-spinner">
+        <FluentProgressRing />
+        <span style="margin-left: 12px;">Loading Business Owners coverage...</span>
+    </div>
+}
+else
+{
+    <div class="bop-coverages">
+        <FluentStack Orientation="Orientation.Vertical" Spacing="16">
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.MoneyCalculator())" />
+                    Property Coverages
+                </div>
+                <div class="field-grid">
+                    <div class="field-item">
+                        <FluentLabel>Building Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.BuildingLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Building Deductible</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.BuildingDeductible"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="500"
+                                           Placeholder="Enter deductible"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Business Personal Property Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.BusinessPersonalPropertyLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Business Personal Property Deductible</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.BusinessPersonalPropertyDeductible"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="500"
+                                           Placeholder="Enter deductible"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+            </FluentCard>
+
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" />
+                    Liability Coverages
+                </div>
+                <div class="field-grid">
+                    <div class="field-item">
+                        <FluentLabel>Liability - Per Occurrence Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.LiabilityPerOccurrenceLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Liability - Per Occurrence Deductible</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.LiabilityPerOccurrenceDeductible"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="500"
+                                           Placeholder="Enter deductible"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Liability - Aggregate Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.LiabilityAggregateLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Liability - Aggregate Deductible</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.LiabilityAggregateDeductible"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="500"
+                                           Placeholder="Enter deductible"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Professional Liability Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.ProfessionalLiabilityLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Professional Liability Deductible</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.ProfessionalLiabilityDeductible"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="500"
+                                           Placeholder="Enter deductible"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Employment Practices Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.EmploymentPracticesLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Employment Practices Deductible</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.EmploymentPracticesDeductible"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="500"
+                                           Placeholder="Enter deductible"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Directors &amp; Officers Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.DirectorsAndOfficersLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Directors &amp; Officers Deductible</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.DirectorsAndOfficersDeductible"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="500"
+                                           Placeholder="Enter deductible"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+            </FluentCard>
+
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Document())" />
+                    Supplemental Limits
+                </div>
+                <div class="field-grid">
+                    <div class="field-item">
+                        <FluentLabel>Products &amp; Completed Operations Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.ProductsCompletedOperationsLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Bodily Injury &amp; Property Damage Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.BodilyInjuryPropertyDamageLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Personal &amp; Advertising Injury Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.PersonalAndAdvertisingInjuryLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Tenants Legal Liability Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.TenantsLegalLiabilityLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Hired &amp; Non-Owned Auto Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.HiredNonOwnedAutoLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+            </FluentCard>
+
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.MoneyCalculator())" />
+                    Business Income &amp; Locations
+                </div>
+                <div class="field-grid">
+                    <div class="field-item">
+                        <FluentLabel>Business Income Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="BusinessOwnersCoverage.BusinessIncomeLimit"
+                                           Format="C0"
+                                           Min="0"
+                                           Step="1000"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item">
+                        <FluentLabel>Business Income Type</FluentLabel>
+                        <FluentTextField @bind-Value="BusinessOwnersCoverage.BusinessIncomeType"
+                                         Placeholder="ALS, Monthly, etc."
+                                         @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    <div class="field-item full-width">
+                        <FluentLabel>Locations &amp; Premises (JSON)</FluentLabel>
+                        <FluentTextArea @bind-Value="BusinessOwnersCoverage.LocationsJson"
+                                        Placeholder='[{ "name": "Main", "address": "123 Main St" }]'
+                                        Rows="4"
+                                        @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+            </FluentCard>
+        </FluentStack>
+    </div>
+}
+
+@code {
+    [Parameter] public int PolicyId { get; set; }
+
+    private BusinessOwnersPolicyCoverage? BusinessOwnersCoverage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCoverageAsync();
+    }
+
+    private async Task LoadCoverageAsync()
+    {
+        BusinessOwnersCoverage = await PolicyService.GetBusinessOwnersPolicyCoverageByPolicyIdAsync(PolicyId);
+
+        if (BusinessOwnersCoverage is null)
+        {
+            BusinessOwnersCoverage = new BusinessOwnersPolicyCoverage
+            {
+                PolicyId = PolicyId,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow
+            };
+
+            BusinessOwnersCoverage = await PolicyService.UpsertBusinessOwnersPolicyCoverageAsync(BusinessOwnersCoverage);
+        }
+    }
+
+    private async Task UpdateCoverageAsync()
+    {
+        if (BusinessOwnersCoverage is null)
+        {
+            return;
+        }
+
+        BusinessOwnersCoverage.DateModified = DateTime.UtcNow;
+        BusinessOwnersCoverage = await PolicyService.UpsertBusinessOwnersPolicyCoverageAsync(BusinessOwnersCoverage);
+        StateHasChanged();
+    }
+}
+
+<style>
+    .bop-coverages {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .coverage-section {
+        padding: 16px;
+        background-color: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    .field-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .field-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .field-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+    }
+</style>
+

@@ -1,0 +1,143 @@
+.users-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.users-page__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.users-page__heading {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.users-page__desktop-tip {
+    margin-top: -8px;
+}
+
+.users-page__grid {
+    background: var(--neutral-layer-1, #fff);
+    border-radius: 18px;
+    border: 1px solid rgba(3, 106, 196, 0.08);
+    padding: 18px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.06);
+}
+
+.users-page__loading,
+.users-page__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 0;
+    color: #5f5f5f;
+}
+
+.users-grid__person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.users-grid__name {
+    font-weight: 600;
+    color: #1f1f1f;
+}
+
+.users-grid__email {
+    font-size: 0.9rem;
+    color: #5f5f5f;
+}
+
+.users-grid__mono {
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.95rem;
+}
+
+.users-grid__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.users-grid__delete {
+    cursor: pointer;
+    color: #c33d3d;
+}
+
+.users-table {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.users-table__header {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.6fr) minmax(150px, 1fr) minmax(150px, 1fr) minmax(160px, 1fr) minmax(220px, 1fr);
+    gap: 16px;
+    padding: 12px 16px;
+    border-bottom: 2px solid rgba(3, 106, 196, 0.12);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #424242;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.users-table__body {
+    display: flex;
+    flex-direction: column;
+}
+
+.users-table__row {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.6fr) minmax(150px, 1fr) minmax(150px, 1fr) minmax(160px, 1fr) minmax(220px, 1fr);
+    gap: 16px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(3, 106, 196, 0.06);
+    transition: background-color 0.15s ease;
+    cursor: pointer;
+    min-height: 70px;
+    align-items: center;
+}
+
+.users-table__row:hover {
+    background-color: rgba(3, 106, 196, 0.04);
+}
+
+.users-table__row:last-child {
+    border-bottom: none;
+}
+
+.users-table__cell {
+    display: flex;
+    align-items: center;
+}
+
+.users-table__cell--user {
+    overflow: hidden;
+}
+
+.users-table__cell--actions {
+    justify-content: flex-end;
+}
+
+.users-table__pagination {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+}

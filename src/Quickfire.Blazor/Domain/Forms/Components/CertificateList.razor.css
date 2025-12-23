@@ -1,0 +1,131 @@
+.certificate-list-container {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e5e7ff;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
+}
+
+.certificate-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.certificate-list-title h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.certificate-list-subtitle {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.certificate-primary-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.certificate-empty-state {
+    border: 1px dashed #cfd4ff;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-top: 12px;
+    background: #f8f9ff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    color: #4b5563;
+}
+
+.certificate-empty-icon {
+    font-size: 48px;
+    color: #5c6bf6;
+}
+
+.certificate-list-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 8px 0 16px;
+}
+
+.certificate-count-badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(92, 107, 246, 0.15);
+    font-weight: 600;
+}
+
+.certificate-list-meta__last {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.certificate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.certificate-card {
+    border: 1px solid #e3e8ff;
+    border-radius: 14px;
+    padding: 16px;
+    background: #fbfcff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.certificate-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.certificate-card__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-decoration: none;
+}
+
+.certificate-card__title:hover {
+    color: #4f46e5;
+}
+
+.certificate-card__subtitle {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.certificate-id-badge {
+    font-weight: 600;
+}
+
+.certificate-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: #4b5563;
+}
+
+.certificate-card__meta span strong {
+    margin-right: 4px;
+    font-size: 0.85rem;
+    color: #374151;
+}

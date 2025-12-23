@@ -1,0 +1,1525 @@
+@page "/Leads"
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@inject ClientService ClientService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<_toolbar PageName="Leads" />
+
+<div class="outreach-panel">
+    @if (isLoading)
+    {
+        <div class="leads-v2__state">
+            <FluentProgressRing Size="ProgressRingSize.Large" />
+            <div class="leads-v2__state-text">Loading your pipeline...</div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(loadError))
+    {
+        <FluentMessageBar Intent="MessageIntent.Error" Title="Unable to load leads" AllowDismiss="true" OnDismiss="@(() => loadError = string.Empty)">
+            @loadError
+        </FluentMessageBar>
+    }
+    else
+    {
+        <div class="leads-v2">
+            <section class="leads-v2__sidebar @(sidebarCollapsed ? "leads-v2__sidebar--collapsed" : string.Empty)">
+                @if (sidebarCollapsed)
+                {
+                    <div class="sidebar-compact">
+                        <button type="button" class="sidebar-compact__btn" title="Expand panel" @onclick="ToggleSidebar">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.ChevronRight())" Color="Color.Fill" />
+                        </button>
+                        <button type="button" class="sidebar-compact__btn" title="New quick lead" @onclick="OpenQuickLeadDialog">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Add())" Color="Color.Fill" />
+                        </button>
+                        <button type="button" class="sidebar-compact__btn" title="@(!ShowClosedStages ? "Show closed stages" : "Hide closed stages")" @onclick="@(() => ShowClosedStages = !ShowClosedStages)">
+                            @if (ShowClosedStages)
+                            {
+                                <FluentIcon Value="@(new Icons.Regular.Size20.EyeOff())" Color="Color.Fill" />
+                            }
+                            else
+                            {
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Eye())" Color="Color.Fill" />
+                            }
+                            
+                        </button>
+                        <button type="button" class="sidebar-compact__btn" title="List view" @onclick="OpenListView">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.TextBulletListSquareClock())" Color="Color.Fill" />
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="sidebar-stack">
+                        <article class="glass-card glass-card--title">
+                            <div class="glass-card__title-head">
+                                <div>
+                                    <p class="glass-card__eyebrow">You're on fire</p>
+                                    <h2>Leads Board</h2>
+                                </div>
+                                <button class="sidebar-collapse" type="button" @onclick="ToggleSidebar">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.ChevronLeft())" Color="Color.Fill" />
+                                </button>
+                            </div>
+                        </article>
+
+                        <button type="button" class="hero-cta" @onclick="OpenQuickLeadDialog">
+                            <div class="hero-cta__glow"></div>
+                            <div class="hero-cta__shine"></div>
+                            <span class="hero-cta__icon">
+                                <FluentIcon Value="@(new Icons.Filled.Size20.AddCircle())" Color="Color.Fill" />
+                            </span>
+                            <span class="hero-cta__text">New Lead</span>
+                            <div class="hero-cta__sparkles">
+                                <span class="hero-cta__sparkle"></span>
+                                <span class="hero-cta__sparkle"></span>
+                                <span class="hero-cta__sparkle"></span>
+                            </div>
+                        </button>
+
+                        <article class="glass-card">
+                            <div class="glass-card__section">
+                                <FluentSearch Placeholder="Search by company, contact, email, or phone"
+                                              @bind-Value="SearchTerm"
+                                              @oninput="OnSearchInput" />
+                            </div>
+                            <div class="glass-card__section glass-card__filters" style="margin-top:8px;">
+                                <div class="stage-filter-field">
+                                    <FluentSelect TOption="string"
+                                                  @bind-Value="StageFilterValue"
+                                                  Class="stage-filter-select">
+                                        <FluentOption Value="">All stages</FluentOption>
+                                        @foreach (var stage in StageOrder)
+                                        {
+                                            <FluentOption Value="@stage.ToString()">@stage</FluentOption>
+                                        }
+                                    </FluentSelect>
+                                </div>
+                                <div class="glass-card__filters-toggle">
+                                    <FluentSwitch @bind-Value="ShowClosedStages" />
+                                    <label>Show all</label>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="glass-card glass-card--stats">
+                            <div class="insight-pair">
+                                <div class="insight-chip">
+                                    <div class="insight-chip__label">Leads in view</div>
+                                    <div class="insight-chip__value">@FilteredLeads.Count</div>
+                                    <div class="insight-chip__hint">@VisibleStageOrder.Count() swimlanes</div>
+                                </div>
+                                <div class="insight-chip">
+                                    <div class="insight-chip__label">New this week</div>
+                                    <div class="insight-chip__value">@NewThisWeek</div>
+                                    <div class="insight-chip__hint">Last 7 days</div>
+                                </div>
+                            </div>
+                            <div class="insight-pair">
+                                <div class="insight-chip">
+                                    <div class="insight-chip__label">Touched</div>
+                                    <div class="insight-chip__value">@TouchedRecently</div>
+                                    <div class="insight-chip__hint">Leads recently</div>
+                                </div>                                                     
+                                <div class="insight-chip">                                 
+                                    <div class="insight-chip__label">Your goals</div>  
+                                    <div class="insight-chip__value">@UpcomingGoals</div>  
+                                    <div class="insight-chip__hint">Next 14 days</div>     
+                                </div>                                                     
+                            </div>
+                        </article>
+
+                        <article class="glass-card glass-card--activity">
+                            <div class="leads-panel__recent-header">
+                                <span>Recent activity</span>
+                                <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Neutral">@RecentActivity.Count</FluentBadge>
+                            </div>
+
+                            @if (RecentActivity.Count == 0)
+                            {
+                                <div class="leads-panel__empty">No recent touchpoints that match your filters.</div>
+                            }
+                            else
+                            {
+                                <ul class="recent-activity">
+                                    @foreach (var lead in RecentActivity)
+                                    {
+                                        var lastTouch = lead.LastOpened ?? lead.CreatedDate;
+                                        <li class="recent-activity__item" @onclick="@(() => SelectLead(lead))">
+                                            <div>
+                                                <div class="recent-activity__name">@(!string.IsNullOrWhiteSpace(lead.CompanyName) ? lead.CompanyName : "Untitled lead")</div>
+                                                <div class="recent-activity__meta">@StringHelper.FormatDateTimeDifference(lastTouch) · @lastTouch.ToString("MMM dd")</div>
+                                            </div>
+                                            <FluentBadge Appearance="Appearance.Accent" Color="Color.Accent">@GetStageDisplay(lead)</FluentBadge>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </article>
+                    </div>
+                }
+            </section>
+
+            <section class="leads-v2__board">
+                <div class="pipeline-carousel" @ref="pipelineScrollerRef">
+                    <div class="pipeline-stage pipeline-stage-spacer"
+                         style="width:@PipelineSpacerWidth;min-width:@PipelineSpacerWidth;"
+                         aria-hidden="true"></div>
+                    @foreach (var stage in VisibleStageOrder)
+                    {
+                        var descriptor = StageDescriptors[stage];
+                        var stageLeads = GetStageLeads(stage).ToList();
+                        var leadColumns = BuildStageColumns(stageLeads);
+
+                        <div class="pipeline-stage" style="--stage-color:@descriptor.AccentColor">
+                            <div class="pipeline-stage__header">
+                                <div>
+                                    <div class="pipeline-stage__eyebrow">@descriptor.Subtitle</div>
+                                    <div class="pipeline-stage__title">@descriptor.DisplayName</div>
+                                </div>
+                                <div class="pipeline-stage__meta">
+                                    <span class="pipeline-stage__count">@stageLeads.Count</span>
+                                </div>
+                            </div>
+
+                            <div class="pipeline-stage__body">
+                                @if (stageLeads.Count == 0)
+                                {
+                                    <div class="pipeline-stage__empty">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Lightbulb())" />
+                                        <span>@descriptor.EmptyState</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="pipeline-stage__viewport">
+                                        <div class="pipeline-stage__columns">
+                                            @foreach (var column in leadColumns)
+                                            {
+                                                <div class="pipeline-stage__column">
+                                                    @foreach (var lead in column)
+                                                    {
+                                                        var isSelected = IsLeadSelected(lead);
+                                                        <article class="lead-card @(isSelected ? "lead-card--selected" : string.Empty)" style="--stage-color:@descriptor.AccentColor"
+                                                                 @onclick="@(() => SelectLead(lead))"
+                                                                 @ondblclick="@(() => NavToLead(lead.LeadId))">
+                                                            <div class="lead-card__title">
+                                                                <span>@(!string.IsNullOrWhiteSpace(lead.CompanyName) ? lead.CompanyName : "Untitled lead")</span>
+                                                                @if (!string.IsNullOrWhiteSpace(lead.Product?.LineNickname))
+                                                                {
+                                                                    <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Neutral">@lead.Product?.LineNickname</FluentBadge>
+                                                                }
+                                                            </div>
+
+                                                            <div class="lead-card__meta">
+                                                                @if (!string.IsNullOrWhiteSpace(lead.ContactName))
+                                                                {
+                                                                    <span><FluentIcon Value="@(new Icons.Regular.Size16.Person())" /> @lead.ContactName</span>
+                                                                }
+                                                                @if (!string.IsNullOrWhiteSpace(lead.PhoneNumber))
+                                                                {
+                                                                    <span><FluentIcon Value="@(new Icons.Regular.Size16.Call())" /> @StringHelper.FormatPhoneNumber(lead.PhoneNumber)</span>
+                                                                }
+                                                                @if (!string.IsNullOrWhiteSpace(lead.Email))
+                                                                {
+                                                                    <span><FluentIcon Value="@(new Icons.Regular.Size16.Mail())" /> @lead.Email</span>
+                                                                }
+                                                            </div>
+
+                                                            <div class="lead-card__footer">
+                                                                <div class="lead-card__chips">
+                                                                    <span class="lead-chip">@descriptor.DisplayName</span>
+                                                                    <span class="lead-chip">@StringHelper.FormatDateTimeDifference(lead.LastOpened ?? lead.CreatedDate)</span>
+                                                                    @if (lead.BindDate.HasValue)
+                                                                    {
+                                                                        <span class="lead-chip">Goal @lead.BindDate.Value.ToString("MMM dd")</span>
+                                                                    }
+                                                                </div>
+
+                                                                <div class="lead-card__actions">
+                                                                    @if (!string.IsNullOrWhiteSpace(lead.PhoneNumber))
+                                                                    {
+                                                                        <a class="lead-card__action" href="tel:@StringHelper.FormatTelDialNumber(lead.PhoneNumber)" title="Call lead" @onclick:stopPropagation="true">
+                                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Call())" />
+                                                                        </a>
+                                                                    }
+                                                            @if (!string.IsNullOrWhiteSpace(lead.Email))
+                                                            {
+                                                                <a class="lead-card__action" href="mailto:@lead.Email" title="Email lead" @onclick:stopPropagation="true">
+                                                                    <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" />
+                                                                </a>
+                                                            }
+                                                            <FluentButton Appearance="Appearance.Lightweight"
+                                                                          Size="ButtonSize.Small"
+                                                                          OnClick="@(() => OpenQuickEditDialog(lead))">
+                                                                Edit
+                                                            </FluentButton>
+                                                            <FluentButton Appearance="Appearance.Lightweight"
+                                                                          Size="ButtonSize.Small"
+                                                                          OnClick="@(() => NavToLead(lead.LeadId))">
+                                                                Open
+                                                            </FluentButton>
+                                                                </div>
+                                                            </div>
+                                                        </article>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section class="leads-v2__detail @((detailCollapsed || selectedLead == null) ? "leads-v2__detail--hidden" : string.Empty)">
+                @if (selectedLead != null)
+                {
+                    <div class="lead-detail lead-detail--glass">
+                        <button type="button" class="lead-detail__close" title="Hide details" @onclick="CollapseDetailPanel">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
+                        </button>
+                        <div class="lead-hero">
+                            <div class="lead-hero__identity">
+                                <div class="lead-detail__avatar">@GetInitials(selectedLead)</div>
+                                <div>
+                                    <div class="lead-detail__eyebrow">Currently viewing</div>
+                                    <div class="lead-detail__company">@(!string.IsNullOrWhiteSpace(selectedLead.CompanyName) ? selectedLead.CompanyName : "Untitled lead")</div>
+                                    <div class="lead-detail__contact">@(!string.IsNullOrWhiteSpace(selectedLead.ContactName) ? selectedLead.ContactName : "No contact on file")</div>
+                                </div>
+                            </div>
+                            <div class="lead-hero__tags">
+                                <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Accent">@GetStageDisplay(selectedLead)</FluentBadge>
+                                @if (selectedLead.BindDate.HasValue)
+                                {
+                                    <span class="lead-hero__chip">Goal @selectedLead.BindDate.Value.ToString("MMM dd")</span>
+                                }
+                            </div>
+                            <div class="lead-hero__stats">
+                                <div class="lead-stat">
+                                    <span class="lead-stat__label">Last touch</span>
+                                    <span class="lead-stat__value">@StringHelper.FormatDateTimeDifference(selectedLead.LastOpened ?? selectedLead.CreatedDate)</span>
+                                    <span class="lead-stat__hint">@((selectedLead.LastOpened ?? selectedLead.CreatedDate).ToString("MMM dd, yyyy"))</span>
+                                </div>
+                                @* <div class="lead-stat">
+                                    <span class="lead-stat__label">Owner</span>
+                                    <span class="lead-stat__value">@GetLeadOwnerName(selectedLead)</span>
+                                    <span class="lead-stat__hint">Created @selectedLead.CreatedDate.ToString("MMM dd, yyyy")</span>
+                                </div> *@
+                                <div class="lead-stat">
+                                    <span class="lead-stat__label">Product</span>
+                                    <span class="lead-stat__value">@(!string.IsNullOrWhiteSpace(selectedLead.Product?.LineName) ? selectedLead.Product?.LineName : "Not mapped")</span>
+                                    <span class="lead-stat__hint">@(!string.IsNullOrWhiteSpace(selectedLead.Product?.LineNickname) ? selectedLead.Product?.LineNickname : "Assign a program")</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lead-detail__grid">
+                            <article class="lead-panel">
+                                <div class="lead-panel__header">
+                                    <div>
+                                        <p class="lead-panel__eyebrow">Contact kit</p>
+                                        <h4>Stay connected</h4>
+                                    </div>
+                                    <div class="lead-panel__actions">
+                                        @if (!string.IsNullOrWhiteSpace(selectedLead.PhoneNumber))
+                                        {
+                                            <a href="tel:@StringHelper.FormatTelDialNumber(selectedLead.PhoneNumber)" class="lead-panel__pill">Call</a>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(selectedLead.Email))
+                                        {
+                                            <a href="mailto:@selectedLead.Email" class="lead-panel__pill">Email</a>
+                                        }
+                                    </div>
+                                </div>
+                                <dl class="lead-detail__list">
+                                    <dt>Phone</dt>
+                                    <dd>
+                                        @if (!string.IsNullOrWhiteSpace(selectedLead.PhoneNumber))
+                                        {
+                                            <a href="tel:@StringHelper.FormatTelDialNumber(selectedLead.PhoneNumber)">@StringHelper.FormatPhoneNumber(selectedLead.PhoneNumber)</a>
+                                        }
+                                        else
+                                        {
+                                            <span>--</span>
+                                        }
+                                    </dd>
+
+                                    <dt>Email</dt>
+                                    <dd>
+                                        @if (!string.IsNullOrWhiteSpace(selectedLead.Email))
+                                        {
+                                            <a href="mailto:@selectedLead.Email">@selectedLead.Email</a>
+                                        }
+                                        else
+                                        {
+                                            <span>--</span>
+                                        }
+                                    </dd>
+
+                                    <dt>Website</dt>
+                                    <dd>
+                                        @if (!string.IsNullOrWhiteSpace(selectedLead.Website))
+                                        {
+                                            <a href="@selectedLead.Website" target="_blank" rel="noopener">@selectedLead.Website</a>
+                                        }
+                                        else
+                                        {
+                                            <span>--</span>
+                                        }
+                                    </dd>
+
+                                    <dt>Client</dt>
+                                    <dd>@(selectedLead.Client?.Name ?? "Not linked")</dd>
+
+                                    <dt>Address</dt>
+                                    <dd>@(!string.IsNullOrWhiteSpace(selectedLead.Address) ? selectedLead.Address : "--")</dd>
+                                </dl>
+                            </article>
+
+                            <article class="lead-panel">
+                                <div class="lead-panel__header">
+                                    <div>
+                                        <p class="lead-panel__eyebrow">Momentum</p>
+                                        <h4>Timeline</h4>
+                                    </div>
+                                </div>
+                                <ul class="lead-timeline">
+                                    <li>
+                                        <div class="lead-timeline__dot"></div>
+                                        <div>
+                                            <span class="lead-timeline__label">Created</span>
+                                            <span class="lead-timeline__value">@selectedLead.CreatedDate.ToString("MMM dd, yyyy")</span>
+                                            <span class="lead-timeline__hint">@GetLeadOwnerName(selectedLead)</span>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="lead-timeline__dot"></div>
+                                        <div>
+                                            <span class="lead-timeline__label">Last viewed</span>
+                                            <span class="lead-timeline__value">@StringHelper.FormatDateTimeDifference(selectedLead.LastOpened ?? selectedLead.CreatedDate)</span>
+                                            <span class="lead-timeline__hint">@((selectedLead.LastOpened ?? selectedLead.CreatedDate).ToString("MMM dd, yyyy"))</span>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="lead-timeline__dot"></div>
+                                        <div>
+                                            <span class="lead-timeline__label">Goal date</span>
+                                            <span class="lead-timeline__value">@((selectedLead.BindDate)?.ToString("MMM dd, yyyy") ?? "Not scheduled")</span>
+                                            <span class="lead-timeline__hint">Keeps reminders inside Tickler</span>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="lead-timeline__dot"></div>
+                                        <div>
+                                            <span class="lead-timeline__label">Stage</span>
+                                            <span class="lead-timeline__value">@GetStageDisplay(selectedLead)</span>
+                                            <span class="lead-timeline__hint">@StageDescriptors[ParseStage(selectedLead) ?? LeadStage.New].Subtitle</span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </article>
+
+                            <article class="lead-panel lead-panel--notes">
+                                <div class="lead-panel__header">
+                                    <div>
+                                        <p class="lead-panel__eyebrow">Briefing</p>
+                                        <h4>Notes & next steps</h4>
+                                    </div>
+                                </div>
+                                <div class="lead-panel__note">@(!string.IsNullOrWhiteSpace(selectedLead.Notes) ? selectedLead.Notes : "No notes captured yet. Tap the full record to add context, objections, or next actions.")</div>
+                                @if (!string.IsNullOrWhiteSpace(selectedLead.Operations))
+                                {
+                                    <div class="lead-panel__callout">
+                                        <span class="lead-panel__callout-label">Operations</span>
+                                        <p>@selectedLead.Operations</p>
+                                    </div>
+                                }
+                            </article>
+                        </div>
+
+                        @if (IsLostLead(selectedLead))
+                        {
+                            <article class="lead-panel tickler-card">
+                                <div>
+                                    <p class="lead-panel__eyebrow">Keep the door open</p>
+                                    <h4>Schedule a tickler reminder</h4>
+                                </div>
+                                <p class="tickler-card__text">
+                                    We'll remind you to re-engage @GetLeadFriendlyName(selectedLead) after things cool off.
+                                </p>
+                                <div class="tickler-card__actions">
+                                    <FluentButton Appearance="Appearance.Accent"
+                                                  Disabled="@isSavingTicklerReminder"
+                                                  OnClick="@(() => ScheduleDefaultTicklerReminderAsync(selectedLead))">
+                                        @(isSavingTicklerReminder ? "Saving..." : "Remind me in a year")
+                                    </FluentButton>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  Disabled="@isSavingTicklerReminder"
+                                                  OnClick="@(() => OpenTicklerDialog(selectedLead))">
+                                        Pick another date
+                                    </FluentButton>
+                                </div>
+                                <small class="tickler-card__hint">We'll move it into Tickler with the reminder date you choose.</small>
+                                @if (!string.IsNullOrWhiteSpace(ticklerActionError))
+                                {
+                                    <FluentMessageBar Intent="MessageIntent.Error"
+                                                      AllowDismiss="true"
+                                                      OnDismiss="@(() => ticklerActionError = string.Empty)">
+                                        @ticklerActionError
+                                    </FluentMessageBar>
+                                }
+                            </article>
+                        }
+                        else if (IsTicklerLead(selectedLead))
+                        {
+                            <article class="lead-panel tickler-card tickler-card--active">
+                                <div class="tickler-card__header">
+                                    <div>
+                                        <p class="lead-panel__eyebrow">Tickler reminder</p>
+                                        <h4>Following up on @GetLeadFriendlyName(selectedLead)</h4>
+                                    </div>
+                                    <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Accent">Active</FluentBadge>
+                                </div>
+                                <p class="tickler-card__text">
+                                    We'll nudge you on <strong>@GetReminderDateLabel(selectedLead)</strong>.
+                                </p>
+                                <div class="tickler-card__actions">
+                                    <FluentButton Appearance="Appearance.Accent"
+                                                  Disabled="@isSavingTicklerReminder"
+                                                  OnClick="@(() => OpenTicklerDialog(selectedLead))">
+                                        Reschedule
+                                    </FluentButton>
+                                    <div class="tickler-card__dismiss">
+                                        <FluentSelect TOption="string"
+                                                      Label="Send back to"
+                                                      @bind-Value="TicklerReturnStageValue"
+                                                      Disabled="@isSavingTicklerReminder">
+                                            @foreach (var stage in TicklerReturnStages)
+                                            {
+                                                <FluentOption Value="@stage.ToString()">@StageDescriptors[stage].DisplayName</FluentOption>
+                                            }
+                                        </FluentSelect>
+                                        <FluentButton Appearance="Appearance.Outline"
+                                                      Disabled="@isSavingTicklerReminder"
+                                                      OnClick="StopTicklerReminderAsync">
+                                            Stop reminder
+                                        </FluentButton>
+                                    </div>
+                                </div>
+                                <small class="tickler-card__hint">Removing the reminder moves the lead back to the stage above.</small>
+                                @if (!string.IsNullOrWhiteSpace(ticklerActionError))
+                                {
+                                    <FluentMessageBar Intent="MessageIntent.Error"
+                                                      AllowDismiss="true"
+                                                      OnDismiss="@(() => ticklerActionError = string.Empty)">
+                                        @ticklerActionError
+                                    </FluentMessageBar>
+                                }
+                            </article>
+                        }
+
+                        <div class="lead-detail__actions">
+                            <FluentButton Appearance="Appearance.Accent" OnClick="@(() => NavToLead(selectedLead.LeadId))">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Open())" />
+                                Open full record
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="OpenQuickLeadDialog">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Add())" />
+                                New lead
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Stealth" OnClick="NavToCreate">
+                                Full builder
+                            </FluentButton>
+                        </div>
+                    </div>
+                }
+            </section>
+        </div>
+    }
+</div>
+
+<EditForm EditContext="@quickLeadContext" OnValidSubmit="SaveQuickLeadAsync">
+    <FluentDialog @key="quickLeadDialogKey"
+                  @bind-Hidden="quickLeadDialogHidden"
+                  TrapFocus="true"
+                  Modal="true"
+                  Style="--dialog-width:560px;">
+        <FluentDialogHeader>
+            <div class="new-lead-dialog__header">
+                <div>
+                    <p class="eyebrow">Quick add</p>
+                    <h3>Start a new lead</h3>
+                    <p class="new-lead-dialog__subtitle">Capture the essentials without leaving your board.</p>
+                </div>
+                <FluentButton Appearance="Appearance.Stealth" Type="ButtonType.Button" OnClick="CloseQuickLeadDialog">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
+                </FluentButton>
+            </div>
+        </FluentDialogHeader>
+        <FluentDialogBody>
+            @if (!string.IsNullOrWhiteSpace(quickLeadError))
+            {
+                <FluentMessageBar Intent="MessageIntent.Error" AllowDismiss="true" OnDismiss="@(() => quickLeadError = string.Empty)">
+                    @quickLeadError
+                </FluentMessageBar>
+            }
+
+            <div class="new-lead-dialog__grid">
+                <FluentTextField Label="Company" Placeholder="Acme Builders" @bind-Value="quickLead.CompanyName" />
+                <FluentTextField Label="Primary contact" Placeholder="Casey Builder" @bind-Value="quickLead.ContactName" />
+                <FluentTextField Label="Phone" Placeholder="(555) 123-4567" @bind-Value="quickLead.PhoneNumber" />
+                <FluentTextField Label="Email" Placeholder="casey@acme.com" @bind-Value="quickLead.Email" />
+                <FluentSelect Label="Stage" TOption="string" @bind-Value="QuickLeadStageValue">
+                    @foreach (var stage in StageOrder)
+                    {
+                        <FluentOption Value="@stage.ToString()">@stage</FluentOption>
+                    }
+                </FluentSelect>
+                <FluentDatePicker Label="Goal date" @bind-Value="quickLead.BindDate" />
+                <FluentTextArea Label="Notes" Rows="3" Placeholder="What's the story?" @bind-Value="quickLead.Notes" />
+            </div>
+        </FluentDialogBody>
+        <FluentDialogFooter>
+            <FluentButton Appearance="Appearance.Lightweight"
+                          Type="ButtonType.Button"
+                          Disabled="@isSavingQuickLead"
+                          OnClick="CloseQuickLeadDialog">
+                Cancel
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Stealth"
+                          Type="ButtonType.Button"
+                          Disabled="@isSavingQuickLead"
+                          OnClick="NavToCreate">
+                Full builder
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Accent"
+                          Type="ButtonType.Submit"
+                          Disabled="@isSavingQuickLead">
+                @(isSavingQuickLead ? "Creating..." : "Create lead")
+            </FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+</EditForm>
+
+<EditForm EditContext="@quickEditContext" OnValidSubmit="SaveQuickEditAsync">
+    <FluentDialog @key="quickEditDialogKey"
+                  @bind-Hidden="quickEditDialogHidden"
+                  TrapFocus="true"
+                  Modal="true"
+                  Style="--dialog-width:480px;">
+        <FluentDialogHeader>
+            <div class="quick-edit-dialog__header">
+                <div>
+                    <p class="eyebrow">Quick edit</p>
+                    <h3>@GetLeadFriendlyName(quickEditLead)</h3>
+                    <p class="quick-edit-dialog__subtitle">Adjust contact info or the stage without leaving the board.</p>
+                </div>
+                <FluentButton Appearance="Appearance.Stealth" Type="ButtonType.Button" OnClick="CloseQuickEditDialog">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
+                </FluentButton>
+            </div>
+        </FluentDialogHeader>
+        <FluentDialogBody>
+            @if (!string.IsNullOrWhiteSpace(quickEditError))
+            {
+                <FluentMessageBar Intent="MessageIntent.Error" AllowDismiss="true" OnDismiss="@(() => quickEditError = string.Empty)">
+                    @quickEditError
+                </FluentMessageBar>
+            }
+
+            <div class="quick-edit-dialog__grid">
+                <FluentSelect Label="Stage"
+                              TOption="string"
+                              @bind-Value="QuickEditStageValue"
+                              Disabled="@isSavingQuickEdit">
+                    @foreach (var stage in StageOrder)
+                    {
+                        <FluentOption Value="@stage.ToString()">@stage</FluentOption>
+                    }
+                </FluentSelect>
+                <FluentTextField Label="Phone"
+                                 Placeholder="(555) 123-4567"
+                                 @bind-Value="quickEditLead.PhoneNumber"
+                                 Disabled="@isSavingQuickEdit" />
+                <FluentTextField Label="Email"
+                                 Placeholder="hello@contoso.com"
+                                 @bind-Value="quickEditLead.Email"
+                                 Disabled="@isSavingQuickEdit" />
+                <FluentTextField Label="Website"
+                                 Placeholder="https://contoso.com"
+                                 @bind-Value="quickEditLead.Website"
+                                 Disabled="@isSavingQuickEdit" />
+            </div>
+        </FluentDialogBody>
+        <FluentDialogFooter>
+            <FluentButton Appearance="Appearance.Lightweight"
+                          Type="ButtonType.Button"
+                          Disabled="@isSavingQuickEdit"
+                          OnClick="CloseQuickEditDialog">
+                Cancel
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Accent"
+                          Type="ButtonType.Submit"
+                          Disabled="@isSavingQuickEdit">
+                @(isSavingQuickEdit ? "Saving..." : "Save changes")
+            </FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+</EditForm>
+
+<FluentDialog @key="ticklerDialogKey"
+              @bind-Hidden="ticklerDialogHidden"
+              TrapFocus="true"
+              Modal="true"
+              Style="--dialog-width:420px;">
+    <FluentDialogHeader>
+        <h3>Pick a reminder date</h3>
+    </FluentDialogHeader>
+    <FluentDialogBody>
+        <p class="tickler-dialog__text">
+            We'll shift @GetLeadFriendlyName(ticklerLead) into Tickler and nudge you on the day you choose.
+        </p>
+        <FluentDatePicker Label="Reminder date"
+                          @bind-Value="ticklerReminderDate"
+                          Min="@DateTime.Today"
+                          Disabled="@isSavingTicklerReminder" />
+        @if (!string.IsNullOrWhiteSpace(ticklerDialogError))
+        {
+            <FluentMessageBar Intent="MessageIntent.Error"
+                              AllowDismiss="true"
+                              OnDismiss="@(() => ticklerDialogError = string.Empty)">
+                @ticklerDialogError
+            </FluentMessageBar>
+        }
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Lightweight"
+                      Type="ButtonType.Button"
+                      Disabled="@isSavingTicklerReminder"
+                      OnClick="CloseTicklerDialog">
+            Cancel
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Accent"
+                      Type="ButtonType.Button"
+                      Disabled="@isSavingTicklerReminder"
+                      OnClick="SaveTicklerReminderFromDialogAsync">
+            @(isSavingTicklerReminder ? "Saving..." : "Save reminder")
+        </FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    public List<Lead> AllLeads { get; set; } = new();
+    public List<Lead> FilteredLeads { get; set; } = new();
+    private List<Lead> RecentActivity { get; set; } = new();
+    private Lead? selectedLead;
+    private bool isLoading = true;
+    private string loadError = string.Empty;
+    private LeadStage? StageFilter { get; set; }
+    private bool showClosedStages;
+    private string searchTerm = string.Empty;
+    private const int StageColumnCapacity = 3;
+    private ElementReference pipelineScrollerRef;
+    private IJSObjectReference? leadsModule;
+    private readonly string quickLeadDialogKey = "quick-lead-dialog";
+    private readonly string quickEditDialogKey = "quick-edit-dialog";
+    private readonly string ticklerDialogKey = "tickler-dialog";
+    private Lead quickLead = new();
+    private EditContext quickLeadContext = default!;
+    private LeadStage quickLeadStage = LeadStage.New;
+    private bool quickLeadDialogHidden = true;
+    private bool isSavingQuickLead;
+    private string quickLeadError = string.Empty;
+    private Lead quickEditLead = new();
+    private EditContext quickEditContext = default!;
+    private LeadStage quickEditStage = LeadStage.New;
+    private bool quickEditDialogHidden = true;
+    private bool isSavingQuickEdit;
+    private string quickEditError = string.Empty;
+    private bool sidebarCollapsed;
+    private bool detailCollapsed = true;
+    private bool ticklerDialogHidden = true;
+    private DateTime? ticklerReminderDate;
+    private Lead? ticklerLead;
+    private bool isSavingTicklerReminder;
+    private string ticklerDialogError = string.Empty;
+    private string ticklerActionError = string.Empty;
+    private LeadStage ticklerReturnStage = LeadStage.Archive;
+    private bool listViewToggle;
+    private string PipelineSpacerWidth => sidebarCollapsed ? "36px" : "280px";
+    [CascadingParameter] public Action<string>? UpdateHeader { get; set; }
+
+    private static readonly LeadStage[] PipelineStages = new[]
+    {
+        LeadStage.New, LeadStage.Active, LeadStage.Closing, LeadStage.Holding, LeadStage.Tickler
+    };
+
+    private static readonly LeadStage[] ClosedStages = new[]
+    {
+        LeadStage.Converted, LeadStage.Archive, LeadStage.Trash
+    };
+
+    private static readonly LeadStage[] TicklerReturnStages = new[]
+    {
+        LeadStage.Archive,
+        LeadStage.Trash,
+        LeadStage.Active,
+        LeadStage.Closing
+    };
+
+    private static readonly LeadStage[] StageOrder = new[]
+    {
+        LeadStage.New, LeadStage.Active, LeadStage.Closing, LeadStage.Holding, LeadStage.Tickler,
+        LeadStage.Converted, LeadStage.Archive, LeadStage.Trash
+    };
+
+    private record StageDescriptor(string DisplayName, string Subtitle, string AccentColor, string EmptyState);
+
+    private static readonly Dictionary<LeadStage, StageDescriptor> StageDescriptors = new()
+    {
+        [LeadStage.New] = new StageDescriptor("New", "Ready to qualify", "#2563eb", "Nothing in review"),
+        [LeadStage.Active] = new StageDescriptor("Active", "In progress", "#16a34a", "Work an open lead"),
+        [LeadStage.Closing] = new StageDescriptor("Closing", "Final steps", "#0ea5e9", "Nothing heading to close"),
+        [LeadStage.Holding] = new StageDescriptor("Holding", "Awaiting info", "#a855f7", "No holds right now"),
+        [LeadStage.Tickler] = new StageDescriptor("Tickler", "Reminders", "#f97316", "No reminders scheduled"),
+        [LeadStage.Converted] = new StageDescriptor("Converted", "Won", "#059669", "No recent wins"),
+        [LeadStage.Archive] = new StageDescriptor("Archive", "Parked", "#6b7280", "Archive is clean"),
+        [LeadStage.Trash] = new StageDescriptor("Trash", "Disqualified", "#ef4444", "Nothing in trash")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResetQuickLeadDraft();
+        quickEditContext = new EditContext(quickEditLead);
+        UpdateHeader?.Invoke("Leads");
+        try
+        {
+            AllLeads = await ClientService.GetAllLeadsAsync() ?? new List<Lead>();
+        }
+        catch (Exception ex)
+        {
+            loadError = $"We could not load the leads list. {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+
+        ApplyFilters();
+    }
+
+    private string SearchTerm
+    {
+        get => searchTerm;
+        set
+        {
+            var sanitized = value ?? string.Empty;
+            if (searchTerm == sanitized)
+            {
+                return;
+            }
+
+            searchTerm = sanitized;
+            ApplyFilters();
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs args)
+    {
+        var value = args?.Value?.ToString() ?? string.Empty;
+        SearchTerm = value;
+    }
+
+    private string StageFilterValue
+    {
+        get => StageFilter?.ToString() ?? string.Empty;
+        set
+        {
+            LeadStage? nextStage = null;
+            if (!string.IsNullOrWhiteSpace(value) && Enum.TryParse<LeadStage>(value, true, out var parsed))
+            {
+                nextStage = parsed;
+            }
+
+            if (StageFilter == nextStage)
+            {
+                return;
+            }
+
+            StageFilter = nextStage;
+            ApplyFilters();
+        }
+    }
+
+    private bool ShowClosedStages
+    {
+        get => showClosedStages;
+        set
+        {
+            if (showClosedStages == value)
+            {
+                return;
+            }
+
+            showClosedStages = value;
+            ApplyFilters();
+        }
+    }
+
+    private string TicklerReturnStageValue
+    {
+        get => ticklerReturnStage.ToString();
+        set
+        {
+            if (Enum.TryParse<LeadStage>(value, true, out var parsed))
+            {
+                ticklerReturnStage = parsed;
+            }
+        }
+    }
+
+    private IEnumerable<LeadStage> VisibleStageOrder
+    {
+        get
+        {
+            var stages = PipelineStages.AsEnumerable();
+            if (ShowClosedStages)
+            {
+                stages = stages.Concat(ClosedStages);
+            }
+            else if (StageFilter.HasValue && ClosedStages.Contains(StageFilter.Value))
+            {
+                stages = stages.Concat(new[] { StageFilter.Value });
+            }
+
+            return stages.Distinct();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        if (AllLeads == null)
+        {
+            FilteredLeads = new List<Lead>();
+            RecentActivity = new List<Lead>();
+            selectedLead = null;
+            StateHasChanged();
+            return;
+        }
+
+        IEnumerable<Lead> query = AllLeads;
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(lead =>
+                (!string.IsNullOrWhiteSpace(lead.CompanyName) && lead.CompanyName.Contains(term, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrWhiteSpace(lead.ContactName) && lead.ContactName.Contains(term, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrWhiteSpace(lead.Email) && lead.Email.Contains(term, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrWhiteSpace(lead.PhoneNumber) && lead.PhoneNumber.Contains(term, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        if (StageFilter.HasValue)
+        {
+            var stageValue = (int)StageFilter.Value;
+            query = query.Where(lead => lead.Stage == stageValue);
+        }
+        else if (!ShowClosedStages)
+        {
+            query = query.Where(lead =>
+            {
+                var stage = ParseStage(lead);
+                return stage is null || !ClosedStages.Contains(stage.Value);
+            });
+        }
+
+        FilteredLeads = query
+            .OrderBy(lead => GetStageSortIndex(lead))
+            .ThenByDescending(lead => lead.LastOpened ?? lead.CreatedDate)
+            .ThenBy(lead => lead.CompanyName)
+            .ToList();
+
+        RecentActivity = FilteredLeads
+            .OrderByDescending(lead => lead.LastOpened ?? lead.CreatedDate)
+            .Take(5)
+            .ToList();
+
+        if (FilteredLeads.Count == 0)
+        {
+            selectedLead = null;
+            detailCollapsed = true;
+        }
+        else if (!detailCollapsed)
+        {
+            if (selectedLead == null || !FilteredLeads.Any(l => l.LeadId == selectedLead.LeadId))
+            {
+                selectedLead = FilteredLeads.First();
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private IEnumerable<Lead> GetStageLeads(LeadStage stage)
+    {
+        return FilteredLeads.Where(lead => ParseStage(lead) == stage);
+    }
+
+    private IReadOnlyList<List<Lead>> BuildStageColumns(IReadOnlyList<Lead> stageLeads)
+    {
+        if (stageLeads == null || stageLeads.Count == 0)
+        {
+            return Array.Empty<List<Lead>>();
+        }
+
+        var columns = new List<List<Lead>>();
+        var workingColumn = new List<Lead>(StageColumnCapacity);
+
+        foreach (var lead in stageLeads)
+        {
+            workingColumn.Add(lead);
+            if (workingColumn.Count == StageColumnCapacity)
+            {
+                columns.Add(workingColumn);
+                workingColumn = new List<Lead>(StageColumnCapacity);
+            }
+        }
+
+        if (workingColumn.Count > 0)
+        {
+            columns.Add(workingColumn);
+        }
+
+        return columns;
+    }
+
+    private LeadStage? ParseStage(Lead lead)
+    {
+        if (lead?.Stage.HasValue == true && Enum.IsDefined(typeof(LeadStage), lead.Stage.Value))
+        {
+            return (LeadStage)lead.Stage.Value;
+        }
+
+        return null;
+    }
+
+    private int GetStageSortIndex(Lead lead)
+    {
+        var stage = ParseStage(lead);
+        if (!stage.HasValue)
+        {
+            return int.MaxValue;
+        }
+
+        var index = Array.IndexOf(StageOrder, stage.Value);
+        return index >= 0 ? index : int.MaxValue - 1;
+    }
+
+    private bool IsLeadSelected(Lead lead) => selectedLead?.LeadId == lead.LeadId;
+
+    private string GetStageDisplay(Lead lead)
+    {
+        var stage = ParseStage(lead);
+        return stage.HasValue && StageDescriptors.TryGetValue(stage.Value, out var descriptor)
+            ? descriptor.DisplayName
+            : "Unassigned";
+    }
+
+    private string GetInitials(Lead? lead)
+    {
+        if (lead == null)
+        {
+            return "--";
+        }
+
+        var source = !string.IsNullOrWhiteSpace(lead.ContactName)
+            ? lead.ContactName
+            : lead.CompanyName;
+
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            return "--";
+        }
+
+        var parts = source.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            var token = parts[0].Trim();
+            return token.Length >= 2
+                ? token.Substring(0, 2).ToUpperInvariant()
+                : token.ToUpperInvariant();
+        }
+
+        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    private string GetLeadFriendlyName(Lead? lead)
+    {
+        if (lead == null)
+        {
+            return "this lead";
+        }
+
+        if (!string.IsNullOrWhiteSpace(lead.CompanyName))
+        {
+            return lead.CompanyName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(lead.ContactName))
+        {
+            return lead.ContactName;
+        }
+
+        return "this lead";
+    }
+
+    private string GetReminderDateLabel(Lead lead)
+    {
+        return lead.BindDate?.ToString("MMM dd, yyyy") ?? "a future date";
+    }
+
+    private bool IsTicklerLead(Lead? lead)
+    {
+        var stage = ParseStage(lead);
+        return stage == LeadStage.Tickler;
+    }
+
+    private bool IsLostLead(Lead? lead)
+    {
+        var stage = ParseStage(lead);
+        return stage == LeadStage.Archive || stage == LeadStage.Trash;
+    }
+
+    private void OpenTicklerDialog(Lead lead)
+    {
+        ticklerLead = lead;
+        ticklerReminderDate = lead.BindDate ?? DateTime.Today.AddYears(1);
+        ticklerDialogError = string.Empty;
+        ticklerDialogHidden = false;
+    }
+
+    private void CloseTicklerDialog()
+    {
+        ticklerDialogHidden = true;
+        ticklerLead = null;
+        ticklerDialogError = string.Empty;
+    }
+
+    private Task ScheduleDefaultTicklerReminderAsync(Lead? lead)
+    {
+        if (lead == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var reminderDate = DateTime.Today.AddYears(1);
+        return ScheduleTicklerReminderAsync(lead, reminderDate, surfaceDialogErrors: false);
+    }
+
+    private async Task SaveTicklerReminderFromDialogAsync()
+    {
+        if (ticklerLead == null)
+        {
+            return;
+        }
+
+        if (!ticklerReminderDate.HasValue)
+        {
+            ticklerDialogError = "Choose a reminder date.";
+            return;
+        }
+
+        var succeeded = await ScheduleTicklerReminderAsync(ticklerLead, ticklerReminderDate.Value, surfaceDialogErrors: true);
+        if (succeeded)
+        {
+            CloseTicklerDialog();
+        }
+    }
+
+    private async Task<bool> ScheduleTicklerReminderAsync(Lead lead, DateTime remindOn, bool surfaceDialogErrors)
+    {
+        if (lead == null)
+        {
+            return false;
+        }
+
+        isSavingTicklerReminder = true;
+
+        if (surfaceDialogErrors)
+        {
+            ticklerDialogError = string.Empty;
+        }
+        else
+        {
+            ticklerActionError = string.Empty;
+        }
+
+        try
+        {
+            lead.BindDate = remindOn.Date;
+            lead.Stage = (int)LeadStage.Tickler;
+            await ClientService.UpdateLeadAsync(lead);
+            await RefreshLeadsAsync(lead.LeadId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            var message = $"We couldn't update the reminder. {ex.Message}";
+            if (surfaceDialogErrors)
+            {
+                ticklerDialogError = message;
+            }
+            else
+            {
+                ticklerActionError = message;
+            }
+
+            return false;
+        }
+        finally
+        {
+            isSavingTicklerReminder = false;
+        }
+    }
+
+    private async Task StopTicklerReminderAsync()
+    {
+        if (selectedLead == null)
+        {
+            return;
+        }
+
+        isSavingTicklerReminder = true;
+        ticklerActionError = string.Empty;
+
+        try
+        {
+            selectedLead.BindDate = null;
+            selectedLead.Stage = (int)ticklerReturnStage;
+            await ClientService.UpdateLeadAsync(selectedLead);
+            await RefreshLeadsAsync(selectedLead.LeadId);
+        }
+        catch (Exception ex)
+        {
+            ticklerActionError = $"We couldn't remove the reminder. {ex.Message}";
+        }
+        finally
+        {
+            isSavingTicklerReminder = false;
+        }
+    }
+
+    private LeadStage QuickLeadStage
+    {
+        get => quickLeadStage;
+        set
+        {
+            quickLeadStage = value;
+            quickLead.Stage = (int)value;
+        }
+    }
+
+    private string QuickLeadStageValue
+    {
+        get => QuickLeadStage.ToString();
+        set
+        {
+            if (Enum.TryParse<LeadStage>(value, true, out var parsed))
+            {
+                QuickLeadStage = parsed;
+            }
+        }
+    }
+
+    private LeadStage QuickEditStage
+    {
+        get => quickEditStage;
+        set
+        {
+            quickEditStage = value;
+            quickEditLead.Stage = (int)value;
+        }
+    }
+
+    private string QuickEditStageValue
+    {
+        get => QuickEditStage.ToString();
+        set
+        {
+            if (Enum.TryParse<LeadStage>(value, true, out var parsed))
+            {
+                QuickEditStage = parsed;
+            }
+        }
+    }
+
+    private void ResetQuickLeadDraft()
+    {
+        quickLead = new Lead
+        {
+            BindDate = DateTime.Today.AddDays(14),
+            Stage = (int)LeadStage.New
+        };
+
+        quickLeadStage = LeadStage.New;
+        quickLead.Stage = (int)quickLeadStage;
+        quickLeadContext = new EditContext(quickLead);
+        quickLeadError = string.Empty;
+    }
+
+    private void OpenQuickLeadDialog()
+    {
+        ResetQuickLeadDraft();
+        quickLeadDialogHidden = false;
+    }
+
+    private void CloseQuickLeadDialog()
+    {
+        quickLeadDialogHidden = true;
+    }
+
+    private async Task SaveQuickLeadAsync(EditContext _)
+    {
+        if (quickLeadContext == null)
+        {
+            return;
+        }
+
+        quickLeadError = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(quickLead.CompanyName) && string.IsNullOrWhiteSpace(quickLead.ContactName))
+        {
+            quickLeadError = "Add at least a company or contact name.";
+            return;
+        }
+
+        if (!quickLead.Stage.HasValue)
+        {
+            quickLeadError = "Pick a stage to continue.";
+            return;
+        }
+
+        isSavingQuickLead = true;
+
+        try
+        {
+            quickLead.CreatedDate = DateTime.UtcNow;
+            await ClientService.AddLeadAsync(quickLead);
+            var newLeadId = quickLead.LeadId;
+            quickLeadDialogHidden = true;
+            await RefreshLeadsAsync(newLeadId);
+            ResetQuickLeadDraft();
+        }
+        catch (Exception ex)
+        {
+            quickLeadError = $"We couldn't create the lead. {ex.Message}";
+        }
+        finally
+        {
+            isSavingQuickLead = false;
+        }
+    }
+
+    private void OpenQuickEditDialog(Lead lead)
+    {
+        if (lead == null)
+        {
+            return;
+        }
+
+        quickEditLead = new Lead
+        {
+            LeadId = lead.LeadId,
+            CompanyName = lead.CompanyName,
+            ContactName = lead.ContactName,
+            PhoneNumber = lead.PhoneNumber,
+            Email = lead.Email,
+            Website = lead.Website,
+            Operations = lead.Operations,
+            Notes = lead.Notes,
+            BindDate = lead.BindDate,
+            Stage = lead.Stage
+        };
+
+        QuickEditStage = ParseStage(lead) ?? LeadStage.New;
+        quickEditContext = new EditContext(quickEditLead);
+        quickEditError = string.Empty;
+        quickEditDialogHidden = false;
+    }
+
+    private void CloseQuickEditDialog()
+    {
+        quickEditDialogHidden = true;
+        quickEditError = string.Empty;
+    }
+
+    private async Task SaveQuickEditAsync(EditContext _)
+    {
+        if (quickEditLead == null)
+        {
+            return;
+        }
+
+        quickEditError = string.Empty;
+
+        if (!quickEditLead.Stage.HasValue)
+        {
+            quickEditError = "Pick a stage to continue.";
+            return;
+        }
+
+        isSavingQuickEdit = true;
+
+        try
+        {
+            await ClientService.UpdateLeadAsync(quickEditLead);
+            quickEditDialogHidden = true;
+            await RefreshLeadsAsync(quickEditLead.LeadId);
+        }
+        catch (Exception ex)
+        {
+            quickEditError = $"We couldn't update the lead. {ex.Message}";
+        }
+        finally
+        {
+            isSavingQuickEdit = false;
+        }
+    }
+
+    private async Task RefreshLeadsAsync(int? leadIdToSelect = null)
+    {
+        AllLeads = await ClientService.GetAllLeadsAsync() ?? new List<Lead>();
+        ApplyFilters();
+
+        if (leadIdToSelect.HasValue)
+        {
+            var match = FilteredLeads.FirstOrDefault(l => l.LeadId == leadIdToSelect.Value);
+            if (match != null)
+            {
+                selectedLead = match;
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private string GetLeadOwnerName(Lead? lead)
+    {
+        if (lead?.CreatedBy == null)
+        {
+            return "Unassigned";
+        }
+
+        var composed = lead.CreatedBy.FullName?.Trim();
+        if (!string.IsNullOrWhiteSpace(composed))
+        {
+            return composed!;
+        }
+
+        if (!string.IsNullOrWhiteSpace(lead.CreatedBy.Email))
+        {
+            return lead.CreatedBy.Email!;
+        }
+
+        return lead.CreatedBy.UserName ?? "Unassigned";
+    }
+
+    private int NewThisWeek => FilteredLeads.Count(lead => (DateTime.UtcNow - lead.CreatedDate).TotalDays <= 7);
+
+    private int TouchedRecently => FilteredLeads.Count(lead =>
+    {
+        var lastInteraction = lead.LastOpened ?? lead.CreatedDate;
+        return (DateTime.UtcNow - lastInteraction).TotalDays <= 7;
+    });
+
+    private int UpcomingGoals => FilteredLeads.Count(lead =>
+        lead.BindDate.HasValue &&
+        lead.BindDate.Value.Date >= DateTime.Today &&
+        lead.BindDate.Value.Date <= DateTime.Today.AddDays(14));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            leadsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Domain/Leads/Components/Leads.razor.js");
+        }
+
+        if (leadsModule != null && pipelineScrollerRef.Context != null)
+        {
+            await leadsModule.InvokeVoidAsync("initializePipelineScroll", pipelineScrollerRef);
+        }
+    }
+
+    private void SelectLead(Lead lead)
+    {
+        if (lead == null)
+        {
+            return;
+        }
+
+        selectedLead = lead;
+        detailCollapsed = false;
+        StateHasChanged();
+    }
+
+    private void ToggleSidebar()
+    {
+        sidebarCollapsed = !sidebarCollapsed;
+    }
+
+    private async Task OnListViewToggle(bool value)
+    {
+        listViewToggle = value;
+        if (value)
+        {
+            OpenListView();
+            listViewToggle = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OpenListView()
+    {
+        Navigation.NavigateTo("/Leads/Index");
+    }
+
+    private void CollapseDetailPanel()
+    {
+        selectedLead = null;
+        detailCollapsed = true;
+    }
+
+    private void NavToCreate()
+    {
+        Navigation.NavigateTo("/Leads/Create");
+    }
+
+    private void NavToLead(int leadId)
+    {
+        Navigation.NavigateTo($"/Leads/{leadId}");
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (leadsModule != null)
+        {
+            try
+            {
+                await leadsModule.InvokeVoidAsync("disposePipelineScroll", pipelineScrollerRef);
+                await leadsModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // ignored - circuit closed
+            }
+        }
+    }
+}
+
+
+

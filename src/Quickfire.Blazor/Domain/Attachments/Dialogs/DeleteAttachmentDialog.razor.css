@@ -1,0 +1,29 @@
+.delete-attachment-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.delete-attachment-content p {
+    margin: 0;
+}
+
+.attachment-details {
+    background-color: var(--neutral-layer-2);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+.attachment-details p {
+    margin: 0.5rem 0;
+}
+
+.attachment-details p:first-child {
+    margin-top: 0;
+}
+
+.attachment-details p:last-child {
+    margin-bottom: 0;
+} 

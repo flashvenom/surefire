@@ -1,0 +1,662 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Ember
+@using Quickfire.Blazor.Domain.Clients.Services
+@inject PolicyService PolicyService
+@inject RenewalService RenewalService
+@inject EmberService EmberService
+@inject IToastService ToastService
+@inject AppJsInterop JsInterop
+@inject ClientService ClientService
+
+<div class="loss-runs-requester">
+    <div class="product-selection">
+        <div class="form-group">
+            @if (uniqueProductLines != null && uniqueProductLines.Any())
+            {
+                <div class="selection-row">
+                    <FluentSelect TOption="string"
+                    Label="Line of Business"
+                    Items="@productLineOptions"
+                    Value="@selectedProductLine"
+                    ValueChanged="@(val => OnProductLineSelected(val))"
+                    OptionText="@(p => p)"
+                    OptionValue="@(p => p)" />
+
+                    <FluentSelect TOption="string"
+                    Label="Number of Years"
+                    Items="@yearOptions"
+                    Value="@numberOfYears.ToString()"
+                    ValueChanged="@(val => OnYearsChanged(val))"
+                    OptionText="@(y => y)"
+                    OptionValue="@(y => y)" />
+                </div>
+
+                @if (RenewalId.HasValue)
+                {
+                    <div class="override-section" style="display: none;">
+                        <FluentCheckbox @bind-Checked="@isOverrideEnabled" 
+                                      Label="Override Line of Business" 
+                                      OnChange="@OnOverrideChanged" />
+                        
+                        @if (isOverrideEnabled)
+                        {
+                            <FluentSelect TOption="string"
+                            Label="Override Line of Business"
+                            Items="@productLineOptions"
+                            Value="@overrideProductLine"
+                            ValueChanged="@(val => OnOverrideProductLineSelected(val))"
+                            OptionText="@(p => p)"
+                            OptionValue="@(p => p)" />
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-data-message">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Info())" />
+                    <p>No policy types found for this client.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (showPoliciesTable && groupedPolicies != null && groupedPolicies.Any())
+    {
+        <div class="policies-table">
+            @* <div class="section-header">
+                <h3 class="section-title">Policies by Carrier</h3>
+                <p class="section-subtitle">Select a carrier to generate a loss runs request email</p>
+            </div> *@
+
+            @foreach (var carrierGroup in groupedPolicies)
+            {
+                <div class="carrier-policy-group">
+                    <div class="carrier-header">
+                        <div class="carrier-info">
+                            <div class="carrier-name">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Building())" />
+                                <h4>@carrierGroup.Key</h4>
+                            </div>
+                            @{
+                                var email = GetLossRunsEmail(carrierGroup.Value);
+                            }
+                            @if (!string.IsNullOrEmpty(email))
+                            {
+                                <span class="carrier-email">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" />
+                                    @email
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(GetLossRunURL(carrierGroup.Value)))
+                            {
+                                <span class="carrier-url">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" />
+                                    <a href="javascript:void(0);" @onclick="() => OpenLossRunURL(carrierGroup.Value)">Loss Runs Portal</a>
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(GetLossRunsNote(carrierGroup.Value)))
+                            {
+                                <div class="carrier-note">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Info())" />
+                                    <span>@GetLossRunsNote(carrierGroup.Value)</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="action-buttons">
+                            <a class="fluent-button fallback" href="@GetMailtoLink(carrierGroup.Key, carrierGroup.Value)" target="_blank" title="Use your default email client">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" Color="Color.Custom" CustomColor="#222222" />
+                                Fallback Email
+                            </a>
+                            @if (!string.IsNullOrEmpty(GetLossRunURL(carrierGroup.Value)))
+                            {
+                                <button class="fluent-button" type="button" @onclick="() => OpenLossRunURL(carrierGroup.Value)">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" Color="Color.Custom" CustomColor="#fff" />
+                                    Access Portal
+                                </button>
+                            }
+                            <button class="fluent-button" type="button" @onclick="() => SendEmailForCarrier(carrierGroup.Key, carrierGroup.Value)">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" Color="Color.Custom" CustomColor="#fff" />
+                                Send Email
+                            </button>
+                        </div>
+                    </div>
+                    <div class="policy-grid">
+                        <FluentDataGrid TGridItem="Policy" 
+                                      Items="@(carrierGroup.Value.AsQueryable())" 
+                                      GridTemplateColumns="minmax(150px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(150px, 1fr) minmax(150px, 1fr)"
+                                      ResizableColumns="true">
+                            <PropertyColumn Property="@(p => p.PolicyNumber)" Title="Policy Number" />
+                            <PropertyColumn Property="@(p => p.EffectiveDate)" Title="Effective Date" Format="MM/dd/yyyy" />
+                            <PropertyColumn Property="@(p => p.ExpirationDate)" Title="Expiration Date" Format="MM/dd/yyyy" />
+                            <TemplateColumn Title="Carrier">
+                                <p>@(context.Carrier?.CarrierName ?? "N/A")</p>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Wholesaler">
+                                <p>@(context.Wholesaler?.CarrierName ?? "N/A")</p>
+                            </TemplateColumn>
+                        </FluentDataGrid>
+                    </div>
+                </div> 
+            }
+
+            @if (groupedPolicies.Any())
+            {
+                <div class="send-all-section">
+                    <button class="fluent-button" type="button" @onclick="SendAllEmails">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" Color="Color.Custom" CustomColor="#fff" />
+                        Send All Emails
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int? ClientId { get; set; }
+
+    [Parameter]
+    public int? RenewalId { get; set; }
+
+    private List<string> uniqueProductLines = new List<string>();
+    private List<string> productLineOptions = new List<string>();
+    private List<string> yearOptions = new List<string> { "1", "2", "3", "4", "5", "6", "7", "8" };
+    private string selectedProductLine;
+    private string overrideProductLine;
+    private bool isOverrideEnabled;
+    private bool showPoliciesTable = false;
+    private Dictionary<string, List<Policy>> groupedPolicies = new Dictionary<string, List<Policy>>();
+    private List<Policy> allPolicies = new List<Policy>();
+    private readonly string SELECT_ONE_OPTION = "--Select One--";
+    private string clientName;
+    private int numberOfYears = 5; // Default to 5 years
+    private DateTime cutoffDate;
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("RequestLossRuns: OnInitialized");
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        Console.WriteLine($"RequestLossRuns: OnParametersSet - ClientId: {ClientId}, RenewalId: {RenewalId}");
+        base.OnParametersSet();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("RequestLossRuns: OnInitializedAsync");
+        if (ClientId.HasValue)
+        {
+            await LoadClientData();
+        }
+    }
+
+    public void Dispose()
+    {
+        Console.WriteLine("RequestLossRuns: Dispose");
+    }
+
+    private async Task OnYearsChanged(string value)
+    {
+        Console.WriteLine($"RequestLossRuns: OnYearsChanged - Old value: {numberOfYears}, New value: {value}");
+        if (int.TryParse(value, out int years) && years > 0)
+        {
+            numberOfYears = years;
+            // Reload client data to get fresh policy list with new date range
+            await LoadClientData();
+        }
+    }
+
+    private async Task LoadClientData()
+    {
+        Console.WriteLine($"RequestLossRuns: LoadClientData - Current selectedProductLine: {selectedProductLine}");
+        try
+        {
+            var client = await ClientService.GetClientDetailsById(ClientId.Value);
+            if (client != null)
+            {
+                clientName = client.Name;
+                
+                // Calculate cutoff date based on number of years
+                cutoffDate = DateTime.Today.AddYears(-numberOfYears);
+                
+                // Get current and past policies
+                var currentPolicies = client.Policies
+                    .Where(p => p.EffectiveDate <= p.ExpirationDate && p.ExpirationDate >= DateTime.Today)
+                    .OrderByDescending(p => p.EffectiveDate)
+                    .ToList();
+
+                var pastPolicies = client.Policies
+                    .Where(p => p.ExpirationDate < DateTime.Today && p.ExpirationDate >= cutoffDate)
+                    .OrderByDescending(p => p.EffectiveDate)
+                    .ToList();
+
+                // Combine policies
+                allPolicies.Clear();
+                allPolicies.AddRange(currentPolicies);
+                allPolicies.AddRange(pastPolicies);
+
+                // Generate unique list of product lines
+                if (allPolicies.Any())
+                {
+                    uniqueProductLines = allPolicies
+                        .Where(p => p.Product != null)
+                        .Select(p => p.Product.LineName)
+                        .Distinct()
+                        .OrderBy(name => name)
+                        .ToList();
+
+                    // Create the dropdown options with "Select One" as the first option
+                    productLineOptions = new List<string> { SELECT_ONE_OPTION };
+                    productLineOptions.AddRange(uniqueProductLines);
+
+                    // Only set the product line if we don't have a valid selection yet
+                    if (string.IsNullOrEmpty(selectedProductLine) || selectedProductLine == SELECT_ONE_OPTION)
+                    {
+                        // If we have a RenewalId, try to pre-select the product line
+                        if (RenewalId.HasValue)
+                        {
+                            var renewal = await RenewalService.GetRenewalByIdTrackAsync(RenewalId.Value);
+                            if (renewal?.Product != null)
+                            {
+                                Console.WriteLine($"RequestLossRuns: Setting product line from renewal: {renewal.Product.LineName}");
+                                selectedProductLine = renewal.Product.LineName;
+                                await GenerateLossRunsRequest();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("RequestLossRuns: Setting default product line to Select One");
+                            selectedProductLine = SELECT_ONE_OPTION;
+                        }
+                    }
+                    else
+                    {
+                        // We have a valid selection, just regenerate the request
+                        await GenerateLossRunsRequest();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error loading client data: {ex.Message}");
+            Console.WriteLine($"Error in LoadClientData: {ex}");
+        }
+    }
+
+    private void OnOverrideChanged(bool isChecked)
+    {
+        isOverrideEnabled = isChecked;
+        if (isChecked)
+        {
+            // When enabling override, use the current selection as the override value
+            overrideProductLine = selectedProductLine;
+        }
+        else
+        {
+            // When disabling override, revert to the original selection
+            selectedProductLine = overrideProductLine;
+            GenerateLossRunsRequest();
+        }
+    }
+
+    private void OnOverrideProductLineSelected(string value)
+    {
+        Console.WriteLine($"Override selection changed to: {value}");
+        overrideProductLine = value;
+        
+        // Only generate request if a real option (not "Select One") was selected
+        if (!string.IsNullOrEmpty(value) && value != SELECT_ONE_OPTION)
+        {
+            GenerateLossRunsRequest();
+        }
+        else
+        {
+            // Clear any displayed results if "Select One" is chosen
+            showPoliciesTable = false;
+        }
+    }
+
+    private void OnProductLineSelected(string value)
+    {
+        Console.WriteLine($"RequestLossRuns: OnProductLineSelected - Old value: {selectedProductLine}, New value: {value}");
+        selectedProductLine = value;
+        
+        // Only generate request if a real option (not "Select One") was selected
+        if (!string.IsNullOrEmpty(value) && value != SELECT_ONE_OPTION)
+        {
+            GenerateLossRunsRequest();
+        }
+        else
+        {
+            // Clear any displayed results if "Select One" is chosen
+            showPoliciesTable = false;
+        }
+    }
+
+    private async Task GenerateLossRunsRequest()
+    {
+        // Use override value if enabled, otherwise use regular selection
+        string effectiveProductLine = isOverrideEnabled ? overrideProductLine : selectedProductLine;
+
+        if (string.IsNullOrEmpty(effectiveProductLine) || effectiveProductLine == SELECT_ONE_OPTION || !allPolicies.Any())
+        {
+            return;
+        }
+
+        // Update cutoff date
+        cutoffDate = DateTime.Today.AddYears(-numberOfYears);
+
+        // Filter policies by selected product line and date range
+        var filteredPolicies = allPolicies
+            .Where(p => p.Product != null && 
+                       p.Product.LineName == effectiveProductLine &&
+                       p.ExpirationDate >= cutoffDate)
+            .OrderByDescending(p => p.ExpirationDate)
+            .ToList();
+
+        if (!filteredPolicies.Any())
+        {
+            showPoliciesTable = false;
+            ToastService.ShowWarning($"No policies found for the selected line of business within the last {numberOfYears} years.");
+            return;
+        }
+
+        try
+        {
+            // Group policies by carrier name to consolidate the same carriers that might appear 
+            // as both a carrier and a wholesaler
+            groupedPolicies = filteredPolicies
+                .GroupBy(p => GetCarrierName(p))
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Show the policies table
+            showPoliciesTable = true;
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error grouping policies: {ex.Message}");
+            Console.WriteLine($"Error in GenerateLossRunsRequest: {ex}");
+        }
+    }
+
+    private string GetCarrierName(Policy policy)
+    {
+        // Create a placeholder carrier name for unknown carriers
+        const string unknownCarrierName = "Unknown Carrier";
+
+        try
+        {
+            // Check if Wholesaler exists and is marked as Wholesaler
+            if (policy.Wholesaler != null && policy.Wholesaler.Wholesaler)
+            {
+                return policy.Wholesaler.CarrierName;
+            }
+            
+            // Check if Carrier exists and is marked as Carrier (or IssuingCarrier)
+            if (policy.Carrier != null && (policy.Carrier.IssuingCarrier || !policy.Carrier.Wholesaler))
+            {
+                return policy.Carrier.CarrierName;
+            }
+            
+            // If none of the above, return the placeholder
+            return unknownCarrierName;
+        }
+        catch
+        {
+            // In case of any error accessing properties, return the placeholder
+            return unknownCarrierName;
+        }
+    }
+
+    private string GetLossRunsEmail(List<Policy> policies)
+    {
+        // Try to find a loss runs email from any policy in the group
+        foreach (var policy in policies)
+        {
+            // Check wholesaler first if it exists and was used for grouping
+            if (policy.Wholesaler != null && 
+                policy.Wholesaler.Wholesaler && 
+                !string.IsNullOrEmpty(policy.Wholesaler.LossRunsEmail))
+            {
+                return policy.Wholesaler.LossRunsEmail;
+            }
+            
+            // Then check carrier if it exists and was used for grouping
+            if (policy.Carrier != null && 
+                (policy.Carrier.IssuingCarrier || !policy.Carrier.Wholesaler) &&
+                !string.IsNullOrEmpty(policy.Carrier.LossRunsEmail))
+            {
+                return policy.Carrier.LossRunsEmail;
+            }
+        }
+        
+        // If no email found, return empty string
+        return string.Empty;
+    }
+
+    private string GetLossRunURL(List<Policy> policies)
+    {
+        // Try to find a loss run URL from any policy in the group
+        foreach (var policy in policies)
+        {
+            // Check wholesaler first if it exists and was used for grouping
+            if (policy.Wholesaler != null && 
+                policy.Wholesaler.Wholesaler)
+            {
+                if (!string.IsNullOrEmpty(policy.Wholesaler.LossRunsURL))
+                {
+                    return policy.Wholesaler.LossRunsURL;
+                }
+            }
+            
+            // Then check carrier if it exists and was used for grouping
+            if (policy.Carrier != null && 
+                (policy.Carrier.IssuingCarrier || !policy.Carrier.Wholesaler))
+            {
+                if (!string.IsNullOrEmpty(policy.Carrier.LossRunsURL))
+                {
+                    return policy.Carrier.LossRunsURL;
+                }
+            }
+        }
+        
+        // If no URL found, return empty string
+        return string.Empty;
+    }
+
+    private async Task OpenLossRunURL(List<Policy> policies)
+    {
+        string url = GetLossRunURL(policies);
+        if (!string.IsNullOrEmpty(url))
+        {
+            // Make sure the URL has a protocol
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
+                url = "https://" + url;
+            }
+            
+            // Open the URL in a new tab
+            await JsInterop.OpenWindowAsync(url, "_blank");
+            
+            // Show a success message
+            ToastService.ShowInfo("Opening carrier's loss runs portal in a new tab.");
+        }
+    }
+
+    private string GetClientNameForPolicies(List<Policy> policies)
+    {
+        // Try to get client name from the first policy
+        string policyClientName = policies.FirstOrDefault()?.Client?.Name;
+        
+        // If we have a client name from policies, use it
+        if (!string.IsNullOrEmpty(policyClientName))
+        {
+            return policyClientName;
+        }
+        
+        // Otherwise, use the client name we loaded
+        if (!string.IsNullOrEmpty(clientName))
+        {
+            return clientName;
+        }
+        
+        // If all else fails, use "Our Client"
+        return "Our Client";
+    }
+
+    private async Task SendEmailForCarrier(string carrierName, List<Policy> policies)
+    {
+        if (policies == null || !policies.Any())
+        {
+            return;
+        }
+
+        // Get a representative policy to use in the subject
+        var firstPolicy = policies.First();
+        
+        // Get the client name
+        string clientName = GetClientNameForPolicies(policies);
+        
+        // Create subject with client name
+        string subject = $"Loss Run Request - {clientName} - {selectedProductLine} ({firstPolicy.PolicyNumber})";
+        
+        // Build email body with client name
+        string body = $"<p>Please send us the current valued loss runs for <strong>{clientName}</strong>'s {selectedProductLine} policies from {carrierName}:</p>";
+        
+        // Add policy details to body
+        body += "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse: collapse; width: 100%;'>";
+        body += "<tr style='background-color: #f2f2f2;'><th>Policy Number</th><th>Effective Date</th><th>Expiration Date</th><th>Carrier</th><th>Wholesaler</th></tr>";
+        
+        foreach (var policy in policies)
+        {
+            string carrierValue = policy.Carrier?.CarrierName ?? "N/A";
+            string wholesalerValue = policy.Wholesaler?.CarrierName ?? "N/A";
+            
+            body += $"<tr><td>{policy.PolicyNumber}</td><td>{policy.EffectiveDate.ToShortDateString()}</td><td>{policy.ExpirationDate.ToShortDateString()}</td><td>{carrierValue}</td><td>{wholesalerValue}</td></tr>";
+        }
+        
+        body += "</table>";
+        body += "<p>Thank you for your assistance.</p>";
+        
+        // Get recipient email
+        string toEmail = GetLossRunsEmail(policies);
+            
+        try 
+        {
+            // Create the email using Ember service
+            await CreateNewEmail(toEmail, subject, body);
+            
+            // Show success toast
+            ToastService.ShowSuccess($"Email created successfully for {carrierName}!");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error creating email for {carrierName}: {ex.Message}");
+            Console.WriteLine($"Error in SendEmailForCarrier: {ex}");
+        }
+    }
+
+    private async Task SendAllEmails()
+    {
+        if (!groupedPolicies.Any())
+        {
+            return;
+        }
+
+        int successCount = 0;
+        int totalCount = groupedPolicies.Count;
+
+        foreach (var carrierGroup in groupedPolicies)
+        {
+            try
+            {
+                await SendEmailForCarrier(carrierGroup.Key, carrierGroup.Value);
+                successCount++;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending email for {carrierGroup.Key}: {ex}");
+            }
+        }
+
+        if (successCount == totalCount)
+        {
+            ToastService.ShowSuccess($"Successfully created all {totalCount} emails!");
+        }
+        else
+        {
+            ToastService.ShowWarning($"Created {successCount} out of {totalCount} emails. Check the console for details.");
+        }
+    }
+
+    private string GetLossRunsNote(List<Policy> policies)
+    {
+        // Try to find a loss runs note from any policy in the group
+        foreach (var policy in policies)
+        {
+            // Check wholesaler first if it exists and was used for grouping
+            if (policy.Wholesaler != null && 
+                policy.Wholesaler.Wholesaler && 
+                !string.IsNullOrEmpty(policy.Wholesaler.LossRunsNote))
+            {
+                return policy.Wholesaler.LossRunsNote;
+            }
+            
+            // Then check carrier if it exists and was used for grouping
+            if (policy.Carrier != null && 
+                (policy.Carrier.IssuingCarrier || !policy.Carrier.Wholesaler) &&
+                !string.IsNullOrEmpty(policy.Carrier.LossRunsNote))
+            {
+                return policy.Carrier.LossRunsNote;
+            }
+        }
+        
+        // If no note found, return empty string
+        return string.Empty;
+    }
+    
+    private async Task CreateNewEmail(string toEmail, string subject, string body)
+    {
+        var parameters = new List<string> { toEmail, subject, body };
+        await EmberService.RunEmberFunction("OutlookEmail_CreateNew", parameters);
+    }
+
+    // Add a method to generate a mailto: link for fallback email
+    private string GetMailtoLink(string carrierName, List<Policy> policies)
+    {
+        if (policies == null || !policies.Any())
+        {
+            return "#";
+        }
+        var firstPolicy = policies.First();
+        string clientName = GetClientNameForPolicies(policies);
+        string subject = $"Loss Run Request - {clientName} - {selectedProductLine} ({firstPolicy.PolicyNumber})";
+        string body = $"Please send us the current valued loss runs for {clientName}'s {selectedProductLine} policies from {carrierName}:\n\n";
+        foreach (var policy in policies)
+        {
+            string carrierValue = policy.Carrier?.CarrierName ?? "N/A";
+            string wholesalerValue = policy.Wholesaler?.CarrierName ?? "N/A";
+            body += $"Policy Number: {policy.PolicyNumber}\nEffective Date: {policy.EffectiveDate.ToShortDateString()}\nExpiration Date: {policy.ExpirationDate.ToShortDateString()}\nCarrier: {carrierValue}\nWholesaler: {wholesalerValue}\n---\n";
+        }
+        body += "\nThank you for your assistance.";
+        string toEmail = GetLossRunsEmail(policies);
+        // URL encode subject and body
+        string encodedSubject = Uri.EscapeDataString(subject);
+        string encodedBody = Uri.EscapeDataString(body);
+        return $"mailto:{toEmail}?subject={encodedSubject}&body={encodedBody}";
+    }
+} 

@@ -1,0 +1,465 @@
+﻿.policy-container {
+    margin: 0 auto;
+}
+.policy {
+    color: #fff;
+    width: 100%;
+    padding: 9px 10px 6px 10px;
+    margin-bottom: 10px;
+    border-left: 5px solid #8870B8;
+    border-radius: 3px;
+    height: 45px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#593294+0,4c2871+46,4c2871+100 */
+    /*background: linear-gradient(to right, #593294 0%,#4c2871 46%,#4c2871 100%);*/ /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    background-image: url(../../../img/bg-grad.jpg);
+    background-size: cover;
+    overflow: hidden;
+    transition: all .4s ease-in-out;
+}
+
+    .policy.expanded {
+        background-color: #141414;
+        transition: all .4s ease-in-out;
+        height: 76px;
+        border-left: 5px solid #FF6600;
+        border-radius: 5px;
+        background-image: url(../../../img/bg-grad.jpg);
+        background-position-x: -800px;
+        background-size: cover;
+    }
+
+.policy-header {
+    display: flex;
+    justify-content: space-between;
+}
+.policy-carriers {
+    font-size: 1.125em;
+    font-weight: 200;
+    padding: 4px 0px;
+    margin-bottom:5px;
+}
+
+.policy-linename {
+    font-size: 1.4em;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+    .policy-linename:hover {
+        cursor: pointer;
+    }
+
+.ff2 {
+    margin-left: auto;
+}
+
+.edate {
+    font-size: 1.4em;
+    float: left;
+    font-weight: 100;
+}
+
+.xdate {
+    font-size: 1.4em;
+    float: left;
+    font-weight: 600;
+}
+
+.rotate-90 {
+    transform: rotate(90deg);
+    transition: transform 0.3s ease;
+}
+
+.rotate-0 {
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+.smalltool {
+    font-size: 11px;
+    padding: 3px 5px;
+    margin: 0px;
+    color: #fff;
+    border: 1px solid #ffffff68;
+    -webkit-text-decoration: none;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+    .smalltool:hover {
+        cursor: pointer;
+        border: 1px solid #fff;
+    }
+
+.carrier-name {
+    font-size: .9em;
+    font-weight: 200;
+    color: #ffffffb1 !important;
+}
+
+    .carrier-name a {
+        color: #ffffffb1 !important;
+        text-decoration: none;
+    }
+
+.lighter {
+    color: #ffffff70;
+    padding: 0px 8px;
+}
+
+.renew-soon-pill {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    border-radius: 20px;
+    padding: 4px 12px 4px 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 8px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3), 
+                0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
+    animation: renewShineInitial 2s ease-in-out, renewShine 5s 2s infinite;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+    .renew-soon-pill::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.4) 50%, 
+            transparent 100%);
+        transition: left 0.6s ease-in-out;
+        z-index: 1;
+    }
+
+    .renew-soon-pill:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4), 
+                    0 2px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px) scale(1.02);
+    }
+
+    .renew-soon-pill:hover::before {
+        left: 100%;
+    }
+
+    .renew-soon-pill:active {
+        transform: translateY(0) scale(0.98);
+        transition: all 0.1s ease;
+    }
+
+    .renew-soon-pill .cakeicon {
+        margin-right: 6px;
+        font-size: 1rem;
+        color: #ffd700;
+        filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+        z-index: 2;
+        position: relative;
+        animation: cakeGlow 2s ease-in-out infinite alternate;
+    }
+
+    .renew-soon-pill .renew-text {
+    color: #ffffff;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+    position: relative;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease;
+}
+
+@keyframes renewShineInitial {
+    0% {
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3), 
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    20% {
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.6), 
+                    0 2px 8px rgba(0, 0, 0, 0.15),
+                    0 0 25px rgba(102, 126, 234, 0.4);
+        transform: scale(1.05);
+    }
+    
+    25% {
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.6), 
+                    0 2px 8px rgba(0, 0, 0, 0.15),
+                    0 0 25px rgba(102, 126, 234, 0.4);
+        transform: scale(1.05);
+    }
+    
+    45% {
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3), 
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+        transform: scale(1);
+    }
+    
+    70% {
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.6), 
+                    0 2px 8px rgba(0, 0, 0, 0.15),
+                    0 0 25px rgba(102, 126, 234, 0.4);
+        transform: scale(1.05);
+    }
+    
+    75% {
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.6), 
+                    0 2px 8px rgba(0, 0, 0, 0.15),
+                    0 0 25px rgba(102, 126, 234, 0.4);
+        transform: scale(1.05);
+    }
+    
+    100% {
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3), 
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+        transform: scale(1);
+    }
+}
+
+.renew-soon-pill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        transparent 100%);
+    z-index: 1;
+    animation: shimmerSweep 2s ease-in-out;
+}
+
+@keyframes shimmerSweep {
+    0%, 45% {
+        left: -100%;
+    }
+    
+    20%, 25% {
+        left: 100%;
+    }
+    
+    50%, 95% {
+        left: -100%;
+    }
+    
+    70%, 75% {
+        left: 100%;
+    }
+    
+    100% {
+        left: -100%;
+    }
+}
+
+@keyframes renewShine {
+    0%, 90% {
+        /* Normal state */
+    }
+    
+    92% {
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3), 
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    94% {
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5), 
+                    0 2px 8px rgba(0, 0, 0, 0.15),
+                    0 0 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    96% {
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6), 
+                    0 3px 12px rgba(0, 0, 0, 0.2),
+                    0 0 30px rgba(102, 126, 234, 0.4);
+    }
+    
+    98% {
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5), 
+                    0 2px 8px rgba(0, 0, 0, 0.15),
+                    0 0 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    100% {
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3), 
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+}
+
+@keyframes cakeGlow {
+    0% {
+        filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+    }
+    
+    100% {
+        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)) 
+                drop-shadow(0 0 12px rgba(255, 215, 0, 0.4));
+    }
+}
+
+/* Responsive Design */
+.compact-date {
+    display: none;
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+.full-date {
+    display: inline;
+}
+
+.ff1 {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0; /* Allow flex item to shrink */
+    overflow: hidden;
+}
+
+.ff2 {
+    margin-left: auto;
+    flex-shrink: 0; /* Prevent date from shrinking */
+}
+
+/* Progressive collapse approach - button text collapses first */
+@container (max-width: 550px) {
+    .renew-soon-pill .renew-text {
+        display: none;
+    }
+    
+    .renew-soon-pill {
+        padding: 4px 8px;
+        margin-left: 6px;
+    }
+    
+    .renew-soon-pill .cakeicon {
+        margin-right: 0;
+    }
+}
+
+/* Media queries for responsive behavior */
+@media (max-width: 600px) {
+    .policy-container {
+        margin: 0;
+        padding: 0 10px;
+    }
+    
+    .full-date {
+        display: none;
+    }
+    
+    .compact-date {
+        display: inline;
+    }
+    
+    .edate, .xdate {
+        font-size: 1.2em;
+    }
+    
+    .compact-date {
+        font-size: 1.2em;
+    }
+}
+
+/* Fallback for browsers that don't support container queries */
+@media (max-width: 1600px) {
+    .renew-soon-pill .renew-text {
+        display: none;
+    }
+    
+    .renew-soon-pill {
+        padding: 4px 8px;
+        margin-left: 6px;
+    }
+    
+    .renew-soon-pill .cakeicon {
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 800px) {
+    .policy {
+        padding: 8px;
+        height: auto;
+        min-height: 45px;
+    }
+    
+    .policy.expanded {
+        height: auto;
+        min-height: 76px;
+    }
+    
+    .policy-linename {
+        font-size: 1.2em;
+    }
+    
+    .renew-soon-pill {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+        margin-left: 4px;
+    }
+    
+    .renew-soon-pill .cakeicon {
+        font-size: 0.9rem;
+    }
+    
+    .compact-date {
+        font-size: 1.1em;
+    }
+    
+    .policy-carriers {
+        font-size: 1em;
+    }
+    
+    .carrier-name {
+        font-size: 0.8em;
+    }
+}
+.custom-label-icon {
+    display: flex;
+    margin-left: 8px;
+    vertical-align: middle;
+    background-color: #fff;
+    padding: 2px 3px 3px 3px;
+    border-radius: 5px;
+}
+
+.custom-label-icon-inner {
+    vertical-align: middle;
+    
+    
+}
+.custom-label-icon-fillservice {
+    display: flex;
+    margin-left: 8px;
+    vertical-align: middle;
+    background-color: #6779e3ff;
+    padding: 2px 3px 3px 3px;
+    border-radius: 5px;
+}
+.custom-label-icon-fillagency {
+    display: flex;
+    margin-left: 8px;
+    vertical-align: middle;
+    background-color: #7451aa;
+    padding: 2px 3px 3px 3px;
+    border-radius: 5px;
+}

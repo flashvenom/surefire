@@ -1,0 +1,22 @@
+{
+  "profiles": {
+    "Quickfire.Blazor": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:58913;http://localhost:58914"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "launchBrowser": true,
+      "launchUrl": "https://localhost:58913",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:58913;http://localhost:58914"
+      },
+      "distributionName": ""
+    }
+  }
+}

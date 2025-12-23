@@ -1,0 +1,477 @@
+﻿@page "/Forms/Editor/{FormDocId:int}"
+@using System.IO
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Syncfusion.Pdf
+@using Syncfusion.Pdf.Parsing
+@using Syncfusion.Blazor.SfPdfViewer
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@inject FormService FormService
+@inject ClientService ClientService
+@inject PolicyService PolicyService
+@inject IWebHostEnvironment Environment
+@inject IToastService ToastService
+@inject IHttpClientFactory _http
+@inject AppJsInterop JsInterop
+
+<div class="page-toolbar">
+    <FluentMenuButton Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="Form"><FluentIcon Value="@(new Icons.Regular.Size20.BuildingBank())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Form</FluentMenuItem>
+        <FluentMenuItem Id="Certificate"><FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Certificate</FluentMenuItem>
+    </FluentMenuButton>
+
+    <span class="sf-verthr2"></span>
+
+    @* Policies *@
+    <a class="toolbar-link" id="myPopoverButtonr" @onclick="() => _policiesVisible = !_policiesVisible"> 
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentBulletList())" />
+        <span class="toolbar-text">Prefill</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myPopoverButtonr" @bind-Open="_policiesVisible">
+        <Header>Prefill Templates</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                <text>Coming soon.</text>
+                @foreach (var policy in PolicyList)
+                {
+                    <FluentCheckbox>
+                        @policy.PolicyNumber (@policy.Product.LineNickname)
+                    </FluentCheckbox>
+                }
+            </FluentStack>
+        </Body>
+    </FluentPopover>
+
+    <a class="toolbar-link" id="myAttachButtonr" @onclick="() => _attachmentsVisible = !_attachmentsVisible">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Attach())" />
+        <span class="toolbar-text">Attachments</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myAttachButtonr" @bind-Open="_attachmentsVisible">
+        <Header>Attachment Options</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                Coming soon.
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => SaveToDatabase(false)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    <a class="toolbar-link" id="myRevisionsButton" @onclick="() => _revisionsVisible = !_revisionsVisible">
+        <FluentIcon Value="@(new Icons.Regular.Size24.History())" />
+        <span class="toolbar-text">Revisions</span>
+    </a>
+    <FluentPopover Style="width: 400px;" VerticalThreshold="170" AnchorId="myRevisionsButton" @bind-Open="_revisionsVisible">
+        <Header>Revision History</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                @if (Revisions == null || Revisions.Count == 0)
+                {
+                    <text>No revision history available.</text>
+                }
+                else
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Revision</th>
+                                <th>Created</th>
+                                <th>By</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var revision in Revisions)
+                            {
+                                <tr>
+                                    <td>@revision.RevisionName</td>
+                                    <td>@revision.DateCreated.ToString("MM/dd/yyyy HH:mm")</td>
+                                    <td>@(revision.CreatedBy?.FirstName ?? "System")</td>
+                                    <td>
+                                        <FluentButton Appearance="Appearance.Lightweight" OnClick="() => RestoreRevision(revision.FormDocRevisionId)">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.ArrowBounce())" />
+                                            Restore
+                                        </FluentButton>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => _revisionsVisible = false">Close</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Reset" class="toolbar-link" @onclick="ResetForm">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eraser())" />
+        <span class="toolbar-text">Reset</span>
+    </a>
+
+    <a id="Duplicate" class="toolbar-link" @onclick="DuplicateForm">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentCopy())" />
+        <span class="toolbar-text">Duplicate</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Email" class="toolbar-link" @onclick="() => ExportForm(true, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.OpenFolder())" />
+        <span class="toolbar-text">Open</span>
+    </a>
+
+    <a id="Save" class="toolbar-link" @onclick="() => ExportForm(false, false, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
+        <span class="toolbar-text">Save</span>
+    </a>
+
+    <a id="Print" class="toolbar-link" @onclick="() => ExportForm(false, true, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
+        <span class="toolbar-text">Print</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Approve" class="toolbar-link" @onclick="() => SaveToDatabase(true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Checkmark())" />
+        <span class="toolbar-text">Approve</span>
+    </a>
+
+    <a id="Cancel" class="toolbar-link" @onclick="NavCancel">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
+        <span class="toolbar-text">Cancel</span>
+    </a>
+</div>
+
+<div class="control-section" style="height:784px;">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath"  Height="784px" Width="90%">
+        <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+    </SfPdfViewer2>
+</div>
+
+@code {
+
+
+
+
+
+
+
+    [Parameter] public int FormDocId { get; set; }
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    public FormPdf FormPdf { get; set; } = new FormPdf();
+    public FormDoc FormDoc { get; set; } = new FormDoc();
+    public Client Client { get; set; } = new Client();
+    public Lead Lead { get; set; } = new Lead();
+    public List<Policy> PolicyList { get; set; } = new List<Policy>();
+    public List<FormDocRevision> Revisions { get; set; } = new List<FormDocRevision>();
+    private string DocumentPath { get; set; } = "";
+    private SfPdfViewer2 pdfViewer;
+    private Stream stream;
+    private bool _policiesVisible = false;
+    private bool _attachmentsVisible = false;
+    private bool _revisionsVisible = false;
+    private List<Policy> selectedpolicies = new List<Policy>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Forms");
+        FormDoc = await FormService.GetFormDocByIdAsync(FormDocId);
+        FormPdf = FormDoc.FormPdf;
+
+        Console.WriteLine($"Loading FormPDF File: {FormPdf.Filepath}");
+        DocumentPath = Path.Combine(Environment.WebRootPath, "forms", FormPdf.Filepath);
+
+        // Load revisions
+        Revisions = await FormService.GetFormDocRevisionsAsync(FormDocId);
+
+        // Load related entity data based on which association is set
+        if(FormDoc.Client != null)
+        {
+            Client = FormDoc.Client;
+            PolicyList = await PolicyService.GetCurrentPoliciesByClientIdAsync(Client.ClientId);
+        }
+        else if(FormDoc.Lead != null)
+        {
+            Lead = FormDoc.Lead;
+        }
+        // Note: Add additional entity relationship handling here as needed
+    }
+
+    //Methods
+    private async Task LoadJsonDataIntoPdfAsync()
+    {
+        if (string.IsNullOrEmpty(FormDoc.JSONData) || FormDoc.JSONData.Length < 10)
+        {
+            Console.WriteLine("No JSON data available to load into the PDF.");
+            return;
+        }
+
+        // Parse the JSON data into a JObject for easy manipulation
+        JObject jsonData = JObject.Parse(FormDoc.JSONData);
+
+        // Check if the FormDocId is 14
+        if (FormDoc.FormPdfId == 14)
+        {
+            // Update the JSON fields if FormDocId is 14
+            jsonData["Name of Insured"] = Client.Name;
+
+            // Update Insurer dates to today's month/year formatted as "MM/yyyy"
+            string currentDate = DateTime.Now.ToString("MM/yyyy");
+            jsonData["Insurer 1 Date"] = currentDate;
+            jsonData["Insurer 2 Date"] = currentDate;
+            jsonData["Insurer 3 Date"] = currentDate;
+        }
+
+        // Convert the updated JObject back to a JSON string
+        FormDoc.JSONData = jsonData.ToString();
+
+        // Load the updated JSON data into the PDF form
+        byte[] byteArray = System.Text.Encoding.UTF8.GetBytes(FormDoc.JSONData);
+        using (MemoryStream jsonStream = new MemoryStream(byteArray))
+        {
+            await pdfViewer.ImportFormFieldsAsync(jsonStream, FormFieldDataFormat.Json);
+        }
+    }
+
+    public async Task SaveToDatabase(bool? exit)
+    {
+        var jsondata = await ExtractJson();
+
+        if (!string.IsNullOrEmpty(jsondata))
+        {
+            FormDoc.JSONData = jsondata;
+            await FormService.UpdateFormDocWithRevisionCheck(FormDoc);
+
+            // Refresh revisions list
+            Revisions = await FormService.GetFormDocRevisionsAsync(FormDocId);
+
+            await ShowToast("Form saved successfully", "success");
+        }
+        else
+        {
+            await ShowToast("Failed to extract form data", "error");
+            Console.WriteLine("Failed to extract JSON data.");
+        }
+        if (exit == true)
+        {
+            NavigateToParentEntity();
+        }
+    }
+
+    private async Task ShowToast(string message, string type)
+    {
+        if (type == "success")
+            ToastService.ShowSuccess(message, 3000);
+        else if (type == "error")
+            ToastService.ShowError(message, 3000);
+
+        // ")
+        // ToastService.ShowInfo(message, 3000);
+        // if (toastRef != null)
+        // {
+        //     await toastRef.ShowAsync(content: message, intent: type == "success" ? ToastIntent.Success : ToastIntent.Error);
+        // }
+    }
+
+    public async Task<string> ExtractJson()
+    {
+        stream = await pdfViewer.ExportFormFieldsAsync(FormFieldDataFormat.Json);
+
+        using (StreamReader reader = new StreamReader(stream))
+        {
+            // Read the stream into a JSON string
+            string jsonString = await reader.ReadToEndAsync();
+
+            try
+            {
+                // Parse or return the raw JSON string (depending on your needs)
+                return jsonString;
+            }
+            catch (JsonException ex)
+            {
+                // Handle JSON parsing errors
+                Console.WriteLine($"Error parsing JSON: {ex.Message}");
+                return null;
+            }
+        }
+    }
+    private async Task HandleOnMenuChanged(MenuChangeEventArgs args)
+    {
+        Console.WriteLine($"ID CLICK: {args.Id}");
+        switch (args.Id)
+        {
+            case "Certificate":
+                await NewCertificate();
+                break;
+            case "Form":
+                await NewForm();
+                break;
+        }
+    }
+    public async Task NewForm()
+    {
+
+        Navigation.NavigateTo($"/Clients/{FormDoc.Client.ClientId}");
+    }
+    public async Task NewCertificate()
+    {
+        if (FormDoc.Client != null)
+
+        {
+            int newcertid = await FormService.CreateCertificate(FormDoc.Client.ClientId);
+            Navigation.NavigateTo($"/Forms/Certificate/{newcertid}");
+        }
+    }
+    public async Task RestoreRevision(int revisionId)
+    {
+        try
+        {
+            await FormService.RestoreFormDocRevisionAsync(FormDocId, revisionId);
+            
+            // Reload the current form with the restored data
+            FormDoc = await FormService.GetFormDocByIdAsync(FormDocId);
+            
+            // Refresh revisions list
+            Revisions = await FormService.GetFormDocRevisionsAsync(FormDocId);
+            
+            // Close revisions popover
+            _revisionsVisible = false;
+            
+            // Reload the JSON data into the PDF viewer
+            await LoadJsonDataIntoPdfAsync();
+            
+            await ShowToast("Revision restored successfully", "success");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"Failed to restore revision: {ex.Message}", "error");
+            Console.WriteLine($"Error restoring revision: {ex.Message}");
+        }
+    }
+    
+    public async Task<string> ExportForm(bool? openNewWindow, bool? printNow, bool? saveToDisk)
+    {
+        await SaveToDatabase(false);
+
+        byte[] data = await pdfViewer.GetDocumentAsync();
+
+        data = FormService.FlattenPdf(data);
+
+        using (MemoryStream originalPdfStream = new MemoryStream(data))
+        {
+            PdfLoadedDocument originalDocument = new PdfLoadedDocument(originalPdfStream);
+
+            using (MemoryStream pdfStream = new MemoryStream())
+            {
+                originalDocument.Save(pdfStream);
+
+                // Convert the PDF to a base64 string
+                byte[] pdfBytes = pdfStream.ToArray();
+                string base64Pdf = Convert.ToBase64String(pdfBytes);
+
+                // Handle options like print, save, or opening a new window
+                if (printNow == true)
+                {
+                    await JsInterop.OpenPdfInNewWindowAsync(base64Pdf);
+                }
+
+                if (saveToDisk == true)
+                {
+                    string entityName = DetermineEntityName();
+                    string certname = $"{entityName}_form.pdf";
+                    await JsInterop.DownloadPdfAsync(base64Pdf, certname);
+                }
+
+                if (openNewWindow == true)
+                {
+                    await JsInterop.OpenPdfInNewWindowAsync(base64Pdf);
+                }
+            }
+
+            // Close the document
+            originalDocument.Close(true);
+        }
+
+        return string.Empty;
+    }
+
+    private string DetermineEntityName()
+    {
+        if (Client != null && !string.IsNullOrEmpty(Client.Name))
+            return Client.Name;
+        else if (Lead != null && !string.IsNullOrEmpty(Lead.CompanyName))
+            return Lead.CompanyName;
+        else if (FormDoc.Submission != null)
+            return $"Submission_{FormDoc.Submission.SubmissionId}";
+        else if (FormDoc.Policy != null)
+            return $"Policy_{FormDoc.Policy.PolicyNumber}";
+        else if (FormDoc.Renewal != null)
+            return $"Renewal_{FormDoc.Renewal.RenewalId}";
+        else
+            return "Form_" + FormDocId;
+    }
+    
+    public async Task DuplicateForm()
+    {
+        int newdocid = await FormService.DuplicateFormDocAsync(FormDoc);
+        Navigation.NavigateTo($"/Forms/Editor/{newdocid}");
+    }
+    
+    public void ResetForm()
+    {
+        Navigation.NavigateTo($"/Forms/Editor/{FormDoc.FormDocId}");
+    }
+    
+    public async void FlattenForm()
+    {
+        byte[] data = await pdfViewer.GetDocumentAsync();
+        byte[] flattenedPdfBytes = FormService.FlattenPdf(data);
+        string base64Pdf = Convert.ToBase64String(flattenedPdfBytes);
+        await JsInterop.OpenPdfInNewWindowAsync(base64Pdf);
+    }
+    
+    public void NavigateToParentEntity()
+    {
+        if (FormDoc.Client != null && FormDoc.ClientId.HasValue)
+        {
+            Navigation.NavigateTo($"/Clients/{FormDoc.ClientId}");
+        }
+        else if (FormDoc.Lead != null && FormDoc.LeadId.HasValue)
+        {
+            Navigation.NavigateTo($"/Leads/{FormDoc.LeadId}");
+        }
+        else if (FormDoc.Submission != null && FormDoc.SubmissionId.HasValue)
+        {
+            Navigation.NavigateTo($"/Submissions/{FormDoc.SubmissionId}");
+        }
+        else if (FormDoc.Policy != null && FormDoc.PolicyId.HasValue)
+        {
+            Navigation.NavigateTo($"/Policies/{FormDoc.PolicyId}");
+        }
+        else if (FormDoc.Renewal != null && FormDoc.RenewalId.HasValue)
+        {
+            Navigation.NavigateTo($"/Renewals/{FormDoc.RenewalId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/Forms");
+        }
+    }
+    
+    public void NavCancel()
+    {
+        NavigateToParentEntity();
+    }
+}

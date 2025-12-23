@@ -1,0 +1,703 @@
+﻿@page "/Policies/Details/{PolicyId:int}"
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Attachments.Services
+@using Quickfire.Blazor.Domain.Attachments.Components
+@using Quickfire.Blazor.Domain.Policies.Components
+@using Quickfire.Blazor.Components.Policies.Coverages
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Inputs
+@using Quickfire.Blazor.Domain.Forms.Components
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Quickfire.Blazor.Domain.Logs
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Ember
+@using Microsoft.Extensions.Logging
+@using System.Collections.Generic
+@using System.Net
+@using System.IO
+@using System.Linq
+@using Microsoft.AspNetCore.StaticFiles
+@inject PolicyService PolicyService
+@inject FormService FormService
+@inject AttachmentService AttachmentService
+@inject NavigationManager Navigation
+@inject AppJsInterop JsInterop
+@inject EmberService EmberService
+@inject ILoggingService _log
+@implements IAsyncDisposable
+
+<div class="page-toolbar">
+    <FluentMenuButton Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="Policy"><FluentIcon Value="@(new Icons.Regular.Size20.Document())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Policy</FluentMenuItem>
+        <FluentMenuItem Id="Product"><FluentIcon Value="@(new Icons.Regular.Size20.ScanObject())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Product</FluentMenuItem>
+    </FluentMenuButton>
+
+    <span class="sf-verthr"></span>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Policies", "Details") ? "toolbar-disabled" : "")" @onclick="GoToPolicies">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Book())" />
+        <span class="toolbar-text">Policies</span>
+    </a>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Products,Create,Edit,Policies", "Details") ? "toolbar-disabled" : "")" href="@("Policies/Edit/" + PolicyId)" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.PenSparkle())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+
+    <a class="toolbar-link  @(LogicHelper.IsDisabled("Details,Products,Policies", "Details") ? "toolbar-disabled" : "")" href="@("Policies/Details/" + PolicyId)" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+        <span class="toolbar-text">Details</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link @(LogicHelper.IsDisabled("Products", "Details") ? "toolbar-disabled" : "")" @onclick="GoToProducts">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Tag())" />
+        <span class="toolbar-text">Product Lines</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" @onclick="TogglePanel2Visibility">
+       @if (_panel2Visible)
+        {
+            <FluentIcon Value="@(new Icons.Regular.Size24.Tag())" />
+        }
+        else
+        {
+             <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+        } 
+       
+        <span class="toolbar-text">@(_panel2Visible ? "Hide Form" : "Show Form")</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Save" class="toolbar-link" @onclick="SavePolicyForm" disabled="@isSaving">
+        @if (isSaving)
+        {
+            <FluentProgressRing style="width: 16px; height: 16px;" />
+        }
+        else
+        {
+            <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
+        }
+        <span class="toolbar-text">@(isSaving ? "Saving..." : "Save")</span>
+    </a>
+
+</div>
+
+@if (showSuccessMessage)
+{
+    <div class="success-message" style="background-color: #d4edda; color: #155724; padding: 8px 16px; margin-bottom: 16px; border-radius: 4px; border: 1px solid #c3e6cb;">
+        <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" style="margin-right: 8px;" />
+        Policy form saved successfully!
+    </div>
+}
+
+@if (isAutoSaving)
+{
+    <div class="auto-save-indicator" style="background-color: #f8f9fa; color: #6c757d; padding: 6px 12px; margin-bottom: 12px; border-radius: 4px; border: 1px solid #e9ecef; font-size: 14px;">
+        <FluentProgressRing style="width: 14px; height: 14px; margin-right: 8px;" />
+        Auto-saving...
+    </div>
+}
+
+@if (Policy is null || Policy.Product is null)
+{
+    <div class="loading-state">
+        <FluentProgressRing />
+        <span class="loading-text">Loading policy details...</span>
+    </div>
+}
+else
+{
+    <FluentSplitter Orientation="Orientation.Horizontal" Panel2Size="@(_panel2Visible ? "40%" : "0%")">
+        <Panel1>
+            <div class="page-content policy-details-container">
+                <!-- Policy Header -->
+                <div class="policy-header">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.ShieldTask())" Class="icon" Color="Color.Custom" CustomColor="#fff" />
+                    <div class="policy-title">
+                        <h1 class="policy-product-name">@Policy.Product.LineName</h1>
+                        <div class="policy-client-name" @onclick="GoToClient">
+                            @Policy.Client.Name
+                        </div>
+                    </div>
+                    <div class="policy-carriers">
+                        @if (Policy.Carrier != null)
+                        {
+                            <div class="carrier-info">
+                                <span class="carrier-label">Carrier: </span>
+                                <span class="carrier-name" @onclick="() => GoToCarrier(Policy.Carrier.CarrierId)">
+                                    @Policy.Carrier.CarrierName
+                                </span>
+                            </div>
+                        }
+                        @if (Policy.Wholesaler != null)
+                        {
+                            <div class="carrier-info">
+                                <span class="carrier-label">Wholesaler</span>
+                                <span class="carrier-name" @onclick="() => GoToCarrier(Policy.Wholesaler.CarrierId)">
+                                    @Policy.Wholesaler.CarrierName
+                                </span>
+                            </div>
+                        }
+                    </div>
+                    <div class="status-indicator status-active"></div>
+                </div>
+
+                <!-- Basic Policy Information -->
+                <div class="policy-basic-info">
+                    <div class="section-title">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentEdit())" />
+                        Policy Information
+                    </div>
+
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <label class="field-label">Policy Number</label>
+                            <div class="field-value">
+                                <input type="text"
+                                       class="form-input top-field"
+                                       value="@Policy.PolicyNumber"
+                                       @onchange="@(async (ChangeEventArgs e) => { Policy.PolicyNumber = e.Value?.ToString(); await UpdatePolicyAsync(Policy); })"
+                                       placeholder="Enter policy number" />
+                            </div>
+                        </div>
+
+                        <div class="field-item">
+                            <label class="field-label">Premium</label>
+                            <div class="field-value">
+                                <div class="currency-input-container">
+                                    <input type="number"
+                                           class="form-input currency-input top-field"
+                                           value="@Policy.Premium"
+                                           @onchange="@(async (ChangeEventArgs e) => { if (decimal.TryParse(e.Value?.ToString(), out var premium)) { Policy.Premium = premium; await UpdatePolicyAsync(Policy); } })"
+                                           step="100"
+                                           min="0"
+                                           placeholder="Enter premium amount" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-item">
+                            <label class="field-label">Effective Date</label>
+                            <div class="field-value">
+                                <div class="date-display-container">
+                                    <div class="date-display-text">
+                                        @(Policy.EffectiveDate.ToString("MMMM dd, yyyy") ?? "Not set")
+                                    </div>
+                                    <div class="cal-width">
+                                        <SfDatePicker TValue="DateTime"
+                                                      Value="Policy.EffectiveDate"
+                                                      ValueChanged="@(async (DateTime newDate) => { Policy.EffectiveDate = newDate; await OnEffectiveDateChanged(); })"
+                                                      ShowClearButton="false"
+                                                      CssClass="date-picker-icon-only"
+                                                      FloatLabelType="FloatLabelType.Never" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-item">
+                            <label class="field-label">Expiration Date</label>
+                            <div class="field-value">
+                                <div class="date-display-container">
+                                    <div class="date-display-text">
+                                        @(Policy.ExpirationDate.ToString("MMMM dd, yyyy") ?? "Not set")
+                                    </div>
+                                    <div class="cal-width">
+                                        <SfDatePicker TValue="DateTime"
+                                                      Value="Policy.ExpirationDate"
+                                                      ValueChanged="@(async (DateTime newDate) => { Policy.ExpirationDate = newDate; await OnExpirationDateChanged(); })"
+                                                      ShowClearButton="false"
+                                                      CssClass="date-picker-icon-only"
+                                                      FloatLabelType="FloatLabelType.Never" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Coverage Sections -->
+                @if (ProductLineCodes.MatchesLineCode(Policy.Product, ProductLineCodes.WorkersComp))
+                {
+                    <div class="coverage-section">
+                        <WorkCompCoverages PolicyId="@PolicyId" />
+                    </div>
+                }
+
+                @if (ProductLineCodes.MatchesLineCode(Policy.Product, ProductLineCodes.GeneralLiability))
+                {
+                    <div class="coverage-section">
+                        <GeneralLiabilityCoverages PolicyId="@PolicyId" />
+                    </div>
+                }
+
+                @if (ProductLineCodes.MatchesLineCode(Policy.Product, ProductLineCodes.CommercialAuto))
+                {
+                    <div class="coverage-section">
+                        <AutoCoverages PolicyId="@PolicyId" />
+                    </div>
+                }
+
+                @if (ProductLineCodes.MatchesLineCode(Policy.Product, ProductLineCodes.BusinessOwners))
+                {
+                    <div class="coverage-section">
+                        <BusinessOwnersCoverages PolicyId="@PolicyId" />
+                    </div>
+                }
+
+                <!-- Policy Metadata -->
+                    <div class="policy-metadata">
+                    Policy ID: @Policy.PolicyId
+                </div>
+
+                    <div class="policy-attachments-section" style="margin-top:16px;">
+                        <div class="section-title">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.DocumentPdf())" />
+                            Policy Attachments
+                        </div>
+                        <DropzoneContainer PolicyId="Policy.PolicyId" ClientId="Policy.ClientId" FileBrowserButton="Hidden" OnAttachmentAdded="LoadPolicyAttachments">
+                            <div class="policy-attachments-tray">
+                                <div class="flat-class-container">
+                                    <div class="flat-card">Policy</div>
+                                    <div class="drop-zone-policy">
+                                        @if (PolicyAttachments?.Any() == true)
+                                        {
+                                            <div class="attachment-thumbnail">
+                                                <div class="pile-canvas">
+                                                    @{
+                                                        var items = PolicyAttachments;
+                                                        var selectedIndex = GetPolicySelectedIndex();
+                                                        var top = items[selectedIndex];
+                                                        var behindOrder = 0;
+                                                    }
+                                                    @for (var idx = 0; idx < items.Count; idx++)
+                                                    {
+                                                        if (idx == selectedIndex)
+                                                        {
+                                                            continue;
+                                                        }
+                                                        var att = items[idx];
+                                                        behindOrder++;
+                                                        var style = GetPolicyPileTransformStyle(att, behindOrder, items.Count);
+                                                        <div class="pile-item" style="@style">
+                                                            <img src="@GetPolicyAttachmentThumb(att)" class="pile-img" />
+                                                        </div>
+                                                    }
+                                                    <div class="@GetPolicyTopItemClass()" style="transform: scale(0.85); z-index: 100;">
+                                                        <a href="/@top.LocalPath/@top.HashedFileName" target="_blank">
+                                                            <img src="@GetPolicyAttachmentThumb(top)" class="pile-img" />
+                                                        </a>
+                                                    </div>
+                                                    <div class="pile-nav" title="Next">
+                                                        <div>
+                                                            <FluentIcon Value="@(new Icons.Regular.Size20.Delete())" Color="Color.Custom" CustomColor="#ffffff" Class="delbtn" OnClick="@(() => RequestDeletePolicyAttachment(top))" />
+                                                            <FluentIcon Value="@(new Icons.Regular.Size20.Folder())" Color="Color.Custom" CustomColor="#ffffff" Class="folderbtn" OnClick="@(() => OpenPolicyAttachmentWithWindows(top, true))" />
+                                                        </div>
+                                                        <div class="pagestw">@($"{selectedIndex + 1} of {items.Count}")</div>
+                                                        <div>
+                                                            <FluentIcon Value="@(new Icons.Regular.Size20.Open())" Color="Color.Custom" CustomColor="#ffffff" Class="openbtn" OnClick="@(() => OpenPolicyAttachmentWithWindows(top, false))" />
+                                                            <FluentIcon Value="@(new Icons.Regular.Size20.ChevronCircleRight())" Color="Color.Custom" CustomColor="#ffffff" Class="openbtn" OnClick="@NextPolicyAttachment" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="attachment-thumbnail empty-tray">
+                                                <img src="/img/tray/document-upload.png" class="thumb-icon" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </DropzoneContainer>
+                    </div>
+            </div>
+        </Panel1>
+        <Panel2>
+            @if (_panel2Visible)
+            {
+                if (PolicyFormDoc != null)
+                {
+                    <PolicyViewer @ref="policyViewerRef" FormDoc="@PolicyFormDoc" />
+                }
+                else
+                {
+                    <div class="loading-state">
+                        <FluentProgressRing />
+                        <span class="loading-text">Loading application form...</span>
+                    </div>
+                }
+            }
+        </Panel2>
+    </FluentSplitter>
+}
+
+<Quickfire.Blazor.Domain.Shared.Components.ConfirmationDialog DialogId="policy-attachment-delete-dialog"
+                                                      Title="Delete Attachment"
+                                                      Message="@DeletePolicyAttachmentMessage"
+                                                      ConfirmText="Delete"
+                                                      CancelText="Cancel"
+                                                      @bind-Hidden="policyDeleteDialogHidden"
+                                                      OnConfirm="OnPolicyDeleteConfirmed" />
+
+@code {
+
+    [Parameter]
+    public int PolicyId { get; set; }
+
+    private Policy Policy { get; set; }
+    private FormDoc PolicyFormDoc { get; set; }
+    private PolicyViewer policyViewerRef;
+    private List<Attachment> PolicyAttachments { get; set; } = new();
+    private int policyAttachmentSelectedIndex = 0;
+    private bool policyAttachmentAnimating = false;
+    private bool policyDeleteDialogHidden = true;
+    private Attachment? attachmentPendingDeletion;
+    private bool isSaving = false;
+    private bool showSuccessMessage = false;
+    private bool isAutoSaving = false;
+    private bool _panel2Visible = true;
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Policies");
+        Policy = await PolicyService.GetPolicyByIdAsync(PolicyId);
+        await LoadPolicyAttachments();
+
+        // Load or create the FormDoc for this policy
+        try
+        {
+            PolicyFormDoc = await FormService.GetOrCreateFormDocForPolicyAsync(PolicyId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading FormDoc for policy {PolicyId}: {ex.Message}");
+            // PolicyFormDoc will remain null, showing loading state
+        }
+
+        // Set up navigation event handler for auto-save
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private async Task LoadPolicyAttachments()
+    {
+        if (Policy != null)
+        {
+            PolicyAttachments = await AttachmentService.GetAttachmentsByPolicyIdAsync(Policy.PolicyId);
+        }
+
+        if (PolicyAttachments.Count == 0 || policyAttachmentSelectedIndex >= PolicyAttachments.Count)
+        {
+            policyAttachmentSelectedIndex = 0;
+        }
+
+        StateHasChanged();
+    }
+
+    private int GetPolicySelectedIndex()
+    {
+        var count = PolicyAttachments?.Count ?? 0;
+        if (count == 0)
+        {
+            policyAttachmentSelectedIndex = 0;
+            return 0;
+        }
+
+        if (policyAttachmentSelectedIndex >= count || policyAttachmentSelectedIndex < 0)
+        {
+            policyAttachmentSelectedIndex = 0;
+        }
+
+        return policyAttachmentSelectedIndex;
+    }
+
+    private string GetPolicyTopItemClass()
+    {
+        return policyAttachmentAnimating ? "pile-item pile-top squish-out" : "pile-item pile-top";
+    }
+
+    private (double rot, int dx, int dy) GetPolicyPileStyleSeed(Attachment attachment)
+    {
+        var h = attachment.AttachmentId.GetHashCode();
+        var rot = (h % 9) - 4;
+        var dx = ((h / 10) % 5) - 2;
+        var dy = ((h / 100) % 5) - 2;
+        return (rot, dx, dy);
+    }
+
+    private string GetPolicyPileTransformStyle(Attachment attachment, int order, int total)
+    {
+        var (rot, dx, dy) = GetPolicyPileStyleSeed(attachment);
+        var depth = total >= 5 ? Math.Min(order, 6) : 0;
+        dx += depth;
+        dy += depth;
+        var z = 10 + order;
+        return $"transform: translate({dx}px, {dy}px) rotate({rot}deg) scale(0.85); z-index: {z};";
+    }
+
+    private async Task NextPolicyAttachment()
+    {
+        if (policyAttachmentAnimating || PolicyAttachments == null || PolicyAttachments.Count <= 1)
+        {
+            return;
+        }
+
+        policyAttachmentAnimating = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(200);
+        }
+        finally
+        {
+            policyAttachmentSelectedIndex = (policyAttachmentSelectedIndex + 1) % PolicyAttachments.Count;
+            policyAttachmentAnimating = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RequestDeletePolicyAttachment(Attachment? attachment)
+    {
+        attachmentPendingDeletion = attachment;
+        policyDeleteDialogHidden = false;
+    }
+
+    private string DeletePolicyAttachmentMessage => attachmentPendingDeletion == null
+        ? "Are you sure you want to delete this attachment?"
+        : $"Are you sure you want to delete '{attachmentPendingDeletion.OriginalFileName}'?";
+
+    private async Task OnPolicyDeleteConfirmed(bool confirmed)
+    {
+        if (confirmed && attachmentPendingDeletion != null)
+        {
+            try
+            {
+                await AttachmentService.DeleteAttachmentAsync(attachmentPendingDeletion.AttachmentId);
+            }
+            finally
+            {
+                await LoadPolicyAttachments();
+            }
+        }
+
+        policyDeleteDialogHidden = true;
+        attachmentPendingDeletion = null;
+        StateHasChanged();
+    }
+
+    private async Task OpenPolicyAttachmentWithWindows(Attachment? attachment, bool openFolderOnly)
+    {
+        if (attachment == null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(attachment.LocalPath))
+            {
+                var pathValue = StringHelper.BuildWindowsPath(attachment, false);
+                var payload = new List<string> { pathValue };
+                var action = openFolderOnly ? "Windows_OpenFolder" : "Windows_OpenFile";
+                await EmberService.RunEmberFunction(action, payload);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _log.LogAsync(LogLevel.Error, $"Error opening policy attachment: {ex.Message}", "PolicyDetails", ex);
+        }
+    }
+
+    private async void OnLocationChanged(object sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        // Auto-save when navigating away from this page
+        if (policyViewerRef != null && !isAutoSaving)
+        {
+            await PerformAutoSave("navigation change");
+        }
+    }
+
+    private async Task TogglePanel2Visibility()
+    {
+        if (_panel2Visible)
+        {
+            try
+            {
+                if (policyViewerRef != null)
+                {
+                    // Save the form data before hiding
+                    await policyViewerRef.SaveToDatabase();
+                    await policyViewerRef.DisposeAsync();
+                }
+            }
+            catch { /* ignore dispose errors */ }
+            finally
+            {
+                policyViewerRef = null;
+            }
+        }
+
+        _panel2Visible = !_panel2Visible;
+        StateHasChanged();
+    }
+
+    private async Task PerformAutoSave(string trigger)
+    {
+        try
+        {
+            isAutoSaving = true;
+            StateHasChanged();
+
+            await policyViewerRef.SaveToDatabase();
+            Console.WriteLine($"Auto-save triggered on {trigger}");
+
+            // Brief delay to show the indicator
+            await Task.Delay(500);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during auto-save ({trigger}): {ex.Message}");
+        }
+        finally
+        {
+            isAutoSaving = false;
+            StateHasChanged();
+        }
+    }
+    private void NavigateToRenewalCreate()
+    {
+        Navigation.NavigateTo("/Policies");
+    }
+    private void GoToPolicies()
+    {
+        Navigation.NavigateTo("/Policies");
+    }
+    private void GoToProducts()
+    {
+        Navigation.NavigateTo("/Policies/Products");
+    }
+    public void GoToClient()
+    {
+        Navigation.NavigateTo($"/Clients/{Policy.Client.ClientId}");
+    }
+
+    public void GoToCarrier(int carrierId)
+    {
+        Navigation.NavigateTo($"/Carriers/{carrierId}");
+    }
+
+    private async Task UpdatePolicyAsync(Policy policy)
+    {
+        await PolicyService.UpdatePolicyContextModelAsync(policy);
+    }
+
+    private async Task OnEffectiveDateChanged()
+    {
+        await UpdatePolicyAsync(Policy);
+        StateHasChanged();
+    }
+
+    private async Task OnExpirationDateChanged()
+    {
+        await UpdatePolicyAsync(Policy);
+        StateHasChanged();
+    }
+    private async Task HandleOnMenuChanged(MenuChangeEventArgs args)
+    {
+        // Check which menu item was selected
+        switch (args.Id)
+        {
+            case "Client":
+                Navigation.NavigateTo("/Clients/Create");
+                break;
+            case "Product":
+                Navigation.NavigateTo("/Policies/Products");
+                break;
+        }
+    }
+
+    private async Task SavePolicyForm()
+    {
+        if (policyViewerRef == null || isSaving)
+            return;
+
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            await policyViewerRef.SaveToDatabase();
+
+            // Show success feedback briefly
+            showSuccessMessage = true;
+            StateHasChanged();
+
+            // Hide success message after 2 seconds
+            await Task.Delay(2000);
+            showSuccessMessage = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving policy form: {ex.Message}");
+            // You could add error handling UI here if needed
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    // Upload logic moved to DropzoneContainer component. Attachments list is refreshed via OnAttachmentAdded → LoadPolicyAttachments.
+
+    private string GetPolicyAttachmentThumb(Attachment attachment)
+    {
+        if (attachment == null || string.IsNullOrEmpty(attachment.HashedFileName) || string.IsNullOrEmpty(attachment.LocalPath))
+            return "/img/icons/document.png";
+
+        var ext = (attachment.FileFormat ?? string.Empty).ToLowerInvariant();
+        if (ext == ".pdf")
+        {
+            var baseName = System.IO.Path.GetFileNameWithoutExtension(attachment.HashedFileName);
+            var localPath = attachment.LocalPath.Replace("\\", "/").TrimEnd('/');
+            return $"/{localPath}/{baseName}_thumb.jpg";
+        }
+        if (ext == ".docx") return "/img/icons/file-proposal.png";
+        if (ext == ".msg") return "/img/icons/file-msg.png";
+        return "/img/icons/file-other.png";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Set up beforeunload event for additional auto-save safety
+            await JsInterop.RegisterBeforeUnloadAutoSaveAsync();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Unsubscribe from navigation events
+        Navigation.LocationChanged -= OnLocationChanged;
+
+        // Auto-save when leaving the page
+        if (policyViewerRef != null && !isAutoSaving)
+        {
+            await PerformAutoSave("page disposal");
+        }
+    }
+}

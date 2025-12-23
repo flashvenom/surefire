@@ -1,0 +1,1336 @@
+@page "/Tasks"
+@namespace Quickfire.Blazor.Domain.Profile.Pages
+@using System.Linq
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Renewals.Dialogs
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Users.Services
+@using Quickfire.Blazor.Domain.Profile.Components
+@using Quickfire.Blazor.Data
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.JSInterop
+@using Microsoft.JSInterop.Infrastructure
+@inject NavigationManager NavigationManager
+@inject TaskService TaskService
+@inject UserService UserService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<_Toolbar currentView="_Toolbar.ViewMode.Tasks" />
+
+<div class="tasks-manager">
+    @if (IsLoading)
+    {
+        <div class="loading-container">
+            <FluentProgressRing Width="40px" Color="#1b8ce3" />
+            <span>Loading task groups...</span>
+        </div>
+    }
+    else
+    {
+        <div class="three-column-layout">
+            <div class="left-column">
+                <div class="column-header">
+                    <div class="col-tweak">
+                        <span class="qf-container__icon">
+                            <FluentIcon Value="@(new Icons.Regular.Size48.ShieldTask())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                        </span>
+                        <div>
+                            <h3 class="qf-container__title">Task Groups</h3>
+                            <p class="qf-container__subtitle">Get organized.</p>
+                        </div>
+                    </div>
+                    <FluentButton Appearance="Appearance.Accent" OnClick="CreateNewTaskGroup" Title="Create Task Group">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Color="Color.Custom" CustomColor="#ffffff" />
+                    </FluentButton>
+                </div>
+
+                <div class="search-box">
+                    <FluentSearch Value="@TaskGroupSearchQuery"
+                                  ValueChanged="OnTaskGroupSearchChanged"
+                                  ValueExpression="() => TaskGroupSearchQuery"
+                                  Placeholder="Search task groups..."
+                                  Immediate="true" />
+                </div>
+
+                <div class="task-group-list">
+                    @if (FilteredTaskGroups.Count == 0)
+                    {
+                        <div class="no-results">
+                            <p>@(string.IsNullOrWhiteSpace(TaskGroupSearchQuery) ? "No task groups yet. Create one to get started." : "No task groups match your search.")</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var taskGroup in FilteredTaskGroups)
+                        {
+                            <div class="task-group-item @(SelectedTaskGroup?.TaskGroupId == taskGroup.TaskGroupId ? "selected" : string.Empty)"
+                                 @onclick="async () => await SelectTaskGroup(taskGroup)">
+                                <div class="task-group-name">@taskGroup.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(taskGroup.Description))
+                                {
+                                    <div class="task-group-description">@taskGroup.Description</div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="middle-column">
+               @*  <div class="middle-header">
+                    <div class="header-info">
+                        
+                    </div>
+                    <div class="middle-actions">
+                        
+                    </div>
+                </div>
+ *@
+                <div class="middle-content">
+                    
+                    @if (SelectedTaskGroup == null)
+                    {
+                        <FluentCard Style="padding: 60px; text-align: center; margin: 40px auto; max-width: 600px;" MinimalStyle="true">
+                            <FluentIcon Value="@(new Icons.Regular.Size48.ShieldTask())" Style="margin-bottom: 20px; opacity: 0.4;" />
+                            <h3 style="margin-bottom: 10px; font-weight: 600;">No Task Group Selected</h3>
+                            <p style="margin-bottom: 20px; color: var(--neutral-foreground-rest); line-height: 1.5;">
+                                Select an existing task group from the list on the left, or create a new one to get started.
+                            </p>
+                        </FluentCard>
+                    }
+                    else
+                    {
+                        <div class="master-card">
+                            <FluentStack Orientation="Orientation.Vertical" Style="gap: 20px;">
+                                @if (!IsPrintView)
+                                {
+                                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="margin-bottom: 15px;">
+                                        <h3 style="margin: 0; flex: 1; font-size: 1.25rem; font-weight: 600;">
+                                            @SelectedTaskGroup.Name
+                                            <span style="color: var(--neutral-foreground-hint); font-weight: 400; font-size: 0.9rem;">
+                                                (@TaskItems.Count @(TaskItems.Count == 1 ? "task" : "tasks"))
+                                            </span>
+                                        </h3>
+                                        
+                                        <div class="property-actions">
+                                            @if (!IsPrintView && SelectedTaskGroup != null)
+                                            {
+                                                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 8px;">
+                                                    <FluentButton Appearance="Appearance.Stealth" OnClick="RefreshSortableFromDatabase">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.ArrowClockwise())" Slot="start" />
+                                                        Refresh Sortable
+                                                    </FluentButton>
+                                                    <FluentButton Appearance="Appearance.Accent" OnClick="AddNewMasterTask">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" Color="Color.Custom" CustomColor="#fff" />
+                                                        Add Task
+                                                    </FluentButton>
+                                                </FluentStack>
+                                            }
+                                        </div>
+                                    </FluentStack>
+                                }
+                                else
+                                {
+                                    <div class="print-header">
+                                        <h2 style="margin: 0; font-size: 1.5em; font-weight: 600;">@SelectedTaskGroup.Name</h2>
+                                        <p style="margin: 5px 0 0 0; color: var(--neutral-foreground-rest); font-size: 0.9em;">@TaskItems.Count @(TaskItems.Count == 1 ? "task" : "tasks")</p>
+                                    </div>
+                                }
+
+                                @if (TaskItems.Count == 0)
+                                {
+                                    @if (!IsPrintView)
+                                    {
+                                        <FluentCard Style="padding: 40px; text-align: center;" MinimalStyle="true">
+                                            <FluentIcon Value="@(new Icons.Regular.Size48.ShieldTask())" Style="margin-bottom: 15px; opacity: 0.4;" />
+                                            <p style="margin: 0; color: var(--neutral-foreground-rest); font-size: 16px;">
+                                                No tasks in this group yet. Click "Add Task" to get started.
+                                            </p>
+                                        </FluentCard>
+                                    }
+                                    else
+                                    {
+                                        <div style="text-align: center; padding: 20px; color: var(--neutral-foreground-rest);">
+                                            No tasks defined for this group.
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    @if (!IsPrintView)
+                                    {
+                                        <div class="task-hierarchy">
+                                            @foreach (var masterTask in TaskItems)
+                                            {
+                                                <div class="master-task-container">
+                                                    <div class="master-task-card">
+                                                        <div class="task-header">
+                                                            <div class="task-content" style="flex: 1;">
+                                                                <div class="task-row" style="@(ShowDescriptions ? "" : "gap: 20px;")">
+                                                                    <div class="task-field-name" style="@(ShowDescriptions ? "" : "flex: 2;")">
+                                                                        <FluentLabel Style="font-weight: 500;">Task Name</FluentLabel>
+                                                                        <FluentTextField Value="@masterTask.TaskName"
+                                                                                         ValueChanged="@(async (string value) => await OnMasterTaskNameChanged(masterTask, value))"
+                                                                                         Style="width: 100%;" />
+                                                                    </div>
+
+                                                                    <div class="task-field" style="@(ShowDescriptions ? "" : "flex: 1;")">
+                                                                        <FluentLabel Style="font-weight: 500;">Default User</FluentLabel>
+                                                                        <FluentSelect TOption="string"
+                                                                                      Items="@GetUserOptions()"
+                                                                                      SelectedOption="@(masterTask.DefaultAssignedToId ?? "")"
+                                                                                      OptionText="@(option => GetUserOptionText(option))"
+                                                                                      OptionValue="@(option => option)"
+                                                                                      ValueChanged="@(userId => OnUserChanged(masterTask, userId))"
+                                                                                      Style="@(ShowDescriptions ? "min-width: 200px;" : "width: 100%;")"
+                                                                                      Placeholder="-- Select User --" />
+                                                                    </div>
+
+                                                                    <div class="task-field" style="@(ShowDescriptions ? "" : "flex: 0 0 150px;")">
+                                                                        <FluentLabel Style="font-weight: 500;">Days Before Expiration</FluentLabel>
+                                                                        <FluentNumberField Value="@masterTask.DaysBeforeExpiration"
+                                                                                           ValueChanged="@(async (int? value) => await OnMasterTaskDaysChanged(masterTask, value))"
+                                                                                           Style="@(ShowDescriptions ? "width: 100px;" : "width: 100%;")" />
+                                                                    </div>
+                                                                </div>
+                                                                @if (ShowDescriptions)
+                                                                {
+                                                                    <div class="task-field-desc">
+                                                                        <FluentLabel Style="font-weight: 500; margin-bottom: 6px;">Description</FluentLabel>
+                                                                        <FluentTextArea Value="@masterTask.Description"
+                                                                                        ValueChanged="@(async (string value) => await OnMasterTaskDescriptionChanged(masterTask, value))"
+                                                                                        Rows="3"
+                                                                                        Style="width: 100%;" />
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                            <div class="task-actions">
+                                                                <FluentButton Appearance="Appearance.Outline" OnClick="() => MoveMasterTaskUp(masterTask)" Disabled="@IsFirstMasterTask(masterTask)">
+                                                                    <FluentIcon Value="@(new Icons.Regular.Size12.ChevronUp())" />
+                                                                </FluentButton>
+                                                                <FluentButton Appearance="Appearance.Outline" OnClick="() => MoveMasterTaskDown(masterTask)" Disabled="@IsLastMasterTask(masterTask)">
+                                                                    <FluentIcon Value="@(new Icons.Regular.Size12.ChevronDown())" />
+                                                                </FluentButton>
+                                                                <FluentButton Appearance="Appearance.Outline" OnClick="() => DuplicateMasterTask(masterTask)">
+                                                                    <FluentIcon Value="@(new Icons.Regular.Size12.Clipboard())" />
+                                                                </FluentButton>
+                                                                <FluentButton Appearance="Appearance.Outline" OnClick="() => AddSubtask(masterTask)">
+                                                                    <FluentIcon Value="@(new Icons.Regular.Size12.Add())" />
+                                                                </FluentButton>
+                                                                <FluentButton Appearance="Appearance.Stealth" OnClick="() => DeleteMasterTask(masterTask)" Style="color: var(--error);">
+                                                                    <FluentIcon Value="@(new Icons.Regular.Size12.Delete())" />
+                                                                </FluentButton>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    @if (masterTask.SubTaskLinks.Any())
+                                                    {
+                                                        <div class="subtasks-container">
+                                                            @foreach (var subtaskLink in masterTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber))
+                                                            {
+                                                                <div class="subtask-card">
+                                                                    <div class="task-header-sub">
+                                                                        <div class="task-content" style="flex: 1;">
+                                                                            <div class="task-row">
+                                                                                <div class="task-field-name-sub">
+                                                                                    <FluentLabel Style="font-weight: 500;">Subtask Name</FluentLabel>
+                                                                                    <FluentTextField Value="@subtaskLink.SubTaskMaster.TaskName"
+                                                                                                     ValueChanged="@(async (string value) => await OnSubtaskNameChanged(subtaskLink.SubTaskMaster, value))"
+                                                                                                     Style="width: 100%;" />
+                                                                                </div>
+                                                                                <div class="task-field">
+                                                                                    <FluentLabel Style="font-weight: 500;">Assigned User</FluentLabel>
+                                                                                    <FluentSelect TOption="string"
+                                                                                                  Items="@GetUserOptions()"
+                                                                                                  SelectedOption="@(subtaskLink.SubTaskMaster.DefaultAssignedToId ?? "")"
+                                                                                                  OptionText="@(option => GetUserOptionText(option))"
+                                                                                                  OptionValue="@(option => option)"
+                                                                                                  ValueChanged="@(async (string userId) => await OnSubtaskUserChanged(subtaskLink.SubTaskMaster, userId))"
+                                                                                                  Style="min-width: 200px;"
+                                                                                                  Placeholder="-- Select User --" />
+                                                                                </div>
+                                                                                <div class="task-field">
+                                                                                    <FluentLabel Style="font-weight: 500;">Days Before Expiration</FluentLabel>
+                                                                                    <FluentNumberField Value="@subtaskLink.SubTaskMaster.DaysBeforeExpiration"
+                                                                                                       ValueChanged="@(async (int? value) => await OnSubtaskDaysChanged(subtaskLink.SubTaskMaster, value))"
+                                                                                                       Style="width: 120px;" />
+                                                                                </div>
+                                                                            </div>
+                                                                            @if (ShowDescriptions)
+                                                                            {
+                                                                                <div class="task-field-desc">
+                                                                                    <FluentLabel Style="font-weight: 500; margin-bottom: 6px;">Description</FluentLabel>
+                                                                                    <FluentTextArea Value="@subtaskLink.SubTaskMaster.Description"
+                                                                                                    ValueChanged="@(async (string value) => await OnSubtaskDescriptionChanged(subtaskLink.SubTaskMaster, value))"
+                                                                                                    Rows="3"
+                                                                                                    Style="width: 100%;" />
+                                                                                </div>
+                                                                            }
+                                                                        </div>
+                                                                        <div class="task-actions">
+                                                                            <FluentButton Appearance="Appearance.Outline" OnClick="() => MoveSubtaskUp(masterTask, subtaskLink)" Disabled="@IsFirstSubtask(masterTask, subtaskLink)">
+                                                                                <FluentIcon Value="@(new Icons.Regular.Size12.ChevronUp())" />
+                                                                            </FluentButton>
+                                                                            <FluentButton Appearance="Appearance.Outline" OnClick="() => MoveSubtaskDown(masterTask, subtaskLink)" Disabled="@IsLastSubtask(masterTask, subtaskLink)">
+                                                                                <FluentIcon Value="@(new Icons.Regular.Size12.ChevronDown())" />
+                                                                            </FluentButton>
+                                                                            <FluentButton Appearance="Appearance.Stealth" OnClick="async () => await RemoveTaskMasterSubtask(masterTask, subtaskLink)" Style="color: var(--error);">
+                                                                                <FluentIcon Value="@(new Icons.Regular.Size12.Delete())" />
+                                                                            </FluentButton>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <!-- Print View -->
+                                        <div class="print-task-list">
+                                            @{
+                                                int taskCounter = 1;
+                                            }
+                                            @foreach (var masterTask in TaskItems)
+                                            {
+                                                <div class="print-task-item">
+                                                    <div class="print-task-main">
+                                                        <div class="print-task-number">@taskCounter.</div>
+                                                        <div class="print-task-content">
+                                                            <div class="print-task-title">@masterTask.TaskName</div>
+                                                            <div class="print-task-details">
+                                                                <span class="print-detail">
+                                                                    <strong>User:</strong> @GetUserOptionText(masterTask.DefaultAssignedToId ?? "")
+                                                                </span>
+                                                                @if (masterTask.DaysBeforeExpiration.HasValue)
+                                                                {
+                                                                    <span class="print-detail">
+                                                                        <strong>Days:</strong> @masterTask.DaysBeforeExpiration
+                                                                    </span>
+                                                                }
+                                                            </div>
+                                                            @if (!string.IsNullOrWhiteSpace(masterTask.Description))
+                                                            {
+                                                                <div class="print-task-description">@masterTask.Description</div>
+                                                            }
+                                                        </div>
+                                                    </div>
+
+                                                    @if (masterTask.SubTaskLinks.Any())
+                                                    {
+                                                        <div class="print-subtasks">
+                                                            @{
+                                                                char subtaskLetter = 'a';
+                                                            }
+                                                            @foreach (var subtaskLink in masterTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber))
+                                                            {
+                                                                <div class="print-subtask-item">
+                                                                    <div class="print-subtask-number">@taskCounter@subtaskLetter.</div>
+                                                                    <div class="print-subtask-content">
+                                                                        <div class="print-subtask-title">@subtaskLink.SubTaskMaster.TaskName</div>
+                                                                        <div class="print-task-details">
+                                                                            <span class="print-detail">
+                                                                                <strong>User:</strong> @GetUserOptionText(subtaskLink.SubTaskMaster.DefaultAssignedToId ?? "")
+                                                                            </span>
+                                                                            @if (subtaskLink.SubTaskMaster.DaysBeforeExpiration.HasValue)
+                                                                            {
+                                                                                <span class="print-detail">
+                                                                                    <strong>Days:</strong> @subtaskLink.SubTaskMaster.DaysBeforeExpiration
+                                                                                </span>
+                                                                            }
+                                                                        </div>
+                                                                        @if (!string.IsNullOrWhiteSpace(subtaskLink.SubTaskMaster.Description))
+                                                                        {
+                                                                            <div class="print-task-description">@subtaskLink.SubTaskMaster.Description</div>
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                subtaskLetter++;
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                                taskCounter++;
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </FluentStack>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="right-column">
+                @if (SelectedTaskGroup == null)
+                {
+                    <div class="properties-empty">
+                        <p>Select a task group to edit its details.</p>
+                    </div>
+                }
+                else
+                {
+                    <FluentTabs Size="TabSize.Medium" Style="padding:0;">
+                        <FluentTab Id="tab-1" Label="Details" Class="taskstab-style">
+                            <div class="group-properties" style="padding:15px;">
+                                <div class="property-field">
+                                    <label>Group Name</label>
+                                    <FluentTextField Value="@TaskGroupNameEdit"
+                                                     ValueChanged="OnTaskGroupNameChanged"
+                                                     ValueExpression="() => TaskGroupNameEdit"
+                                                     Placeholder="e.g. Renewal Kickoff" />
+                                </div>
+
+                                <div class="property-field">
+                                    <label>Description</label>
+                                    <FluentTextArea Value="@TaskGroupDescriptionEdit"
+                                                    ValueChanged="OnTaskGroupDescriptionChanged"
+                                                    ValueExpression="() => TaskGroupDescriptionEdit"
+                                                    Rows="4"
+                                                    Placeholder="Short summary for this group" />
+                                </div>
+
+                                <div class="property-field">
+                                    <label>View Options</label>
+                                    <FluentStack>
+                                        <FluentButton Appearance="Appearance.Outline" OnClick="TogglePrintView">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Print())" Slot="start" />
+                                            @(IsPrintView ? "Edit View" : "Print View")
+                                        </FluentButton>
+                                        <FluentButton Appearance="Appearance.Outline" OnClick="ToggleDescriptions">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.TextDescription())" Slot="start" />
+                                            @(ShowDescriptions ? "Hide Descriptions" : "Show Descriptions")
+                                        </FluentButton>
+                                    </FluentStack>
+                                </div>
+
+                                <div class="property-field" style="margin-top:50px;">
+                                    <label>Delete</label>
+                                    @if (!ShowDeleteConfirmation)
+                                    {
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      OnClick="ShowDeleteConfirmationUI"
+                                                      Disabled="@(SelectedTaskGroup == null)"
+                                                      Style="color: var(--error);">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                                            Delete Task Group
+                                        </FluentButton>
+                                    }
+                                    else
+                                    {
+                                        <div class="delete-confirmation-container">
+                                            <p style="margin-bottom: 15px; color: var(--neutral-foreground-rest);">
+                                                Are you sure you want to delete the task group '@(SelectedTaskGroup?.Name ?? "this task group")'? 
+                                                Unique tasks that only belong to it will also be removed.
+                                            </p>
+                                            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 10px;">
+                                                <FluentButton Appearance="Appearance.Accent"
+                                                              OnClick="ConfirmDeleteTaskGroup"
+                                                              Style="background-color: var(--error);">
+                                                    Yes, Delete
+                                                </FluentButton>
+                                                <FluentButton Appearance="Appearance.Outline"
+                                                              OnClick="CancelDeleteTaskGroup">
+                                                    No, Cancel
+                                                </FluentButton>
+                                            </FluentStack>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </FluentTab>
+                        <FluentTab Id="tab-2" Label="Order" Class="taskstab-style">
+                             <div class="group-properties">
+                                @if (!IsPrintView)
+                                {
+                                    <div class="sortable-section">
+                                        <div class="sortable-list" id="sortableTaskList" @ref="sortableListRef">
+                                            @foreach (var masterTask in TaskItems)
+                                            {
+                                                <div class="sortable-item sortable-parent" data-task-id="@masterTask.TaskMasterId" data-task-type="parent" @key="@($"parent-{masterTask.TaskMasterId}")">
+                                                    <div class="sortable-item-handle">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size16.Grid())" Color="Color.Custom" CustomColor="#999" />
+                                                    </div>
+                                                    <div class="sortable-item-content">
+                                                        <div class="sortable-item-name">@masterTask.TaskName</div>
+                                                    </div>
+                                                </div>
+                                                @foreach (var subtaskLink in masterTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber))
+                                                {
+                                                    <div class="sortable-item sortable-subtask" data-task-id="@subtaskLink.SubTaskMasterId" data-task-type="subtask" data-parent-id="@masterTask.TaskMasterId" @key="@($"sub-{masterTask.TaskMasterId}-{subtaskLink.SubTaskMasterId}")">
+                                                         <div class="sortable-item-handle">
+                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Grid())" Color="Color.Custom" CustomColor="#999" />
+                                                        </div>
+                                                        <div class="sortable-item-content">
+                                                            <div class="sortable-item-name">@subtaskLink.SubTaskMaster.TaskName</div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </FluentTab>
+                    </FluentTabs>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<SimpleTaskGroupDialog @ref="taskGroupDialog" OnSave="HandleTaskGroupSave" />
+
+@code {
+    private List<TaskGroup> AllTaskGroups { get; set; } = new();
+    private TaskGroup? SelectedTaskGroup { get; set; }
+    private List<TaskMaster> TaskItems { get; set; } = new();
+    private List<ApplicationUser> AllUsers { get; set; } = new();
+    private List<TaskGroup> FilteredTaskGroups { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+    private bool IsPrintView { get; set; } = false;
+    private bool ShowDescriptions { get; set; } = true;
+    private bool ShowDeleteConfirmation { get; set; } = false;
+    private string TaskGroupSearchQuery { get; set; } = string.Empty;
+    private string TaskGroupNameEdit { get; set; } = string.Empty;
+    private string TaskGroupDescriptionEdit { get; set; } = string.Empty;
+    private SimpleTaskGroupDialog taskGroupDialog;
+    private ElementReference sortableListRef;
+    private IJSObjectReference? sortableModule;
+    private DotNetObjectReference<Tasks>? dotNetRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        await LoadData();
+        IsLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await InitializeSortable();
+        }
+        // Don't auto-refresh sortable on every render - it causes issues with drag/drop
+        // The sortable list will be refreshed when we switch task groups
+    }
+
+    private async Task InitializeSortable()
+    {
+        try
+        {
+            sortableModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/sortable-interop.js");
+            if (sortableModule != null)
+            {
+                await sortableModule.InvokeVoidAsync("initializeSortable", "sortableTaskList", dotNetRef);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing sortable: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshSortable()
+    {
+        try
+        {
+            if (sortableModule != null)
+            {
+                await sortableModule.InvokeVoidAsync("refreshSortable", "sortableTaskList");
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error refreshing sortable: {ex.Message}");
+        }
+    }
+    
+    private async Task RefreshSortableFromDatabase()
+    {
+        if (SelectedTaskGroup == null) return;
+
+        await LoadTasksForGroup();
+        await InvokeAsync(StateHasChanged);
+        await RefreshSortable();
+    }
+
+    [JSInvokable]
+    public async Task OnSortEnd(string taskId, string taskType, int newIndex, string? newParentId, int oldIndex, int newDomIndex)
+    {
+        try
+        {
+            int taskIdInt = int.Parse(taskId);
+            
+            Console.WriteLine($"OnSortEnd called: taskId={taskId}, taskType={taskType}, newIndex={newIndex}, newParentId={newParentId}");
+
+            if (taskType == "parent")
+            {
+                await HandleParentTaskReorder(taskIdInt, newIndex);
+            }
+            else if (taskType == "subtask")
+            {
+                await HandleSubtaskReorder(taskIdInt, newIndex, newParentId);
+            }
+
+            // Reload to get the updated order from database
+            await LoadTasksForGroup();
+            
+            // Allow the hierarchy to render, then sync the sortable view to match
+            await Task.Delay(50);
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(50);
+            await RefreshSortable();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in OnSortEnd: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    private async Task HandleParentTaskReorder(int taskId, int targetIndex)
+    {
+        if (SelectedTaskGroup == null) return;
+
+        var orderedTasks = TaskItems.ToList();
+        var task = orderedTasks.FirstOrDefault(t => t.TaskMasterId == taskId);
+        if (task == null) return;
+
+        var currentIndex = orderedTasks.IndexOf(task);
+        
+        Console.WriteLine($"HandleParentTaskReorder: taskId={taskId}, currentIndex={currentIndex}, targetIndex={targetIndex}");
+        
+        if (currentIndex == targetIndex) return;
+
+        orderedTasks.RemoveAt(currentIndex);
+        var insertIndex = Math.Max(0, Math.Min(targetIndex, orderedTasks.Count));
+        orderedTasks.Insert(insertIndex, task);
+
+        await TaskService.UpdateTaskGroupOrderAsync(
+            SelectedTaskGroup.TaskGroupId,
+            orderedTasks.Select(t => t.TaskMasterId).ToList());
+
+        TaskItems = orderedTasks;
+    }
+
+    private async Task HandleSubtaskReorder(int subtaskId, int targetIndex, string? newParentIdStr)
+    {
+        // Find the current parent of the subtask
+        TaskMaster? oldParentTask = null;
+        TaskMasterSubTask? subtaskLink = null;
+
+        foreach (var master in TaskItems)
+        {
+            var link = master.SubTaskLinks.FirstOrDefault(st => st.SubTaskMasterId == subtaskId);
+            if (link != null)
+            {
+                oldParentTask = master;
+                subtaskLink = link;
+                break;
+            }
+        }
+
+        if (oldParentTask == null || subtaskLink == null) return;
+
+        Console.WriteLine($"HandleSubtaskReorder: subtaskId={subtaskId}, targetIndex={targetIndex}, newParentId={newParentIdStr}, oldParentId={oldParentTask.TaskMasterId}");
+
+        // Check if we're moving to a different parent
+        if (!string.IsNullOrEmpty(newParentIdStr) && int.TryParse(newParentIdStr, out int newParentId))
+        {
+            if (newParentId != oldParentTask.TaskMasterId)
+            {
+                Console.WriteLine($"Moving subtask to different parent: {oldParentTask.TaskMasterId} -> {newParentId}");
+                
+                // Moving to a different parent - reassign
+                await TaskService.UnassignSubtaskAsync(oldParentTask.TaskMasterId, subtaskId);
+
+                var newParent = TaskItems.FirstOrDefault(t => t.TaskMasterId == newParentId);
+                if (newParent != null)
+                {
+                    await TaskService.AssignSubtaskAsync(newParentId, subtaskId, targetIndex);
+                }
+                return;
+            }
+        }
+
+        // Reordering within the same parent
+        var orderedSubtasks = oldParentTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber).ToList();
+        var currentIndex = orderedSubtasks.IndexOf(subtaskLink);
+
+        Console.WriteLine($"Reordering within same parent: currentIndex={currentIndex}, targetIndex={targetIndex}");
+
+        if (currentIndex == targetIndex) return;
+
+        orderedSubtasks.RemoveAt(currentIndex);
+        var insertIndex = Math.Max(0, Math.Min(targetIndex, orderedSubtasks.Count));
+        orderedSubtasks.Insert(insertIndex, subtaskLink);
+
+        var orderedIds = orderedSubtasks.Select(st => st.SubTaskMasterId).ToList();
+        await TaskService.UpdateSubtaskOrderAsync(oldParentTask.TaskMasterId, orderedIds);
+
+        for (int i = 0; i < orderedSubtasks.Count; i++)
+        {
+            orderedSubtasks[i].OrderNumber = i;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (sortableModule != null)
+            {
+                await sortableModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit has already disconnected, ignore
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error disposing sortable module: {ex.Message}");
+        }
+        finally
+        {
+            dotNetRef?.Dispose();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        AllTaskGroups = await TaskService.GetAllTaskGroupsAsync();
+        AllUsers = await UserService.GetAllUsersAsync();
+        FilterTaskGroups();
+
+        if (SelectedTaskGroup != null)
+        {
+            SelectedTaskGroup = AllTaskGroups.FirstOrDefault(tg => tg.TaskGroupId == SelectedTaskGroup.TaskGroupId);
+        }
+
+        if (SelectedTaskGroup == null && FilteredTaskGroups.Any())
+        {
+            SelectedTaskGroup = FilteredTaskGroups.First();
+        }
+
+        SyncTaskGroupEditorFields();
+
+        if (SelectedTaskGroup != null)
+        {
+            await LoadTasksForGroup();
+        }
+        else
+        {
+            TaskItems.Clear();
+        }
+    }
+
+    private async Task LoadTasksForGroup()
+    {
+        if (SelectedTaskGroup == null) return;
+
+        TaskItems.Clear();
+        var newTasks = await TaskService.GetTaskMastersForGroupAsync(SelectedTaskGroup.TaskGroupId);
+        TaskItems = newTasks ?? new List<TaskMaster>();
+    }
+
+    private void FilterTaskGroups()
+    {
+        if (string.IsNullOrWhiteSpace(TaskGroupSearchQuery))
+        {
+            FilteredTaskGroups = AllTaskGroups
+                .OrderBy(tg => tg.Name ?? string.Empty, System.StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+        else
+        {
+            var query = TaskGroupSearchQuery.Trim().ToLowerInvariant();
+            FilteredTaskGroups = AllTaskGroups
+                .Where(tg =>
+                    (tg.Name?.ToLowerInvariant().Contains(query) ?? false) ||
+                    (tg.Description?.ToLowerInvariant().Contains(query) ?? false))
+                .OrderBy(tg => tg.Name ?? string.Empty, System.StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+    }
+
+    private Task OnTaskGroupSearchChanged(string value)
+    {
+        TaskGroupSearchQuery = value ?? string.Empty;
+        FilterTaskGroups();
+        return Task.CompletedTask;
+    }
+
+    private async Task SelectTaskGroup(TaskGroup taskGroup)
+    {
+        if (taskGroup == null) return;
+
+        SelectedTaskGroup = taskGroup;
+        ShowDeleteConfirmation = false; // Hide confirmation when switching groups
+        SyncTaskGroupEditorFields();
+        await LoadTasksForGroup();
+        StateHasChanged();
+        
+        // Refresh sortable after switching task groups
+        await Task.Delay(100); // Let the UI render first
+        await RefreshSortable();
+    }
+
+    private void SyncTaskGroupEditorFields()
+    {
+        TaskGroupNameEdit = SelectedTaskGroup?.Name ?? string.Empty;
+        TaskGroupDescriptionEdit = SelectedTaskGroup?.Description ?? string.Empty;
+    }
+
+    private async Task OnTaskGroupNameChanged(string value)
+    {
+        TaskGroupNameEdit = value ?? string.Empty;
+        await OnTaskGroupNameCommitted(TaskGroupNameEdit);
+    }
+
+    private async Task OnTaskGroupDescriptionChanged(string value)
+    {
+        TaskGroupDescriptionEdit = value ?? string.Empty;
+        await OnTaskGroupDescriptionCommitted(TaskGroupDescriptionEdit);
+    }
+
+    private async Task OnTaskGroupNameCommitted(string value)
+    {
+        if (SelectedTaskGroup == null) return;
+
+        var nextValue = (value ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(nextValue))
+        {
+            TaskGroupNameEdit = SelectedTaskGroup.Name ?? string.Empty;
+            return;
+        }
+
+        if (string.Equals(SelectedTaskGroup.Name ?? string.Empty, nextValue, System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        SelectedTaskGroup.Name = nextValue;
+        TaskGroupNameEdit = nextValue;
+        await TaskService.UpdateTaskGroupAsync(SelectedTaskGroup);
+        FilterTaskGroups();
+    }
+
+    private async Task OnTaskGroupDescriptionCommitted(string value)
+    {
+        if (SelectedTaskGroup == null) return;
+
+        var nextValue = (value ?? string.Empty).Trim();
+        if (string.Equals(SelectedTaskGroup.Description ?? string.Empty, nextValue, System.StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        SelectedTaskGroup.Description = nextValue;
+        TaskGroupDescriptionEdit = nextValue;
+        await TaskService.UpdateTaskGroupAsync(SelectedTaskGroup);
+        FilterTaskGroups();
+    }
+
+    private void CreateNewTaskGroup()
+    {
+        taskGroupDialog.Show();
+    }
+
+    private void TogglePrintView()
+    {
+        IsPrintView = !IsPrintView;
+        StateHasChanged();
+    }
+
+    private void ToggleDescriptions()
+    {
+        ShowDescriptions = !ShowDescriptions;
+        StateHasChanged();
+    }
+
+    private async Task HandleTaskGroupSave(TaskGroup taskGroup)
+    {
+        if (taskGroup.TaskGroupId > 0)
+        {
+            await TaskService.UpdateTaskGroupAsync(taskGroup);
+            var existingGroup = AllTaskGroups.FirstOrDefault(tg => tg.TaskGroupId == taskGroup.TaskGroupId);
+            if (existingGroup != null)
+            {
+                existingGroup.Name = taskGroup.Name;
+                existingGroup.Description = taskGroup.Description;
+                SelectedTaskGroup = existingGroup;
+            }
+        }
+        else
+        {
+            var newGroup = await TaskService.AddTaskGroupAsync(taskGroup);
+            AllTaskGroups.Add(newGroup);
+            SelectedTaskGroup = newGroup;
+            await LoadTasksForGroup();
+        }
+
+        ShowDeleteConfirmation = false; // Hide confirmation when saving
+        FilterTaskGroups();
+        SyncTaskGroupEditorFields();
+        StateHasChanged();
+    }
+
+    private void ShowDeleteConfirmationUI()
+    {
+        ShowDeleteConfirmation = true;
+        StateHasChanged();
+    }
+
+    private void CancelDeleteTaskGroup()
+    {
+        ShowDeleteConfirmation = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDeleteTaskGroup()
+    {
+        if (SelectedTaskGroup == null) return;
+
+        try
+        {
+            var groupId = SelectedTaskGroup.TaskGroupId;
+            await TaskService.DeleteTaskGroupAsync(groupId);
+
+            AllTaskGroups = AllTaskGroups
+                .Where(tg => tg.TaskGroupId != groupId)
+                .ToList();
+
+            FilterTaskGroups();
+
+            SelectedTaskGroup = FilteredTaskGroups.FirstOrDefault();
+            if (SelectedTaskGroup != null)
+            {
+                await LoadTasksForGroup();
+            }
+            else
+            {
+                TaskItems.Clear();
+            }
+
+            ShowDeleteConfirmation = false;
+            StateHasChanged();
+            await RefreshSortable();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting task group: {ex.Message}");
+            ShowDeleteConfirmation = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddNewMasterTask()
+    {
+        if (SelectedTaskGroup == null) return;
+
+        var newTask = new TaskMaster
+        {
+            TaskName = "New Task",
+            Description = "",
+            MasterSubTasks = new List<MasterSubTask>()
+        };
+
+        var savedTask = await TaskService.AddTaskMasterAsync(newTask);
+
+        var taskGroupTaskMaster = new TaskGroupTaskMaster
+        {
+            TaskGroupId = SelectedTaskGroup.TaskGroupId,
+            TaskMasterId = savedTask.TaskMasterId,
+            OrderNumber = TaskItems.Count
+        };
+        await TaskService.AddTaskToGroupAsync(taskGroupTaskMaster);
+
+        TaskItems.Add(savedTask);
+        StateHasChanged();
+    }
+
+    private async Task SaveMasterTask(TaskMaster task)
+    {
+        await TaskService.UpdateTaskMasterAsync(task);
+    }
+
+    private async Task DeleteMasterTask(TaskMaster task)
+    {
+        if (await ConfirmDelete($"Are you sure you want to delete the task '{task.TaskName}'? This will also remove all its subtasks."))
+        {
+            try
+            {
+                // First, delete all subtasks and their links
+                if (task.SubTaskLinks != null && task.SubTaskLinks.Any())
+                {
+                    var subtaskLinks = task.SubTaskLinks.ToList(); // Create a copy to avoid collection modification
+                    foreach (var subtaskLink in subtaskLinks)
+                    {
+                        // Unassign the subtask first
+                        await TaskService.UnassignSubtaskAsync(task.TaskMasterId, subtaskLink.SubTaskMasterId);
+
+                        // Delete the subtask TaskMaster if it's a dedicated subtask
+                        if (subtaskLink.SubTaskMaster?.ForType == "sub")
+                        {
+                            await TaskService.DeleteTaskMasterAsync(subtaskLink.SubTaskMasterId);
+                        }
+                    }
+                }
+
+                // Now delete the parent task
+                await TaskService.DeleteTaskMasterAsync(task.TaskMasterId);
+                TaskItems.Remove(task);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting task: {ex.Message}");
+                // Optionally show an error message to the user
+            }
+        }
+    }
+
+    private async Task AddSubtask(TaskMaster parentTask)
+    {
+        var newSubtaskMaster = new TaskMaster
+        {
+            TaskName = "New Subtask",
+            Description = "",
+            DaysBeforeExpiration = null,
+            DefaultAssignedToId = null,
+            ForType = "sub",
+            Important = false
+        };
+
+        var savedSubtaskMaster = await TaskService.AddTaskMasterAsync(newSubtaskMaster);
+
+        var newOrderNumber = parentTask.SubTaskLinks.Count;
+        await TaskService.AssignSubtaskAsync(parentTask.TaskMasterId, savedSubtaskMaster.TaskMasterId, newOrderNumber);
+
+        var newLink = new TaskMasterSubTask
+        {
+            ParentTaskMasterId = parentTask.TaskMasterId,
+            SubTaskMasterId = savedSubtaskMaster.TaskMasterId,
+            OrderNumber = newOrderNumber,
+            SubTaskMaster = savedSubtaskMaster
+        };
+
+        parentTask.SubTaskLinks.Add(newLink);
+        StateHasChanged();
+    }
+
+    private async Task DuplicateMasterTask(TaskMaster sourceTask)
+    {
+        if (SelectedTaskGroup == null || sourceTask == null) return;
+
+        var duplicateTask = new TaskMaster
+        {
+            TaskName = string.IsNullOrWhiteSpace(sourceTask.TaskName) ? "Task Copy" : $"{sourceTask.TaskName} (Copy)",
+            Description = sourceTask.Description,
+            DaysBeforeExpiration = sourceTask.DaysBeforeExpiration,
+            ForType = sourceTask.ForType,
+            Important = sourceTask.Important,
+            DefaultAssignedToId = sourceTask.DefaultAssignedToId
+        };
+
+        var savedDuplicate = await TaskService.AddTaskMasterAsync(duplicateTask);
+        savedDuplicate.SubTaskLinks ??= new List<TaskMasterSubTask>();
+
+        var sourceIndex = TaskItems.IndexOf(sourceTask);
+        var insertOrder = sourceIndex >= 0 ? sourceIndex + 1 : TaskItems.Count;
+
+        await TaskService.AddTaskToGroupAsync(new TaskGroupTaskMaster
+        {
+            TaskGroupId = SelectedTaskGroup.TaskGroupId,
+            TaskMasterId = savedDuplicate.TaskMasterId,
+            OrderNumber = insertOrder
+        });
+
+        if (sourceTask.SubTaskLinks != null && sourceTask.SubTaskLinks.Count > 0)
+        {
+            var orderedLinks = sourceTask.SubTaskLinks.OrderBy(link => link.OrderNumber).ToList();
+            foreach (var link in orderedLinks)
+            {
+                var sourceSubtask = link.SubTaskMaster;
+                if (sourceSubtask == null)
+                {
+                    continue;
+                }
+
+                var newSubtask = new TaskMaster
+                {
+                    TaskName = sourceSubtask.TaskName,
+                    Description = sourceSubtask.Description,
+                    DaysBeforeExpiration = sourceSubtask.DaysBeforeExpiration,
+                    ForType = sourceSubtask.ForType,
+                    Important = sourceSubtask.Important,
+                    DefaultAssignedToId = sourceSubtask.DefaultAssignedToId
+                };
+
+                var savedSubtask = await TaskService.AddTaskMasterAsync(newSubtask);
+                var nextOrder = savedDuplicate.SubTaskLinks.Count;
+                await TaskService.AssignSubtaskAsync(savedDuplicate.TaskMasterId, savedSubtask.TaskMasterId, nextOrder);
+
+                savedDuplicate.SubTaskLinks.Add(new TaskMasterSubTask
+                {
+                    ParentTaskMasterId = savedDuplicate.TaskMasterId,
+                    SubTaskMasterId = savedSubtask.TaskMasterId,
+                    OrderNumber = nextOrder,
+                    SubTaskMaster = savedSubtask
+                });
+            }
+        }
+
+        var localInsertIndex = insertOrder;
+        if (localInsertIndex < 0)
+        {
+            localInsertIndex = 0;
+        }
+        if (localInsertIndex > TaskItems.Count)
+        {
+            localInsertIndex = TaskItems.Count;
+        }
+
+        TaskItems.Insert(localInsertIndex, savedDuplicate);
+        StateHasChanged();
+    }
+
+    private async Task SaveTaskMasterSubtask(TaskMaster subtaskMaster)
+    {
+        await TaskService.UpdateTaskMasterAsync(subtaskMaster);
+    }
+
+    private async Task OnSubtaskUserChanged(TaskMaster subtaskMaster, string userId)
+    {
+        subtaskMaster.DefaultAssignedToId = string.IsNullOrEmpty(userId) ? null : userId;
+        await SaveTaskMasterSubtask(subtaskMaster);
+    }
+
+    private async Task OnMasterTaskNameChanged(TaskMaster masterTask, string value)
+    {
+        masterTask.TaskName = value ?? "";
+        await SaveMasterTask(masterTask);
+        StateHasChanged();
+    }
+
+    private async Task OnMasterTaskDaysChanged(TaskMaster masterTask, int? value)
+    {
+        masterTask.DaysBeforeExpiration = value;
+        await SaveMasterTask(masterTask);
+        StateHasChanged();
+    }
+
+    private async Task OnMasterTaskDescriptionChanged(TaskMaster masterTask, string value)
+    {
+        masterTask.Description = value ?? "";
+        await SaveMasterTask(masterTask);
+        StateHasChanged();
+    }
+
+    private async Task OnSubtaskNameChanged(TaskMaster subtaskMaster, string value)
+    {
+        subtaskMaster.TaskName = value ?? "";
+        await SaveTaskMasterSubtask(subtaskMaster);
+        StateHasChanged();
+    }
+
+    private async Task OnSubtaskDaysChanged(TaskMaster subtaskMaster, int? value)
+    {
+        subtaskMaster.DaysBeforeExpiration = value;
+        await SaveTaskMasterSubtask(subtaskMaster);
+        StateHasChanged();
+    }
+
+    private async Task OnSubtaskDescriptionChanged(TaskMaster subtaskMaster, string value)
+    {
+        subtaskMaster.Description = value ?? "";
+        await SaveTaskMasterSubtask(subtaskMaster);
+        StateHasChanged();
+    }
+
+    private async Task RemoveTaskMasterSubtask(TaskMaster parentTask, TaskMasterSubTask subtaskLink)
+    {
+        if (await ConfirmDelete($"Are you sure you want to delete the subtask '{subtaskLink.SubTaskMaster.TaskName}'?"))
+        {
+            try
+            {
+                // First, unassign the subtask (removes the relationship)
+                await TaskService.UnassignSubtaskAsync(parentTask.TaskMasterId, subtaskLink.SubTaskMasterId);
+
+                // Then delete the TaskMaster if it's a dedicated subtask
+                if (subtaskLink.SubTaskMaster?.ForType == "sub")
+                {
+                    await TaskService.DeleteTaskMasterAsync(subtaskLink.SubTaskMasterId);
+                }
+
+                // Remove from the local collection
+                parentTask.SubTaskLinks.Remove(subtaskLink);
+
+                // Reload the tasks to ensure we have the latest state
+                await LoadTasksForGroup();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error removing subtask: {ex.Message}");
+                // Reload to ensure UI is in sync with database
+                await LoadTasksForGroup();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task<bool> ConfirmDelete(string message)
+    {
+        return await Task.FromResult(true);
+    }
+
+    private string GetUserDisplayName(ApplicationUser user)
+    {
+        if (user == null) return "";
+
+        var firstName = user.FirstName ?? "";
+        var lastName = user.LastName ?? "";
+
+        if (!string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(lastName))
+        {
+            return $"{firstName} {lastName}";
+        }
+        else if (!string.IsNullOrEmpty(firstName))
+        {
+            return firstName;
+        }
+        else if (!string.IsNullOrEmpty(lastName))
+        {
+            return lastName;
+        }
+        else
+        {
+            return user.UserName ?? user.Email ?? user.Id;
+        }
+    }
+
+    private List<string> GetUserOptions()
+    {
+        var options = new List<string> { "" };
+        options.AddRange(AllUsers.Select(u => u.Id));
+        return options;
+    }
+
+    private string GetUserOptionText(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            return "-- None --";
+        }
+
+        var user = AllUsers.FirstOrDefault(u => u.Id == userId);
+        return user != null ? GetUserDisplayName(user) : userId;
+    }
+
+    private async Task OnUserChanged(TaskMaster masterTask, string userId)
+    {
+        masterTask.DefaultAssignedToId = string.IsNullOrEmpty(userId) ? null : userId;
+        await SaveMasterTask(masterTask);
+    }
+
+    private bool IsFirstMasterTask(TaskMaster task)
+    {
+        return TaskItems.FirstOrDefault()?.TaskMasterId == task.TaskMasterId;
+    }
+
+    private bool IsLastMasterTask(TaskMaster task)
+    {
+        return TaskItems.LastOrDefault()?.TaskMasterId == task.TaskMasterId;
+    }
+
+    private async Task MoveMasterTaskUp(TaskMaster task)
+    {
+        if (SelectedTaskGroup == null) return;
+
+        var currentIndex = TaskItems.FindIndex(t => t.TaskMasterId == task.TaskMasterId);
+        if (currentIndex <= 0) return;
+
+        var previousTask = TaskItems[currentIndex - 1];
+
+        await TaskService.SwapTaskGroupOrderAsync(SelectedTaskGroup.TaskGroupId, task.TaskMasterId, previousTask.TaskMasterId);
+
+        await LoadTasksForGroup();
+        StateHasChanged();
+    }
+
+    private async Task MoveMasterTaskDown(TaskMaster task)
+    {
+        if (SelectedTaskGroup == null) return;
+
+        var currentIndex = TaskItems.FindIndex(t => t.TaskMasterId == task.TaskMasterId);
+        if (currentIndex >= TaskItems.Count - 1) return;
+
+        var nextTask = TaskItems[currentIndex + 1];
+
+        await TaskService.SwapTaskGroupOrderAsync(SelectedTaskGroup.TaskGroupId, task.TaskMasterId, nextTask.TaskMasterId);
+
+        await LoadTasksForGroup();
+        StateHasChanged();
+    }
+
+    private bool IsFirstSubtask(TaskMaster parentTask, TaskMasterSubTask subtaskLink)
+    {
+        return parentTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber).FirstOrDefault()?.SubTaskMasterId == subtaskLink.SubTaskMasterId;
+    }
+
+    private bool IsLastSubtask(TaskMaster parentTask, TaskMasterSubTask subtaskLink)
+    {
+        return parentTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber).LastOrDefault()?.SubTaskMasterId == subtaskLink.SubTaskMasterId;
+    }
+
+    private async Task MoveSubtaskUp(TaskMaster parentTask, TaskMasterSubTask subtaskLink)
+    {
+        var orderedSubtasks = parentTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber).ToList();
+        var currentIndex = orderedSubtasks.FindIndex(stl => stl.SubTaskMasterId == subtaskLink.SubTaskMasterId);
+
+        if (currentIndex <= 0) return;
+
+        var previousSubtask = orderedSubtasks[currentIndex - 1];
+
+        var tempOrder = subtaskLink.OrderNumber;
+        subtaskLink.OrderNumber = previousSubtask.OrderNumber;
+        previousSubtask.OrderNumber = tempOrder;
+
+        await TaskService.SwapSubtaskOrderAsync(parentTask.TaskMasterId, subtaskLink.SubTaskMasterId, previousSubtask.SubTaskMasterId);
+
+        StateHasChanged();
+    }
+
+    private async Task MoveSubtaskDown(TaskMaster parentTask, TaskMasterSubTask subtaskLink)
+    {
+        var orderedSubtasks = parentTask.SubTaskLinks.OrderBy(stl => stl.OrderNumber).ToList();
+        var currentIndex = orderedSubtasks.FindIndex(stl => stl.SubTaskMasterId == subtaskLink.SubTaskMasterId);
+
+        if (currentIndex >= orderedSubtasks.Count - 1) return;
+
+        var nextSubtask = orderedSubtasks[currentIndex + 1];
+
+        var tempOrder = subtaskLink.OrderNumber;
+        subtaskLink.OrderNumber = nextSubtask.OrderNumber;
+        nextSubtask.OrderNumber = tempOrder;
+
+        await TaskService.SwapSubtaskOrderAsync(parentTask.TaskMasterId, subtaskLink.SubTaskMasterId, nextSubtask.SubTaskMasterId);
+
+        StateHasChanged();
+    }
+}

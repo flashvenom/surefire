@@ -1,0 +1,62 @@
+@using Quickfire.Blazor.Domain.Leads.Models
+@inherits LeadActivityLogBase
+
+<div class="activity-log-section timeline">
+    <div class="activity-log-header">
+        <div class="txt-section acttxt">Activity Log</div>
+        <div class="activity-input-container">
+            <FluentTextField Placeholder="Add a note to the activity log..."
+                             @bind-Value="NewActivityNote"
+                             Disabled="@IsAddDisabled"
+                             @onkeyup="OnActivityNoteKeyUp"
+                             Style="width:100% !important;">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Add())"
+                            Slot="end"
+                            Color="Color.Neutral"
+                            class="@($"activity-log__add-icon {(IsAddIconDisabled ? "activity-log__add-icon--disabled" : string.Empty)}")"
+                            @onclick="AddActivityNote" />
+            </FluentTextField>
+        </div>
+    </div>
+    <div class="activity-log-container timeline-container">
+        @if (IsLoading)
+        {
+            <div class="lead-activity__loading">
+                <FluentProgressRing />
+                <span>Loading activity...</span>
+            </div>
+        }
+        else if (ActivityItems != null && ActivityItems.Any())
+        {
+            string? lastDate = null;
+            foreach (var item in ActivityItems)
+            {
+                var currentDate = item.FormattedDateFull;
+                if (currentDate != lastDate)
+                {
+                    <div class="timeline-date-header">
+                        <span class="timeline-date-text">@currentDate</span>
+                        <span class="timeline-days-ago">@item.DaysAgoText</span>
+                    </div>
+                    lastDate = currentDate;
+                }
+
+                <div class="timeline-row">
+                    <div class="timeline-dot dot-@item.EntryType"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-card card-@item.EntryType">
+                            <span class="user-note-body">@item.DisplayContent</span>
+                            <span class="user-note-meta">@item.FormattedDate &bull; @item.DisplaySource</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="activity-empty">
+                <p>No activity recorded yet for this lead.</p>
+            </div>
+        }
+    </div>
+</div>

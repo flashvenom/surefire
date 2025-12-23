@@ -1,0 +1,159 @@
+@namespace Quickfire.Blazor.Domain.Renewals.Dialogs
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+
+<BaseDialog DialogId="@DialogId" Title="Edit Premium Amount" @bind-Hidden="Hidden">
+    <ChildContent>
+        @if (EditContext != null)
+        {
+            <EditForm EditContext="@EditContext">
+                <DataAnnotationsValidator />
+                <div class="premium-edit-form">
+                    @if (SubmissionForEdit != null)
+                    {
+                        <div class="submission-info">
+                            <p><strong>Carrier:</strong> @(SubmissionForEdit.Carrier?.CarrierName ?? "Unknown")</p>
+                            @if (SubmissionForEdit.Wholesaler != null)
+                            {
+                                <p><strong>Wholesaler:</strong> @SubmissionForEdit.Wholesaler.CarrierName</p>
+                            }
+                        </div>
+                    }
+                    <div class="form-group">
+                        <label for="premium">Premium Amount</label>
+                        <FluentNumberField @bind-Value="CurrentPremium.Amount" Id="premium" Placeholder="Enter premium amount" Min="0" Step="1" />
+                        <ValidationMessage For="() => CurrentPremium.Amount" class="text-danger" />
+                    </div>
+                </div>
+                <ValidationSummary />
+            </EditForm>
+        }
+        else
+        {
+            <p>Loading...</p>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveChanges">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="Cancel">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<style>
+    .premium-edit-form {
+        min-width: 400px;
+        padding: 10px 0;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #323130;
+    }
+
+    .submission-info {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 12px;
+        border-left: 3px solid #0078d4;
+    }
+
+    .submission-info p {
+        margin: 4px 0;
+        font-size: 0.9rem;
+    }
+
+    .text-danger {
+        color: #d13438;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+</style>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "premium-edit-dialog";
+    [Parameter] public Submission? SubmissionForEdit { get; set; } // Data passed from parent
+
+    // --- Visibility Binding ---
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+
+    // --- Action Callbacks ---
+    [Parameter] public EventCallback<PremiumEditModel> OnSave { get; set; }
+
+    // --- Internal State ---
+    private PremiumEditModel CurrentPremium { get; set; } = new();
+    private EditContext? EditContext { get; set; }
+
+    // *** CRITICAL: Only initialize when dialog becomes visible ***
+    protected override void OnParametersSet()
+    {
+        if (!Hidden && (SubmissionForEdit?.SubmissionId != CurrentPremium.SubmissionId || EditContext == null))
+        {
+            InitializeDialogState();
+        }
+    }
+
+    private void InitializeDialogState()
+    {
+        if (SubmissionForEdit != null)
+        {
+            CurrentPremium = new PremiumEditModel
+            {
+                SubmissionId = SubmissionForEdit.SubmissionId,
+                Amount = SubmissionForEdit.Premium ?? 0
+            };
+        }
+        else
+        {
+            CurrentPremium = new PremiumEditModel();
+        }
+        EditContext = new EditContext(CurrentPremium);
+    }
+
+    private async Task SaveChanges()
+    {
+        if (EditContext?.Validate() ?? false)
+        {
+            try
+            {
+                await OnSave.InvokeAsync(CurrentPremium);
+                await CloseDialogAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error saving premium: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await CloseDialogAsync();
+    }
+
+    private async Task CloseDialogAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+
+    public class PremiumEditModel
+    {
+        public int SubmissionId { get; set; }
+        
+        [Required(ErrorMessage = "Premium amount is required")]
+        [Range(0, int.MaxValue, ErrorMessage = "Premium must be a positive number")]
+        public int Amount { get; set; }
+    }
+} 

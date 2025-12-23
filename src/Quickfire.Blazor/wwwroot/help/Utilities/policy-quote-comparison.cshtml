@@ -1,0 +1,237 @@
+<h1>Policy Quote Comparison</h1>
+
+<p>
+    The Policy Quote Comparison tool extracts text from both a bound policy document and a renewal quote, then uses AI to generate a detailed comparison highlighting differences, changes, and important updates between the two documents.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the Policy Quote Comparison tool showing: policy document selector, quote document selector, comparison progress indicator, and the resulting comparison report with highlighted differences. Show the side-by-side or before/after view of key changes. -->
+
+<h2>What the Policy Quote Comparison Does</h2>
+
+<p>
+    This tool helps you:
+</p>
+
+<ul>
+    <li><strong>Compare documents</strong> – Analyze both the expiring policy and the renewal quote side-by-side</li>
+    <li><strong>Extract text automatically</strong> – Uses document intelligence to pull text from PDFs</li>
+    <li><strong>Identify differences</strong> – Highlights what changed between the old policy and new quote</li>
+    <li><strong>Generate AI summary</strong> – Creates a narrative comparison explaining key changes</li>
+    <li><strong>Save time</strong> – Automates the tedious process of manually comparing long policy documents</li>
+    <li><strong>Cache results</strong> – Saves extracted text for faster re-comparisons</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual diagram showing the comparison workflow: 1) Select policy and quote PDFs, 2) Extract text from both, 3) AI analyzes differences, 4) Generate comparison report, 5) Review changes. Use icons and progress indicators. -->
+
+<h2>Using the Policy Quote Comparison</h2>
+
+<p>
+    To compare a policy and quote:
+</p>
+
+<ol>
+    <li><strong>Open from a renewal</strong> – Launch the tool from a renewal page so it has context about the policy and available quotes</li>
+    <li><strong>Select the policy document</strong> – Choose the bound policy PDF you want to compare (usually the expiring policy)</li>
+    <li><strong>Select the quote document</strong> – Choose the renewal quote PDF you want to compare against</li>
+    <li><strong>Start the comparison</strong> – Click <strong>Compare</strong> to begin the process</li>
+    <li><strong>Monitor progress</strong> – Watch the progress indicator as it:
+        <ul>
+            <li>Extracts text from the quote document</li>
+            <li>Extracts text from the policy document</li>
+            <li>Generates the AI comparison</li>
+        </ul>
+    </li>
+    <li><strong>Review the results</strong> – Once complete, review the comparison report showing:
+        <ul>
+            <li>Document statistics (page count, word count)</li>
+            <li>AI-generated comparison narrative</li>
+            <li>Key differences and changes</li>
+        </ul>
+    </li>
+</ol>
+
+<!-- IMAGE PLACEHOLDER: Step-by-step screenshots: 1) Policy Quote Comparison button on renewal page, 2) Document selectors showing policy and quote dropdowns, 3) Progress indicator showing extraction steps, 4) Comparison results displayed with statistics and AI summary. Use numbered annotations. -->
+
+<h2>Understanding the Comparison Process</h2>
+
+<p>
+    The comparison happens in several stages:
+</p>
+
+<h3>Stage 1: Text Extraction</h3>
+<ul>
+    <li>Both PDFs are processed to extract all text</li>
+    <li>Text is saved to cache files for future use</li>
+    <li>Progress shows "Extracting Quote Text" and "Extracting Policy Text"</li>
+</ul>
+
+<h3>Stage 2: AI Analysis</h3>
+<ul>
+    <li>The extracted text from both documents is sent to AI for analysis</li>
+    <li>AI identifies differences, changes, and important updates</li>
+    <li>Progress shows "Generating Comparison"</li>
+</ul>
+
+<h3>Stage 3: Report Generation</h3>
+<ul>
+    <li>AI generates a formatted comparison report</li>
+    <li>Report includes summary and detailed findings</li>
+    <li>Results are displayed in an easy-to-read format</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the progress indicator showing all three stages with checkmarks as each completes. Show the progress bar and status messages for each stage. -->
+
+<h2>Debug Mode</h2>
+
+<p>
+    Debug mode allows you to:
+</p>
+
+<ul>
+    <li><strong>Reuse cached text</strong> – Skip PDF processing and use previously extracted text files</li>
+    <li><strong>Faster comparisons</strong> – Run comparisons much faster when you've already extracted text</li>
+    <li><strong>Test AI changes</strong> – Re-run the AI comparison with different prompts or settings</li>
+    <li><strong>Inspect extracted text</strong> – View the raw extracted text files if needed</li>
+</ul>
+
+<p>
+    <strong>When to use debug mode:</strong>
+</p>
+<ul>
+    <li>You've already run a comparison and want to try different AI prompts</li>
+    <li>You want to save time by skipping PDF extraction</li>
+    <li>You need to inspect the extracted text for troubleshooting</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing the debug mode toggle and the option to "Compare Using Saved Text". Show where cached text files are stored and how to access them. -->
+
+<h2>Running AI Comparison on Cached Text</h2>
+
+<p>
+    After extracting text, you can run the AI comparison separately:
+</p>
+
+<ol>
+    <li>Complete a full comparison first (this extracts and caches the text)</li>
+    <li>Use the <strong>Run OpenAI on Cached Text</strong> option</li>
+    <li>The AI will analyze the cached text files without re-processing the PDFs</li>
+    <li>This is useful if you want to:
+        <ul>
+            <li>Try different comparison prompts</li>
+            <li>Re-run the analysis after updating AI settings</li>
+            <li>Get a fresh comparison without waiting for PDF extraction</li>
+        </ul>
+    </li>
+</ol>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing the "Run OpenAI on Cached Text" button and the resulting AI comparison. Show how this differs from the full comparison process. -->
+
+<h2>Understanding the Comparison Results</h2>
+
+<p>
+    The comparison report includes:
+</p>
+
+<ul>
+    <li><strong>Document statistics</strong>:
+        <ul>
+            <li>Page count for both documents</li>
+            <li>Word count for both documents</li>
+            <li>File paths to cached text files</li>
+        </ul>
+    </li>
+    <li><strong>AI-generated summary</strong>:
+        <ul>
+            <li>Brief overview of key changes</li>
+            <li>Detailed findings organized by category</li>
+            <li>Tables comparing policy vs. quote details</li>
+            <li>Highlighted differences and updates</li>
+        </ul>
+    </li>
+</ul>
+
+<p>
+    The AI comparison is formatted as HTML, making it easy to read and share.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the comparison results showing: statistics section at the top, then the AI-generated comparison with tables, headings, and highlighted differences. Show how the report is organized and formatted. -->
+
+<h2>Best Practices</h2>
+
+<ul>
+    <li><strong>Use during renewals</strong> – Compare the expiring policy with renewal quotes to identify changes</li>
+    <li><strong>Review carefully</strong> – AI comparisons are helpful but should be reviewed for accuracy</li>
+    <li><strong>Check important sections</strong> – Pay special attention to coverage limits, deductibles, and exclusions</li>
+    <li><strong>Use cached text for speed</strong> – Once text is extracted, use debug mode for faster re-comparisons</li>
+    <li><strong>Share with clients</strong> – Use the comparison report to explain changes to clients</li>
+    <li><strong>Document changes</strong> – Save comparison reports as attachments for your records</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual checklist showing best practices with icons: renewal icon, review icon, important sections icon, sharing icon. -->
+
+<h2>What Gets Compared</h2>
+
+<p>
+    The AI comparison analyzes:
+</p>
+
+<ul>
+    <li><strong>Coverage limits</strong> – Changes in liability limits, property values, etc.</li>
+    <li><strong>Deductibles</strong> – Changes in deductible amounts</li>
+    <li><strong>Coverage types</strong> – Additions or removals of specific coverages</li>
+    <li><strong>Exclusions</strong> – Changes to policy exclusions</li>
+    <li><strong>Terms and conditions</strong> – Updates to policy language</li>
+    <li><strong>Premiums</strong> – Changes in premium amounts (if visible in documents)</li>
+    <li><strong>Effective dates</strong> – Policy period changes</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of a comparison report showing examples of different types of changes: coverage limits in a table, deductible changes highlighted, new exclusions listed. Use callouts to label each type of comparison. -->
+
+<h2>Troubleshooting</h2>
+
+<h3>Documents Not Extracting</h3>
+<ul>
+    <li>Ensure both documents are PDFs (not images or other formats)</li>
+    <li>Check that the documents are not password-protected or corrupted</li>
+    <li>Verify document intelligence integration is configured (Azure or LLMWhisperer)</li>
+    <li>Try processing the documents individually first to identify which one has issues</li>
+</ul>
+
+<h3>AI Comparison Not Generating</h3>
+<ul>
+    <li>Verify OpenAI integration is configured and working</li>
+    <li>Check that text extraction completed successfully for both documents</li>
+    <li>Ensure documents are not too large (very long documents may be truncated)</li>
+    <li>Try running the AI comparison on cached text if the initial attempt failed</li>
+</ul>
+
+<h3>Comparison Results Seem Incomplete</h3>
+<ul>
+    <li>Very long documents may be truncated to fit AI model limits</li>
+    <li>Check the document statistics to see if truncation occurred</li>
+    <li>Review the cached text files to see what was actually extracted</li>
+    <li>Consider comparing specific sections if documents are very long</li>
+</ul>
+
+<h3>Debug Mode Not Working</h3>
+<ul>
+    <li>Ensure you've run a full comparison first to create cached text files</li>
+    <li>Check that cached text files exist and are accessible</li>
+    <li>Verify the file paths shown in the comparison results</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of an error message that might appear during comparison, with annotations explaining what it means and how to resolve it. Show both extraction errors and AI comparison errors. -->
+
+<h2>Tips for Effective Comparisons</h2>
+
+<ul>
+    <li><strong>Use clear document names</strong> – Name your policy and quote attachments clearly so they're easy to identify</li>
+    <li><strong>Compare early</strong> – Run comparisons as soon as you receive renewal quotes to identify changes quickly</li>
+    <li><strong>Review with context</strong> – Use the comparison report alongside the original documents for full understanding</li>
+    <li><strong>Share key findings</strong> – Extract the most important changes to share with clients or underwriters</li>
+    <li><strong>Save for records</strong> – Keep comparison reports as part of your renewal documentation</li>
+</ul>
+
+<p>
+    <strong>Next Steps:</strong> Learn about other utilities like <a href="/help/Utilities/gap-highlighter">Gap Highlighter</a> to identify coverage gaps, or explore <a href="/help/Renewals/submissions">Submissions</a> to understand how to track quotes.
+</p>

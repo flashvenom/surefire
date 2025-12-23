@@ -1,0 +1,468 @@
+@page "/Leads/{LoadLeadId:int}"
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Quickfire.Blazor.Domain.Forms.Components
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Syncfusion.Blazor.RichTextEditor
+@inject ClientService ClientService
+
+<_toolbar LeadId="LoadLeadId" />
+
+<div class="lead-detail-page">
+    @if (isLoading)
+    {
+        <div class="lead-detail__state">
+            <FluentProgressRing Size="ProgressRingSize.Large" />
+            <p>Loading your lead...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(loadError))
+    {
+        <FluentMessageBar Intent="MessageIntent.Error"
+                          AllowDismiss="true"
+                          Title="Unable to load lead"
+                          OnDismiss="@(() => loadError = string.Empty)">
+            @loadError
+        </FluentMessageBar>
+    }
+    else if (selectedLead == null)
+    {
+        <div class="lead-detail__state">
+            <p>No lead found for id @LoadLeadId.</p>
+        </div>
+    }
+    else
+    {
+        var stageDescriptor = GetStageDescriptor(selectedLead);
+        <div class="lead-detail__layout">
+            <section class="lead-detail__hero glass-card" style="--stage-accent:@(stageDescriptor?.AccentColor ?? "#475569")">
+                <div class="lead-detail__hero-text">
+                    <p class="lead-detail__eyebrow">Pipeline lead</p>
+                    <h1>@GetLeadFriendlyName(selectedLead)</h1>
+                    <div class="lead-detail__meta">
+                        <span class="lead-detail__stage-pill">@stageDescriptor?.DisplayName ?? "Unassigned"</span>
+                        <span class="lead-detail__meta-pill">@GetGoalDateLabel(selectedLead)</span>
+                        <span class="lead-detail__meta-pill">Last touched @GetLastTouchedLabel(selectedLead)</span>
+                    </div>
+                    <p class="lead-detail__subhead">@stageDescriptor?.Subtitle ?? "Stay close and keep momentum going."</p>
+                </div>
+                <div class="lead-detail__hero-actions">
+                    @if (!string.IsNullOrWhiteSpace(selectedLead.PhoneNumber))
+                    {
+                        <a class="lead-detail__action" href="tel:@StringHelper.FormatTelDialNumber(selectedLead.PhoneNumber)">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Call())" />
+                            Call
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(selectedLead.Email))
+                    {
+                        <a class="lead-detail__action" href="mailto:@selectedLead.Email">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" />
+                            Email
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(selectedLead.Website))
+                    {
+                        <a class="lead-detail__action" href="@NormalizeWebsite(selectedLead.Website)" target="_blank">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" />
+                            Website
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(selectedLead.Address))
+                    {
+                        <a class="lead-detail__action" href="@BuildMapsLink(selectedLead)" target="_blank">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Location())" />
+                            Map
+                        </a>
+                    }
+                </div>
+            </section>
+
+            <div class="lead-detail__grid">
+                <article class="glass-card lead-detail__card lead-detail__card--snapshot">
+                    <header>
+                        <p class="lead-detail__card-eyebrow">Opportunity snapshot</p>
+                        <h3>Key info</h3>
+                    </header>
+                    <div class="lead-detail__stat-grid">
+                        <div class="lead-detail__stat">
+                            <span class="lead-detail__stat-label">Stage</span>
+                            <span class="lead-detail__stat-value">@stageDescriptor?.DisplayName ?? "Unassigned"</span>
+                            <span class="lead-detail__stat-hint">@stageDescriptor?.Subtitle</span>
+                        </div>
+                        <div class="lead-detail__stat">
+                            <span class="lead-detail__stat-label">Source</span>
+                            <span class="lead-detail__stat-value">@GetSourceDisplay(selectedLead)</span>
+                            <span class="lead-detail__stat-hint">Origin channel</span>
+                        </div>
+                        <div class="lead-detail__stat">
+                            <span class="lead-detail__stat-label">Created</span>
+                            <span class="lead-detail__stat-value">@selectedLead.CreatedDate.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                            <span class="lead-detail__stat-hint">@GetCreatedByLabel(selectedLead)</span>
+                        </div>
+                        <div class="lead-detail__stat">
+                            <span class="lead-detail__stat-label">Goal date</span>
+                            <span class="lead-detail__stat-value">@GetGoalDateLabel(selectedLead)</span>
+                            <span class="lead-detail__stat-hint">Bind target</span>
+                        </div>
+                        <div class="lead-detail__stat">
+                            <span class="lead-detail__stat-label">Submissions</span>
+                            <span class="lead-detail__stat-value">@((selectedLead.Submissions?.Count ?? 0).ToString("N0"))</span>
+                            <span class="lead-detail__stat-hint">Carrier + wholesale efforts</span>
+                        </div>
+                        <div class="lead-detail__stat">
+                            <span class="lead-detail__stat-label">Product</span>
+                            <span class="lead-detail__stat-value">@(!string.IsNullOrWhiteSpace(selectedLead.Product?.LineName) ? selectedLead.Product.LineName : "Not set")</span>
+                            <span class="lead-detail__stat-hint">Line of business</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="glass-card lead-detail__card lead-detail__card--context">
+                    <header>
+                        <p class="lead-detail__card-eyebrow">Business context</p>
+                        <h3>What they're about</h3>
+                    </header>
+                    <dl class="lead-detail__description">
+                        <div>
+                            <dt>Operations</dt>
+                            <dd>@(!string.IsNullOrWhiteSpace(selectedLead.Operations) ? selectedLead.Operations : "Not documented")</dd>
+                        </div>
+                        <div>
+                            <dt>Primary contact</dt>
+                            <dd>@(!string.IsNullOrWhiteSpace(selectedLead.ContactName) ? selectedLead.ContactName : "Not captured")</dd>
+                        </div>
+                        <div>
+                            <dt>Location</dt>
+                            <dd>@GetLocationDisplay(selectedLead)</dd>
+                        </div>
+                    </dl>
+                </article>
+
+                <article class="glass-card lead-detail__card">
+                    <header>
+                        <p class="lead-detail__card-eyebrow">Contacts</p>
+                        <h3>People we know</h3>
+                    </header>
+                    @if (leadContacts?.Any() == true)
+                    {
+                        <ListContactsForParent Contacts="leadContacts" />
+                    }
+                    else
+                    {
+                        <p class="lead-detail__empty">No contacts are tied to this lead yet.</p>
+                    }
+                </article>
+
+                <article class="glass-card lead-detail__card lead-detail__card--notes">
+                    <header>
+                        <p class="lead-detail__card-eyebrow">Working notes</p>
+                        <h3>Prep & research</h3>
+                    </header>
+                    <SfRichTextEditor @bind-Value="selectedLead.Notes"
+                                      Height="320px" />
+                    <div class="lead-detail__actions">
+                        <FluentButton Appearance="Appearance.Accent"
+                                      OnClick="SaveNotesAsync">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Save())" />
+                            Save notes
+                        </FluentButton>
+                    </div>
+                </article>
+
+                <article class="glass-card lead-detail__card lead-detail__card--wide">
+                    <header>
+                        <p class="lead-detail__card-eyebrow">Activity</p>
+                        <h3>Timeline</h3>
+                    </header>
+                    <LeadActivityLog LeadId="selectedLead.LeadId"
+                                     LeadContext="selectedLead"
+                                     OnActivityAdded="HandleActivityAdded" />
+                </article>
+
+                <article class="glass-card lead-detail__card lead-detail__card--wide">
+                    <header>
+                        <p class="lead-detail__card-eyebrow">Applications & forms</p>
+                        <h3>Documents on file</h3>
+                    </header>
+                    <FormDocList EntityType="lead"
+                                 EntityId="@selectedLead.LeadId"
+                                 Title="Applications & Forms"
+                                 AllowAddNew="true"
+                                 AllowEdit="true"
+                                 Width="100%" />
+                </article>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int LoadLeadId { get; set; }
+
+    [Parameter]
+    public bool showCreatePolicy { get; set; } = false;
+
+    private Lead? selectedLead;
+    private List<Contact>? leadContacts;
+    private string? loadError;
+    private bool isLoading = true;
+
+    [CascadingParameter] public Action<string>? UpdateHeader { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        UpdateHeader?.Invoke("Leads");
+        await LoadLeadAsync(LoadLeadId);
+    }
+
+    private async Task LoadLeadAsync(int leadId)
+    {
+        isLoading = true;
+        loadError = null;
+
+        if (leadId <= 0)
+        {
+            selectedLead = null;
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            selectedLead = await ClientService.GetLeadByIdAsync(leadId);
+
+            if (selectedLead == null)
+            {
+                loadError = "That lead was not found.";
+            }
+            else
+            {
+                BuildLeadContacts();
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = $"Something went wrong while loading the record. {ex.Message}";
+            selectedLead = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void BuildLeadContacts()
+    {
+        if (selectedLead == null)
+        {
+            leadContacts = null;
+            return;
+        }
+
+        var contactHasDetails = !string.IsNullOrWhiteSpace(selectedLead.ContactName)
+                                || !string.IsNullOrWhiteSpace(selectedLead.PhoneNumber)
+                                || !string.IsNullOrWhiteSpace(selectedLead.Email);
+
+        if (!contactHasDetails)
+        {
+            leadContacts = null;
+            return;
+        }
+
+        var primaryContact = new Contact
+        {
+            FirstName = selectedLead.ContactName,
+            LastName = string.Empty,
+            PhoneNumbers = new List<PhoneNumber>(),
+            EmailAddresses = new List<EmailAddress>()
+        };
+
+        if (!string.IsNullOrWhiteSpace(selectedLead.PhoneNumber))
+        {
+            primaryContact.PhoneNumbers.Add(new PhoneNumber
+            {
+                Number = selectedLead.PhoneNumber,
+                Type = PhoneType.Office,
+                IsPrimary = true,
+                DateCreated = DateTime.UtcNow
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedLead.Email))
+        {
+            primaryContact.EmailAddresses.Add(new EmailAddress
+            {
+                Email = selectedLead.Email,
+                IsPrimary = true,
+                DateCreated = DateTime.UtcNow
+            });
+        }
+
+        leadContacts = new List<Contact> { primaryContact };
+    }
+
+    private async Task SaveNotesAsync()
+    {
+        if (selectedLead == null)
+        {
+            return;
+        }
+
+        await ClientService.UpdateLeadSimpleAsync(selectedLead);
+    }
+
+    private Task HandleActivityAdded(LeadNote newNote)
+    {
+        if (selectedLead == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        selectedLead.LeadNotes ??= new List<LeadNote>();
+        selectedLead.LeadNotes.Insert(0, newNote);
+        return Task.CompletedTask;
+    }
+
+    private string GetLeadFriendlyName(Lead? lead)
+    {
+        if (lead == null)
+        {
+            return "Untitled lead";
+        }
+
+        if (!string.IsNullOrWhiteSpace(lead.CompanyName))
+        {
+            return lead.CompanyName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(lead.ContactName))
+        {
+            return lead.ContactName;
+        }
+
+        return "Untitled lead";
+    }
+
+    private string GetGoalDateLabel(Lead lead)
+    {
+        return lead.BindDate.HasValue
+            ? lead.BindDate.Value.ToLocalTime().ToString("MMM dd, yyyy")
+            : "No goal date";
+    }
+
+    private string GetLastTouchedLabel(Lead lead)
+    {
+        var referenceDate = lead.LastOpened ?? lead.CreatedDate;
+        return StringHelper.FormatDateTimeDifference(referenceDate);
+    }
+
+    private string GetLocationDisplay(Lead lead)
+    {
+        if (string.IsNullOrWhiteSpace(lead.Address) &&
+            string.IsNullOrWhiteSpace(lead.City) &&
+            string.IsNullOrWhiteSpace(lead.State))
+        {
+            return "Location not set";
+        }
+
+        var builder = new List<string>();
+        if (!string.IsNullOrWhiteSpace(lead.Address))
+        {
+            builder.Add(lead.Address);
+        }
+
+        if (!string.IsNullOrWhiteSpace(lead.City) || !string.IsNullOrWhiteSpace(lead.State))
+        {
+            var cityState = $"{lead.City}, {lead.State}".Trim(' ', ',');
+            if (!string.IsNullOrWhiteSpace(cityState))
+            {
+                builder.Add(cityState);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(lead.Zip))
+        {
+            builder.Add(lead.Zip);
+        }
+
+        return string.Join(" · ", builder);
+    }
+
+    private string GetCreatedByLabel(Lead lead)
+    {
+        if (lead.CreatedBy == null)
+        {
+            return "Added automatically";
+        }
+
+        return $"{lead.CreatedBy.FirstName} {lead.CreatedBy.LastName}".Trim();
+    }
+
+    private string GetSourceDisplay(Lead lead)
+    {
+        if (lead.Source.HasValue && Enum.IsDefined(typeof(Source), lead.Source.Value))
+        {
+            return ((Source)lead.Source.Value).ToString();
+        }
+
+        return "Not captured";
+    }
+
+    private LeadStage? ParseStage(Lead? lead)
+    {
+        if (lead?.Stage.HasValue == true && Enum.IsDefined(typeof(LeadStage), lead.Stage.Value))
+        {
+            return (LeadStage)lead.Stage.Value;
+        }
+
+        return null;
+    }
+
+    private StageDescriptor? GetStageDescriptor(Lead lead)
+    {
+        var stage = ParseStage(lead);
+        if (stage.HasValue && StageDescriptors.TryGetValue(stage.Value, out var descriptor))
+        {
+            return descriptor;
+        }
+
+        return null;
+    }
+
+    private string BuildMapsLink(Lead lead)
+    {
+        var address = $"{lead.Address} {lead.City}, {lead.State} {lead.Zip}".Trim();
+        return $"https://www.google.com/maps/search/?api=1&query={Uri.EscapeDataString(address)}";
+    }
+
+    private string NormalizeWebsite(string website)
+    {
+        if (string.IsNullOrWhiteSpace(website))
+        {
+            return "#";
+        }
+
+        return website.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            ? website
+            : $"http://{website}";
+    }
+
+    private record StageDescriptor(string DisplayName, string Subtitle, string AccentColor);
+
+    private static readonly Dictionary<LeadStage, StageDescriptor> StageDescriptors = new()
+    {
+        [LeadStage.New] = new StageDescriptor("New", "Ready to qualify", "#2563eb"),
+        [LeadStage.Active] = new StageDescriptor("Active", "In progress", "#16a34a"),
+        [LeadStage.Closing] = new StageDescriptor("Closing", "Final steps", "#0ea5e9"),
+        [LeadStage.Holding] = new StageDescriptor("Holding", "Awaiting info", "#a855f7"),
+        [LeadStage.Tickler] = new StageDescriptor("Tickler", "Reminders", "#f97316"),
+        [LeadStage.Converted] = new StageDescriptor("Converted", "Won", "#059669"),
+        [LeadStage.Archive] = new StageDescriptor("Archive", "Parked", "#6b7280"),
+        [LeadStage.Trash] = new StageDescriptor("Trash", "Disqualified", "#ef4444")
+    };
+}

@@ -1,0 +1,238 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using System.Linq
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Interfaces
+@using Quickfire.Blazor.Data
+@using Quickfire.Blazor.Components
+@using Quickfire.Blazor.Components.Layout
+@using Quickfire.Blazor.Domain.Ember
+@using Quickfire.Blazor.Domain.Policies.Services
+@inject IEmailTemplateService EmailTemplateService
+@inject PolicyService PolicyService
+@inject EmberService EmberService
+
+<div class="template-sender-section">
+    <div class="sender-form">
+        <div class="form-group">
+            @if (templates != null)
+            {
+                <FluentSelect TOption="EmailTemplate"
+                Label="Template"
+                Items="@templates.Where(t => t.IsActive)"
+                @bind-SelectedOption="@selectedTemplateForSending"
+                OptionText="@(t => t.Name)"
+                OptionValue="@(t => t.EmailTemplateId.ToString())" />
+            }
+        </div>
+
+        <div class="form-group">
+            @if (CurrentPolicies != null)
+            {
+                <FluentSelect TOption="Policy"
+                Label="Policy"
+                Items="@CurrentPolicies"
+                @bind-SelectedOption="@selectedPolicy"
+                OptionText="@(p => $"{p.Product.LineName} - {p.PolicyNumber}")"
+                OptionValue="@(p => p.PolicyId.ToString())" />
+            }
+        </div>
+
+        <div class="form-group">
+            @if (Contacts != null)
+            {
+                <FluentSelect TOption="Contact"
+                Label="Recipient"
+                Items="@Contacts.Where(c => !string.IsNullOrEmpty(GetContactEmail(c)))"
+                @bind-SelectedOption="@selectedContact"
+                OptionText="@(c => $"{c.FirstName} {c.LastName} ({GetContactEmail(c)})")"
+                OptionValue="@(c => c.ContactId.ToString())" />
+            }
+        </div>
+    </div>
+    <div class="email-preview">
+        <h4>Preview</h4>
+        @if (selectedTemplateForSending == null || selectedPolicy == null)
+        {
+            <div class="preview-placeholder">
+                <p>Select a template and policy to see the preview.</p>
+            </div>
+        }
+        else
+        {
+            <FluentStack>
+                <div class="btn-compose">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Compose())" />
+                </div>
+                <div>
+                    <div class="preview-subject">
+                        <label>Subject:</label>
+                        <span>@GetProcessedSubject()</span>
+                    </div>
+                    <div class="preview-contact">
+                        <label>To:</label>
+                        <span>@GetContactEmail(selectedContact)</span>
+                    </div>
+                </div>
+            </FluentStack>
+            
+            <div class="preview-body">
+                <label>Body:</label>
+                <div class="preview-content" @ref="previewRef">
+                    @((MarkupString)GetProcessedBody())
+                </div>
+            </div>
+        }
+        <div class="form-group">
+            <FluentButton Appearance="Appearance.Accent" OnClick="SendOutlookEmail" Disabled="@(!IsReadyToSend())">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Mail())" />
+                Send Email
+            </FluentButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public List<Policy> CurrentPolicies { get; set; }
+
+    [Parameter]
+    public List<Contact> Contacts { get; set; }
+
+    private List<EmailTemplate> templates;
+    private EmailTemplate selectedTemplateForSending;
+    private Policy selectedPolicy;
+    private Contact selectedContact;
+    private ElementReference previewRef;
+
+    private string selectedTemplateId;
+    private string selectedPolicyId;
+    private string selectedContactId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplates();
+    }
+
+    private async Task LoadTemplates()
+    {
+        templates = await EmailTemplateService.GetAllTemplatesAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(selectedTemplateId))
+        {
+            selectedTemplateForSending = templates?.FirstOrDefault(t => t.EmailTemplateId.ToString() == selectedTemplateId);
+        }
+
+        if (!string.IsNullOrEmpty(selectedPolicyId))
+        {
+            selectedPolicy = CurrentPolicies?.FirstOrDefault(p => p.PolicyId.ToString() == selectedPolicyId);
+        }
+
+        if (!string.IsNullOrEmpty(selectedContactId))
+        {
+            selectedContact = Contacts?.FirstOrDefault(c => c.ContactId.ToString() == selectedContactId);
+        }
+    }
+
+    private string GetProcessedSubject()
+    {
+        if (selectedTemplateForSending == null || selectedPolicy == null || selectedContact == null)
+        {
+            return string.Empty;
+        }
+
+        var processedSubject = selectedTemplateForSending.Subject
+            .Replace("{PolicyType}", selectedPolicy.Product?.LineName)
+            .Replace("{PolicyNumber}", selectedPolicy.PolicyNumber)
+            .Replace("{ExpirationDate}", selectedPolicy.ExpirationDate.ToShortDateString())
+            .Replace("{ContactFirstName}", selectedContact.FirstName)
+            .Replace("{ClientName}", selectedPolicy.Client?.Name ?? string.Empty);
+
+        // Remove LineHistoryForPolicy if present in subject (unlikely but possible)
+        if (processedSubject.Contains("{LineHistoryForPolicy}"))
+        {
+            processedSubject = processedSubject.Replace("{LineHistoryForPolicy}", "Policy History");
+        }
+
+        return processedSubject;
+    }
+
+    private string GetProcessedBody()
+    {
+        if (selectedTemplateForSending == null || selectedPolicy == null || selectedContact == null)
+        {
+            return string.Empty;
+        }
+
+        var processedBody = selectedTemplateForSending.Body
+            .Replace("{PolicyType}", selectedPolicy?.Product.LineName)
+            .Replace("{PolicyNumber}", selectedPolicy.PolicyNumber)
+            .Replace("{ExpirationDate}", selectedPolicy.ExpirationDate.ToShortDateString())
+            .Replace("{ContactFirstName}", selectedContact.FirstName)
+            .Replace("{ClientName}", selectedPolicy.Client?.Name ?? string.Empty);
+
+        // Handle line history placeholder if present
+        if (processedBody.Contains("{LineHistoryForPolicy}"))
+        {
+            var policyHistory = PolicyService.GetPolicyLineHistoryAsync(selectedPolicy, 5).GetAwaiter().GetResult();
+            var formattedHistory = PolicyService.FormatPolicyLineHistory(policyHistory);
+            processedBody = processedBody.Replace("{LineHistoryForPolicy}", formattedHistory);
+        }
+
+        return processedBody;
+    }
+
+    private async Task LoadSelectedTemplate()
+    {
+        if (selectedTemplateForSending == null)
+        {
+            Console.WriteLine("Can't load template!");
+            return;
+        }
+        StateHasChanged();
+    }
+
+    private bool IsReadyToSend()
+    {
+        return selectedTemplateForSending != null && selectedPolicy != null && selectedContact != null;
+    }
+
+    private string GetContactEmail(Contact c)
+    {
+        if (c == null) return "";
+        
+        // First try to get the primary email
+        if (c.PrimaryEmail != null && !string.IsNullOrEmpty(c.PrimaryEmail.Email))
+            return c.PrimaryEmail.Email;
+            
+        // Then try to get any email from the EmailAddresses collection
+        if (c.EmailAddresses != null && c.EmailAddresses.Any())
+            return c.EmailAddresses.FirstOrDefault(e => !string.IsNullOrEmpty(e.Email))?.Email ?? "";
+            
+        return "";
+    }
+
+    private void SendOutlookEmail()
+    {
+        string toEmail = GetContactEmail(selectedContact);
+        string subject = GetProcessedSubject();
+        string body = GetProcessedBody();
+        _ = OutlookNewEmail(toEmail, subject, body);
+    }
+
+    public async Task OutlookNewEmail(string toEmail = null, string subject = null, string body = null)
+    {
+        if (toEmail != null && subject != null && body != null)
+        {
+            var myParams = new List<string> { toEmail, subject, body };
+            await EmberService.RunEmberFunction("OutlookEmail_CreateNew", myParams);
+        }
+    }
+}

@@ -1,0 +1,150 @@
+@namespace Quickfire.Blazor.Domain.Forms.Components
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.Linq
+
+<div class="certificate-list-container">
+    <div class="certificate-list-header">
+        <div class="certificate-list-title">
+            <h3>Certificates</h3>
+            <p class="certificate-list-subtitle">Track proof-of-insurance requests and who fulfilled them.</p>
+        </div>
+        @if (CanRequestNewCertificate)
+        {
+            <FluentButton Appearance="Appearance.Accent" OnClick="HandleCreateCertificateAsync" Class="certificate-primary-action">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Certificate())" Slot="start" Color="Color.Fill" />
+                New certificate
+            </FluentButton>
+        }
+    </div>
+
+    @if (certList is null)
+    {
+        <FluentSkeleton Width="100%" Height="56px" Shimmer="true"></FluentSkeleton>
+    }
+    else if (certList.Count == 0)
+    {
+        <div class="certificate-empty-state">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Certificate())" Class="certificate-empty-icon" />
+            <h4>No certificates yet</h4>
+            <p>When clients request proof of insurance, you can create it from here.</p>
+            @if (CanRequestNewCertificate)
+            {
+                <FluentButton Appearance="Appearance.Accent" OnClick="HandleCreateCertificateAsync">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Slot="start" Color="Color.Fill" />
+                    Add your first certificate
+                </FluentButton>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="certificate-list-meta">
+            <FluentBadge Appearance="Appearance.Neutral" Class="certificate-count-badge">
+                @certList.Count certificate@(certList.Count == 1 ? "" : "s")
+            </FluentBadge>
+            <span class="certificate-list-meta__last">@GetLatestCertificateActivity()</span>
+        </div>
+        <div class="certificate-grid">
+            @foreach (var certificate in GetCertificatesByRecency())
+            {
+                <article class="certificate-card">
+                    <div class="certificate-card__header">
+                        <div>
+                            <a href="/Forms/Certificate/@certificate.CertificateId" class="certificate-card__title">@GetHolderDisplay(certificate)</a>
+                            <p class="certificate-card__subtitle">@GetProjectDisplay(certificate)</p>
+                        </div>
+                        <FluentBadge Appearance="Appearance.Accent" Class="certificate-id-badge">#@certificate.CertificateId</FluentBadge>
+                    </div>
+                    <div class="certificate-card__meta">
+                        <span><strong>Created</strong> @FormatDateWithOwner(certificate.DateCreated, certificate.CreatedBy?.FirstName)</span>
+                        <span><strong>Updated</strong> @FormatDateWithOwner(certificate.DateModified, certificate.ModifiedBy?.FirstName)</span>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<Certificate> certList { get; set; }
+
+    [Parameter]
+    public bool AllowAddNew { get; set; } = true;
+
+    [Parameter]
+    public EventCallback OnCreateNewCertificateRequested { get; set; }
+
+    private bool CanRequestNewCertificate => AllowAddNew && OnCreateNewCertificateRequested.HasDelegate;
+
+    private IEnumerable<Certificate> GetCertificatesByRecency()
+    {
+        if (certList == null || certList.Count == 0)
+        {
+            return Enumerable.Empty<Certificate>();
+        }
+
+        return certList.OrderByDescending(c => c.DateModified ?? c.DateCreated ?? DateTime.MinValue);
+    }
+
+    private string GetLatestCertificateActivity()
+    {
+        if (certList == null || certList.Count == 0)
+        {
+            return "No certificate activity yet.";
+        }
+
+        var latest = certList
+            .OrderByDescending(c => c.DateModified ?? c.DateCreated ?? DateTime.MinValue)
+            .First();
+
+        var timestamp = latest.DateModified ?? latest.DateCreated;
+        var owner = latest.ModifiedBy?.FirstName ?? latest.CreatedBy?.FirstName;
+
+        if (timestamp == null)
+        {
+            return owner != null ? $"Last touched by {owner}" : "Recently updated.";
+        }
+
+        var dateLabel = timestamp.Value.ToString("MMM dd, yyyy");
+        return owner != null ? $"Updated {dateLabel} by {owner}" : $"Updated {dateLabel}";
+    }
+
+    private static string GetHolderDisplay(Certificate certificate)
+    {
+        return string.IsNullOrWhiteSpace(certificate.HolderName) ? "Holder name not set" : certificate.HolderName;
+    }
+
+    private static string GetProjectDisplay(Certificate certificate)
+    {
+        if (!string.IsNullOrWhiteSpace(certificate.ProjectName))
+        {
+            return certificate.ProjectName.Length > 80
+                ? $"{certificate.ProjectName.Substring(0, 80)}..."
+                : certificate.ProjectName;
+        }
+
+        return "No project details.";
+    }
+
+    private static string FormatDateWithOwner(DateTime? date, string? owner)
+    {
+        if (date == null && string.IsNullOrWhiteSpace(owner))
+        {
+            return "-";
+        }
+
+        var dateText = date?.ToString("MMM dd, yyyy") ?? "Unknown date";
+        return !string.IsNullOrWhiteSpace(owner) ? $"{dateText} by {owner}" : dateText;
+    }
+
+    private async Task HandleCreateCertificateAsync()
+    {
+        if (CanRequestNewCertificate)
+        {
+            await OnCreateNewCertificateRequested.InvokeAsync();
+        }
+    }
+}

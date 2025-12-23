@@ -1,0 +1,205 @@
+﻿@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Logs
+@using Syncfusion.Blazor.Spinner
+@using Syncfusion.Blazor.Notifications
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject HomeService HomeService
+@inject StateService StateService
+@inject ILoggingService _log
+@implements IDisposable
+
+<div class="sectiontitletab">Leads</div>
+<div class="leads-box-inner">
+    <table id="leadertable" cellspacing="0" class="ltable">
+        <thead class="lbg">
+            <tr>
+                <th class="mid-a">Company</th>
+                <th class="mid-z">Contact</th>
+                <th class="mid-b">Last</th>
+                <th class="mid-c">Phone</th>
+                <th class="mid-d">Status</th>
+            </tr>
+        </thead>
+        <tbody class="lbody">
+            @if (isLoading)
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    <tr class="lrow">
+                        <td colspan="5">
+                            <SfSkeleton Shape=SkeletonType.Rectangle Width="570px" Height="13px" CssClass="e-customize" Visible="true"></SfSkeleton>
+                        </td>
+                    </tr>
+                }
+            }
+            else if (leads == null || !leads.Any())
+            {
+                <tr>
+                    <td colspan="5" class="no-taskssub">No leads available</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var lead in leads)
+                {
+                    <tr class="lrow main">
+                        <td class="mid-a mid-name lpad" @onclick="() => ShowDetails(lead)">@lead.CompanyName</td>
+                        <td class="mid-z mid-color ellipsis">@lead.ContactName</td>
+                        <td class="mid-b mid-color ellipsis">@StringHelper.FormatDateTimeDifference(lead.LastOpened)</td>
+                        <td class="mid-c mid-date ellipsis">@lead.PhoneNumber</td>
+                        <td class="mid-d ellipsis">
+                            <span class="dot dot-@(lead?.Stage ?? 0)"></span>
+                            <span class="mid-dotname link-@(lead?.Stage ?? 0)">@GetStageText(lead?.Stage ?? 0)</span>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <div style="height:7px;"></div>
+</div>
+
+@if (showDetailsModal && selectedLead != null)
+{
+    <div class="modal-backdrop" @onclick="CloseDetailsModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>Lead Details</h3>
+                <button type="button" class="close-btn" @onclick="CloseDetailsModal">×</button>
+            </div>
+            <div class="modal-body">
+                <table class="details-table">
+                    <tr>
+                        <td class="detail-label">Company:</td>
+                        <td>@selectedLead.CompanyName</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-label">Contact:</td>
+                        <td>@selectedLead.ContactName</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-label">Phone:</td>
+                        <td>@selectedLead.PhoneNumber</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-label">Email:</td>
+                        <td>@selectedLead.Email</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-label">Stage:</td>
+                        <td><span class="status-badge status-stage-@selectedLead.Stage">@GetStageText(selectedLead.Stage)</span></td>
+                    </tr>
+                    <tr>
+                        <td class="detail-label">Last Activity:</td>
+                        <td>@StringHelper.FormatDateTimeDifference(selectedLead.LastOpened)</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(selectedLead.Notes))
+                    {
+                        <tr>
+                            <td class="detail-label">Notes:</td>
+                            <td>@selectedLead.Notes</td>
+                        </tr>
+                    }
+                </table>
+                <div class="modal-actions">
+                    <button type="button" class="action-btn view-lead-btn" @onclick="() => NavigateToLead(selectedLead.LeadId)">
+                        View Lead
+                    </button>
+                    <button type="button" class="action-btn close-modal-btn" @onclick="CloseDetailsModal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Lead> leads = new();
+    private bool isLoading = true;
+    
+    private bool showDetailsModal = false;
+    private Lead? selectedLead;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to data updates
+        StateService.OnHomepageDataUpdated += HandleDataUpdated;
+        await LoadData();
+    }
+    
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            // Try to get from cache first
+            if (StateService.CachedLeads?.Any() == true)
+            {
+                leads = StateService.CachedLeads.ToList();
+            }
+            else
+            {
+                // Load fresh data if cache is empty
+                leads = await HomeService.GetAllLeadsAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            await _log.LogAsync(LogLevel.Error, $"Error loading leads data: {ex.Message}", "LeadList");
+            leads = new();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void HandleDataUpdated()
+    {
+        InvokeAsync(async () =>
+        {
+            await LoadData();
+        });
+    }
+    
+    private void ShowDetails(Lead lead)
+    {
+        selectedLead = lead;
+        showDetailsModal = true;
+        StateHasChanged();
+    }
+    
+    private void CloseDetailsModal()
+    {
+        showDetailsModal = false;
+        StateHasChanged();
+    }
+    
+    private void NavigateToLead(int leadId)
+    {
+        NavigationManager.NavigateTo($"/Leads/{leadId}");
+    }
+    
+    private string GetStageText(int? stage)
+    {
+        return stage switch
+        {
+            0 => "new",
+            1 => "work",
+            2 => "stale",
+            _ => "n/a"
+        };
+    }
+    
+    public void Dispose()
+    {
+        StateService.OnHomepageDataUpdated -= HandleDataUpdated;
+    }
+}

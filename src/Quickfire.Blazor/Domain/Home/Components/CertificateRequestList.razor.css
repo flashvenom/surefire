@@ -1,0 +1,159 @@
+/*----------------------------*/
+/*primary class*/
+.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.3em;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    background: linear-gradient(to right, #595959 0%,#aaaaaa 87%,#bfbfbf 94%,#aaaaaa 100%);
+    padding-left: 10px;
+    color: #e6e6e6;
+    text-align: left;
+    border-left: 15px solid #1b1b1b;
+    z-index: 20;
+    position: relative;
+    text-shadow: 1px 1px 3px #2b2b2b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-link {
+    color: #e6e6e6;
+    text-decoration: none;
+    padding-right: 15px;
+    font-size: 1.5em;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+    .section-link:hover {
+        opacity: 1;
+        transform: translateX(3px);
+    }
+
+    .section-link .fluent-icon {
+        display: inline-block;
+    }
+/*----------------------------*/
+/*standard mid table*/
+.ltable {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    font-size: 1em;
+}
+
+.lbg {
+    height: 20px;
+    color: #ffffff64;
+    text-align: left;
+    font-size: .7em;
+}
+
+    .lbg th {
+        color: #979797;
+    }
+
+.lbody {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: .9em;
+}
+/*----------------------------*/
+/*column classes for table*/
+.mid-a {
+    width: auto;
+    padding-left: 15px;
+}
+
+.mid-b {
+    width: 20%;
+}
+
+.mid-c {
+    width: 15%;
+}
+
+.mid-d {
+    width: 60px;
+}
+
+.mid-name {
+    font-weight: bold;
+    color: #595959;
+    cursor: pointer;
+}
+
+    .mid-name:hover {
+        color: #006bb7;
+    }
+
+.mid-color {
+    color: #20874b;
+    font-weight: bold;
+    font-size: .8em;
+}
+
+.mid-date {
+    color: #7c7c7c;
+    font-size: .8em;
+}
+
+.mid-dotname {
+    text-decoration: none;
+    color: #2ca55e;
+    font-size: .75em;
+    position: relative;
+    left: -4px;
+    top: -2px;
+}
+/*----------------------------*/
+/*dots*/
+.dot {
+    height: 8px;
+    width: 8px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    top: -0px;
+    margin-right: 8px;
+    margin-left: 6px;
+}
+
+.dot-2 {
+    background-color: #2ca55e;
+    box-shadow: 0px 0px 7px #2ca55e;
+    border: 1px solid #ffffffaa;
+}
+/*----------------------------*/
+/*Standards */
+.main {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+    .main:hover {
+        background-color: #fff;
+        cursor: pointer;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+.ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+.no-taskssub {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 20px;
+}
+.cert-box-inner {
+    box-shadow: inset 0px 5px 7px #a1a1a1;
+    background-color: #dfdfdf87;
+    z-index: 10;
+}
+/*----------------------------*/

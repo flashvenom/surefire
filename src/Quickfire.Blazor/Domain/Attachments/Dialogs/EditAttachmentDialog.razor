@@ -1,0 +1,85 @@
+@namespace Quickfire.Blazor.Domain.Attachments.Components.Dialogs
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Attachments.Services
+@using Quickfire.Blazor.Domain.Shared.Services
+@inject AttachmentService AttachmentService
+@inject StateService StateService
+
+<BaseDialog DialogId="@DialogId"
+            Title="Edit Attachment"
+            @bind-Hidden="Hidden">
+    <ChildContent>
+        @if (Attachment != null)
+        {
+            <div class="edit-attachment-content">
+                <FluentTextField Label="Name" @bind-Value="editName" Placeholder="Attachment name" Style="width: 100%; max-width: 520px;" />
+                <div style="margin-top:8px; color: var(--neutral-foreground-rest); font-size: 12px;">
+                    <div><strong>Filename:</strong> @Attachment.OriginalFileName</div>
+                    <div><strong>Type:</strong> @Attachment.FileFormat</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <p>No attachment selected.</p>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveAsync">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Save())" Slot="start" />Save
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="Cancel">
+            Cancel
+        </FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "edit-attachment-dialog";
+    [Parameter] public Attachment? Attachment { get; set; }
+
+    // Visibility binding
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+
+    // Callback to parent after save
+    [Parameter] public EventCallback<Attachment> OnSaved { get; set; }
+
+    private string editName;
+
+    protected override void OnParametersSet()
+    {
+        if (!Hidden && Attachment != null)
+        {
+            editName = Attachment.Description;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Attachment == null) return;
+        var newName = (editName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            // keep it simple for now: don't allow blank
+            return;
+        }
+        await AttachmentService.UpdateAttachmentDescriptionAsync(Attachment.AttachmentId, newName);
+        StateService.NotifyAttachmentListUpdated();
+        await OnSaved.InvokeAsync(Attachment);
+        await CloseAsync();
+    }
+
+    private async Task Cancel()
+    {
+        await CloseAsync();
+    }
+
+    private async Task CloseAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+}

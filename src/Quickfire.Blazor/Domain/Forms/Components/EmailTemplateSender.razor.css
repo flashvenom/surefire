@@ -1,0 +1,345 @@
+.template-manager {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.template-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    height: 100%;
+}
+
+.template-list-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.template-sender-section {
+    height: fit-content;
+}
+
+.sender-header {
+    margin-bottom: 24px;
+}
+
+.sender-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.sender-form {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 16px;
+}
+    .sender-form .form-group,
+    .sender-form .email-preview,
+    .sender-form .sender-actions {
+        flex: 1;
+        min-width: 250px;
+    }
+.email-preview {
+    border-radius: 8px;
+    background-color:#f1f1f1;
+    padding:15px;
+    box-shadow: 0px 0px 6px #9b9b9b;
+}
+
+.email-preview h4 {
+    margin: 0 0 16px 0;
+    font-size: 1.1rem;
+    color: var(--neutral-foreground-rest);
+}
+
+.preview-subject {
+    margin-bottom: 16px;
+}
+
+.preview-subject label,
+.preview-body label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--neutral-foreground-hint);
+    margin-bottom: 4px;
+}
+
+.preview-content {
+    background: white;
+    border-radius: 4px;
+    padding: 16px;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.sender-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.template-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.template-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--neutral-foreground-rest);
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    gap: 16px;
+    color: var(--neutral-foreground-hint);
+}
+
+.no-templates {
+    text-align: center;
+    padding: 60px;
+    color: var(--neutral-foreground-hint);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.no-templates p {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.status-badge.active {
+    background-color: var(--accent-fill-rest);
+    color: white;
+}
+
+.status-badge.inactive {
+    background-color: var(--neutral-fill-rest);
+    color: var(--neutral-foreground-rest);
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--neutral-stroke-rest);
+}
+
+.dialog-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.dialog-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--neutral-stroke-rest);
+}
+
+.template-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-top-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.name-field {
+    flex: 2;
+}
+
+.description-field {
+    flex: 3;
+}
+
+.status-toggle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-top: 20px;
+}
+
+.form-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--neutral-stroke-rest);
+    margin: 10px 0;
+}
+
+.subject-field ::deep input {
+    font-size: 1.2rem;
+    font-weight: 500;
+    padding: 12px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.status-help {
+    font-size: 0.85rem;
+    color: var(--neutral-foreground-hint);
+    margin-top: 4px;
+}
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.editor-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--neutral-foreground-rest);
+}
+
+.editor-wrapper {
+    border: 1px solid var(--neutral-stroke-rest);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+::deep .e-richtexteditor {
+    border: none;
+}
+
+::deep .e-toolbar {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--neutral-stroke-rest);
+    background-color: var(--neutral-layer-1);
+}
+
+::deep .e-content {
+    border-radius: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .form-top-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .status-toggle {
+        padding-top: 0;
+    }
+}
+
+/* Template Form Styles */
+.template-form {
+    background: var(--neutral-layer-2);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.form-header h4 {
+    margin: 0;
+}
+
+.form-top-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-divider {
+    border: none;
+    border-top: 1px solid var(--neutral-stroke-divider-rest);
+    margin: 24px 0;
+}
+
+.editor-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.editor-wrapper {
+    border: 1px solid var(--neutral-stroke-input-rest);
+    border-radius: 4px;
+}
+
+.status-help {
+    display: block;
+    font-size: 12px;
+    color: var(--neutral-foreground-hint);
+    margin-top: 4px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .form-top-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1200px) {
+    .template-sections {
+        grid-template-columns: 1fr;
+    }
+} 

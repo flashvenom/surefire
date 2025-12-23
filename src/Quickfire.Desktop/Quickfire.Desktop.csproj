@@ -1,0 +1,178 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows10.0.19041.0</TargetFrameworks>
+    <UseMaui>true</UseMaui>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Quickfire.Desktop</RootNamespace>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCssItems>false</EnableDefaultCssItems>
+    <Nullable>enable</Nullable>
+
+    <!-- Display name -->
+    <ApplicationTitle>Quickfire</ApplicationTitle>
+
+    <!-- App Identifier -->
+    <ApplicationId>com.flashvenom.quickfire</ApplicationId>
+
+    <!-- Versions -->
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+
+    <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
+    <WindowsPackageType>None</WindowsPackageType>
+
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+    <QuickfirePublishDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\build\desktop\'))</QuickfirePublishDir>
+    <PrepareForBuildDependsOn>$(PrepareForBuildDependsOn);PrepareQuickfireHostPackage</PrepareForBuildDependsOn>
+    <Description>Commercial insurance agency management suite with extensive third party API support.</Description>
+    <Copyright>2025</Copyright>
+    <PackageProjectUrl>https://quickfireams.com</PackageProjectUrl>
+    <PackageIcon>appicon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/flashvenom/quickfire</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>insurance;ams;blazor</PackageTags>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+  </PropertyGroup>
+
+  <!--<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-ios|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-maccatalyst|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-windows10.0.19041.0|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-ios|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-maccatalyst|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>-->
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-windows10.0.19041.0|AnyCPU'">
+    <ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+	
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+	  <ApplicationIcon>Resources\AppIcon\appicon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <QuickfireTrayProject>$(MSBuildProjectDirectory)\..\Quickfire.Tray\Quickfire.Tray.csproj</QuickfireTrayProject>
+    <QuickfireTrayOutputDir>$(MSBuildProjectDirectory)\..\Quickfire.Tray\bin\$(Configuration)\</QuickfireTrayOutputDir>
+    <QuickfireTrayPackageFolder>Tray</QuickfireTrayPackageFolder>
+  </PropertyGroup>
+	
+  <ItemGroup>
+    <!-- App Icon -->
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" />
+
+    <!-- Splash Screen -->
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" BaseSize="512,512" />
+
+    <!-- Images -->
+    <MauiImage Include="Resources\Images\*" />
+    <MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
+
+    <!-- Custom Fonts -->
+    <MauiFont Include="Resources\Fonts\*" />
+
+    <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\loot\scripts\open-folder.ps1">
+      <Link>open-folder.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Maui" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.Json" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Office.Interop.Outlook" Version="15.0.4797.1004" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Quickfire.Blazor\Quickfire.Blazor.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <Compile Include="..\Quickfire.Tray\Methods\SysFunction.cs" Link="TrayInterop\SystemControl.cs" />
+    <Compile Include="..\Quickfire.Tray\Methods\OutlookControl.cs" Link="TrayInterop\OutlookControl.cs" />
+    <Compile Include="..\Quickfire.Tray\Methods\WindowsControl.cs" Link="TrayInterop\WindowsControl.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\Raw\appicon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <Target Name="PrepareQuickfireHostPackage" Condition="Exists('$(QuickfirePublishDir)')">
+    <ItemGroup>
+      <_QuickfireHostFiles Include="$(QuickfirePublishDir)\**\*.*" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_QuickfireManifest>$(IntermediateOutputPath)QuickfireHost\manifest.txt</_QuickfireManifest>
+    </PropertyGroup>
+    <Message Importance="High" Text="Staging Quickfire desktop host assets from $(QuickfirePublishDir)" />
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_QuickfireManifest)'))" />
+    <WriteLinesToFile File="$(_QuickfireManifest)" Lines="@(_QuickfireHostFiles->'%(RecursiveDir)%(Filename)%(Extension)')" Overwrite="true" />
+    <ItemGroup>
+      <MauiAsset Include="@(_QuickfireHostFiles)" LogicalName="QuickfireHost\%(RecursiveDir)%(Filename)%(Extension)" />
+      <MauiAsset Include="$(_QuickfireManifest)" LogicalName="QuickfireHost\manifest.txt" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="BuildQuickfireTray" Condition="'$(OS)' == 'Windows_NT' And Exists('$(QuickfireTrayProject)')">
+    <MSBuild Projects="$(QuickfireTrayProject)" Targets="Build" Properties="Configuration=$(Configuration);Platform=AnyCPU" />
+  </Target>
+
+  <Target Name="StageQuickfireTray" AfterTargets="Build" DependsOnTargets="BuildQuickfireTray" Condition="'$(OS)' == 'Windows_NT' And Exists('$(QuickfireTrayOutputDir)')">
+    <ItemGroup>
+      <_QuickfireTrayFiles Include="$(QuickfireTrayOutputDir)\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_QuickfireTrayFiles)" DestinationFolder="$(OutDir)$(QuickfireTrayPackageFolder)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="StageQuickfireTrayPublish" AfterTargets="Publish" DependsOnTargets="BuildQuickfireTray" Condition="'$(OS)' == 'Windows_NT' And Exists('$(QuickfireTrayOutputDir)')">
+    <ItemGroup>
+      <_QuickfireTrayFiles Include="$(QuickfireTrayOutputDir)\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_QuickfireTrayFiles)" DestinationFolder="$(PublishDir)$(QuickfireTrayPackageFolder)\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

@@ -1,0 +1,95 @@
+@namespace Quickfire.Blazor.Domain.Utilities.Components
+
+<div class="policy-premium-summary">
+    <FluentStack Orientation="Orientation.Vertical" Gap="16">
+        <FluentStack Orientation="Orientation.Horizontal" Gap="8" VerticalAlignment="VerticalAlignment.Center" Wrap="true">
+            <FluentButton Appearance="Appearance.Accent"
+                          OnClick="LoadReportAsync"
+                          Disabled="@(!CanRunReport)">
+                <FluentIcon Value="@(new Icons.Filled.Size20.ChartMultiple())" Class="me-1" />
+                Refresh Policy Summary
+            </FluentButton>
+
+            <FluentCheckbox @bind-Checked="ShowAllClients">
+                Show all clients
+            </FluentCheckbox>
+
+            <FluentButton Appearance="Appearance.Outline"
+                          OnClick="DownloadCsvAsync"
+                          Disabled="@(clientSummaries.Count == 0)">
+                <FluentIcon Value="@(new Icons.Filled.Size20.ArrowDownload())" Class="me-1" />
+                Download CSV
+            </FluentButton>
+
+            @if (isLoading)
+            {
+                <FluentProgressRing Size="ProgressRingSize.Small" />
+            }
+
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <span class="status-message">@statusMessage</span>
+            }
+        </FluentStack>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <FluentMessageBar Intent="MessageIntent.Error">
+                <FluentIcon Value="@(new Icons.Filled.Size20.Warning())" Class="me-2" />
+                @errorMessage
+            </FluentMessageBar>
+        }
+        else if (!ShowAllClients && !ClientId.HasValue)
+        {
+            <FluentMessageBar Intent="MessageIntent.Info">
+                <FluentIcon Value="@(new Icons.Filled.Size20.Info())" Class="me-2" />
+                Select a client to view policy premium data.
+            </FluentMessageBar>
+        }
+        else
+        {
+            <div class="summary-cards">
+                <FluentStack Orientation="Orientation.Horizontal" Gap="24" Wrap="true">
+                    <div class="summary-card">
+                        <div class="summary-label">Active Policies (12 months)</div>
+                        <div class="summary-value">@ActivePolicyCount</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Total Premium</div>
+                        <div class="summary-value">@TotalPremiumFormatted</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Average Premium per Policy</div>
+                        <div class="summary-value">@AveragePremiumFormatted</div>
+                    </div>
+                </FluentStack>
+            </div>
+
+            <FluentMessageBar Intent="MessageIntent.Info">
+                <FluentIcon Value="@(new Icons.Filled.Size20.Info())" Class="me-2" />
+                Policies counted are those that were active at any time since @windowStart.ToString("MMM d, yyyy").
+            </FluentMessageBar>
+
+            @if (clientSummaries.Count > 0)
+            {
+                <FluentDataGrid Items="@clientSummaries.AsQueryable()"
+                                TGridItem="PolicyPremiumSummary.ClientSummaryRow"
+                                GridTemplateColumns="minmax(220px, 2fr) minmax(140px, 1fr) minmax(140px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr)"
+                                ShowHover="true">
+                    <PropertyColumn Title="Client" Property="@(row => row.ClientName)" />
+                    <PropertyColumn Title="Lookup Code" Property="@(row => row.LookupCode)" />
+                    <PropertyColumn Title="Active Policies" Property="@(row => row.ActivePolicies)" />
+                    <PropertyColumn Title="Total Premium" Property="@(row => row.TotalPremiumDisplay)" />
+                    <PropertyColumn Title="Average Premium" Property="@(row => row.AveragePremiumDisplay)" />
+                </FluentDataGrid>
+            }
+            else if (!isLoading)
+            {
+                <FluentMessageBar Intent="MessageIntent.Info">
+                    <FluentIcon Value="@(new Icons.Filled.Size20.Info())" Class="me-2" />
+                    No policies were active within the selected window.
+                </FluentMessageBar>
+            }
+        }
+    </FluentStack>
+</div>

@@ -1,0 +1,499 @@
+﻿@page "/Renewals"
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Renewals.Components
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.AspNetCore.Components.Authorization
+@inject StateService _stateService
+@inject RenewalService RenewalService
+@inject NavigationManager NavigationManager
+
+<div class="page-toolbar">
+    <FluentMenuButton ButtonAppearance="Appearance.Accent" Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="NewMasterTaskBtn">
+            <FluentIcon Value="@(new Icons.Regular.Size20.TaskListAdd())" Color="Color.Custom" CustomColor="#000" Slot="start" />
+            Master Task
+        </FluentMenuItem>
+        <FluentMenuItem Id="NewTaskGroupBtn">
+            <FluentIcon Value="@(new Icons.Regular.Size20.GroupList())" Color="Color.Custom" CustomColor="#000" Slot="start" />
+            Task Group
+        </FluentMenuItem>
+    </FluentMenuButton>
+
+    <span class="sf-verthr"></span>
+
+    <span class="sftb toolbar-selected-disabled">
+        <a class="toolbar-link">
+            <FluentIcon Value="@(new Icons.Regular.Size24.TaskListLtr())" />
+            <span class="toolbar-text">Renewals</span>
+        </a>
+    </span>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="sf-chevron" @onclick="PrevMonth"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronLeft())" Color="Color.Custom" CustomColor="#636363" Slot="start" /></a>
+    <a @onclick="() => goToCurrentMonth()" class="toolbar-link-cal" Match="NavLinkMatch.Prefix">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Calendar())" />
+    </a>
+    @if (_stateService.HtmlMonth != 0)
+    {
+        <span class="toolbar-text-cal">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(_stateService.HtmlMonth) @_stateService.HtmlYear</span>
+    }
+    <a class="sf-chevron" @onclick="NextMonth"><FluentIcon Value="@(new Icons.Filled.Size24.ChevronRight())" Slot="start" Color="Color.Custom" CustomColor="#636363" /></a>
+    <span class="spcr"></span>
+    <a @onclick="() => goToCurrentUser()" class="toolbar-link-cal">
+        <FluentIcon Value="@(new Icons.Filled.Size24.Person())" Color="Color.FillInverse" Slot="start" />
+    </a>
+    <select @onchange="OnUserChanged" value="@_stateService.HtmlUser" class="e-input e-dropdownlist">
+        <option value="Everyone">Everyone</option>
+        @if (allUsers != null)
+        {
+            @foreach (var item in allUsers)
+            {
+                <option value="@item.Id">@item.FirstName @item.LastName</option>
+            }
+        }
+    </select>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" href="Renewals/List">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+
+    <a class="toolbar-link toolbar-disabled">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Pen())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a class="toolbar-link" href="/Tasks">
+        <FluentIcon Value="@(new Icons.Regular.Size24.TasksApp())" />
+        <span class="toolbar-text">Task Admin</span>
+    </a>
+
+</div>
+
+<div class="page-content">
+    <div id="filter-results" class="@(_stateService.IsLoading ? "results-off" : "results-on")">
+        <div class="homelist">
+            <table class="sf-table">
+                <thead class="sf-thead">
+                    <tr class="sf-rentable">
+                        <th class="rt-1">Date</th>
+                        <th class="rt-2">Line</th>
+                        <th class="rt-3"><strong>Insured</strong></th>
+                        <th class="rt-4">Status</th>
+                        <th class="rt-5">Labels</th>
+                        <th class="rt-6a">Carrier</th>
+                        <th class="rt-7a">MGA</th>
+                        <th class="rt-8">Policy</th>
+                        <th class="rt-9a">Premium</th>
+                        <th class="rt-10a">Assigned</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_stateService.RenewalList != null)
+                    {
+                        @foreach (var item in _stateService.RenewalList)
+                        {
+                            <tr class="@(item.RenewalId == _stateService.HtmlRenewalId ? "renewal-row-recent" : "") @GetRenewalRowClass(item.RenewalStatus)">
+                                <td class="rdate">@item.RenewalDate.ToString("M/dd")</td>
+                                <td class="sf-td-mono" style="padding:0px 8px;"><ProductIcon ProductCode="@item.ProductLineCode" /></td>
+                                <td class="sf-td-bold"><a class="renewalitemlink" @onclick="() => NavToRenewalDetails(item.RenewalId)">@item.ClientName</a></td>
+                                <td class="sf-td-sm">
+
+                                    @if (item.RenewalStatus == "Non-Renewed" || item.RenewalStatus == "Defected" || item.RenewalStatus == "Ghosted" || item.RenewalStatus == "Unplaceable" || item.RenewalStatus == "Unneeded")
+                                    {
+                                        <div class="status-pill status-nonren">@(item.RenewalStatus.ToUpper())</div>
+                                    }
+                                    else
+                                    {
+                                            <div class="status-pill @StringHelper.GetSubmissionStatusPillClass(item.MaxSubmissionStatus)">
+                                                <FluentStack HorizontalGap="0">
+                                                    <div class="status-pill-text">@StringHelper.GetSubmissionStatusPillText(item.MaxSubmissionStatus)</div>
+                                                    <Battery PerComplete="@StringHelper.RenewalProgressPercent(item.TrackTasks)" />
+                                                    <span class="sf-reddot @(item.Submits == 1 ? "rd-1" : item.Submits >= 2 && item.Submits <= 4 ? "rd-2" : item.Submits >= 5 ? "rd-3" : "")">@item.Submits</span>
+                                                </FluentStack>
+                                            </div>
+                                        }
+                                        
+                                    
+                                </td>
+                                
+                                <td class="rt-5">
+                                    @{
+
+                                        var renewalId = item.RenewalId;
+                                        var policyId = item.PolicyId;
+
+                                        var purpleId = "";
+                                        var yellowId = "";
+                                        var greenId = "";
+                                    }
+                                    <FluentStack HorizontalGap="10" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                        <div class="label-cell">
+                                            @if (item.RenewalStatus == "Purple")
+                                            {
+                                            purpleId = $"purple-{renewalId}";
+                                                <FluentIcon Id="@purpleId" Value="@(new Icons.Filled.Size20.Square())" Color="Color.Custom" CustomColor="#6f42c1" Class="warning-icon" />
+                                            <FluentTooltip Anchor="@purpleId">Group A</FluentTooltip>
+                                            }
+                                            else if (item.RenewalStatus == "Yellow")
+                                            {
+                                            yellowId = $"yellow-{renewalId}";
+                                                <FluentIcon Id="@yellowId" Value="@(new Icons.Filled.Size20.Square())" Color="Color.Custom" CustomColor="#ffc107" Class="warning-icon" />
+                                            <FluentTooltip Anchor="@yellowId">Group B</FluentTooltip>
+                                            }
+                                            else if (item.RenewalStatus == "Green")
+                                            {
+                                            greenId = $"green-{renewalId}";
+                                                <FluentIcon Id="@greenId" Value="@(new Icons.Filled.Size20.Square())" Color="Color.Custom" CustomColor="#28a745" Class="warning-icon" />
+                                            <FluentTooltip Anchor="@greenId">Group C</FluentTooltip>
+                                            }
+                                            else
+                                            {
+                                                <FluentIcon Value="@(new Icons.Regular.Size20.LineHorizontal1())" Color="Color.Custom" CustomColor="#ccc" Class="warning-icon" />
+                                            }
+                                        </div>
+                                        
+                                        <div class="label-cell">
+                                            @* Bill Type Icons *@
+                                            @{
+                                                var billType = ResolveBillType(item);
+                                            }
+                                            @if (billType == "Direct")
+                                            {
+                                                var directBillId = $"direct-bill-{renewalId}";
+                                                <FluentIcon Id="@directBillId" Value="@(new Icons.Regular.Size20.BuildingRetailMoney())" Color="Color.Custom" CustomColor="#007acc" Class="warning-icon" />
+                                                <FluentTooltip Anchor="@directBillId">Direct Bill</FluentTooltip>
+                                            }
+                                            else if (billType == "Agency")
+                                            {
+                                                var agencyBillId = $"agency-bill-{renewalId}";
+                                                <FluentIcon Id="@agencyBillId" Value="@(new Icons.Regular.Size20.PersonMoney())" Color="Color.Custom" CustomColor="#28a745" Class="warning-icon" />
+                                                <FluentTooltip Anchor="@agencyBillId">Agency Bill</FluentTooltip>
+                                            }
+                                            else
+                                            {
+                                                <FluentIcon Value="@(new Icons.Regular.Size20.LineHorizontal1())" Color="Color.Custom" CustomColor="#ccc" Class="warning-icon" />
+                                            }
+                                        </div>
+                               
+                                        <div class="label-cell">
+                                            @* Custom Label Icons *@
+                                            @if (item.CustomLabel.HasValue)
+                                            {
+                                                @if (item.CustomLabel == CustomLabel.HartfordServiceCenter)
+                                                {
+                                                    var hartServId = $"hart-serv-{policyId}";
+                                                    <span class="custom-label-icon-fillservice" id="@hartServId">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size20.Briefcase())" Color="Color.Custom" CustomColor="#64408b" />
+                                                    </span>
+                                                    <FluentTooltip Anchor="@hartServId">Hartford Service Center</FluentTooltip>
+                                                }
+                                                else if (item.CustomLabel == CustomLabel.HartfordAgencyService)
+                                                {
+                                                    var hartAgencyId = $"hart-agency-{policyId}";
+                                                    <span class="custom-label-icon-fillagency" id="@hartAgencyId">
+                                                        <FluentIcon Value="@(new Icons.Regular.Size20.Organization())" Color="Color.Custom" CustomColor="#64408b" />
+                                                    </span>
+                                                    <FluentTooltip Anchor="@hartAgencyId">Hartford Agency Service</FluentTooltip>
+                                                }
+                                                
+                                            }
+                                            else
+                                            {
+                                                <FluentIcon Value="@(new Icons.Regular.Size20.LineHorizontal1())" Color="Color.Custom" CustomColor="#CCCCCC" />
+                                            }
+                                        </div>
+                                        <div class="label-cell">
+                                            @if (item.PriorityNeeded)
+                                            {
+                                                var priorityId = $"priority-{renewalId}";
+                                                <span class="warning-ico-big" id="@priorityId">
+                                                    <FluentIcon Value="@(new Icons.Filled.Size20.ErrorCircle())" Color="Color.Custom" CustomColor="#E53935" Class="warning-icon priority-needed" />
+                                                </span>
+                                                <FluentTooltip Anchor="@priorityId">Priority Needed</FluentTooltip>
+                                            }else{
+                                                <FluentIcon Value="@(new Icons.Regular.Size20.LineHorizontal1())" Color="Color.Custom" CustomColor="#ccc" Class="warning-icon" />
+                                            }
+                                        </div>
+                                    </FluentStack>
+                                </td>
+                                <td class="rt-td-sm rt-6"><span class="ellipsis">@StringHelper.CropCarrierName(item.CarrierName)</span></td>
+                                <td class="rt-td-sm rt-7"><span class="ellipsis">@item.WholesalerNickname</span></td>
+                                <td class="rt-td-sm rt-elip"><a href="/Clients/@item.ClientId">@item.PolicyNumber</a></td>
+                                <td class="rt-td-mono rt-9">@item.Premium?.ToString("C0")</td>
+                                <td class="rt-10">
+                                    <div class="ellipsis">
+                                        <img src="@Quickfire.Blazor.Domain.Shared.Helpers.StaffPhotoHelper.BuildUrl(item.AssignedToPictureUrl)" alt="User Image" class="renewal-assignedto" />
+                                        <span class="txt-name">@item.AssignedToFirstName</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10">
+                                <div style="height:25px;" class="txt-cursive">Loading renewals....</div>
+                                <SfSpinner Visible="true"></SfSpinner>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_stateService.PolicyOrphanList != null && _stateService.HtmlUser == "Everyone")
+        {
+            <div class="orphan-list">
+                <div class="txt-section">Policies without Renewals</div>
+                <table>
+                    <thead class="txt-small">
+                        <tr>
+                            <th>Expire</th>
+                            <th>Line</th>
+                            <th>Client</th>
+                            <th>Carrier</th>
+                            <th>Wholesaler</th>
+                            <th>Policy #</th>
+                            <th>Premium</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody class="txt-p">
+                        @foreach (var item in _stateService.PolicyOrphanList)
+                        {
+                            <tr>
+                                <td style="padding: 3px;">@item.ExpirationDate.ToString("MM/dd/yy")</td>
+                                <td style="padding: 3px;">@item.Product?.LineCode</td>
+                                <td style="padding: 3px;"><a href="/Clients/@item.ClientId">@item.Client?.Name</a></td>
+                                <td style="padding: 3px;">@StringHelper.CropCarrierName(item.Carrier?.CarrierName)</td>
+                                <td style="padding: 3px;">@item.Wholesaler?.CarrierNickname</td>
+                                <td style="padding: 3px;"><a href="/Policies/Details/@(item.PolicyId)">@item.PolicyNumber</a></td>
+                                <td style="padding: 3px;">@item.Premium.ToString("C")</td>
+                                <td style="padding: 3px;"><SfButton OnClick="() => CreateAndRedirectToRenewal(item.PolicyId)" CssClass="e-small">Renew</SfButton></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+    private List<ApplicationUser> allUsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Renewals");
+
+        allUsers = await _stateService.AllUsers;
+
+        // Check for query parameters
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).Count > 0)
+        {
+            var queryParams = QueryHelpers.ParseQuery(uri.Query);
+            
+            // Extract month parameter
+            if (queryParams.TryGetValue("month", out var monthParam) && int.TryParse(monthParam, out var month))
+            {
+                _stateService.HtmlMonth = month;
+            }
+            
+            // Extract year parameter
+            if (queryParams.TryGetValue("year", out var yearParam) && int.TryParse(yearParam, out var year))
+            {
+                _stateService.HtmlYear = year;
+            }
+            
+            // Extract user parameter
+            if (queryParams.TryGetValue("user", out var userParam))
+            {
+                _stateService.HtmlUser = userParam;
+            }
+        }
+        // Default to everyone if view isn't already set or user filter is empty/everyone
+        else if (string.IsNullOrEmpty(_stateService.HtmlView) || 
+            string.IsNullOrEmpty(_stateService.HtmlUser))
+        {
+            _stateService.HtmlUser = "Everyone";
+        }
+
+        // Handle month/year if not set
+        if (_stateService.HtmlMonth == 0)
+        {
+            _stateService.HtmlMonth = DateTime.Now.Month;
+            _stateService.HtmlYear = DateTime.Now.Year;
+        }
+
+        // Load the renewal list based on the current filters
+        await LazyLoadRenewalList();
+    }
+
+    private async Task LazyLoadRenewalList()
+    {
+        _stateService.IsLoading = true;
+        StateHasChanged();
+
+        _stateService.RenewalList = await RenewalService.GetFilteredRenewalListAsync(
+            _stateService.HtmlMonth, _stateService.HtmlYear, _stateService.HtmlUser
+        );
+
+        if (_stateService.HtmlUser == "Everyone")
+        {
+            _stateService.PolicyOrphanList = await RenewalService.GetFilteredRenewalOrphanListAsync(_stateService.HtmlMonth, _stateService.HtmlYear);
+        }else{
+            _stateService.PolicyOrphanList.Clear();
+        }
+
+        //await RenewalService.SetSmartLastRenewalPageAsync("list", null, _stateService.HtmlMonth, _stateService.HtmlYear, _stateService.HtmlUser, _stateService.CurrentUser?.Id);
+        _stateService.HtmlView = "list";
+        _stateService.IsLoading = false;
+        StateHasChanged();
+    }
+    private async Task OnUserChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        _stateService.HtmlUser = e.Value.ToString();
+        await LazyLoadRenewalList();
+    }
+    private async Task goToCurrentMonth()
+    {
+        _stateService.HtmlMonth = DateTime.Now.Month;
+        _stateService.HtmlYear = DateTime.Now.Year;
+        await LazyLoadRenewalList();
+    }
+    private async Task goToCurrentUser()
+    {
+        if (_stateService.CurrentUser?.Id != null)
+        {
+            _stateService.HtmlUser = _stateService.CurrentUser.Id;
+            await LazyLoadRenewalList();
+        }
+    }
+    private async Task NextMonth()
+    {
+        if (_stateService.HtmlMonth < 12)
+        {
+            _stateService.HtmlMonth++;
+        }
+        else
+        {
+            _stateService.HtmlMonth = 1;
+            _stateService.HtmlYear++;
+        }
+
+        await LazyLoadRenewalList();
+    }
+    private async Task PrevMonth()
+    {
+        if (_stateService.HtmlMonth > 1)
+        {
+            _stateService.HtmlMonth--;
+        }
+        else
+        {
+            _stateService.HtmlMonth = 12;
+            _stateService.HtmlYear--;
+        }
+
+        await LazyLoadRenewalList();
+    }
+    private void CreateAndRedirectToRenewal(int policyid)
+    {
+        // Redirect to a special page that allows us to pick a TaskGroup
+        Navigation.NavigateTo($"/Renewals/CreateFromPolicyId/{policyid}");
+    }
+    private async Task CreateRenewal(int policyId)
+    {
+        var renewalId = await RenewalService.CreateRenewalFromPolicyAsync(policyId);
+
+        if (renewalId == null || renewalId == 0)
+        {
+            throw new Exception("Failed to create renewal.");
+        }
+
+        Navigation.NavigateTo($"/Renewals/Details/{renewalId}");
+    }
+
+    private void NavToRenewalCreate()
+    {
+        Navigation.NavigateTo("/Renewals/Create");
+    }
+    private void NavToRenewalDetails(int renewalId)
+    {
+        _stateService.HtmlRenewalId = renewalId;
+        _stateService.HtmlView = "details";
+        _stateService.HtmlTab = "tab-1";
+        
+        // Include query parameters to preserve the current filter state
+        Navigation.NavigateTo($"/Renewals/Details/{renewalId}?month={_stateService.HtmlMonth}&year={_stateService.HtmlYear}&user={_stateService.HtmlUser}");
+    }
+    private void GoToMaster() {
+        Navigation.NavigateTo("Renewals/MasterTasks");
+    }
+    private Task HandleOnMenuChanged(MenuChangeEventArgs args)
+    {
+        switch (args.Id)
+        {
+            case "NewMasterTaskBtn":
+                NavigationManager.NavigateTo("/Renewals/MasterTasks");
+                break;
+            case "NewTaskGroupBtn":
+                NavigationManager.NavigateTo("/Renewals/TaskGroupSorter/1");
+                break;
+        }
+        return Task.CompletedTask;
+    }
+    
+    private string? ResolveBillType(RenewalListItemViewModel item)
+    {
+        return NormalizeBillType(item.SettlementBillType)
+            ?? NormalizeBillType(item.RenewalBillType)
+            ?? NormalizeBillType(item.PolicyBillType);
+    }
+
+    private static string? NormalizeBillType(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var normalized = value.Trim().ToLowerInvariant();
+
+        if (normalized.Contains("direct"))
+        {
+            return "Direct";
+        }
+
+        if (normalized.Contains("agency"))
+        {
+            return "Agency";
+        }
+
+        return null;
+    }
+    
+    private string GetRenewalRowClass(string renewalStatus)
+    {
+        return renewalStatus switch
+        {
+            "Non-Renewed" => "renewal-row-non-renewed",
+            "Unneeded" => "renewal-row-unneeded",
+            "Defected" or "Ghosted" or "Unplaceable" => "renewal-row-defected",
+            "Other" => "renewal-row-other",
+            _ => ""
+        };
+    }
+}

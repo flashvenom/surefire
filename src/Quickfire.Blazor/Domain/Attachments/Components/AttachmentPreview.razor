@@ -1,0 +1,110 @@
+﻿@namespace Quickfire.Blazor.Domain.Attachments.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Attachments.Services
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Ember
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Quickfire.Blazor.Domain.Attachments.Components.Dialogs
+@inject EmberService EmberService
+@inject AttachmentService AttachmentService
+@inject StateService StateService
+
+@if (attachment != null)
+{
+    <div class="btn-bar">
+        <div class="attach-buttons">
+            <a @onclick="OpenFile" class="btndiv"><img src="/img/icons/btn-view.jpg" class="img-fluid" /></a>
+            <a href="@(StringHelper.BuildWindowsPath(attachment, false, true))" target="_blank" class="btndiv"><img src="/img/icons/btn-document.jpg" class="img-fluid" /></a>
+            <a @onclick="OpenFolder" class="btndiv"><img src="/img/icons/btn-folder.jpg" class="img-fluid" /></a>
+            <div class="btndiv"><img src="/img/icons/btn-edit.jpg" class="img-fluid" /></div>
+            <div class="btndiv"><img src="/img/icons/btn-download.jpg" class="img-fluid" /></div>
+            <a @onclick="DeleteFile" class="btndiv"><img src="/img/icons/btn-share.jpg" class="img-fluid" /></a>
+        </div>
+    </div>
+    <div class="preview-container">
+        <div class="attachment-description">@attachment.Description</div>
+        <div class="attachment-filename">@attachment.OriginalFileName</div>
+        <FluentButton Appearance="Appearance.Outline" Title="View Document" OnClick="OpenFile"><FluentIcon Value="@(new Icons.Regular.Size28.Document())" Slot="start" />Open</FluentButton>
+
+        <div class="preview-space">
+            @if (attachment.FileFormat.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="attachment-image"><img src="@StringHelper.BuildThumbnailPath(attachment)" class="img-fluid" /></div>
+            }
+        </div>
+        <div class="attachment-details">
+            <p><strong>Filepath:</strong> @attachment.LocalPath</p>
+            <p><strong>File Type:</strong> @attachment.FileFormat</p>
+            <p><strong>Date Created:</strong> @attachment.DateCreated.ToString("MM/dd/yyyy")</p>
+            <p><strong>Created By:</strong> @attachment.UploadedBy?.FirstName</p>
+
+            @if (attachment.Policy != null)
+            {
+                <h3>Policy Details</h3>
+                <p><strong>Product Line:</strong> @attachment.Policy?.Product?.LineNickname</p>
+                <p><strong>Carrier:</strong> @attachment.Policy?.Carrier</p>
+                <p><strong>Wholesaler:</strong> @attachment.Policy?.Wholesaler</p>
+                <p><strong>Policy Number:</strong> <a href="/Policies/Details/@attachment.Policy?.PolicyId">@attachment.Policy?.PolicyNumber</a></p>
+                
+            }
+        </div>
+    </div>
+
+    <DeleteAttachmentDialog 
+        @bind-Hidden="isDeleteDialogHidden"
+        Attachment="attachment"
+        OnConfirm="HandleDeleteConfirmation" />
+}
+else
+{
+    <p>No attachment selected</p>
+}
+
+@code {
+    [Parameter] public int? attachmentId { get; set; }
+    private Attachment attachment;
+    private bool isDeleteDialogHidden = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (attachmentId.HasValue)
+        {
+            attachment = await AttachmentService.GetAttachmentByIdAsync(attachmentId.Value);
+        }
+    }
+
+    private async Task OpenFolder()
+    {
+        await EmberService.WindowsOpenFolder(attachment);
+    }
+
+    private async Task OpenFile()
+    {
+        await EmberService.WindowsOpenFile(attachment);
+    }
+
+    private async Task DeleteFile()
+    {
+        isDeleteDialogHidden = false;
+    }
+
+    private async Task HandleDeleteConfirmation(Attachment attachment)
+    {
+        try
+        {
+            await AttachmentService.DeleteAttachmentAndFileAsync(attachment.AttachmentId);
+            StateService.NotifyAttachmentListUpdated();
+        }
+        catch (Exception ex)
+        {
+            // Handle any errors that occur during deletion
+            Console.WriteLine($"Error deleting attachment: {ex.Message}");
+        }
+    }
+}

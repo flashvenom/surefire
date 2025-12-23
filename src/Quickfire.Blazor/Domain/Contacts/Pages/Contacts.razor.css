@@ -1,0 +1,40 @@
+﻿.no-selection-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--neutral-foreground-rest);
+}
+.sf-verthr2 {
+    display: inline-block;
+    width: 1px;
+    height: 24px;
+    background-color: var(--neutral-stroke-rest);
+    margin: 0 8px;
+}
+.no-selection-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--neutral-foreground-rest);
+}
+
+.sf-verthr2 {
+    display: inline-block;
+    width: 1px;
+    height: 24px;
+    background-color: var(--neutral-stroke-rest);
+    margin: 0 8px;
+}
+.toolbar-link {
+    position: relative;
+    top:2px;
+}
+.toolbar-text {
+    position: relative;
+    top:-5px;
+    left: -1px;
+}

@@ -1,0 +1,188 @@
+﻿.form-doc-list-container {
+    margin-bottom: 20px;
+    /* Ensure the container doesn't affect parent layout */
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.form-doc-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.form-doc-list-title h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.form-doc-list-subtitle {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.form-doc-primary-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.form-doc-loading-state,
+.form-doc-empty-state {
+    border-radius: 12px;
+    padding: 32px 24px;
+    border: 1px dashed #cdd5ff;
+    background: radial-gradient(circle at top, #f7f8ff 0%, #f2f4ff 70%, #ffffff 100%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #4b5563;
+}
+
+.form-doc-empty-state h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #111827;
+}
+
+.form-doc-empty-state p,
+.form-doc-loading-state p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.form-doc-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.form-doc-secondary-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #4b6fff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.form-doc-secondary-link:hover {
+    text-decoration: underline;
+}
+
+.form-doc-list-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.form-doc-count-badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(92, 107, 246, 0.15);
+    font-weight: 600;
+}
+
+.form-doc-list-meta__last {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.form-doc-refreshing-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(92, 107, 246, 0.12);
+    color: #4b5563;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+.form-doc-link {
+    color: #3949ab;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.form-doc-link:hover {
+    text-decoration: underline;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.revision-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0078d4;
+        box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+    }
+
+/* Syncfusion Grid Override Styles */
+.form-doc-list-container .e-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+}
+
+/* Prevent Syncfusion from affecting parent layout */
+.form-doc-list-container .e-grid .e-gridcontent {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.form-doc-list-container .e-grid .e-table {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Ensure the grid container doesn't force parent width changes */
+.form-doc-list-container .e-grid .e-gridheader,
+.form-doc-list-container .e-grid .e-gridcontent,
+.form-doc-list-container .e-grid .e-gridfooter {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Override any Syncfusion styles that might affect the main element */
+.form-doc-list-container .e-grid * {
+    box-sizing: border-box !important;
+}

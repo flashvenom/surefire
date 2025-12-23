@@ -1,0 +1,463 @@
+.activity-log-section {
+    flex: 2;
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+    padding-left: .5rem;
+    /*max-width: 500px;*/
+    margin-left: auto;
+    /*background: linear-gradient(to right, #e7e7e7 0%,#f6f6f6 100%);*/
+    /*height: calc(100vh - 254px);*/
+}
+
+.activity-log-container {
+    /*max-height: calc(100vh - 350px);*/ /* Adjust to fit within window */
+    /*overflow-y: auto;*/
+}
+
+/* Compact style for TaskCompleted activity log */
+.activity-item.taskcompleted .activity-content {
+    padding: 2px 0;
+    font-size: 0.98em;
+    line-height: 1.2;
+}
+
+/* Activity Log Styles */
+.activity-log-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: .25rem;
+}
+
+.activity-log-header h3 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.activity-input-container {
+    width: 100%;
+}
+
+.activity-item {
+    display: flex;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.activity-icon {
+    flex: 0 0 32px;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.activity-date {
+    font-weight: 500;
+}
+
+.activity-source {
+    font-style: italic;
+}
+
+.activity-body {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Activity type specific styling */
+.activity-item.submissionnote {
+    background-color: #f6f6f6;
+}
+
+.activity-item.taskcompleted {
+    background-color: #f1fff8;
+}
+
+.activity-item.statuschange {
+    background-color: #fff9f1;
+}
+
+.activity-item.renewalnote {
+    background-color: #fffff1;
+}
+
+.activity-empty {
+    padding: 1rem;
+    text-align: center;
+    color: #888;
+    font-style: italic;
+}
+
+.system-log-note {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0 0 10px !important;
+    margin: 0 0 0 0 !important;
+    font-size: 0.92em;
+    color: #888;
+    opacity: 0.85;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    border-left: 3px solid #e0e0e0;
+}
+
+.system-log-task {
+    background: linear-gradient(to right, #eaf3fb 0%, #fff 100%) !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0 0 10px !important;
+    margin: 0 0 0 0 !important;
+    font-size: 0.92em;
+    color: #3b82f6;
+    opacity: 0.85;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    border-left: 3px solid #3b82f6 !important;
+}
+
+.system-log-subtask {
+    background: linear-gradient(to right, #f5f5f5 0%, #fff 100%) !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0 0 10px !important;
+    margin: 0 0 0 0 !important;
+    font-size: 0.92em;
+    color: #666;
+    opacity: 0.85;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    border-left: 3px solid #a3a3a3 !important;
+}
+
+.system-log-content {
+    
+}
+
+.system-log-date {
+    font-size: 0.85em;
+    color: #5c5c5c;
+    margin-right: 4px;
+    min-width: 120px;
+}
+.system-log-body {
+    font-size: 0.95em;
+    color: inherit;
+}
+
+.user-note-task, .user-note-subtask {
+    background: #f9f7f4;
+    font-size: 1em;
+    color: #222;
+    font-weight: 500;
+    box-shadow: 0 1px 4px rgba(60, 120, 200, 0.04);
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    min-height: 36px;
+}
+
+.user-note-task .activity-icon, .user-note-subtask .activity-icon {
+    width: 69px;
+    min-width: 69px;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f36c21;
+    z-index: 1;
+    position: static;
+    margin: 0;
+    padding: 0;
+}
+
+.user-note-task .activity-icon svg, .user-note-subtask .activity-icon svg {
+    color: #fff !important;
+    fill: #fff !important;
+    width: 28px;
+    height: 28px;
+    display: block;
+}
+
+.user-note-content-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+    margin-left: 0;
+    padding: 6px 0 6px 16px;
+    flex: 1;
+}
+
+.user-note-date {
+    font-size: 0.85em;
+    color: #6a8bb7;
+    margin-bottom: 2px;
+}
+
+.user-note-body {
+    color: #757575;
+    font-weight: 500;
+}
+
+.user-note-source {
+    font-size: 0.85em;
+    color: #6a8bb7;
+    margin-top: 2px;
+}
+
+.user-note-meta {
+    display: block;
+    font-size: 0.85em;
+    color: #888;
+    font-weight: 400;
+    position: relative;
+    top: -3px;
+}
+
+.txt-section {
+    font-family: "montserrat", sans-serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+/* Timeline styles for activity log */
+.timeline-container {
+    position: relative;
+    padding-left: 5px;
+}
+
+.timeline-row {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+}
+
+.timeline-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #bbb;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e0e0e0;
+    position: absolute;
+    left: 0;
+    top: 8px;
+    z-index: 2;
+}
+
+.dot-orange {
+    background: #f36c21;
+}
+.dot-grey {
+    background: #bdbdbd;
+}
+
+.timeline-row:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 23px;
+    width: 2px;
+    height: calc(100% - 19px);
+    background: #d4d4d4;
+    z-index: 1;
+}
+
+.timeline-content {
+    margin-left: 32px;
+    flex: 1;
+}
+
+.timeline-card {
+    background: transparent;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(60, 120, 200, 0.04);
+    padding: 0px;
+    margin-bottom: 0;
+    padding-bottom: 10px;
+}
+.timeline-card-alt {
+    background: transparent;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(60, 120, 200, 0.04);
+    padding: 0px;
+    margin-bottom: 0;
+}
+
+.timeline-date-header {
+    font-weight: 600;
+    font-size: 1.25em;
+    color: #676e86;
+    margin: 20px 0 15px 0;
+    padding-left: 0px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.timeline-date-text {
+    margin-right: 12px;
+    white-space: nowrap;
+}
+
+.timeline-days-ago {
+    font-size: 0.75em;
+    color: #888;
+    font-weight: 400;
+    margin-right: 12px;
+    white-space: nowrap;
+}
+
+.timeline-date-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, #d4d4d4, transparent);
+    margin-left: auto;
+}
+
+.timeline-user {
+    min-width: 120px;
+    text-align: right;
+    color: #888;
+    font-size: 0.95em;
+    margin-left: 12px;
+    align-self: center;
+}
+
+/* Timeline dot and card color classes for NoteType groupings */
+.dot-usertasknote, .dot-submissionusernote, .dot-userentry {
+    background: #2ecc40;
+}
+.dot-systemlog {
+    background: #e0e0e0;
+}
+.dot-renewalupdate {
+    background: #af58cb;
+}
+.dot-submissionlog {
+    background: #ffd580;
+}
+.dot-usersubtasknote {
+    background: #b3b3b3;
+    width: 6px;
+    height: 6px;
+    border: 0;
+    position: relative;
+    left: 7px;
+    top: 10px;
+    box-shadow: none;
+}
+.card-usertasknote, .card-submissionusernote, .card-userentry {
+    background: #f1fff8;
+    border-left: 4px solid #2ecc40;
+    font-weight: 600;
+    padding: 6px 6px;
+    margin-bottom: 6px;
+}
+.card-usersubtasknote {
+    font-size: .7em;
+    position: relative;
+    top: 0px;
+    left: -20px;
+    padding-bottom: 5px;
+    padding-top: 2px;
+    opacity: 0.6;
+}
+.card-systemlog {
+    font-size: .85em;
+}
+.card-renewalupdate {
+    font-size: 1.2em;
+    font-weight: 600;
+    padding: 6px 6px;
+    margin-bottom: 6px;
+    position:relative;
+    left:-5px;
+}
+    .card-renewalupdate .user-note-meta {
+        font-size: .7em;
+        color: #8b8b8b !important;
+    }
+.card-renewalupdate .user-note-body {
+    color: #af58cb !important;
+}
+.timeline-card .card-renewalupdate .user-note-meta {
+    font-size:.5em !important;
+}
+.card-submissionlog {
+    background: #fff7e6;
+    border-left: 4px solid #ffd580;
+    padding: 4px 8px;
+    margin-bottom: 12px;
+}
+.dot-submissionupdate {
+    background: #0b5394;
+}
+.card-submissionupdate {
+    background: #e7f3fe; /* light blue background */
+    border-left: 4px solid #2196f3; /* standard blue (like info alerts) */
+    padding: 4px 8px;
+    margin-bottom: 12px;
+}
+
+    .card-submissionupdate .user-note-meta {
+        font-size: .7em;
+        color: #0b5394 !important; /* deep blue for text */
+    }
+
+    .card-submissionupdate .user-note-body {
+        color: #0b5394 !important;
+    }
+.dot-systemlog-small {
+    width: 10px !important;
+    height: 10px !important;
+    top: 4px !important;
+    left: 3px !important;
+}
+
+/* User note (green) text bigger and darker */
+.card-usertasknote .user-note-body,
+.card-submissionusernote .user-note-body,
+.card-userentry .user-note-body {
+    color: #1b3a1b;
+    font-size: 1.08em;
+    font-weight: 600;
+}
+
+/* Remove right column space for user notes (if any extra) */
+.timeline-row .timeline-user { display: none; }
+.timeline-row.user-note .timeline-user { display: none; }
+
+/* Orange text for submission notes */
+.card-submissionusernote .user-note-body {
+    color: #1b3a1b !important;
+}
+.acttxt {
+    color: #495057;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+}

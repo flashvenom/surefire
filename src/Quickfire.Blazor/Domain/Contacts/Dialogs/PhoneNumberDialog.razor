@@ -1,0 +1,312 @@
+@namespace Quickfire.Blazor.Domain.Contacts.Components.Dialogs
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Contacts.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components.DesignTokens
+@using Microsoft.AspNetCore.Components.Forms
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+
+<BaseDialog DialogId="@DialogId" 
+Title="@(CurrentPhone?.PhoneNumberId > 0 ? "Edit Phone Number" : "Add Phone Number")"
+@bind-Hidden="Hidden">
+    <ChildContent>
+        @if (EditContext != null)
+        {
+            <EditForm EditContext="@EditContext">
+                <FluentStack Style="min-width: 619px;">
+                    <div class="form-group" style="width:50%">
+                        <SfTextBox Value="@DisplayPhoneNumber"
+                                 ValueChanged="@HandlePhoneInput"
+                                 ValueExpression="@(() => DisplayPhoneNumber)"
+                                 Placeholder="(555) 555-5555" 
+                                 FloatLabelType="FloatLabelType.Always"
+                                 MaxLength="14" />
+                        @if (!string.IsNullOrEmpty(DisplayPhoneNumber))
+                        {
+                            <div class="phone-preview">
+                                <span class="preview-label">Preview:</span>
+                                <span class="preview-number">@FormattedPhoneDisplay</span>
+                                @if (!string.IsNullOrEmpty(CurrentPhone.Extension))
+                                {
+                                    <span class="preview-extension">ext. @CurrentPhone.Extension</span>
+                                }
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(phoneValidationError))
+                        {
+                            <div class="validation-error">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Error" />
+                                <span>@phoneValidationError</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="form-group" style="width:50%">
+                        <SfTextBox id="extension" 
+                                 @bind-Value="CurrentPhone.Extension" 
+                                 Placeholder="Ext" 
+                                 FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                </FluentStack>
+                <FluentStack>
+                    <div class="form-group" style="width:50%">
+                        <SfDropDownList TItem="PhoneType" 
+                                     TValue="PhoneType" 
+                                     DataSource="@(((IEnumerable<PhoneType>)Enum.GetValues(typeof(PhoneType))))" 
+                                     Value="@CurrentPhone.Type" 
+                                     ValueChanged="@((PhoneType val) => CurrentPhone.Type = val)" 
+                                     Placeholder="Phone Type" 
+                                     FloatLabelType="FloatLabelType.Always">
+                        </SfDropDownList>
+                    </div>
+                    @if (CurrentPhone.Type == PhoneType.Other)
+                    {
+                        <div class="form-group" style="width:50%">
+                            <SfTextBox id="typeOther" 
+                                     @bind-Value="CurrentPhone.TypeOther" 
+                                     Placeholder="Specify Type" 
+                                     FloatLabelType="FloatLabelType.Always" />
+                        </div>
+                    }
+                </FluentStack>
+                <div class="form-group" style="padding-top: 10px;">
+                    <FluentCheckbox Label="Can receive SMS messages" @bind-Value="CurrentPhone.SMS" />
+                </div>
+            </EditForm>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" 
+                     OnClick="SavePhoneNumber"
+                     Disabled="@(!IsValidPhoneNumber(DisplayPhoneNumber))">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<style>
+    .phone-preview {
+        margin-top: 4px;
+        font-size: 0.9rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .preview-label {
+        font-weight: 500;
+    }
+
+    .preview-number {
+        color: #0078d4;
+    }
+
+    .preview-extension {
+        color: #666;
+        font-style: italic;
+    }
+
+    .validation-error {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #d13438;
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+</style>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "phone-dialog";
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+    [Parameter] public EventCallback<PhoneNumber> OnSave { get; set; }
+    [Parameter] public int ContactId { get; set; }
+    [Parameter] public PhoneNumber? PhoneForEdit { get; set; } // Data passed from parent
+
+    [Inject] public SurefireDialogService DialogService { get; set; }
+    [Inject] public ContactService ContactService { get; set; }
+
+    public PhoneNumber CurrentPhone { get; private set; } = new PhoneNumber();
+    public EditContext EditContext { get; private set; }
+    public string DisplayPhoneNumber { get; set; } = string.Empty;
+    public string FormattedPhoneDisplay { get; private set; } = "";
+    private string phoneValidationError = "";
+
+    protected override void OnParametersSet()
+    {
+        // Initialize state when the dialog is made visible AND the data context changes
+        if (!Hidden && (PhoneForEdit != CurrentPhone || EditContext == null))
+        {
+            InitializeDialogState();
+        }
+    }
+
+    private void InitializeDialogState()
+    {
+        if (PhoneForEdit != null)
+        {
+            // Edit mode: Create a COPY of the phone to prevent direct modification
+            CurrentPhone = new PhoneNumber
+            {
+                PhoneNumberId = PhoneForEdit.PhoneNumberId,
+                Number = PhoneForEdit.Number,
+                Extension = PhoneForEdit.Extension,
+                IsPrimary = PhoneForEdit.IsPrimary,
+                SMS = PhoneForEdit.SMS,
+                ContactId = PhoneForEdit.ContactId,
+                DateCreated = PhoneForEdit.DateCreated,
+                DateModified = DateTime.UtcNow
+            };
+            DisplayPhoneNumber = PhoneForEdit.Number ?? "";
+        }
+        else
+        {
+            // Add mode: Create a new phone
+            CurrentPhone = new PhoneNumber
+            {
+                ContactId = ContactId,
+                IsPrimary = false,
+                SMS = false,
+                DateCreated = DateTime.UtcNow
+            };
+            DisplayPhoneNumber = "";
+        }
+
+        EditContext = new EditContext(CurrentPhone);
+        UpdateFormattedPhoneDisplay();
+        StateHasChanged();
+    }
+
+    private void HandlePhoneInput(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            DisplayPhoneNumber = "";
+            FormattedPhoneDisplay = "";
+            ValidatePhoneNumber();
+            return;
+        }
+
+        var digitsOnly = new string(input.Where(char.IsDigit).ToArray());
+        
+        if (digitsOnly.Length > 0)
+        {
+            if (digitsOnly.Length <= 3)
+            {
+                DisplayPhoneNumber = $"({digitsOnly}";
+            }
+            else if (digitsOnly.Length <= 6)
+            {
+                DisplayPhoneNumber = $"({digitsOnly.Substring(0, 3)}) {digitsOnly.Substring(3)}";
+            }
+            else
+            {
+                DisplayPhoneNumber = $"({digitsOnly.Substring(0, 3)}) {digitsOnly.Substring(3, 3)}-{digitsOnly.Substring(6, Math.Min(4, digitsOnly.Length - 6))}";
+            }
+        }
+        else
+        {
+            DisplayPhoneNumber = "";
+        }
+
+        FormattedPhoneDisplay = FormatPhoneNumber(DisplayPhoneNumber);
+        ValidatePhoneNumber();
+    }
+
+    private void ValidatePhoneNumber()
+    {
+        if (string.IsNullOrEmpty(DisplayPhoneNumber))
+        {
+            phoneValidationError = "";
+            return;
+        }
+
+        var digitsOnly = new string(DisplayPhoneNumber.Where(char.IsDigit).ToArray());
+        
+        if (digitsOnly.Length < 10)
+        {
+            phoneValidationError = "Phone number must have at least 10 digits";
+        }
+        else if (digitsOnly.Length > 10)
+        {
+            phoneValidationError = "Phone number cannot have more than 10 digits";
+        }
+        else
+        {
+            phoneValidationError = "";
+        }
+    }
+
+    private bool IsValidPhoneNumber(string phoneNumber)
+    {
+        if (string.IsNullOrEmpty(phoneNumber))
+        {
+            return false;
+        }
+
+        var digitsOnly = new string(phoneNumber.Where(char.IsDigit).ToArray());
+        return digitsOnly.Length == 10;
+    }
+
+    private string FormatPhoneNumber(string phoneNumber)
+    {
+        if (string.IsNullOrEmpty(phoneNumber))
+        {
+            return "";
+        }
+
+        var digitsOnly = new string(phoneNumber.Where(char.IsDigit).ToArray());
+        if (digitsOnly.Length == 10)
+        {
+            return $"({digitsOnly.Substring(0, 3)}) {digitsOnly.Substring(3, 3)}-{digitsOnly.Substring(6)}";
+        }
+        return phoneNumber;
+    }
+
+    private string CleanPhoneInput(string phoneInput)
+    {
+        if (string.IsNullOrEmpty(phoneInput))
+            return "";
+            
+        return new string(phoneInput.Where(char.IsDigit).ToArray());
+    }
+    
+    private async Task SavePhoneNumber()
+    {
+        if (EditContext?.Validate() ?? false)
+        {
+            try
+            {
+                CurrentPhone.Number = StringHelper.CleanPhoneNumber(DisplayPhoneNumber);
+                await OnSave.InvokeAsync(CurrentPhone);
+                await CloseDialogAsync();
+            }
+            catch (Exception ex)
+            {
+                phoneValidationError = $"Error saving phone number: {ex.Message}";
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task CancelDialog()
+    {
+        await CloseDialogAsync();
+    }
+
+    // Central method to hide the dialog and notify the parent
+    private async Task CloseDialogAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+
+    private void UpdateFormattedPhoneDisplay()
+    {
+        FormattedPhoneDisplay = FormatPhoneNumber(DisplayPhoneNumber);
+    }
+}

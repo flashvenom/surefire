@@ -1,0 +1,88 @@
+﻿@namespace Quickfire.Blazor.Components.Layout
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Routing
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Logs
+@using Quickfire.Blazor.Data
+@using System.Security.Claims;
+@inject NavigationManager NavigationManager
+@inject SharedService SharedService
+@inject AppJsInterop JsInterop
+@inject ILoggingService _log
+@inject IConfiguration Configuration
+
+
+<AuthorizeView>
+    <Authorized>
+        @if (AppUser != null)
+        {
+            <a href="/Profile" class="profile-gear" @onclick="OnProfileGearClick">
+                <FluentIcon Value="@(new Icons.Regular.Size28.Settings())" Color="Color.Custom" CustomColor="#fff" />
+            </a>
+            <FluentProfileMenu Image="@StaffPhotoHelper.BuildUrl(AppUser.PictureUrl)"
+            Status="@PresenceStatus.Available"
+            HeaderLabel="@companyName"
+            FullName="@(AppUser.FirstName + " " + AppUser.LastName)"
+            Initials="@(AppUser.FirstName[0].ToString().ToUpper() + " " + AppUser.LastName[0].ToString().ToUpper())"
+            EMail="@AppUser.Email"
+            PopoverStyle="min-width: 430px; padding-right:25px; position:relative; top:10px;"
+            OnFooterLinkClick="ManageAccount"
+            OnHeaderButtonClick="LogMeOut" />
+        }
+    </Authorized>
+    <NotAuthorized>
+        <a href="/Account/Login" class="e-icon-btn e-icons">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Person())" />
+        </a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+    private ApplicationUser? AppUser { get; set; }
+    private string companyName = "Quickfire Insurance";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get company name from configuration
+        companyName = Configuration["Agency:Company"] ?? "Quickfire Insurance";
+
+        var user = await SharedService.GetCurrentUserAsync();
+        AppUser = user;
+    }
+
+    public void LogMeOut()
+    {
+        NavigationManager.NavigateTo("/Account/Logout", true); // force navigation to reload the page
+    }
+    public async Task ManageAccount()
+    {
+        await TriggerProfileFirebarAsync();
+        NavigationManager.NavigateTo("/Profile"); // force navigation to reload the page
+    }
+
+    private async Task OnProfileGearClick()
+    {
+        await TriggerProfileFirebarAsync();
+    }
+
+    private async Task TriggerProfileFirebarAsync()
+    {
+        try
+        {
+            await JsInterop.PlayTopBarVideoAsync("Profile");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing top bar animation: {ex.Message}");
+        }
+    }
+}

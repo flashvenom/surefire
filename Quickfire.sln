@@ -1,0 +1,143 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickfire.Desktop", "src\Quickfire.Desktop\Quickfire.Desktop.csproj", "{334C9F6A-D576-B671-BC4B-D95D58AF9203}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickfire.Blazor", "src\Quickfire.Blazor\Quickfire.Blazor.csproj", "{08B991C3-7A88-77D0-2356-4C97D3A1848E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Wiki", "Wiki", "{A9C7BE23-158A-430A-AE9B-64B644AC2360}"
+	ProjectSection(SolutionItems) = preProject
+		docs\wiki\Getting-Started.md = docs\wiki\Getting-Started.md
+		docs\wiki\Home.md = docs\wiki\Home.md
+		docs\wiki\Release-Notes.md = docs\wiki\Release-Notes.md
+		docs\wiki\System-Architecture.md = docs\wiki\System-Architecture.md
+		docs\wiki\_Footer.md = docs\wiki\_Footer.md
+		docs\wiki\_Sidebar.md = docs\wiki\_Sidebar.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Agents", "Agents", "{F109D2E8-EDDF-44AC-85CF-75A2BA654E2B}"
+	ProjectSection(SolutionItems) = preProject
+		docs\wiki\agents\Agent-Prompts.md = docs\wiki\agents\Agent-Prompts.md
+		docs\wiki\agents\Database-Debug-Guide.md = docs\wiki\agents\Database-Debug-Guide.md
+		docs\wiki\agents\OpenAIPro-and-Agent-Stack.md = docs\wiki\agents\OpenAIPro-and-Agent-Stack.md
+		docs\wiki\agents\Roadmap.md = docs\wiki\agents\Roadmap.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Features", "Features", "{47C7EEC0-6D9A-49F6-8C52-84E2FCE2E892}"
+	ProjectSection(SolutionItems) = preProject
+		docs\wiki\features\Clients.md = docs\wiki\features\Clients.md
+		docs\wiki\features\Files-and-Attachments.md = docs\wiki\features\Files-and-Attachments.md
+		docs\wiki\features\Forms-and-ACORD.md = docs\wiki\features\Forms-and-ACORD.md
+		docs\wiki\features\Homepage.md = docs\wiki\features\Homepage.md
+		docs\wiki\features\Integrations.md = docs\wiki\features\Integrations.md
+		docs\wiki\features\Interface.md = docs\wiki\features\Interface.md
+		docs\wiki\features\Proposals-and-Proposler.md = docs\wiki\features\Proposals-and-Proposler.md
+		docs\wiki\features\Renewals-and-Submissions.md = docs\wiki\features\Renewals-and-Submissions.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Guides", "Guides", "{4F96575C-CEE8-4F3A-83F7-C7A9205B8F4B}"
+	ProjectSection(SolutionItems) = preProject
+		docs\wiki\guides\Desktop-Builds.md = docs\wiki\guides\Desktop-Builds.md
+		docs\wiki\guides\Quickfire-Desktop-Builds.md = docs\wiki\guides\Quickfire-Desktop-Builds.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integrations", "Integrations", "{35BE19C5-5E62-4B26-A606-8511441AE2A9}"
+	ProjectSection(SolutionItems) = preProject
+		docs\wiki\integrations\Integration-Architecture.md = docs\wiki\integrations\Integration-Architecture.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Reference", "Reference", "{671F7A11-9119-46C9-A466-C070E50DA50E}"
+	ProjectSection(SolutionItems) = preProject
+		docs\wiki\reference\Binding-Events.md = docs\wiki\reference\Binding-Events.md
+		docs\wiki\reference\Dropdowns.md = docs\wiki\reference\Dropdowns.md
+		docs\wiki\reference\Feature-Map.md = docs\wiki\reference\Feature-Map.md
+		docs\wiki\reference\Product-Types.md = docs\wiki\reference\Product-Types.md
+		docs\wiki\reference\Renewal-Data-Share.md = docs\wiki\reference\Renewal-Data-Share.md
+		docs\wiki\reference\Word-Doc-Integration.md = docs\wiki\reference\Word-Doc-Integration.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quickfire.Tray", "src\Quickfire.Tray\Quickfire.Tray.csproj", "{5A5B9286-22B3-47B5-B0DE-2B21D095BCD1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ref", "Ref", "{3B18023F-EB9B-4590-AE9A-DDA3D611E779}"
+	ProjectSection(SolutionItems) = preProject
+		docs\ref\certificate-editor-field-mapping.md = docs\ref\certificate-editor-field-mapping.md
+		docs\ref\coverage-types-schema.json = docs\ref\coverage-types-schema.json
+		docs\ref\form-field-variables-list.csv = docs\ref\form-field-variables-list.csv
+		docs\ref\ToDo.md = docs\ref\ToDo.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Python", "Python", "{82167FB3-6F94-4CB3-8DFA-E93506B2C036}"
+	ProjectSection(SolutionItems) = preProject
+		loot\py\filter_bad_annots-2.py = loot\py\filter_bad_annots-2.py
+		loot\py\filter_bad_annots.py = loot\py\filter_bad_annots.py
+		loot\py\get_all_metadata.py = loot\py\get_all_metadata.py
+		loot\py\remove_fields.py = loot\py\remove_fields.py
+		loot\py\remove_fields_and_extract_json.py = loot\py\remove_fields_and_extract_json.py
+		loot\py\rename_fields.py = loot\py\rename_fields.py
+		loot\py\rename_fields_unique.py = loot\py\rename_fields_unique.py
+		loot\py\tabula_process_pdf.py = loot\py\tabula_process_pdf.py
+		loot\py\variable-extractor.py = loot\py\variable-extractor.py
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Word", "Word", "{247B6D5A-8481-45E6-9196-9F59874C03C7}"
+	ProjectSection(SolutionItems) = preProject
+		loot\word\clipboard-helper.bas = loot\word\clipboard-helper.bas
+		loot\word\minify-xml.bas = loot\word\minify-xml.bas
+		loot\word\send-doc-as-email.bas = loot\word\send-doc-as-email.bas
+		loot\word\unlock-all-content-controls.bas = loot\word\unlock-all-content-controls.bas
+		loot\word\wrap-controls-with-xml.bas = loot\word\wrap-controls-with-xml.bas
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{F719A4A4-52F1-49FF-BC54-0B9B76A40330}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		loot\install\quickfire-installer.iss = loot\install\quickfire-installer.iss
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{334C9F6A-D576-B671-BC4B-D95D58AF9203}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{334C9F6A-D576-B671-BC4B-D95D58AF9203}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{334C9F6A-D576-B671-BC4B-D95D58AF9203}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{334C9F6A-D576-B671-BC4B-D95D58AF9203}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08B991C3-7A88-77D0-2356-4C97D3A1848E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08B991C3-7A88-77D0-2356-4C97D3A1848E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08B991C3-7A88-77D0-2356-4C97D3A1848E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08B991C3-7A88-77D0-2356-4C97D3A1848E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A5B9286-22B3-47B5-B0DE-2B21D095BCD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A5B9286-22B3-47B5-B0DE-2B21D095BCD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A5B9286-22B3-47B5-B0DE-2B21D095BCD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A5B9286-22B3-47B5-B0DE-2B21D095BCD1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A9C7BE23-158A-430A-AE9B-64B644AC2360} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{F109D2E8-EDDF-44AC-85CF-75A2BA654E2B} = {A9C7BE23-158A-430A-AE9B-64B644AC2360}
+		{47C7EEC0-6D9A-49F6-8C52-84E2FCE2E892} = {A9C7BE23-158A-430A-AE9B-64B644AC2360}
+		{4F96575C-CEE8-4F3A-83F7-C7A9205B8F4B} = {A9C7BE23-158A-430A-AE9B-64B644AC2360}
+		{35BE19C5-5E62-4B26-A606-8511441AE2A9} = {A9C7BE23-158A-430A-AE9B-64B644AC2360}
+		{671F7A11-9119-46C9-A466-C070E50DA50E} = {A9C7BE23-158A-430A-AE9B-64B644AC2360}
+		{3B18023F-EB9B-4590-AE9A-DDA3D611E779} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{82167FB3-6F94-4CB3-8DFA-E93506B2C036} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{247B6D5A-8481-45E6-9196-9F59874C03C7} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{F719A4A4-52F1-49FF-BC54-0B9B76A40330} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1DB27740-CCD5-4B49-8E91-2DF484708326}
+	EndGlobalSection
+EndGlobal

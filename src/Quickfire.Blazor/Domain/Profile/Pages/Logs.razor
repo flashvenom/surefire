@@ -1,0 +1,90 @@
+@page "/Logs"
+@using Quickfire.Blazor.Domain.Logs
+@using Quickfire.Blazor.Domain.Profile.Components
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@inject IToastService ToastService
+@inject ILoggingService LoggingService
+
+<_Toolbar currentView="_Toolbar.ViewMode.Logs" />
+
+<div class="qf-scroll-panel">
+    <div class="qf-scroll-panel__container log-panel">
+        <div class="log-header">Showing the 40 most recent log entries.</div>
+        @if (logs == null)
+        {
+            <FluentProgressRing Width="30px" Color="#1b8ce3" />
+        }
+        else if (!logs.Any())
+        {
+            <span class="log-empty">No log entries found.</span>
+        }
+        else
+        {
+            <div class="log-content">
+                @foreach (var log in logs)
+                {
+                    var formattedTimestamp = LogFormatHelper.FormatTimestamp(log.Timestamp);
+                    var displayLevel = LogFormatHelper.GetDisplayLevel(log.LogLevel.ToString());
+                    var levelCssClass = LogFormatHelper.GetLogLevelCssClass(log.LogLevel.ToString());
+                    <div class="log-entry">
+                        <span class="log-timestamp">[@formattedTimestamp]</span>
+                        <span class="log-level @levelCssClass">@displayLevel:</span>
+                        <span class="log-message">@((MarkupString)FormatLogMessage(log.Message))</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+    public List<Log>? logs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        logs = await LoadRecentLogsAsync();
+    }
+    public async Task<List<Log>> LoadRecentLogsAsync()
+    {
+        try
+        {
+            return await LoggingService.GetRecentLogsAsync(40);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading logs: {ex.Message}");
+            return new List<Log>();
+        }
+    }
+
+    private string FormatLogMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return message;
+
+        // Highlight file paths (C:\ or similar patterns)
+        message = System.Text.RegularExpressions.Regex.Replace(
+            message,
+            @"([A-Za-z]:\\[^\\/:*?""<>|\s]+(?:\\[^\\/:*?""<>|\s]+)*\.?\w*)",
+            "<span class=\"log-path\">$1</span>"
+        );
+
+        // Highlight numbers and IDs
+        message = System.Text.RegularExpressions.Regex.Replace(
+            message,
+            @"\b(\d{1,10})\b",
+            "<span class=\"log-number\">$1</span>"
+        );
+
+        // Highlight common keywords
+        message = System.Text.RegularExpressions.Regex.Replace(
+            message,
+            @"\b(SignalR|connection|timeout|Server|Error|Exception|Failed|Success|Completed|Started|Stopped)\b",
+            "<span class=\"log-keyword\">$1</span>",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase
+        );
+
+        return message;
+    }
+}

@@ -1,0 +1,75 @@
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.AspNetCore.Components
+@inherits ActivityLogBase
+
+<div class="activity-log-section timeline">
+    <div class="activity-log-header">
+        <div class="txt-section acttxt">Activity Log</div>
+        <div class="activity-input-container">
+            <FluentTextField Id="newActivityInput"
+                             Placeholder="Add a note to the activity log..."
+                             @bind-Value="NewActivityNote"
+                             Disabled="@IsAddingNote"
+                             @onkeyup="OnActivityNoteKeyUp"
+                             Style="width:100% !important;">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Add())"
+                            Slot="end"
+                            Color="Color.Neutral"
+                            @onclick="AddActivityNote"
+                            />
+            </FluentTextField>
+        </div>
+    </div>
+    <div class="activity-log-container timeline-container">
+        @if (ActivityItems != null && ActivityItems.Any())
+        {
+            string? lastDate = null;
+            foreach (var itemVm in ActivityItems)
+            {
+                var currentDate = itemVm.FormattedDateFull; // Use the full written date
+                if (currentDate != lastDate)
+                {
+                    <div class="timeline-date-header">
+                        <span class="timeline-date-text">@currentDate</span>
+                        <span class="timeline-days-ago">@itemVm.DaysAgoText</span>
+                    </div>
+                    lastDate = currentDate;
+                }
+                <div class="timeline-row">
+                    <div class="timeline-dot dot-@itemVm.NoteType.ToLower() @(itemVm.NoteType == "systemlog" ? "dot-systemlog-small" : null)"></div>
+                    <div class="timeline-content">
+                        @if (itemVm.NoteType.ToLower() == "usersubtasknote")
+                        {
+                            <div class="timeline-card-alt card-@itemVm.NoteType.ToLower()">
+                                <span class="user-note-body">@itemVm.DisplayContent</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="timeline-card card-@itemVm.NoteType.ToLower()">
+                                <span class="user-note-body">@itemVm.DisplayContent</span>
+                                <span class="user-note-meta">@itemVm.FormattedDate &bull; <strong>@itemVm.DisplaySource</strong></span>
+                            </div>
+                        }
+                    </div>
+                    @if (itemVm.IsUserNote)
+                    {
+                        <div class="timeline-user">@itemVm.DisplaySource</div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="activity-empty">
+                <p>No activity recorded yet for this renewal.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    // All logic in code-behind
+}

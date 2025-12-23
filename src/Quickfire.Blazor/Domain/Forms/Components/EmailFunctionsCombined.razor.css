@@ -1,0 +1,98 @@
+﻿.email-functions-combined {
+    
+}
+
+.template-selector {
+    margin-bottom: 1rem;
+}
+
+.no-selection-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: var(--neutral-foreground-hint);
+    border: 1px dashed var(--neutral-stroke-rest);
+    border-radius: 4px;
+}
+
+.email-template-sender {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sender-form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+    .sender-form-row .form-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+.email-preview-container {
+    border: 1px solid var(--neutral-stroke-rest);
+    border-radius: 10px;
+    padding: .5rem;
+    background-color: #fff;
+}
+
+    .email-preview-container h4 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+
+.preview-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: var(--neutral-foreground-hint);
+}
+
+.preview-subject {
+    margin-bottom: 1rem;
+}
+
+    .preview-subject label {
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+
+.preview-body label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.preview-content {
+    border-top: 1px solid var(--neutral-stroke-rest);
+    padding: 1rem;
+    min-height: 200px;
+    margin-bottom: 1rem;
+    background-color: white;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+.btn-compose {
+    padding: 10px 20px;
+    border: 1px solid #939393;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    color: #494949;
+}
+    .btn-compose:hover {
+        border: 1px solid #959595;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        background-color: #d0d0d0;
+        color: #000000;
+        cursor:pointer;
+    }
+    .efield {
+        width:150px;
+        text-align:center;
+        font-weight:100;
+        color:#494949;
+    }

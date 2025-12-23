@@ -1,0 +1,98 @@
+﻿@page "/"
+@page "/Home"
+@using Quickfire.Blazor.Domain.Home.Components
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Shared.Models
+@inject StateService StateService
+@inherits AppComponentBase
+@implements IDisposable
+
+<PageTitle>Surefire: So hot right now.</PageTitle>
+
+<img src="/img/home/banner-behind.jpg" style="z-index: 1; position: absolute; pointer-events:none;" />
+<img src="/img/home/banner-top.png" class="img-fluid" style="z-index: 199; position: absolute; pointer-events:none;" />
+<img src="/img/home/bottom-right.png" class="bottom-right" style="z-index: 1; position: absolute; pointer-events:none; bottom: -10px;" />
+<div class="page-content">
+    <div class="dashboard">
+        <section class="col col-left">
+            <div class="parCol">
+                <DailyTaskList />
+                <RenewalFlowTasks />
+                <DailyInspiration />
+            </div>
+        </section>
+
+        <section class="col col-middle">
+            <div class="parCol">
+                <div style="height:75px;"></div>
+                <div class="rounded-corn">
+                    <CertificateRequestList />
+                    <LeadsHomeList />
+                </div>
+                <div style="height: 20px;"></div>
+            </div>
+        </section>
+
+        <section class="col col-right">
+            <div class="parCol">
+                <div style="height:75px;"></div>
+                <ExpiringSoon />
+                <IncompleteTasks />
+                <CheatSheet />
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+    [Inject] private AppJsInterop JsInterop { get; set; } = default!;
+    private string? _parColToken;
+    private bool _initialized;
+
+    protected override async Task OnInitializedAsync()
+    {
+        StateService.OnHomepageDataUpdated += HandleHomepageDataUpdated;
+        StateService.OnUserPreferencesChanged += HandleUserPreferencesChanged;
+        
+        await StateService.GetHomepageDataAsync();
+
+        // Set page header and status
+        UpdateHeader?.Invoke("Home");
+        StateService.UpdateStatus($"System operational. Welcome to Quickfire {StateService.SurefireVersion}");
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_initialized)
+        {
+            _initialized = true;
+            await Task.Delay(500);                  // half-second delay
+            _parColToken = await JsInterop.ParallaxInitAsync();
+        }
+    }
+    private void HandleHomepageDataUpdated()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleUserPreferencesChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static bool ShouldShowComponent(HomepageItemSettings settings)
+    {
+        return settings.Vis == HomepageItemVisibility.Visible || settings.Vis == HomepageItemVisibility.Collapsed;
+    }
+
+    public async ValueTask DisposeAsync()          // async disposal
+    {
+        if (_parColToken is not null)
+        {
+            await JsInterop.ParallaxDisposeAsync(_parColToken);
+        }
+
+        StateService.OnHomepageDataUpdated -= HandleHomepageDataUpdated;
+        StateService.OnUserPreferencesChanged -= HandleUserPreferencesChanged;
+    }
+}

@@ -1,0 +1,60 @@
+@page "/Contacts"
+@page "/Contacts/{EntityType}/{EntityId:int}"
+@page "/Contacts/{ContactId:int}"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Contacts.Components
+@using Microsoft.AspNetCore.Components.Routing
+@inherits ContactsPageBase
+
+<div class="page-toolbar">
+    <a class="toolbar-link @(currentView == ViewMode.List ? "toolbar-disabled" : "")" @onclick="@(() => ShowListView())">
+        <FluentIcon Value="@(new Icons.Regular.Size20.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+    <a class="toolbar-link @(currentView == ViewMode.Edit || selectedContactId == 0 ? "toolbar-disabled" : "")" @onclick="@(() => ShowEditView())">
+        <FluentIcon Value="@(new Icons.Regular.Size20.Eye())" />
+        <span class="toolbar-text">View</span>
+    </a>
+    <a class="toolbar-link @(currentView == ViewMode.Create ? "toolbar-disabled" : "")" @onclick="@(() => ShowCreateView())">
+        <FluentIcon Value="@(new Icons.Regular.Size20.Add())" />
+        <span class="toolbar-text">Create</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+</div>
+
+<div class="page-content">
+    <div class="home-list">
+        @switch (currentView)
+        {
+            case ViewMode.List:
+                <List @bind-SelectedContactId="selectedContactId" SearchTerm="@SearchTerm" OnRowSelected="HandleRowSelected" />
+                break;
+
+            case ViewMode.Edit:
+                @if (selectedContactId != 0)
+                {
+                    <View ContactId="@selectedContactId" />
+                }
+                else
+                {
+                    <div class="no-selection-message">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Person())" />
+                        <h3>Select a contact to edit</h3>
+                    </div>
+                }
+                break;
+
+            case ViewMode.Create:
+                <Create 
+                    OnSaved="HandleContactCreated" 
+                    PreSelectedEntityType="@EntityType"
+                    PreSelectedEntityId="@EntityId"
+                    ReturnUrl="@ReturnUrl" />
+                break;
+        }
+    </div>
+</div>

@@ -1,0 +1,475 @@
+@namespace Quickfire.Blazor.Components.Policies.Coverages
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Attachments.Services
+@inject PolicyService PolicyService
+@inject AttachmentService AttachmentService
+@inject AppJsInterop JsInterop
+
+@if (AutoCoverage is not null)
+{
+    <div class="auto-container">
+        <!-- Policy Limits Section -->
+        <FluentCard Class="coverage-section">
+            <div class="section-title">
+                <FluentIcon Value="@(new Icons.Regular.Size20.MoneyCalculator())" Color="Color.Custom" CustomColor="#000" />
+                Policy Limits
+            </div>
+            
+            <div class="field-group">
+                <div class="field-row">
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Combined Single Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="AutoCoverage.CombinedLimit"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">BI Per Person</FluentLabel>
+                        <FluentNumberField @bind-Value="AutoCoverage.BodilyInjuryPerPerson"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">BI Per Accident</FluentLabel>
+                        <FluentNumberField @bind-Value="AutoCoverage.BodilyInjuryPerAccident"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Property Damage</FluentLabel>
+                        <FluentNumberField @bind-Value="AutoCoverage.PropertyDamage"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+            </div>
+        </FluentCard>
+
+        <FluentStack>
+            <!-- Coverage Options Section -->
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" Color="Color.Custom" CustomColor="#000" />
+                    Limits Apply To
+                </div>
+                <FluentStack>
+                    <FluentStack Orientation="Orientation.Vertical" Class="switch-stack">
+                        <div class="switch-container">
+                            <FluentSwitch Value="@(AutoCoverage.ForAny ?? false)" ValueChanged="@(async (bool value) => { AutoCoverage.ForAny = value; await UpdateCoverageAsync(); })" />
+                            <span>1-Any</span>
+                        </div>
+                        <div class="switch-container">
+                            <FluentSwitch Value="@(AutoCoverage.ForOwned ?? false)" ValueChanged="@(async (bool value) => { AutoCoverage.ForOwned = value; await UpdateCoverageAsync(); })" />
+                            <span>2-Owned</span>
+                        </div>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Vertical" Class="switch-stack">
+                        <div class="switch-container">
+                            <FluentSwitch Value="@(AutoCoverage.ForScheduled ?? false)" ValueChanged="@(async (bool value) => { AutoCoverage.ForScheduled = value; await UpdateCoverageAsync(); })" />
+                            <span>7-Scheduled</span>
+                        </div>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Vertical" Class="switch-stack">
+                        <div class="switch-container">
+                            <FluentSwitch Value="@(AutoCoverage.ForHired ?? false)" ValueChanged="@(async (bool value) => { AutoCoverage.ForHired = value; await UpdateCoverageAsync(); })" />
+                            <span>8-Hired</span>
+                        </div>
+
+                        <div class="switch-container">
+                            <FluentSwitch Value="@(AutoCoverage.ForNonOwned ?? false)" ValueChanged="@(async (bool value) => { AutoCoverage.ForNonOwned = value; await UpdateCoverageAsync(); })" />
+                            <span>9-Non-Owned</span>
+                        </div>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+
+            <!-- Additional Insured Section -->
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentAdd())" Color="Color.Custom" CustomColor="#000" />
+                    Additional Insured
+                </div>
+            
+                <div class="field-group">
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(AutoCoverage.AdditionalInsured ?? false)"
+                                      ValueChanged="@(async (bool value) => { AutoCoverage.AdditionalInsured = value; await UpdateCoverageAsync(); })">
+                            Additional Insured Required
+                        </FluentSwitch>
+                    </div>
+                
+                    @if (AutoCoverage.AdditionalInsured == true)
+                    {
+                        <div class="attachment-section @(AutoCoverage.AdditionalInsuredAttachment != null ? "has-file" : "")">
+                            @if (AutoCoverage.AdditionalInsuredAttachment != null)
+                            {
+                                <div class="file-display">
+                                    <div class="file-icon">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentPdf())" />
+                                    </div>
+                                    <div class="file-info">
+                                        <div class="file-name">@AutoCoverage.AdditionalInsuredAttachment.OriginalFileName</div>
+                                        <div class="file-size">Uploaded @AutoCoverage.AdditionalInsuredAttachment.DateCreated.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                    <FluentButton Appearance="Appearance.Outline"
+                                                  OnClick="@(async () => await ViewFile(AutoCoverage.AdditionalInsuredAttachment))"
+                                                  Class="file-action-btn">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" Slot="start" />
+                                        View
+                                    </FluentButton>
+                                    <FluentButton Appearance="Appearance.Outline"
+                                                  OnClick="@(() => RemoveFileAsync("auto-ai"))"
+                                                  Class="file-action-btn">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                                        Remove
+                                    </FluentButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="upload-area">
+                                    <FluentIcon Value="@(new Icons.Regular.Size48.CloudArrowUp())" Class="upload-icon" />
+                                    <div class="upload-text">Drop files here or click to browse</div>
+                                    <div class="upload-hint">Supports PDF, TXT files</div>
+                                    <InputFile OnChange="@(async (e) => await OnFileSelected(e, "auto-ai"))" accept=".pdf,.txt" style="margin-top: 16px;" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </FluentCard>
+
+            <!-- Waiver of Subrogation Section -->
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentAdd())" Color="Color.Custom" CustomColor="#000" />
+                    Waiver of Subrogation
+                </div>
+            
+                <div class="field-group">
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(AutoCoverage.WaiverOfSub ?? false)"
+                                      ValueChanged="@(async (bool value) => { AutoCoverage.WaiverOfSub = value; await UpdateCoverageAsync(); })">
+                            Waiver of Subrogation Required
+                        </FluentSwitch>
+                    </div>
+                
+                    @if (AutoCoverage.WaiverOfSub == true)
+                    {
+                        <div class="attachment-section @(AutoCoverage.WaiverOfSubAttachment != null ? "has-file" : "")">
+                            @if (AutoCoverage.WaiverOfSubAttachment != null)
+                            {
+                                <div class="file-display">
+                                    <div class="file-icon">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentPdf())" />
+                                    </div>
+                                    <div class="file-info">
+                                        <div class="file-name">@AutoCoverage.WaiverOfSubAttachment.OriginalFileName</div>
+                                        <div class="file-size">Uploaded @AutoCoverage.WaiverOfSubAttachment.DateCreated.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                    <FluentButton Appearance="Appearance.Outline"
+                                                  OnClick="@(async () => await ViewFile(AutoCoverage.WaiverOfSubAttachment))"
+                                                  Class="file-action-btn">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" Slot="start" />
+                                        View
+                                    </FluentButton>
+                                    <FluentButton Appearance="Appearance.Outline"
+                                                  OnClick="@(() => RemoveFileAsync("auto-wos"))"
+                                                  Class="file-action-btn">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                                        Remove
+                                    </FluentButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="upload-area">
+                                    <FluentIcon Value="@(new Icons.Regular.Size48.CloudArrowUp())" Class="upload-icon" />
+                                    <div class="upload-text">Drop files here or click to browse</div>
+                                    <div class="upload-hint">Supports PDF, TXT files</div>
+                                    <InputFile OnChange="@(async (e) => await OnFileSelected(e, "auto-wos"))" accept=".pdf,.txt" style="margin-top: 16px;" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </FluentCard>
+        </FluentStack>
+
+        <!-- Drivers Section -->
+        @if (Drivers != null && Drivers.Count > 0)
+        {
+            <div class="drivers-section">
+                <div class="drivers-table-header">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Custom" CustomColor="#000" />
+                    Drivers
+                </div>
+                
+                <table class="drivers-table">
+                    <thead>
+                        <tr>
+                            <th>Driver #</th>
+                            <th>Full Name</th>
+                            <th>Date of Birth</th>
+                            <th>License Number</th>
+                            <th>License State</th>
+                            <th>Gender</th>
+                            <th>Married</th>
+                            <th>License Expiry</th>
+                            <th>Date of Hire</th>
+                            <th>Primary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var driver in Drivers)
+                        {
+                            <tr>
+                                <td><span class="code-cell">@driver.DriverNumberNote</span></td>
+                                <td>@driver.FullName</td>
+                                <td>@(driver.DateOfBirth?.ToString("MM/dd/yyyy"))</td>
+                                <td>@driver.LicenseNumber</td>
+                                <td>@driver.LicenseState</td>
+                                <td>@driver.Gender</td>
+                                <td>@driver.Married</td>
+                                <td>@(driver.LicenseExpiryDate?.ToString("MM/dd/yyyy"))</td>
+                                <td>@(driver.DateOfHire?.ToString("MM/dd/yyyy"))</td>
+                                <td>
+                                    @if (driver.IsPrimaryDriver)
+                                    {
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" Color="Color.Success" />
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <FluentCard Class="coverage-section">
+                <div class="empty-state">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.Person())" Class="empty-state-icon" />
+                    <div>No driver information available</div>
+                </div>
+            </FluentCard>
+        }
+
+        <!-- Vehicles Section -->
+        @if (Vehicles != null && Vehicles.Count > 0)
+        {
+            <div class="vehicles-section">
+                <div class="vehicles-table-header">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.VehicleCar())" Color="Color.Custom" CustomColor="#000" />
+                    Vehicles
+                </div>
+                
+                <table class="vehicles-table">
+                    <thead>
+                        <tr>
+                            <th>Vehicle #</th>
+                            <th>Year</th>
+                            <th>Make</th>
+                            <th>Model</th>
+                            <th>VIN</th>
+                            <th>License Plate</th>
+                            <th>Registration Date</th>
+                            <th>Garaged Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var vehicle in Vehicles)
+                        {
+                            <tr>
+                                <td><span class="code-cell">@vehicle.VehicleNumberNote</span></td>
+                                <td>@vehicle.Year</td>
+                                <td>@vehicle.Make</td>
+                                <td>@vehicle.Model</td>
+                                <td class="vin-cell">@vehicle.VIN</td>
+                                <td>@vehicle.LicensePlate</td>
+                                <td>@(vehicle.RegistrationDate?.ToString("MM/dd/yyyy"))</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(vehicle.GaragedCity) || !string.IsNullOrEmpty(vehicle.GaragedState))
+                                    {
+                                        <span>@vehicle.GaragedCity, @vehicle.GaragedState</span>
+                                    }
+                                    else if (!string.IsNullOrEmpty(vehicle.GaragedAddress))
+                                    {
+                                        <span>@vehicle.GaragedAddress</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <FluentCard Class="coverage-section">
+                <div class="empty-state">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.VehicleCar())" Class="empty-state-icon" />
+                    <div>No vehicle information available</div>
+                </div>
+            </FluentCard>
+        }
+    </div>
+}
+else
+{
+    <div class="loading-spinner">
+        <FluentProgressRing />
+        <span style="margin-left: 12px;">Loading Auto coverage...</span>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int PolicyId { get; set; }
+
+    public AutoCoverage? AutoCoverage { get; set; }
+    public List<Driver> Drivers { get; set; } = new();
+    public List<Vehicle> Vehicles { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        // Load AutoCoverage for this policy
+        AutoCoverage = await PolicyService.GetAutoCoverageByPolicyIdAsync(PolicyId);
+        
+        // If no coverage exists, create one
+        if (AutoCoverage == null)
+        {
+            AutoCoverage = new AutoCoverage
+            {
+                PolicyId = PolicyId,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow,
+                ForAny = false,
+                ForOwned = true,
+                ForScheduled = false,
+                ForHired = false,
+                ForNonOwned = false,
+                AdditionalInsured = false,
+                WaiverOfSub = false
+            };
+            AutoCoverage = await PolicyService.UpsertAutoCoverageAsync(AutoCoverage);
+        }
+
+        // Load Drivers for this policy
+        Drivers = await PolicyService.GetDriversByPolicyIdAsync(PolicyId);
+        
+        // Load Vehicles for this policy
+        Vehicles = await PolicyService.GetVehiclesByPolicyIdAsync(PolicyId);
+    }
+
+    private async Task UpdateCoverageAsync()
+    {
+        if (AutoCoverage != null)
+        {
+            AutoCoverage.DateModified = DateTime.UtcNow;
+            await PolicyService.UpsertAutoCoverageAsync(AutoCoverage);
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e, string attachmentType)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null) return;
+
+            // Save file to uploads directory
+            var uploadsPath = Path.Combine("wwwroot", "uploads");
+            Directory.CreateDirectory(uploadsPath);
+            
+            var fileName = $"{Guid.NewGuid()}_{file.Name}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream); // 10MB limit
+            }
+
+            // Create and assign the attachment
+            var attachment = await AttachmentService.AddPolicyAttachmentAsync(fileName, AutoCoverage!.AutoCoverageId, attachmentType);
+
+            if (attachment != null)
+            {
+                if (attachmentType == "auto-ai")
+                {
+                    AutoCoverage.AdditionalInsuredAttachment = attachment;
+                }
+                else if (attachmentType == "auto-wos")
+                {
+                    AutoCoverage.WaiverOfSubAttachment = attachment;
+                }
+                
+                await PolicyService.UpsertAutoCoverageAsync(AutoCoverage);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveFileAsync(string attachmentType)
+    {
+        try
+        {
+            if (AutoCoverage == null) return;
+
+            if (attachmentType == "auto-ai" && AutoCoverage.AdditionalInsuredAttachment != null)
+            {
+                await AttachmentService.RemovePolicyAttachmentAsync(AutoCoverage.AutoCoverageId, attachmentType);
+                AutoCoverage.AdditionalInsuredAttachment = null;
+            }
+            else if (attachmentType == "auto-wos" && AutoCoverage.WaiverOfSubAttachment != null)
+            {
+                await AttachmentService.RemovePolicyAttachmentAsync(AutoCoverage.AutoCoverageId, attachmentType);
+                AutoCoverage.WaiverOfSubAttachment = null;
+            }
+            
+            await PolicyService.UpsertAutoCoverageAsync(AutoCoverage);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing file: {ex.Message}");
+        }
+    }
+
+    private async Task ViewFile(Attachment attachment)
+    {
+        // Open file in new tab
+        var url = $"/uploads/{attachment.OriginalFileName}";
+        await JsInterop.OpenWindowAsync(url, "_blank");
+    }
+}

@@ -1,0 +1,757 @@
+@page "/Forms/CertificateRequest"
+@page "/Forms/CertificateRequest/{RequestId:int}"
+@using System.Collections.Generic
+@using System.Globalization
+@using System.Linq
+@using System.Net
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Syncfusion.Blazor.Notifications
+@inject FormService FormService
+@inject NavigationManager NavigationManager
+@inherits AppComponentBase
+
+<PageTitle>Certificate Request</PageTitle>
+
+<div class="page-toolbar certificate-toolbar">
+    <a class="tb-link tb-link-first" @onclick="NavigateToList">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+    <a class="tb-link tb-disabled">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+    <a class="tb-link tb-disabled">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+        <span class="toolbar-text">View</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <FluentSearch Placeholder="Search" Disabled="true" />
+    <FluentSelect TOption="string" Placeholder="Status" Disabled="true" Class="toolbar-select">
+        <FluentOption Value="">All statuses</FluentOption>
+    </FluentSelect>
+    <FluentSelect TOption="string" Placeholder="Date range" Disabled="true" Class="toolbar-select">
+        <FluentOption Value="all">All time</FluentOption>
+    </FluentSelect>
+    <FluentButton Appearance="Appearance.Stealth" Disabled="true">
+        Clear
+    </FluentButton>
+
+    <span class="sf-verthr2"></span>
+
+    <FluentButton Appearance="Appearance.Accent"
+                  IconStart="@(new Icons.Regular.Size20.DocumentAdd())"
+                  OnClick="NavigateToNewRequest">
+        New request
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline"
+                  IconStart="@(new Icons.Regular.Size16.ArrowClockwise())"
+                  Disabled="@isLoading"
+                  OnClick="async () => await RefreshCurrentRequestAsync()">
+        Refresh
+    </FluentButton>
+</div>
+
+<div class="request-detail-page">
+    @if (isLoading)
+    {
+        <div class="state-card">
+            <FluentProgressRing Size="ProgressRingSize.Large" />
+            <p>Loading certificate request&hellip;</p>
+        </div>
+    }
+    else if (hasError)
+    {
+        <div class="state-card error">
+            <FluentIcon Value="@(new Icons.Filled.Size20.DismissCircle())" Color="Color.Error" />
+            <h3>We couldn't load this request</h3>
+            <p>@errorMessage</p>
+            <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="RetryLoading">Try again</FluentButton>
+        </div>
+    }
+    else if (showSelectionPrompt)
+    {
+        <div class="state-card empty">
+            <FluentIcon Value="@(new Icons.Regular.Size24.QuestionCircle())" Color="Color.Neutral" />
+            <h3>Please select a certificate from the list</h3>
+            <FluentButton Appearance="Appearance.Accent"
+                          IconStart="@(new Icons.Regular.Size16.List())"
+                          OnClick="NavigateToList">
+                Go to list
+            </FluentButton>
+        </div>
+    }
+    else if (certificateRequest is null)
+    {
+        <div class="state-card empty">
+            <FluentIcon Value="@(new Icons.Regular.Size24.QuestionCircle())" Color="Color.Neutral" />
+            <h3>This certificate request is no longer available</h3>
+            <FluentButton Appearance="Appearance.Accent" OnClick="NavigateBack">Back to list</FluentButton>
+        </div>
+    }
+    else
+    {
+        <div class="request-shell">
+            <div class="request-header">
+                <div class="request-header__main">
+                    <span class="request-header__label">Certificate Request</span>
+                    <h1>@certificateRequest.ClientCompany</h1>
+                    <div class="request-header__meta">
+                        <span>#@certificateRequest.CertificateRequestId</span>
+                        <span>Holder: @certificateRequest.HolderName</span>
+                        <span>@GetSourceLabel(certificateRequest.IsImported)</span>
+                    </div>
+                </div>
+                <div class="request-header__side">
+                    <div class="status-chip status-@GetStatusClass(certificateRequest.Status)">
+                        <span>@FormatStatus(certificateRequest.Status)</span>
+                    </div>
+                    <div class="request-header__dates">
+                        <span>Requested @FormatDateTime(certificateRequest.RequestDate)</span>
+                        @if (certificateRequest.ImportedDate.HasValue)
+                        {
+                            <span>Imported @FormatDateTime(certificateRequest.ImportedDate)</span>
+                        }
+                    </div>
+                    <div class="request-actions">
+                        <FluentButton Appearance="Appearance.Accent"
+                                      IconStart="@(new Icons.Regular.Size16.CheckmarkCircle())"
+                                      Disabled="@(IsCurrentStatus("Approved") || isUpdatingStatus)"
+                                      OnClick="@(() => UpdateStatusAsync("Approved"))">
+                            Approve
+                        </FluentButton>
+                        <FluentButton Appearance="Appearance.Outline"
+                                      IconStart="@(new Icons.Regular.Size16.Warning())"
+                                      Disabled="@(IsCurrentStatus("Review") || isUpdatingStatus)"
+                                      OnClick="@(() => UpdateStatusAsync("Review"))">
+                            Needs review
+                        </FluentButton>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      IconStart="@(new Icons.Filled.Size20.DismissCircle())"
+                                      Disabled="@(IsCurrentStatus("Rejected") || isUpdatingStatus)"
+                                      OnClick="@(() => UpdateStatusAsync("Rejected"))">
+                            Reject
+                        </FluentButton>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-card__label">Holder Address</div>
+                    <div class="summary-card__content">@FormatAddress(certificateRequest.HolderAddress, certificateRequest.HolderCity, certificateRequest.HolderState, certificateRequest.HolderZip)</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-card__label">Holder Contact</div>
+                    <div class="summary-card__content">
+                        <div>@certificateRequest.HolderName</div>
+                        @if (!string.IsNullOrWhiteSpace(certificateRequest.HolderEmail))
+                        {
+                            <a href="mailto:@certificateRequest.HolderEmail">@certificateRequest.HolderEmail</a>
+                        }
+                        else
+                        {
+                            <span class="muted">Email not provided</span>
+                        }
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-card__label">Delivery</div>
+                    <div class="summary-card__content">
+                        <span>Email holder: <strong>@FormatBoolean(certificateRequest.EmailToHolder)</strong></span>
+                        <span>Copy client: <strong>@FormatBoolean(certificateRequest.EmailCopyToClient)</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-layout">
+                <div class="content-main">
+                    <section class="info-section">
+                        <h2>Certificate Information</h2>
+                        <dl class="info-pairs">
+                            <div>
+                                <dt>Status</dt>
+                                <dd>@FormatStatus(certificateRequest.Status)</dd>
+                            </div>
+                            <div>
+                                <dt>Requested</dt>
+                                <dd>@FormatDateTime(certificateRequest.RequestDate)</dd>
+                            </div>
+                            <div>
+                                <dt>Imported</dt>
+                                <dd>@FormatDateTime(certificateRequest.ImportedDate)</dd>
+                            </div>
+                            <div>
+                                <dt>Primary &amp; Non-Contributory</dt>
+                                <dd>@FormatBoolean(certificateRequest.PrimaryNonContributary)</dd>
+                            </div>
+                            <div>
+                                <dt>Waiver of Subrogation (GL)</dt>
+                                <dd>@FormatBoolean(certificateRequest.WaiverSubrogationGL)</dd>
+                            </div>
+                            <div>
+                                <dt>Waiver of Subrogation (WC)</dt>
+                                <dd>@FormatBoolean(certificateRequest.WaiverSubrogationWC)</dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    @if (certificateRequest.HasProject)
+                    {
+                        <section class="info-section">
+                            <h2>Project Details</h2>
+                            <dl class="info-pairs">
+                                <div>
+                                    <dt>Project</dt>
+                                    <dd>@FormatOrPlaceholder(certificateRequest.ProjectName)</dd>
+                                </div>
+                                <div>
+                                    <dt>Number</dt>
+                                    <dd>@FormatOrPlaceholder(certificateRequest.ProjectNumber)</dd>
+                                </div>
+                                <div>
+                                    <dt>Start</dt>
+                                    <dd>@FormatDateTime(certificateRequest.StartDate)</dd>
+                                </div>
+                                <div>
+                                    <dt>End</dt>
+                                    <dd>@FormatDateTime(certificateRequest.EndDate)</dd>
+                                </div>
+                                <div>
+                                    <dt>Location</dt>
+                                    <dd>@FormatOrPlaceholder(certificateRequest.ProjectAddress)</dd>
+                                </div>
+                                <div class="wide">
+                                    <dt>Description</dt>
+                                    <dd>@FormatOrPlaceholder(certificateRequest.Description)</dd>
+                                </div>
+                            </dl>
+                        </section>
+                    }
+
+                    <section class="info-section">
+                        <h2>Internal Notes</h2>
+                        <FluentTextArea @bind-Value="notes"
+                                        @bind-Value:event="oninput"
+                                        Rows="5"
+                                        Placeholder="Add processing steps, follow-up context, or reminders for this request."></FluentTextArea>
+                        <div class="notes-actions">
+                            <FluentButton Appearance="Appearance.Accent"
+                                          IconStart="@(new Icons.Regular.Size16.Save())"
+                                          Disabled="@(!HasNoteChanges || isSavingNotes)"
+                                          OnClick="@SaveNotesAsync">
+                                @(isSavingNotes ? "Saving..." : "Save notes")
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Stealth"
+                                          Disabled="@(!HasNoteChanges || isSavingNotes)"
+                                          OnClick="ResetNotesToOriginal">
+                                Discard changes
+                            </FluentButton>
+                            @if (HasNoteChanges && !isSavingNotes)
+                            {
+                                <span class="notes-hint">Unsaved changes</span>
+                            }
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="content-side">
+                    <div class="side-card">
+                        <h3>Client Contact</h3>
+                        @if (!string.IsNullOrWhiteSpace(certificateRequest.ClientName))
+                        {
+                            <div class="contact-badge">@GetInitials(certificateRequest.ClientName)</div>
+                            <div class="contact-name">@certificateRequest.ClientName</div>
+                            @if (!string.IsNullOrWhiteSpace(certificateRequest.ClientPhone))
+                            {
+                                <div class="contact-meta">@certificateRequest.ClientPhone</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(certificateRequest.ClientEmail))
+                            {
+                                <a class="contact-link" href="mailto:@certificateRequest.ClientEmail">@certificateRequest.ClientEmail</a>
+                            }
+                        }
+                        else
+                        {
+                            <p class="muted">No client contact on file.</p>
+                            <FluentButton Appearance="Appearance.Lightweight" IconStart="@(new Icons.Regular.Size16.Add())" OnClick="NavigateBack">Add contact</FluentButton>
+                        }
+                    </div>
+
+                    <div class="side-card">
+                        <h3>Delivery Preferences</h3>
+                        <ul class="side-list">
+                            <li><span>Email certificate holder</span><strong>@FormatBoolean(certificateRequest.EmailToHolder)</strong></li>
+                            <li><span>Email copy to client</span><strong>@FormatBoolean(certificateRequest.EmailCopyToClient)</strong></li>
+                            <li><span>Needs review</span><strong>@FormatBoolean(IsReviewStatus(certificateRequest.Status))</strong></li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    }
+</div>
+
+<SfToast ID="statusToast" Timeout="3500" @ref="ToastObj">
+    <ToastPosition X="Right" Y="Bottom"></ToastPosition>
+</SfToast>
+
+@code {
+    [Parameter]
+    public int? RequestId { get; set; }
+
+    private CertificateRequest? certificateRequest;
+    private bool isLoading = true;
+    private bool hasError;
+    private bool showSelectionPrompt;
+    private string errorMessage = string.Empty;
+    private string notes = string.Empty;
+    private SfToast? ToastObj;
+    private bool isUpdatingStatus;
+    private bool isSavingNotes;
+    private int? currentRequestId;
+    private static int? LastViewedRequestId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await ResolveRequestIdAsync();
+
+        if (RequestId.HasValue && RequestId.Value > 0)
+        {
+            await LoadCertificateRequestAsync();
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ResolveRequestIdAsync()
+    {
+        if (RequestId.HasValue && RequestId.Value > 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var requests = await FormService.GetAllCertificateRequestsAsync();
+            if (requests is { Count: > 0 })
+            {
+                var pending = requests.FirstOrDefault(r => string.Equals(r.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+                if (pending != null)
+                {
+                    RequestId = pending.CertificateRequestId;
+                    NavigationManager.NavigateTo($"/Forms/CertificateRequest/{RequestId}", true);
+                    return;
+                }
+
+                if (LastViewedRequestId.HasValue)
+                {
+                    var last = requests.FirstOrDefault(r => r.CertificateRequestId == LastViewedRequestId.Value);
+                    if (last != null)
+                    {
+                        RequestId = last.CertificateRequestId;
+                        NavigationManager.NavigateTo($"/Forms/CertificateRequest/{RequestId}", true);
+                        return;
+                    }
+                }
+            }
+
+            showSelectionPrompt = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error resolving certificate request: {ex.Message}");
+            showSelectionPrompt = true;
+        }
+    }
+
+    private async Task LoadCertificateRequestAsync(bool force = false)
+    {
+        if (!RequestId.HasValue || RequestId.Value <= 0)
+        {
+            certificateRequest = null;
+            currentRequestId = null;
+            showSelectionPrompt = true;
+            return;
+        }
+
+        if (!force && currentRequestId == RequestId.Value && certificateRequest is not null)
+        {
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            hasError = false;
+            showSelectionPrompt = false;
+            certificateRequest = await FormService.GetCertificateRequestByIdAsync(RequestId.Value);
+            if (certificateRequest is not null)
+            {
+                notes = certificateRequest.Notes ?? string.Empty;
+                currentRequestId = certificateRequest.CertificateRequestId;
+                LastViewedRequestId = certificateRequest.CertificateRequestId;
+            }
+            else
+            {
+                currentRequestId = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading certificate request: {ex.Message}");
+            hasError = true;
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task RefreshCurrentRequestAsync()
+    {
+        await LoadCertificateRequestAsync(force: true);
+    }
+
+    private async Task RetryLoading()
+    {
+        hasError = false;
+        await LoadCertificateRequestAsync(force: true);
+    }
+
+    private bool HasNoteChanges =>
+        certificateRequest is not null &&
+        !string.Equals(notes ?? string.Empty, certificateRequest.Notes ?? string.Empty, StringComparison.Ordinal);
+
+    private bool IsCurrentStatus(string status) =>
+        certificateRequest is not null &&
+        string.Equals(certificateRequest.Status, status, StringComparison.OrdinalIgnoreCase);
+
+    private async Task UpdateStatusAsync(string status)
+    {
+        if (certificateRequest is null || isUpdatingStatus || IsCurrentStatus(status))
+        {
+            return;
+        }
+
+        isUpdatingStatus = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var success = await FormService.UpdateCertificateRequestStatusAsync(certificateRequest.CertificateRequestId, status, notes);
+
+            if (success)
+            {
+                certificateRequest.Status = status;
+
+                if (status.Equals("Approved", StringComparison.OrdinalIgnoreCase) ||
+                    status.Equals("Completed", StringComparison.OrdinalIgnoreCase))
+                {
+                    certificateRequest.ImportedDate = DateTime.UtcNow;
+                }
+
+                await ShowToastAsync("Success", $"Status updated to {FormatStatus(status)}", "e-toast-success");
+            }
+            else
+            {
+                await ShowToastAsync("Update failed", "We couldn't update the status. Try again.", "e-toast-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating status: {ex.Message}");
+            await ShowToastAsync("Error", ex.Message, "e-toast-danger");
+        }
+        finally
+        {
+            isUpdatingStatus = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SaveNotesAsync()
+    {
+        if (certificateRequest is null || isSavingNotes || !HasNoteChanges)
+        {
+            return;
+        }
+
+        isSavingNotes = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var success = await FormService.UpdateCertificateRequestStatusAsync(certificateRequest.CertificateRequestId, certificateRequest.Status, notes);
+
+            if (success)
+            {
+                certificateRequest.Notes = notes;
+                await ShowToastAsync("Saved", "Notes updated successfully", "e-toast-success");
+            }
+            else
+            {
+                await ShowToastAsync("Save failed", "We couldn't save the notes. Try again.", "e-toast-danger");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving notes: {ex.Message}");
+            await ShowToastAsync("Error", ex.Message, "e-toast-danger");
+        }
+        finally
+        {
+            isSavingNotes = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ResetNotesToOriginal()
+    {
+        if (certificateRequest is null)
+        {
+            return;
+        }
+
+        notes = certificateRequest.Notes ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task ShowToastAsync(string title, string content, string cssClass)
+    {
+        if (ToastObj is null)
+        {
+            return;
+        }
+
+        await ToastObj.ShowAsync(new ToastModel
+        {
+            Title = title,
+            Content = content,
+            CssClass = cssClass
+        });
+    }
+
+    private static string FormatOrPlaceholder(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+    private static string FormatBoolean(bool value) => value ? "Yes" : "No";
+
+    private static string GetSourceLabel(bool isImported) =>
+        isImported ? "External portal" : "Internal";
+
+    private static string GetStatusClass(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return "pending";
+        }
+
+        if (CompletedStatuses.Contains(status))
+        {
+            return "success";
+        }
+
+        if (DeclinedStatuses.Contains(status))
+        {
+            return "danger";
+        }
+
+        if (ReviewStatuses.Contains(status))
+        {
+            return "warn";
+        }
+
+        if (OpenStatuses.Contains(status))
+        {
+            return "warn";
+        }
+
+        return "pending";
+    }
+
+    private static bool IsReviewStatus(string? status) =>
+        !string.IsNullOrWhiteSpace(status) && ReviewStatuses.Contains(status);
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0].Length >= 2 ? parts[0].Substring(0, 2).ToUpperInvariant() : parts[0].ToUpperInvariant();
+        }
+
+        return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
+    }
+
+    private static string FormatStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return "Pending";
+        }
+
+        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(status.ToLowerInvariant());
+    }
+
+    private static string FormatDateTime(DateTime? value) =>
+        value.HasValue ? value.Value.ToLocalTime().ToString("MMM d, yyyy h:mm tt", CultureInfo.InvariantCulture) : "—";
+
+    private static string GetRelativeTime(DateTime? value)
+    {
+        if (!value.HasValue)
+        {
+            return "No timestamp";
+        }
+
+        var normalized = value.Value.Kind switch
+        {
+            DateTimeKind.Utc => value.Value,
+            DateTimeKind.Local => value.Value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+        };
+
+        var delta = DateTime.UtcNow - normalized;
+
+        if (delta.TotalSeconds < -60)
+        {
+            return "Upcoming";
+        }
+
+        if (delta.TotalSeconds < 60)
+        {
+            return "Just now";
+        }
+
+        if (delta.TotalMinutes < 60)
+        {
+            var minutes = Math.Max(1, (int)Math.Floor(delta.TotalMinutes));
+            return $"{minutes} min ago";
+        }
+
+        if (delta.TotalHours < 24)
+        {
+            var hours = Math.Max(1, (int)Math.Floor(delta.TotalHours));
+            return $"{hours} hr ago";
+        }
+
+        if (delta.TotalDays < 7)
+        {
+            var days = Math.Max(1, (int)Math.Floor(delta.TotalDays));
+            return $"{days} day{(days > 1 ? "s" : string.Empty)} ago";
+        }
+
+        if (delta.TotalDays < 31)
+        {
+            var weeks = Math.Max(1, (int)Math.Floor(delta.TotalDays / 7));
+            return $"{weeks} wk{(weeks > 1 ? "s" : string.Empty)} ago";
+        }
+
+        return normalized.ToLocalTime().ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
+    }
+
+    private static MarkupString FormatAddress(string? line1, string? city, string? state, string? zip)
+    {
+        var segments = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(line1))
+        {
+            segments.Add(WebUtility.HtmlEncode(line1));
+        }
+
+        var cityStateParts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            cityStateParts.Add(WebUtility.HtmlEncode(city));
+        }
+
+        if (!string.IsNullOrWhiteSpace(state))
+        {
+            cityStateParts.Add(WebUtility.HtmlEncode(state));
+        }
+
+        var cityState = string.Join(", ", cityStateParts);
+
+        if (!string.IsNullOrWhiteSpace(zip))
+        {
+            cityState = string.IsNullOrWhiteSpace(cityState)
+                ? WebUtility.HtmlEncode(zip)
+                : $"{cityState} {WebUtility.HtmlEncode(zip)}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(cityState))
+        {
+            segments.Add(cityState);
+        }
+
+        if (segments.Count == 0)
+        {
+            return (MarkupString)"<span class=\"muted\">Address not provided</span>";
+        }
+
+        return (MarkupString)string.Join("<br />", segments);
+    }
+
+    private void NavigateToList()
+    {
+        NavigationManager.NavigateTo("/Forms/CertificateRequests");
+    }
+
+    private void NavigateToNewRequest()
+    {
+        NavigationManager.NavigateTo("/Forms/CertificateRequest/New");
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/Forms/CertificateRequests");
+    }
+
+    private static readonly HashSet<string> OpenStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Pending",
+        "In Progress",
+        "Sent",
+        "New"
+    };
+
+    private static readonly HashSet<string> ReviewStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Review",
+        "Needs Review",
+        "Pending Review"
+    };
+
+    private static readonly HashSet<string> CompletedStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Completed",
+        "Approved",
+        "Fulfilled",
+        "Issued",
+        "Signed"
+    };
+
+    private static readonly HashSet<string> DeclinedStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Rejected",
+        "Declined",
+        "Cancelled",
+        "Canceled"
+    };
+}

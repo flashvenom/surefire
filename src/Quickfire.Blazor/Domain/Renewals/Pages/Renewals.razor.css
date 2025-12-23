@@ -1,0 +1,498 @@
+﻿:root .e-dropdownlist {
+    font-size: .8em !important;
+    font-weight: 400;
+    font-weight: normal !important;
+    background-color: transparent !important;
+    border: 0px !important;
+    padding-left: 3px !important;
+    padding-right: 0px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-family: "montserrat", sans-serif;
+    font-size: .8em !important;
+}
+
+:root .e-input {
+    /*padding-left: 9px;
+    padding-right: 22px;
+    height: 30px;*/
+}
+
+:root .sf-eformbld {
+    font-weight: bold !important;
+}
+
+.filter-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+@keyframes blink-fade {
+    0%, 66% {
+        opacity: 0.5;
+    }
+
+    83% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
+.warning-ico-big {
+    position: relative;
+    top: 1px;
+    animation: blink-fade 3s infinite ease-in-out;
+}
+#filter-results {
+    display: block;
+    transition: all 0.2s linear;
+}
+
+.results-on {
+   
+    opacity: 1;
+}
+
+.results-off {
+   
+    opacity: .25;
+}
+
+.results-temp {
+    height: auto;
+    opacity: 1;
+}
+
+
+.selected-on {
+    height: 100%;
+    opacity: 1;
+}
+
+.selected-off {
+    height: 0%;
+    overflow: hidden;
+    opacity: .5;
+}
+.renewalitemlink a:hover {
+    cursor: pointer;
+}
+.renewalitemlink:hover {
+    cursor: pointer;
+}
+
+.spcr {
+    width: 15px;
+}
+
+#renewal-view {
+    display: block;
+    transition: all 0.25s ease-in-out;
+}
+
+.monthholder {
+    width: 100px;
+    text-align: center;
+}
+
+.yearholder {
+    text-align: center;
+}
+
+.userholder {
+}
+
+
+.homelist {
+    background-color: #fff;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0px 0px 10px #ccc;
+}
+
+h1 {
+    font-family: "montserrat", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 2.9em;
+    margin-bottom: 0px;
+}
+
+:root .e-input {
+    padding-left: 9px;
+    border: 2px solid #f1f1f1;
+    padding-right: 22px;
+    height: 30px;
+    background-color: #f1f1f1;
+    color: #3c3c3c !important;
+}
+
+.sf-chevron {
+    position: relative;
+    top: 2px;
+}
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
+}
+
+    select::-ms-expand {
+        display: none;
+    }
+
+.txt-name {
+    font-family: "Segoe UI", -apple-system, blinkMacSystemfont, "Roboto", "Helvetica Neue", sans-serif;
+    font-size: .6em;
+    color: #626262;
+    position: relative;
+    top: -8px;
+    left: -5px;
+}
+
+.renewal-assignedto {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 4px;
+    position: relative;
+    top: 3px;
+}
+
+.toolbar-calendar-calendar {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.toolbar-calendar-selected {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.toolbar-selected-selected {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.toolbar-selected-disabled {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.toolbar-text-cal {
+    color: #3c3c3c;
+    font-family: "montserrat", sans-serif;
+    font-size: .85em;
+    width: 115px;
+    text-align: center;
+    -webkit-user-select: none; /* For Safari */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
+    user-select: none;
+}
+
+.toolbar-link-cal {
+    text-decoration: none;
+}
+
+:root .toolbar-link-cal svg {
+    fill: #636363 !important;
+}
+
+.sftb {
+    position: relative;
+    top: 1px;
+}
+.orphan-list {
+    padding:10px 10px;
+}
+.sf-reddot {
+    background-color: #9f9f9f;
+    font-family: "montserrat", sans-serif;
+    font-weight: 600;
+    font-size: 1.2em;
+    padding: 3px 1px 1px 1px;
+    color: #fff;
+    border-radius: 10px;
+    width: 15px;
+    display: block;
+    text-align: center;
+    position:relative;
+    top:-3px;
+    left: 5px;
+}
+
+.rd-1 {
+    background-color: #0000003b;
+}
+.rd-2 {
+    background-color: #0000003b;
+}
+.rd-3 {
+    background-color: #0000003b;
+}
+.sf-td-bold {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width:180px;
+    max-width:300px;
+}
+.sf-rentable {
+
+}
+.ellipsis2 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width:50px;
+    max-width:300px;
+}
+.page-content {
+    height: calc(100vh - 135px);
+    padding-right:10px;
+}
+
+/* Recently opened renewal row shimmer effect */
+.renewal-row-recent {
+    position: relative;
+    background: linear-gradient(90deg, 
+        rgba(74, 144, 226, 0.1) 0%, 
+        rgba(74, 144, 226, 0.2) 25%, 
+        rgba(74, 144, 226, 0.3) 50%, 
+        rgba(74, 144, 226, 0.2) 75%, 
+        rgba(74, 144, 226, 0.1) 100%);
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Ensure shimmer works with future bound/non-renewed states */
+.renewal-row-recent.renewal-bound {
+    background: linear-gradient(90deg, 
+        rgba(40, 167, 69, 0.1) 0%, 
+        rgba(40, 167, 69, 0.2) 25%, 
+        rgba(40, 167, 69, 0.3) 50%, 
+        rgba(40, 167, 69, 0.2) 75%, 
+        rgba(40, 167, 69, 0.1) 100%);
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+.renewal-row-recent.renewal-non-renewed {
+    background: linear-gradient(90deg, 
+        rgba(108, 117, 125, 0.05) 0%, 
+        rgba(108, 117, 125, 0.1) 25%, 
+        rgba(108, 117, 125, 0.15) 50%, 
+        rgba(108, 117, 125, 0.1) 75%, 
+        rgba(108, 117, 125, 0.05) 100%);
+    animation: shimmer 2s ease-in-out infinite;
+    opacity: 0.5;
+}
+.sf-table {
+    border-spacing: 0;
+    width: 100%;
+}
+
+/* Warning icon styles */
+.warning-icon {
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+/* Non-renewed row transparency */
+.renewal-row-non-renewed {
+    opacity: 0.5;
+}
+
+/* Unneeded row - similar to non-renewed but lighter opacity */
+.renewal-row-unneeded {
+    opacity: 0.5;
+}
+
+/* Defected, Ghosted, Unplaceable rows - light red background */
+.renewal-row-defected {
+    opacity: 0.5;
+    background-color: rgba(220, 53, 69, 0.1); /* Light red */
+}
+
+/* Other status rows - light orange background */
+.renewal-row-other {
+    opacity: 0.5;
+    background-color: rgba(255, 193, 7, 0.15); /* Light orange */
+}
+
+/* Ensure shimmer effects work with new status classes */
+.renewal-row-recent.renewal-row-unneeded {
+    background: linear-gradient(90deg, 
+        rgba(108, 117, 125, 0.02) 0%, 
+        rgba(108, 117, 125, 0.05) 25%, 
+        rgba(108, 117, 125, 0.08) 50%, 
+        rgba(108, 117, 125, 0.05) 75%, 
+        rgba(108, 117, 125, 0.02) 100%);
+    animation: shimmer 2s ease-in-out infinite;
+    opacity: 0.3;
+}
+
+.renewal-row-recent.renewal-row-defected {
+    background: linear-gradient(90deg, 
+        rgba(220, 53, 69, 0.08) 0%, 
+        rgba(220, 53, 69, 0.12) 25%, 
+        rgba(220, 53, 69, 0.18) 50%, 
+        rgba(220, 53, 69, 0.12) 75%, 
+        rgba(220, 53, 69, 0.08) 100%);
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+.renewal-row-recent.renewal-row-other {
+    background: linear-gradient(90deg, 
+        rgba(255, 193, 7, 0.1) 0%, 
+        rgba(255, 193, 7, 0.15) 25%, 
+        rgba(255, 193, 7, 0.2) 50%, 
+        rgba(255, 193, 7, 0.15) 75%, 
+        rgba(255, 193, 7, 0.1) 100%);
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+
+.warning-non-renewed {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.th-labels {
+    
+}
+.label-cell {
+    /*display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;*/
+}
+.rt-1 {
+    width: 40px;
+    overflow:hidden;
+}
+.rt-2 {
+    width: 80px;
+    overflow: hidden;
+}
+.rt-3 {
+    width: 30%;
+    overflow: hidden;
+}
+.rt-4 {
+    width: 150px;
+}
+.rt-5 {
+    width: 15%;
+    padding-left: 20px;
+    padding-right: 20px;
+    text-align: center;
+}
+.rt-6 {
+    width: 10%;
+    padding-left: 10px;
+    background-color: #cccccc39;
+    font-family: "montserrat", sans-serif;
+    padding-top: 3px;
+    min-width: 0;
+    max-width: 90px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rt-6a {
+    width: 10%;
+    padding-left: 10px;
+}
+.rt-7 {
+    width: 10%;
+    padding-left: 10px;
+    background-color: #cccccc39;
+    font-weight: bold;
+    font-family: "montserrat", sans-serif;
+    padding-top: 3px;
+    min-width: 0;
+    max-width: 70px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rt-7a {
+    width: auto;
+    padding-left: 10px;
+}
+.rt-elip {
+    min-width:0;
+    max-width: 70px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sf-td-sm2 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rt-td-sm {
+    font-size: .65em;
+    color: #636363;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.rt-9a {
+    
+}
+.rt-9 {
+    width: 100px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#7c7f84+0,555f69+27,555f69+100 */
+    background: linear-gradient(to right, #7c7f84 0%,#555f69 27%,#555f69 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    text-align: right;
+    padding-right: 15px;
+    padding-left: 10px;
+    border-bottom: 1px solid #00000069;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+.rt-10 {
+    width: 50px;
+    padding-left: 10px;
+}
+.rt-10a {
+    width: 50px;
+    padding-left: 10px;
+}
+.rt-td-sm2 {
+    font-size: 15px;
+    font-weight: bold;
+}
+.rt-td-mono {
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
+    color: #fff !important;
+}

@@ -1,0 +1,79 @@
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+
+<FluentDialog @ref="dialog" Hidden="@Hidden" PreventDismissOnOverlayClick="true">
+    <FluentDialogHeader>
+        <h3>@(IsEditing ? "Edit Task Group" : "Create New Task Group")</h3>
+    </FluentDialogHeader>
+    <FluentDialogBody>
+        <FluentStack Orientation="Orientation.Vertical" Style="gap: 15px;">
+            <FluentTextField @bind-Value="Name" 
+                           Label="Group Name" 
+                           Required="true"
+                           Style="width: 100%;" />
+            <FluentTextArea @bind-Value="Description" 
+                          Label="Description (optional)" 
+                          Style="width: 100%; min-height: 80px;" />
+        </FluentStack>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton OnClick="Cancel">Cancel</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="Save">Save</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public EventCallback<TaskGroup> OnSave { get; set; }
+    
+    private FluentDialog dialog;
+    private bool Hidden { get; set; } = true;
+    private bool IsEditing { get; set; } = false;
+    private int TaskGroupId { get; set; } = 0;
+    private string Name { get; set; } = string.Empty;
+    private string Description { get; set; } = string.Empty;
+
+    public void Show(TaskGroup? taskGroup = null)
+    {
+        if (taskGroup != null)
+        {
+            IsEditing = true;
+            TaskGroupId = taskGroup.TaskGroupId;
+            Name = taskGroup.Name;
+            Description = taskGroup.Description ?? string.Empty;
+        }
+        else
+        {
+            IsEditing = false;
+            TaskGroupId = 0;
+            Name = string.Empty;
+            Description = string.Empty;
+        }
+        
+        Hidden = false;
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(Name)) return;
+
+        var taskGroup = new TaskGroup
+        {
+            TaskGroupId = TaskGroupId,
+            Name = Name,
+            Description = Description
+        };
+
+        await OnSave.InvokeAsync(taskGroup);
+        Cancel();
+    }
+
+    private void Cancel()
+    {
+        Hidden = true;
+        Name = string.Empty;
+        Description = string.Empty;
+        TaskGroupId = 0;
+        StateHasChanged();
+    }
+} 

@@ -1,0 +1,118 @@
+@using Quickfire.Blazor.Domain.Clients.Models
+@using System.Text.RegularExpressions
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Shared.Helpers
+
+<div class="note-card @(Note.Pinned ? "pinned" : "")">
+    <div class="note-header">
+        <div class="note-metadata">
+            <div class="author-info">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Person())" Color="Color.Custom" CustomColor="#555" />
+                <span class="author-name">@StringHelper.GetFirstName(Note.AuthorName)</span>
+            </div>
+            <div class="date-info">
+                <FluentIcon Value="@(new Icons.Regular.Size16.CalendarEmpty())" Color="Color.Custom" CustomColor="#555" />
+                <span class="date">@FormatDate(Note.CreatedAt)</span>
+            </div>
+            @if (Note.ReminderDate.HasValue)
+            {
+                <div class="reminder-info" title="Reminder set for @Note.ReminderDate.Value.ToShortDateString()">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Alert())" Color="Color.Custom" CustomColor="#555" />
+                    <span class="reminder-date">@Note.ReminderDate.Value.ToShortDateString()</span>
+                </div>
+            }
+        </div>
+        <div class="note-actions">
+            <a @onclick="HandleEdit" class="note-btn"><FluentIcon Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Custom" CustomColor="#000" /></a>
+            <a @onclick="HandlePin" class="note-btn"><FluentIcon Value="@(new Icons.Regular.Size16.PinOff())" Color="Color.Custom" CustomColor="#000" /></a>
+            <a @onclick="HandleDelete" class="note-btn"><FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Color="Color.Custom" CustomColor="#000" /></a>
+        </div>
+    </div>
+
+    <div class="note-content">
+        @if (Note.HasMarkdown)
+        {
+            <span class="markdown-content">
+                @((MarkupString)Note.Text)
+            </span>
+        }
+        else
+        {
+            <span class="text-content">
+                @Note.Text
+            </span>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Note.Tags))
+    {
+        <div class="note-tags">
+            @foreach (var tag in ParseTags(Note.Tags))
+            {
+                <span class="tag">@tag</span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public GlobalNote Note { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public Func<Task> OnDelete { get; set; }
+    [Parameter] public Func<Task> OnPin { get; set; }
+
+    private void HandleEdit()
+    {
+        OnEdit.InvokeAsync();
+    }
+
+    private async Task HandlePin()
+    {
+        if (OnPin != null)
+        {
+            await OnPin.Invoke();
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        if (OnDelete != null)
+        {
+            await OnDelete.Invoke();
+        }
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        var now = DateTime.Now;
+        var diff = now - date;
+
+        if (diff.TotalDays < 1)
+        {
+            if (diff.TotalHours < 1)
+            {
+                return $"{(int)diff.TotalMinutes} min ago";
+            }
+            return $"{(int)diff.TotalHours} hours ago";
+        }
+        else if (diff.TotalDays < 7)
+        {
+            return $"{(int)diff.TotalDays} days ago";
+        }
+        else
+        {
+            return date.ToShortDateString();
+        }
+    }
+
+    private List<string> ParseTags(string tags)
+    {
+        if (string.IsNullOrEmpty(tags))
+            return new List<string>();
+
+        return tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => t.Trim())
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
+    }
+} 

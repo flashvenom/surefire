@@ -1,0 +1,444 @@
+﻿.empty-message {
+    padding: 10px;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 15px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.dialog-content {
+    padding: 10px;
+    min-width: 350px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.checkbox-group {
+    margin-top: 15px;
+}
+
+
+/* --------------------------------------------------------- */
+/* SECTION TABLE ------------------------------------------- */
+/* --------------------------------------------------------- */
+.flauxentTable {
+    width: 100%;
+    border-collapse: collapse; /* Essential for clean lines */
+    border-spacing: 0;
+    font-family: var(--body-font, Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif);
+    font-size: var(--type-ramp-base-font-size, 14px);
+    line-height: var(--type-ramp-base-line-height, 20px);
+    color: var(--neutral-foreground-rest, #212121);
+    margin-bottom: .3rem; /* Spacing below the table          */
+}
+
+    /* --- Table Header (thead) ---                          */
+    .flauxentTable thead th {
+        padding: 0px 12px;
+        font-weight: 300;
+        border-bottom: 1px solid #c3c3c3;
+        white-space: nowrap;
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    /* --- Table Body (tbody) ---                            */
+    .flauxentTable tbody tr {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+        /* Zebra striping                                    */
+        .flauxentTable tbody tr:nth-child(even) {
+            background-color: #ffffff2d;
+        }
+
+    .flauxentTable thead th:first-child {
+        padding-left: 10px !important;
+    }
+
+    .flauxentTable tbody td:first-child {
+        padding-left: 10px !important;
+    }
+
+    /* Hover effect                                      */
+    .flauxentTable tbody tr:hover {
+        background-color: #00000010;
+    }
+
+    /* --- Table Cells (td) ---                              */
+    .flauxentTable tbody td {
+        padding: 0px 12px;
+        border-bottom: 1px solid var(--neutral-stroke-divider-rest, #e0e0e0);
+        vertical-align: middle;
+        line-height: var(--type-ramp-base-line-height, 20px);
+    }
+
+    .flauxentTable tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* --- Action Buttons Alignment ---                      */
+    .flauxentTable td:last-child {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+        .flauxentTable td:last-child > fluent-button + fluent-button,
+        .flauxentTable td:last-child > button + button {
+            margin-left: 4px;
+        }
+
+.featuredrow {
+    font-weight: bold;
+    font-size: 1.2em;
+    font-family: 'Montserrat';
+    position: relative;
+    top: 2px;
+}
+
+.shmedium {
+    width: 50px;
+    text-align: center;
+}
+.tlabel {
+
+}
+/* END TABLE -----------------------------------------------  */
+/* ---------------------------------------------------------  */
+.fluent-radio {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: transparent;
+    margin: 0;
+    font: inherit;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #5e5e5e;
+    border-radius: 50%;
+    display: inline-grid;
+    place-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease-in-out;
+    vertical-align: middle;
+    position: relative;
+}
+
+    .fluent-radio::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        transform: scale(0);
+        transition: transform 120ms ease-in-out;
+        background-color: #0078d4; /* Fluent primary blue */
+    }
+
+    .fluent-radio:checked::before {
+        transform: scale(1);
+    }
+
+    .fluent-radio:hover {
+        border-color: #0078d4;
+    }
+
+    .fluent-radio:focus {
+        outline: 2px solid #0078d4;
+        outline-offset: 2px;
+    }
+
+.contact-body {
+    background-color: #fbfbfb;
+    padding: 10px;
+    border-top: 1px solid #cecece;
+    border-left: 1px solid #cecece;
+}
+
+.contact-header {
+    font-family: "montserrat", sans-serif;
+    background-color: #ffffff7e;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    z-index: 300;
+    padding: 3px;
+    border-top-left-radius: 40px;
+    border-left: 1px solid #cecece;
+    background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(234,234,234,1) 82%,rgba(229,229,229,1) 100%);
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#ffffff+0,eaeaea+82,e5e5e5+100 */
+}
+
+.contact-name {
+    font-weight: 800;
+    font-style: normal;
+    font-size: 2.5em;
+    position: relative;
+}
+
+.contact-title {
+    font-family: "montserrat", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 1.3em;
+}
+
+.contact-header-td {
+    padding-left: 20px;
+    position: relative;
+}
+
+.persona-box {
+    font-size: .5em;
+    position: relative;
+}
+
+
+/* Box Sections ------------------------- */
+.sf-section-title {
+    font-family: "montserrat", sans-serif;
+    border-bottom-right-radius: 8px;
+    background-color: #fbfbfb;
+    text-transform: uppercase;
+    border-bottom: 1px solid #00000026;
+    letter-spacing: 2px;
+    padding-right: 10px;
+    padding-bottom: 3px;
+    position: relative;
+    padding-left: 0px;
+    font-weight: 400;
+    font-size: 1em;
+    color: #717171;
+    top: 8px;
+}
+
+.sf-section-container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-top: 16px;
+    padding-left: 0px;
+    border-left: 1px solid #dedede;
+    border-bottom: 1px solid #dedede;
+    border-right: 1px solid #fff;
+    background: linear-gradient(182deg, rgba(219,219,219,1) 0%,rgba(239,239,239,1) 27%,rgba(244,244,244,1) 100%);
+}
+
+.sf-txt-column {
+    font-family: "montserrat", sans-serif;
+    font-weight: 300;
+    font-size: .75em;
+    color: #5f5f5f;
+    text-transform: uppercase;
+}
+
+/* Persona ------------------------- */
+td:first-child .edit-icon-container {
+    bottom: -4px;
+    right: -11px;
+}
+
+td:nth-child(2) .edit-icon-container {
+    top: 30px;
+    right: -30px;
+}
+
+.edit-icon-container {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .edit-icon-container:hover {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+
+/* Buttons ------------------------- */
+.button-row {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+
+/* Layout */
+#firstColumn {
+    flex: 2;
+    min-width: 550px;
+}
+
+#secondColumn {
+    flex: 2;
+    min-width: 300px;
+}
+
+#thirdColumn {
+    flex: 1;
+    min-width: 500px;
+}
+
+.cb {
+    margin-bottom: 10px;
+}
+/*//AI GENERATED*/
+
+.txt-persona {
+    box-shadow: 0px 0px 10px #ccc;
+    font-size: 5em;
+}
+
+.phone-input-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+    .phone-input-container input.sf-textbox {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+
+        .phone-input-container input.sf-textbox:focus {
+            border-color: #0473ce;
+            outline: none;
+        }
+
+.formatted-preview {
+    font-size: 13px;
+    color: #0473ce;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.primary-association {
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.clickable-client {
+    cursor: pointer;
+    color: #0066cc;
+}
+
+    .clickable-client:hover {
+        text-decoration: underline;
+    }
+
+.hint-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.mt-2 {
+    margin-top: 10px;
+}
+
+.mb-2 {
+    margin-bottom: 5px;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.search-spinner {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.search-results-container {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.search-results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .search-results-table th {
+        background-color: #f5f5f5;
+        padding: 8px;
+        text-align: left;
+        font-weight: 500;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .search-results-table td {
+        padding: 8px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+.search-result-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+    .search-result-row:hover {
+        background-color: #f0f7ff;
+    }
+
+.empty-search-results {
+    padding: 15px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.selected-result {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #f0f7ff;
+    border-radius: 4px;
+    border-left: 4px solid #0066cc;
+}
+
+.selected-result-header {
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.selected-result-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.selected-result-parent {
+    font-size: 13px;
+    color: #666;
+}
+
+.mt-4 {
+    margin-top: 20px;
+}
+
+.mb-3 {
+    margin-bottom: 15px;
+}
+.page-content {
+    padding-left: 5px;
+}

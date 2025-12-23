@@ -1,0 +1,598 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.FluentUI.AspNetCore.Components
+@using System.ComponentModel.DataAnnotations
+@using System.IO
+@using System.Linq
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using System.Timers
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Carriers.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@inherits AppComponentBase
+@inject CarrierService CarrierService
+@inject IWebHostEnvironment WebHostEnvironment
+
+<div class="layout-flow">
+   <FluentStack HorizontalGap="20">
+        <div class="surface-card create-form-card">
+            <h1>Create New Carrier</h1>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+            <EditForm EditContext="@editContext" OnValidSubmit="CreateCarrierAsync">
+                <DataAnnotationsValidator />
+                <div class="form-stack">
+                    <div class="ts"></div>
+                    <FluentTextField @bind-Value="createModel.CarrierName" @oninput="HandleCarrierNameInput" Label="Carrier name" Required="true" />
+                    <ValidationMessage For="@(() => createModel.CarrierName)" />
+                    <div class="ts"></div>
+                    <FluentTextField @bind-Value="createModel.CarrierNickname" Label="Nickname" />
+
+                    <FluentTextField Style="flex:1" @bind-Value="createModel.LookupCode" Label="Lookup code" Required="true" />
+
+                    <ValidationMessage For="@(() => createModel.LookupCode)" />
+                </div>
+
+                <div class="form-actions">
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Disabled="isSaving">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Save())" Slot="start" />
+                        Create carrier
+                    </FluentButton>
+                </div>
+            </EditForm>
+        </div>
+
+        <div class="surface-card carrier-directory-card">
+            <div class="directory-card-header">
+                <h2>Carrier Directory</h2>
+                <FluentBadge Appearance="Appearance.Accent">@filteredDirectoryEntries.Count / @directorySuggestionLimit</FluentBadge>
+            </div>
+            @if (isDirectoryLoading)
+            {
+                <div class="lookup-progress">
+                    <FluentProgressRing Size="ProgressRingSize.Small" />
+                    <span>Loading carrier directory...</span>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(directoryLoadError))
+            {
+                <div class="alert alert-danger">@directoryLoadError</div>
+            }
+            else
+            {
+                <p class="directory-help">Start typing a carrier name to see matches from the curated directory.</p>
+                @if (ShouldShowDirectorySuggestions)
+                {
+                    <div class="carrier-suggestions">
+                        @foreach (var suggestion in filteredDirectoryEntries)
+                        {
+                            <button type="button"
+                                    class="carrier-suggestion"
+                                    disabled="@isSaving"
+                                    @onclick="async () => await CreateCarrierFromDirectoryAsync(suggestion)">
+                                <div class="suggestion-name">@suggestion.CompanyName</div>
+                                <div class="suggestion-meta">
+                                    @if (!string.IsNullOrWhiteSpace(suggestion.City) || !string.IsNullOrWhiteSpace(suggestion.State))
+                                    {
+                                        <span>@FormatLocation(suggestion)</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(suggestion.Naic))
+                                    {
+                                        <span>NAIC: @suggestion.Naic</span>
+                                    }
+                                    @if (suggestion.Emails?.Count > 0)
+                                    {
+                                        <span>@suggestion.Emails.Count email@(suggestion.Emails.Count == 1 ? string.Empty : "s")</span>
+                                    }
+                                </div>
+                            </button>
+                        }
+                    </div>
+                }
+                else if (!string.IsNullOrWhiteSpace(createModel.CarrierName))
+                {
+                    <div class="directory-empty">
+                        No carriers found for "<strong>@createModel.CarrierName</strong>".
+                    </div>
+                }
+                else
+                {
+                    <div class="directory-empty">Enter a carrier name to view matches.</div>
+                }
+            }
+        </div>
+    </FluentStack>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<int> CarrierCreated { get; set; }
+
+    private CarrierCreateModel createModel = new();
+    private EditContext editContext = default!;
+    private bool isSaving;
+    private string? errorMessage;
+    private bool isDirectoryLoading;
+    private string? directoryLoadError;
+    private IReadOnlyList<CarrierDirectoryEntry> allDirectoryEntries = Array.Empty<CarrierDirectoryEntry>();
+    private List<CarrierDirectoryEntry> filteredDirectoryEntries = new();
+    private const int directorySuggestionLimit = 8;
+    private System.Timers.Timer? directorySearchDebounceTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        editContext = new EditContext(createModel);
+        ResetLookupState();
+        
+        // Initialize the debounce timer
+        directorySearchDebounceTimer = new System.Timers.Timer(100); // 100ms debounce
+        directorySearchDebounceTimer.Elapsed += DirectorySearchTimerElapsed;
+        directorySearchDebounceTimer.AutoReset = false;
+        
+        await LoadCarrierDirectoryAsync();
+    }
+
+    private bool ShouldShowDirectorySuggestions => filteredDirectoryEntries.Count > 0;
+
+    private async Task CreateCarrierAsync()
+    {
+        errorMessage = null;
+
+        if (!editContext.Validate())
+        {
+            errorMessage = "Please fix the validation errors before creating the carrier.";
+            return;
+        }
+
+        var lookupCode = createModel.LookupCode?.Trim() ?? string.Empty;
+        createModel.LookupCode = lookupCode;
+
+        if (await LookupCodeExistsAsync(lookupCode))
+        {
+            errorMessage = "Lookup code already exists!";
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            var carrier = new Carrier
+            {
+                CarrierName = createModel.CarrierName,
+                LookupCode = lookupCode,
+                CarrierNickname = createModel.CarrierNickname,
+                IssuingCarrier = true,
+                Admitted = true
+            };
+
+            var newId = await CarrierService.CreateCarrierReturnIdAsync(carrier);
+
+            await CarrierCreated.InvokeAsync(newId);
+
+            createModel = new CarrierCreateModel();
+            editContext = new EditContext(createModel);
+            ResetLookupState();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "We couldn't create the carrier right now. Please try again.";
+            Console.WriteLine($"Error creating carrier: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCarrierDirectoryAsync()
+    {
+        try
+        {
+            isDirectoryLoading = true;
+            directoryLoadError = null;
+
+            var webRoot = WebHostEnvironment.WebRootPath;
+            if (string.IsNullOrWhiteSpace(webRoot))
+            {
+                directoryLoadError = "Unable to locate the carrier directory (web root missing).";
+                return;
+            }
+
+            var directoryPath = Path.Combine(webRoot, "files", "carrier_database.json");
+            if (!File.Exists(directoryPath))
+            {
+                directoryLoadError = "Carrier directory file is missing.";
+                return;
+            }
+
+            var json = await File.ReadAllTextAsync(directoryPath);
+            var entries = JsonSerializer.Deserialize<List<CarrierDirectoryEntry>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? new List<CarrierDirectoryEntry>();
+
+            allDirectoryEntries = entries
+                .Where(entry => !string.IsNullOrWhiteSpace(entry.CompanyName))
+                .OrderBy(entry => entry.CompanyName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            UpdateDirectorySuggestions(createModel.CarrierName);
+        }
+        catch (Exception ex)
+        {
+            directoryLoadError = "Unable to load the carrier directory.";
+            Console.WriteLine($"Failed to load carrier directory: {ex.Message}");
+        }
+        finally
+        {
+            isDirectoryLoading = false;
+            if (!isDisposed)
+            {
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void HandleCarrierNameInput(ChangeEventArgs args)
+    {
+        var newValue = args?.Value?.ToString() ?? string.Empty;
+        createModel.CarrierName = newValue;
+        
+        // Reset the timer on each keystroke
+        directorySearchDebounceTimer?.Stop();
+        
+        if (string.IsNullOrWhiteSpace(newValue))
+        {
+            filteredDirectoryEntries.Clear();
+            StateHasChanged();
+            return;
+        }
+        
+        // Start the timer with the current value
+        directorySearchDebounceTimer?.Start();
+    }
+    
+    private async void DirectorySearchTimerElapsed(object sender, ElapsedEventArgs e)
+    {
+        await InvokeAsync(() =>
+        {
+            UpdateDirectorySuggestions(createModel.CarrierName);
+            StateHasChanged();
+        });
+    }
+
+    private void UpdateDirectorySuggestions(string? term)
+    {
+        if (string.IsNullOrWhiteSpace(term) || allDirectoryEntries.Count == 0)
+        {
+            filteredDirectoryEntries = new List<CarrierDirectoryEntry>();
+            return;
+        }
+
+        var normalized = term.Trim();
+        filteredDirectoryEntries = allDirectoryEntries
+            .Where(entry => entry.CompanyName != null &&
+                            entry.CompanyName.Contains(normalized, StringComparison.OrdinalIgnoreCase))
+            .Take(directorySuggestionLimit)
+            .ToList();
+    }
+
+    private static string FormatLocation(CarrierDirectoryEntry entry)
+    {
+        var city = entry.City?.Trim();
+        var state = entry.State?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(city) && !string.IsNullOrWhiteSpace(state))
+        {
+            return $"{city}, {state}";
+        }
+
+        return city ?? state ?? string.Empty;
+    }
+
+    private async Task CreateCarrierFromDirectoryAsync(CarrierDirectoryEntry entry)
+    {
+        if (entry == null || isSaving)
+        {
+            return;
+        }
+
+        errorMessage = null;
+
+        // Generate lookup code automatically
+        var lookupCode = await GenerateUniqueLookupCodeAsync(entry.CompanyName);
+
+        isSaving = true;
+
+        try
+        {
+            var carrier = BuildCarrierFromDirectoryEntry(entry, lookupCode);
+
+            var newId = await CarrierService.CreateCarrierReturnIdAsync(carrier);
+            await CarrierCreated.InvokeAsync(newId);
+
+            createModel = new CarrierCreateModel();
+            editContext = new EditContext(createModel);
+            ResetLookupState();
+            UpdateDirectorySuggestions(string.Empty);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "We couldn't create the carrier from the directory. Please try again.";
+            Console.WriteLine($"Error creating carrier from directory: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private Carrier BuildCarrierFromDirectoryEntry(CarrierDirectoryEntry entry, string lookupCode)
+    {
+        var sanitizedName = entry.CompanyName?.Trim() ?? string.Empty;
+        var normalizedEmails = entry.Emails?
+            .Select(email => email?.Trim())
+            .Where(email => !string.IsNullOrWhiteSpace(email))
+            .Select(email => email!)
+            .ToList() ?? new List<string>();
+
+        var primaryEmail = normalizedEmails.FirstOrDefault();
+
+        var firstWord = GetFirstWord(sanitizedName);
+        
+        var carrier = new Carrier
+        {
+            LookupCode = lookupCode,
+            CarrierName = sanitizedName,
+            CarrierNickname = firstWord,
+            StreetAddress = entry.Address?.Trim(),
+            City = entry.City?.Trim(),
+            State = entry.State?.Trim(),
+            Zip = entry.Zip?.Trim(),
+            Phone = FirstNonEmpty(entry.Phone1, entry.Phone2)?.Trim(),
+            Website = entry.Website?.Trim(),
+            ServicingWebsite = entry.Website?.Trim(),
+            ServicingEmail = primaryEmail,
+            LossRunsEmail = primaryEmail,
+            Notes = BuildDirectoryNotes(entry),
+            IssuingCarrier = true,
+            Admitted = true
+        };
+
+        foreach (var contact in BuildContactsFromEntry(entry, normalizedEmails.Skip(1)))
+        {
+            carrier.Contacts.Add(contact);
+            // Note: PrimaryEmail is not set here to avoid circular dependency
+            // The email address is marked as IsPrimary=true and can be set as PrimaryEmail
+            // after the entities are saved if needed
+        }
+
+        return carrier;
+    }
+
+    private static string? BuildDirectoryNotes(CarrierDirectoryEntry entry)
+    {
+        var notes = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(entry.Naic))
+        {
+            notes.Add($"NAIC: {entry.Naic}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(entry.Phone2))
+        {
+            notes.Add($"Alt Phone: {entry.Phone2}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(entry.Fax))
+        {
+            notes.Add($"Fax: {entry.Fax}");
+        }
+
+        return notes.Count > 0 ? string.Join(Environment.NewLine, notes) : null;
+    }
+
+    private static IEnumerable<Contact> BuildContactsFromEntry(CarrierDirectoryEntry entry, IEnumerable<string> emails)
+    {
+        foreach (var email in emails)
+        {
+            var contact = TryCreateContactFromEmail(email, entry);
+            if (contact != null)
+            {
+                yield return contact;
+            }
+        }
+    }
+
+    private static Contact? TryCreateContactFromEmail(string? email, CarrierDirectoryEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return null;
+        }
+
+        var trimmedEmail = email.Trim();
+        var name = ExtractNameFromEmail(trimmedEmail) ?? entry.CompanyName ?? trimmedEmail;
+
+        var contact = new Contact
+        {
+            FirstName = name,
+            Notes = $"Imported from carrier directory record for {entry.CompanyName}"
+        };
+
+        var emailAddress = new EmailAddress
+        {
+            Email = trimmedEmail,
+            Label = "Directory",
+            IsPrimary = true
+        };
+
+        // Add email address to contact's collection
+        // EF Core will automatically set ContactId when the contact is saved
+        contact.EmailAddresses = new List<EmailAddress> { emailAddress };
+        
+        // Don't set PrimaryEmail here - it will be set after contact is added to carrier
+        // to avoid circular dependency issues with EF Core
+
+        return contact;
+    }
+
+    private static string? ExtractNameFromEmail(string email)
+    {
+        var localPart = email.Split('@').FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(localPart))
+        {
+            return null;
+        }
+
+        var normalized = localPart.Replace('.', ' ').Replace('_', ' ').Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+    }
+
+    private Task<bool> LookupCodeExistsAsync(string code)
+    {
+        return CarrierService.GetAllCarriers()
+            .AsNoTracking()
+            .AnyAsync(c => c.LookupCode != null && c.LookupCode == code);
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
+    }
+
+    private void ResetLookupState()
+    {
+        // Lookup state cleared; external checks removed.
+    }
+
+    private async Task<string> GenerateUniqueLookupCodeAsync(string? companyName)
+    {
+        var letters = GetLookupCodeLetters(companyName);
+        var random = new Random();
+        var attempts = 0;
+        const int maxAttempts = 100;
+        string lookupCode;
+
+        // Ensure uniqueness by trying different random numbers if needed
+        do
+        {
+            var numbers = random.Next(100, 1000); // 100-999
+            lookupCode = $"{letters}-{numbers}";
+            attempts++;
+        } while (await LookupCodeExistsAsync(lookupCode) && attempts < maxAttempts);
+
+        if (attempts >= maxAttempts)
+        {
+            // Fallback: append timestamp-based suffix if we can't find a unique code
+            lookupCode = $"{letters}-{DateTime.Now.Ticks % 1000:D3}";
+        }
+
+        return lookupCode;
+    }
+
+    private static string GetLookupCodeLetters(string? companyName)
+    {
+        if (string.IsNullOrWhiteSpace(companyName))
+        {
+            return "CARRI";
+        }
+
+        // Remove spaces and take first 5 letters (uppercase)
+        var letters = new string(companyName
+            .Where(char.IsLetter)
+            .Take(5)
+            .Select(char.ToUpper)
+            .ToArray());
+
+        // Pad to 5 characters if needed
+        if (letters.Length < 5)
+        {
+            letters = letters.PadRight(5, 'X');
+        }
+
+        return letters;
+    }
+
+    private static string GetFirstWord(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        var words = text.Trim().Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+        return words.Length > 0 ? words[0] : string.Empty;
+    }
+
+    public override void Dispose()
+    {
+        directorySearchDebounceTimer?.Dispose();
+        base.Dispose();
+    }
+
+    private sealed class CarrierCreateModel
+    {
+        [Required]
+        public string CarrierName { get; set; } = string.Empty;
+
+        [Required]
+        public string LookupCode { get; set; } = string.Empty;
+
+        public string? CarrierNickname { get; set; }
+    }
+
+    private sealed class CarrierDirectoryEntry
+    {
+        [JsonPropertyName("Company Name")]
+        public string? CompanyName { get; set; }
+
+        [JsonPropertyName("Address")]
+        public string? Address { get; set; }
+
+        [JsonPropertyName("City")]
+        public string? City { get; set; }
+
+        [JsonPropertyName("State")]
+        public string? State { get; set; }
+
+        [JsonPropertyName("Zip")]
+        public string? Zip { get; set; }
+
+        [JsonPropertyName("Phone1")]
+        public string? Phone1 { get; set; }
+
+        [JsonPropertyName("Phone2")]
+        public string? Phone2 { get; set; }
+
+        [JsonPropertyName("Fax")]
+        public string? Fax { get; set; }
+
+        [JsonPropertyName("NAIC")]
+        public string? Naic { get; set; }
+
+        [JsonPropertyName("Website")]
+        public string? Website { get; set; }
+
+        [JsonPropertyName("Emails")]
+        public List<string> Emails { get; set; } = new();
+    }
+}

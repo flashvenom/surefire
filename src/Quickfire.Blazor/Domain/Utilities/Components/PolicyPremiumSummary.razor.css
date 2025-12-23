@@ -1,0 +1,31 @@
+.policy-premium-summary {
+    padding: 1rem;
+}
+
+.policy-premium-summary .summary-cards {
+    margin-bottom: 0.75rem;
+}
+
+.policy-premium-summary .summary-card {
+    background: var(--neutral-layer-1);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    min-width: 220px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.policy-premium-summary .summary-label {
+    font-size: 0.85rem;
+    color: var(--neutral-foreground-hint);
+    margin-bottom: 0.25rem;
+}
+
+.policy-premium-summary .summary-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.policy-premium-summary .status-message {
+    color: var(--accent-foreground-rest);
+    font-size: 0.9rem;
+}

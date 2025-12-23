@@ -1,0 +1,193 @@
+﻿@using Quickfire.Blazor.Domain.Renewals.ViewModels
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Home.Models
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Syncfusion.Blazor.Notifications
+@inject AppJsInterop JsInterop
+@inject TaskService TaskService
+@inject HomeService HomeService
+@inject StateService StateService
+
+
+<div class="daily-container">
+    <div class="sectiontitletab">Welcome back to Quickfire, @StateService.CurrentUser.FirstName!</div>
+    <div class="dailytask-box">
+        <div class="add-field">
+            <FluentTextField Id="newTaskInput" Placeholder="Add a new to-do item..." @bind-Value="newTaskName" @onkeyup="OnKeyUp" Style="width:100% !important;">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="end" Color="Color.Neutral" @onclick="AddNewTask" />
+            </FluentTextField>
+        </div>
+
+        @if (isLoading)
+        {
+            for (var i = 0; i < 7; i++)
+            {
+                <SfSkeleton Shape=SkeletonType.Rectangle Width="100%" Height="20px" CssClass="e-customize" Visible="true"></SfSkeleton>
+            }
+        }
+        else
+        {
+            @if (!incompleteTasks.Any())
+            {
+                <div class="nothingfound">No tasks left today! You're a rockstar!</div>
+            }
+            else
+            {
+                <FluentSortableList Id="sortableList" Items="incompleteTasks" Style="--fluent-sortable-list-item-height: 25px;" OnUpdate="HandleOnUpdate">
+                    <ItemTemplate>
+                        <div class="sortitem @GetTaskCssClass(context)" @key="context.Id">
+                            <FluentCheckbox Checked="@context.Completed" @onchange="async (e) => await ToggleTaskCompletion(context)" />
+                            <span class="ellipsis" style="margin-left: 10px;">@context.TaskName</span>
+                        </div>
+                    </ItemTemplate>
+                </FluentSortableList>
+            }
+            @if (completedTasks.Any())
+            {
+                <ul class="task-list completed-ts">
+                    @foreach (var task in completedTasks)
+                    {
+                        <li class="@GetTaskCssClass(task)" @key="task.Id">
+                            <FluentCheckbox Checked="@task.Completed" @onchange="async (e) => await ToggleTaskCompletion(task)" />
+                            <span class="ellipsis" style="margin-left: 10px;">@task.TaskName</span>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .completed-task {
+        opacity: 0.5;
+    }
+
+    .task-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+        .task-list li {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+        }
+
+    :root {
+        --stroke-width: 0px;
+        --neutral-stroke-input-active: #fff0 !important;
+    }
+</style>
+
+@code {
+    private List<DailyTask> incompleteTasks = new();
+    private List<DailyTask> completedTasks = new();
+    private bool isLoading = true;
+    private string newTaskName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDailyTasksData();
+    }
+
+    private async Task LoadDailyTasksData()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            await LoadDataDirectly();
+        }
+        catch (Exception ex)
+        {
+            // Handle error gracefully - initialize empty lists
+            incompleteTasks = new();
+            completedTasks = new();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+
+
+    private async Task LoadDataDirectly()
+    {
+        var incompleteTasksTask = HomeService.GetDailyTasksAsync();
+        var completedTasksTask = HomeService.GetDailyCompletedTasksAsync();
+
+        await Task.WhenAll(incompleteTasksTask, completedTasksTask);
+
+        incompleteTasks = await incompleteTasksTask;
+        completedTasks = await completedTasksTask;
+    }
+
+    private async Task AddNewTask()
+    {
+        await JsInterop.BlurFieldAsync("newTaskInput");
+        await Task.Delay(100);
+        if (!string.IsNullOrWhiteSpace(newTaskName))
+        {
+            var newTask = new DailyTask { TaskName = newTaskName, Completed = false };
+            await TaskService.AddNewDailyTaskAsync(newTask);
+            incompleteTasks.Add(newTask);
+            newTaskName = "";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string GetTaskCssClass(DailyTask task)
+    {
+        return task.Completed ? "completed-task" : "daily-task";
+    }
+
+    private async Task OnKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await AddNewTask();
+        }
+    }
+
+    private async Task ToggleTaskCompletion(DailyTask task)
+    {
+        task.Completed = !task.Completed;
+        await Task.Delay(200);
+        if (task.Completed)
+        {
+            task.CompletedDate = DateTime.Now; // Set the completion date
+            incompleteTasks.Remove(task);
+            completedTasks.Add(task);
+        }
+        else
+        {
+            task.CompletedDate = null; // Reset the completion date
+            completedTasks.Remove(task);
+            incompleteTasks.Add(task);
+        }
+
+        await TaskService.UpdateDailyTaskAsync(task);
+
+        StateHasChanged();
+    }
+
+    private async Task HandleOnUpdate(FluentSortableListEventArgs args)
+    {
+        var movedItem = incompleteTasks[args.OldIndex];
+        incompleteTasks.RemoveAt(args.OldIndex);
+        incompleteTasks.Insert(args.NewIndex, movedItem);
+
+        // Update the order of tasks in the list, ensuring tasks with null orders are handled
+        for (int i = 0; i < incompleteTasks.Count; i++)
+        {
+            incompleteTasks[i].Order = i + 1; // Set the order (1-based index)
+        }
+
+        // Persist the order changes to the database
+        await TaskService.UpdateDailyTaskOrderAsync(incompleteTasks);
+    }
+}

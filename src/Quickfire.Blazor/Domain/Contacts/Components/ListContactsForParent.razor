@@ -1,0 +1,212 @@
+﻿@namespace Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Microsoft.JSInterop
+@using Quickfire.Blazor.Domain.Contacts.Services
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject ContactService ContactService
+
+
+@if (loadedContacts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!loadedContacts.Any())
+{
+    <div class="empty-state-container">
+        <FluentIcon Value="@(new Icons.Regular.Size48.PeopleTeam())" Color="Color.Custom" CustomColor="#c7cdd6" />
+        <span class="empty-state-text">None Found</span>
+    </div>
+}
+else
+{
+    foreach (var item in loadedContacts)
+    {
+        // Ensure FirstName and LastName are not null
+        string fullName = (item?.FirstName ?? "") + " " + (item?.LastName ?? "");
+
+        string nameInitials;
+        if (!string.IsNullOrEmpty(item?.FirstName) && !string.IsNullOrEmpty(item?.LastName))
+        {
+            nameInitials = $"{item.FirstName[0]}{item.LastName[0]}";
+        }
+        else
+        {
+            nameInitials = "??";
+        }
+
+        string headshotImage = !string.IsNullOrEmpty(item?.HeadshotFilename) ? "/uploads/headshots/" + item.HeadshotFilename : null;
+        <div class="m-contact m-primary-@(PrimaryContactId == item?.ContactId ? "True" : "False")">
+            <FluentStack>
+                <div class="m-contact-persona">
+                    <FluentPersona Initials="@nameInitials" ImageSize="55px" Class="txt-persona" Image="@headshotImage" />
+                </div>
+
+                <div class="m-contact-info">
+                    <Trigger Type="Trigger.ClickType.String" Value="@fullName" Class="m-name" />
+                    @if (!string.IsNullOrEmpty(item?.Title))
+                    {
+                        <span class="m-title">, @item.Title</span>
+                    }
+                    <br />
+
+                    @if (item?.EmailAddresses != null)
+                    {
+                        foreach (var email in item.EmailAddresses)
+                        {
+                            <Trigger Type="Trigger.ClickType.Email" Value="@email.Email" Class="m-email teldialphone" />
+                            @if (!string.IsNullOrEmpty(email.Label))
+                            {
+                                <span class="m-phonetype">(@email.Label)</span>
+                            }
+                            <br />
+                        }
+                    }
+
+                    @if (item?.PhoneNumbers != null)
+                    {
+                        foreach (var phone in item.PhoneNumbers)
+                        {
+                            <span class="m-phone m-padafter">
+                                <Trigger Type="Trigger.ClickType.Phone" Value="@StringHelper.FormatPhoneNumber(phone.Number)" Class="teldialphone" />
+                                <span class="m-phonetype">(@phone.Type.ToString())</span>
+                            </span>
+                        }
+                    }
+                </div>
+                <div class="m-contact-buttons">
+                    @if (PrimaryContactId == item?.ContactId)
+                    {
+                        <div>
+                            <FluentIcon Value="@(new Icons.Filled.Size24.Star())" Color="Color.Accent" />
+                        </div>
+                    } else
+                    {
+                        <div>
+                            <button class="star-btn" @onclick="() => OnStarClicked(item.ContactId)">
+                                <FluentIcon Value="@(new Icons.Regular.Size24.Star())" Color="Color.Custom" CustomColor="#dddddd" />
+                            </button>
+                        </div>
+                    }
+                    <a href="/Contacts/@(item.ContactId)">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Pen())" CustomColor="#6b6b6b" Color="Color.Custom" />
+                    </a>
+                </div>
+            </FluentStack>
+        </div>
+    }
+}
+<style type="text/css">
+    .initials {
+        --accent-stroke-control-active: #b5b5b5;
+    }
+    .star-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+    }
+    .empty-state-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+        gap: 12px;
+    }
+    .empty-state-text {
+        font-family: "Montserrat", sans-serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #9ca3af;
+        letter-spacing: 0.02em;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public ICollection<Contact> Contacts { get; set; }
+
+    [Parameter]
+    public string ParentType { get; set; }
+
+    [Parameter]
+    public int ParentId { get; set; }
+
+    [Parameter]
+    public int PrimaryContactId { get; set; }
+
+    private List<Contact> loadedContacts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Contacts != null && Contacts.Any())
+        {
+            // Check if the first contact already has navigation properties loaded
+            var firstContact = Contacts.First();
+            if (firstContact.PhoneNumbers != null && firstContact.EmailAddresses != null)
+            {
+                // If navigation properties are already loaded, use the contacts as is
+                loadedContacts = Contacts.ToList();
+            }
+            else
+            {
+                // Load full contact data for each contact
+                loadedContacts = new List<Contact>();
+                foreach (var contact in Contacts)
+                {
+                    var fullContact = await ContactService.GetContactByIdAsync(contact.ContactId);
+                    if (fullContact != null)
+                    {
+                        loadedContacts.Add(fullContact);
+                    }
+                }
+            }
+        }
+        else
+        {
+            loadedContacts = new List<Contact>();
+        }
+
+        // Sort so that the primary contact is at the top
+        if (loadedContacts != null && loadedContacts.Any() && PrimaryContactId != 0)
+        {
+            loadedContacts = loadedContacts
+                .OrderByDescending(c => c.ContactId == PrimaryContactId)
+                .ThenBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .ToList();
+        }
+    }
+
+    private async Task OnStarClicked(int contactId)
+    {
+        if (ParentType == "Client")
+        {
+            await ContactService.SetPrimaryContactForClientAsync(ParentId, contactId);
+            PrimaryContactId = contactId;
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        loadedContacts = null;
+        Contacts = null;
+    }
+
+    public enum ClickType
+    {
+        Email,
+        Phone,
+        Url,
+        String
+    }
+}

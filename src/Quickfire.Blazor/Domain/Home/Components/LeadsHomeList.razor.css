@@ -1,0 +1,369 @@
+﻿/*standard mid table*/
+.mid-a {
+    width: auto;
+    padding-left: 15px;
+}
+
+.mid-b {
+    width: 20%;
+}
+
+.mid-c {
+    width: 15%;
+}
+
+.mid-d {
+    width: 60px;
+}
+.mid-z {
+    width: 80px;
+    padding-right:15px;
+}
+.mid-name {
+    font-weight: bold;
+    color: #595959;
+    cursor: pointer;
+}
+    .mid-name:hover {
+        color: #006bb7;
+    }
+.mid-color {
+    color: #585858;
+    font-weight: bold;
+    font-size: .75em !important;
+}
+
+.mid-date {
+    color: #7c7c7c;
+    font-size: .8em;
+}
+
+.mid-dotname {
+    text-decoration: none;
+    color: #2ca55e;
+    font-size: .75em;
+    position: relative;
+    left: -4px;
+    top: -2px;
+}
+/*standard mid table*/
+.ltable {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    font-size: 1em;
+}
+
+.lbg {
+    height: 20px;
+    color: #ffffff64;
+    text-align: left;
+    font-size: .7em;
+}
+
+    .lbg th {
+        color: #979797;
+    }
+
+.lbody {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: .9em;
+}
+/*standard mid table*/
+
+.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.3em;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#595959+0,aaaaaa+87,bfbfbf+94,aaaaaa+100 */
+    background: linear-gradient(to right, #595959 0%,#aaaaaa 87%,#bfbfbf 94%,#aaaaaa 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    padding-left: 10px;
+    color: #e6e6e6;
+    text-align: left;
+    border-left: 15px solid #1b1b1b;
+    z-index: 20;
+    position: relative;
+    text-shadow: 1px 1px 3px #2b2b2b;
+}
+
+#leadertable {
+    padding-top: 10px;
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    z-index: 99;
+}
+.main {
+    padding-left:10px;
+    transition: all linear .2s;
+}
+
+    .main:hover {
+        background-color: #fff;
+        cursor: pointer;
+    }
+.lead-box {
+    padding: 3px;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    background-color: #fff;
+}
+.leads-box-inner {
+    box-shadow: inset 0px 5px 7px #a1a1a1;
+    background-color: #dfdfdf87;
+    z-index: 10;
+}
+.leads-box {
+    background: linear-gradient(to right, rgba(227,80,73,0.1) 0%,rgba(32,30,96,0.1) 49%,rgba(255,255,255,0.5) 100%);
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    box-shadow: 0px 0px 40px #0000007c;
+    z-index: 10;
+}
+/*.lbg {
+    height: 20px;
+    color: #ffffff64;
+    text-align: left;
+    font-size: .7em;
+}
+
+    .lbg th {
+        padding-left: 4px !important;
+        color: #979797;
+    }
+
+.ltable {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    font-size: 1em;
+
+}*/
+/*.lbody {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size:.9em;
+}
+.lbody tr td {
+    padding:0px 4px;
+}*/
+/*.lcname {
+    font-weight: bold;
+    color: #525252;
+}
+.lccon {
+    color: #423838;
+    font-size: .8em;
+}*/
+.lstage {
+    color: #423838;
+    font-size: .8em;
+}
+.dot {
+    height: 8px;
+    width: 8px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    top: -0px;
+    margin-right: 8px;
+    margin-left: 6px;
+}
+.dot-0 {
+    background-color: #d94c43;
+    box-shadow: 0px 0px 7px #d94c43;
+    border:1px solid #ffffffaa;
+}
+.dot-1 {
+    background-color: #72174a;
+    box-shadow: 0px 0px 7px #72174a;
+    border: 1px solid #ffffffaa;
+}
+.dot-2 {
+    background-color: #036ac4;
+    box-shadow: 0px 0px 7px #036ac4;
+    border: 1px solid #ffffffaa;
+}
+.ctweak {
+    margin-left: 26px;
+}
+.llink {
+    text-decoration:none;
+}
+.link-0 {
+    color: #d94c43;
+}
+.link-1 {
+    color: #72174a;
+}
+.link-2 {
+    color: #036ac4;
+}
+
+.ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* Buttons in table row */
+.action-buttons {
+    white-space: nowrap;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    margin: 0 2px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+    color: #666;
+}
+
+.details-btn:hover {
+    color: #72174a;
+}
+
+/* Modal styles */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    background: linear-gradient(to right, rgba(61,61,61,1) 0%,rgba(32,30,96,1) 49%,rgba(61,61,61,1) 100%);
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #b8adef;
+    font-family: "montserrat", sans-serif;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    color: #b8adef;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.details-table tr {
+    border-bottom: 1px solid #eee;
+}
+
+.details-table tr:last-child {
+    border-bottom: none;
+}
+
+.details-table td {
+    padding: 10px 5px;
+}
+
+.detail-label {
+    font-weight: bold;
+    color: #555;
+    width: 30%;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    color: white;
+}
+
+.status-stage-0 {
+    background-color: #d94c43;
+}
+
+.status-stage-1 {
+    background-color: #72174a;
+}
+
+.status-stage-2 {
+    background-color: #036ac4;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.action-btn {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+}
+
+.view-lead-btn {
+    background-color: #036ac4;
+    color: white;
+}
+
+.view-lead-btn:hover {
+    background-color: #0258a1;
+}
+
+.close-modal-btn {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.close-modal-btn:hover {
+    background-color: #ddd;
+}

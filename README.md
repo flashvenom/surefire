@@ -1,28 +1,10 @@
-# Quickfire AMS
-![Quickfire](https://quickfireams.com/images/github/home-small.png)
+﻿# Surefire AMS
+
 ## Primer
-Quickfire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features several built-in productivity tools and well as a flexible plugin system for things like consolidating your APIs, writing custom integrations for data processing and a foundation on which to leverage AI with custom prompts.
-[Take a Quick Video Tour](https://youtu.be/OEAfL_fraq4)
-## Ammo
-**November 11th, 2025 - Get Ready For Fire**
-Desktop build is solid, open source repo is nearly clean. Massive update coming by the end of the year. Check out the wiki for a preview.
+Surefire's open source project Openfire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features built-in productivity tools and a foundation on which to leverage third party integrations, AI with custom prompts and more.
 
-**June 28th, 2025 - Quick Update**
-I have a stable build I've been demoing around town and have started to merge into the public changeset. I started with the models and viewmodels and will be adding database services next. Then the other methods and services and finally the razor pages. Exciting things in the months ahead.
-
-**May 5th, 2025 - Quick Update**
-So many new features are written, but I haven't had a single minute to devote to merging them into the public version. Next version is going to have a lot of AI-based features like call summaries (using RingCentral phone recordings) client summaries (using recent emails with GraphAPI and client notes) and a ton more. Contact me if you want a one-off build. 
-
-**January 25th, 2025 - Release Preview v1.0.1-alpha**
-
-[Download the Windows x64 Standalone Installer](https://www.dropbox.com/scl/fi/vfye3p7una4iy7pq6wl1m/Install_Surefire.exe?rlkey=5gmxu5ywisjyqgspzhaepe6fh&dl=0)
-
-
-![Quickfire](https://quickfireams.com/images/github/qf-header2.png)
 ## Scope
 - Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
-- Bring all your APIs together to track payments, phone calls, leads, signed documents, forms and more
-- Leverage OpenAI integration to make custom prompts to process your data and get work done faster
 - Simplify your renewal workflow by putting all your renewals, quotes, leads and submissions in one central place.
 - Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
 - Set goal dates and assign sub-tasks to other employees. The homepage tells you what tasks you have to complete next for upcoming renewals and when they're due.
@@ -30,7 +12,7 @@ So many new features are written, but I haven't had a single minute to devote to
 - Issue, store and manage certificates, PDF and applications quickly and easily with a built-in PDF editor
  
 ## Loadout
-- **ASP.NET Core 9**
+- **.NET 10**
 - **Blazor (Server Side Interactivity)**
 - **Entity Framework Core**
 - **Microsoft FluentUI**
@@ -38,22 +20,13 @@ So many new features are written, but I haven't had a single minute to devote to
 - **Outlook Interop**
 - **SQL Server and SQLite**
 
-![Quickfire](https://quickfireams.com/images/github/renewals-small.png)
-
-## Plugin Lockbox
-- **RingCentral API**
-- **ePayPolicy API**
-- **AppliedEpic API**
-- **AMS360 SDK API**
-- 
-![Quickfire](https://quickfireams.com/images/github/outreach-short-2.png)
 ## Triggerfinger
 **Ready, Aim, Fire...**
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/flashvenom/Quickfire.git
-    cd Quickfire
+    git clone https://github.com/flashvenom/surefire.git
+    cd Openfire
     ```
 
 2. **Set up your database (optional):**
@@ -82,6 +55,10 @@ So many new features are written, but I haven't had a single minute to devote to
 
 
 ## Line of Fire / Version History
+
+**v1.1.0 - 2026-01-01**
+- General availability release
+
 **v1.0.1-alpha - 2025-01-24**
 - ALPHA preview release is a massive merge from my personal branch and includes tons of new features and updates
 - Complete restructure of solution and projects
@@ -112,7 +89,7 @@ So many new features are written, but I haven't had a single minute to devote to
 - Added custom component: "Trigger" which handles tel, mailto, and hyperlink tags. Click to launch, Ctrl+Click to copy, Ctrl+Shift+Click to search in Outlook
 - Major overhaul of dbcontext and code cleanup and refactoring
 - Better error handling on FireSearch (universal search bar at the top)
-- Added custom SmartPaste component to Lead and Client create and edit forms so you can paste a block of text and have Quickfire fill in the appropriate fields automatically
+- Added custom SmartPaste component to Lead and Client create and edit forms so you can paste a block of text and have Openfire fill in the appropriate fields automatically
 - Migrated to .net9
 - BETA: Added Plugin System for custom components
 - Reorganization of file structure with a focus on components and services with a new root namespace

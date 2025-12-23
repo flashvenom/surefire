@@ -1,0 +1,222 @@
+@namespace Quickfire.Blazor.Components.Layout
+@implements IDisposable
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Renewals.Services
+@inject NavigationManager NavigationManager
+@inject SharedService SharedService
+@inject RenewalService RenewalService
+@inject Quickfire.Blazor.Domain.Clients.Services.ClientStateService ClientStateService
+@inject StateService _stateService
+@inject AppJsInterop JsInterop
+
+<!-- Rollover NavTips -->
+@foreach (var item in navItems)
+{
+    <div class="ro-container ro-@(item.Name.ToLower()) @(item.RolloverClass)">
+        <span class="ro-mi-name">@item.Name</span>
+    </div>
+}
+
+<!-- Dynamic Navbar Items -->
+<div class="sidebar">
+    @foreach (var item in navItems)
+    {
+        <div class="sfnav @(GetNavItemClass(item.Href))"
+             @onmouseenter="@(e => NavRollOver("over", item.Name))"
+             @onmouseleave="@(e => NavRollOver("out", item.Name))"
+             @onclick="@(async e => await NavTo(item.Href))">
+
+            <div class="nb-blueline@(GetNavItemClass(item.Href))"></div>
+
+            <NavLink Id="@($"btn{item.Name}")"
+                     class="nav-link"
+                     href="@item.Href"
+                     Match="NavLinkMatch.Prefix">
+
+                @if (item.UsesPngIcon)
+                {
+                    var isActive = GetNavItemClass(item.Href) == "nb-active";
+                    var src = isActive ? item.ActivePngPath : item.InactivePngPath;
+                    var roClass = isActive ? null : $"inactive-icon-{item.RolloverClass}";
+                    <img src="@src" alt="@item.Name" class="nav-icon @roClass" />
+                }
+                else
+                {
+                    var isActive = GetNavItemClass(item.Href) == "nb-active";
+                    var icon = isActive ? item.ActiveIcon() : item.InactiveIcon();
+                    var roClass = isActive ? null : $"inactive-icon-{item.RolloverClass}";
+                    <FluentIcon Value="@(icon)" Class="@roClass" />
+                }
+            </NavLink>
+        </div>
+        <br />
+        @if (item.Name == "Renewals")
+        {
+            <text><hr><br /></text>
+        }
+    }
+</div>
+
+<style>
+    :root .nav-link { padding:0 !important; margin-left:11px; margin-bottom:2px; }
+    .nav-icon        { width:24px; height:24px; }
+</style>
+
+@code {
+    private string? currentUrl;
+    private List<NavItem> navItems = new();
+    private List<NavItem> _allNavItems = new();
+    private static readonly string[] _simpleModeHidden = { "Leads", "Carriers", "Contacts", "Locations", "Policies" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+
+        BuildNavItems();
+        _stateService.OnUserPreferencesChanged += HandlePrefsChanged;
+        if (!_stateService.IsInitialized)
+        {
+            await _stateService.InitializationTask;
+        }
+        
+        ApplySimpleMode();
+    }
+
+    private void HandlePrefsChanged()
+    {
+        ApplySimpleMode();
+        InvokeAsync(StateHasChanged);
+    }
+
+
+    private void BuildNavItems()
+    {
+        _allNavItems = new()
+        {
+            new("Home",      "Home",      () => new Icons.Color.Size24.Home(), () => new Icons.Color.Size24.Home())
+            { UsesPngIcon = true, ActivePngPath = "img/icons/home-sm-over.png",  InactivePngPath = "img/icons/home-sm.png" },
+            new("Clients",   "Clients",   () => new Icons.Color.Size24.Library(), () => new Icons.Color.Size24.Library())
+            { UsesPngIcon = true, ActivePngPath = "img/icons/clients-sm-over.png", InactivePngPath = "img/icons/clients-sm.png" },
+            new("Renewals",  "Renewals",  () => new Icons.Color.Size24.History(), () => new Icons.Color.Size24.History())
+            { UsesPngIcon = true, ActivePngPath = "img/icons/renewals-sm-over.png", InactivePngPath = "img/icons/renewals-sm.png" },
+            new("Leads",     "Leads",     () => new Icons.Filled.Size24.TargetArrow(),     () => new Icons.Regular.Size24.TargetArrow()),
+            new("Carriers",  "Carriers",  () => new Icons.Filled.Size24.BuildingRetailShield(), () => new Icons.Regular.Size24.BuildingRetailShield()),
+            new("Contacts",  "Contacts",  () => new Icons.Filled.Size24.People(),           () => new Icons.Regular.Size24.People()),
+            new("Locations", "Locations", () => new Icons.Filled.Size24.Location(),         () => new Icons.Regular.Size24.Location()),
+            new("Policies",  "Policies",  () => new Icons.Filled.Size24.DocumentMultiple(), () => new Icons.Regular.Size24.DocumentMultiple())
+        };
+    }
+    private void ApplySimpleMode()
+    {
+        var prefs = _stateService.GetUserPreferences();
+        var simple = prefs?.EnableSimpleMode ?? false;
+
+        navItems = simple
+            ? _allNavItems.Where(i => !_simpleModeHidden.Contains(i.Name)).ToList()
+            : new List<NavItem>(_allNavItems);
+    }
+    /* ------------- helper methods (unchanged) ------------- */
+    private void NavRollOver(string whichway, string whatItem)
+        => (navItems.FirstOrDefault(i => i.Name == whatItem) ?? new NavItem()).RolloverClass
+           = whichway == "over" ? "ro-on" : "ro-off";
+
+    private void OnLocationChanged(object? _, LocationChangedEventArgs e)
+    { currentUrl = NavigationManager.ToBaseRelativePath(e.Location); StateHasChanged(); }
+
+    private string GetNavItemClass(string href)
+        => string.IsNullOrEmpty(currentUrl) && href == "/"      ? ""
+         : currentUrl?.Contains(href, StringComparison.OrdinalIgnoreCase) == true
+           || (string.IsNullOrEmpty(currentUrl) && href == "Home")       ? "nb-active"
+           : "nb-inactive";
+
+    private async Task NavTo(string whereto)
+    {
+        await TriggerFireshelfAnimation(whereto);
+
+        if (whereto == "Clients")
+        {
+            var clientId = ClientStateService.SelectedClientId;
+            ClientStateService.ActiveTab = "tab-1";
+            NavigationManager.NavigateTo($"/Clients/{clientId}");
+        }
+        else if (whereto == "Renewals")
+        {
+            if (!string.IsNullOrEmpty(currentUrl) && (currentUrl.Contains("/Renewals/Details/", StringComparison.OrdinalIgnoreCase) || currentUrl.Contains("Renewals/Details/", StringComparison.OrdinalIgnoreCase)))
+            {
+                // Already on renewals details page so navigate to the renewals list
+                NavigationManager.NavigateTo("/Renewals");
+            }
+            else if (_stateService.HtmlView == "details" && _stateService.HtmlRenewalId != 0)
+            {
+                // User was on renewals details page prior to this, so return to that page
+                NavigationManager.NavigateTo($"/Renewals/Details/{_stateService.HtmlRenewalId}");
+            }
+            else
+            {
+                // Go to the renewals calendar list
+                NavigationManager.NavigateTo("/Renewals");
+            }
+        }
+        else if (whereto == "Contacts")
+        {
+            if (_stateService.ContactId > 0)
+            {
+                NavigationManager.NavigateTo($"/Contacts/{_stateService.ContactId}");
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/Contacts");
+            }
+        }
+        else
+        {
+            NavigationManager.NavigateTo(whereto);
+        }
+    }
+    private async Task TriggerFireshelfAnimation(string section)
+    {
+        try
+        {
+            if (!_stateService.GetUserPreferences().EnableAnimations)
+                return;
+
+            if (section == "Home" || section == "Clients" || section == "Renewals" || 
+                section == "Carriers" || section == "Leads" || section == "Contacts" || section == "Policies")
+            {
+                await JsInterop.PlayTopBarVideoAsync(section);
+            }
+            else
+            {
+                // Show blank fireshelf
+                await JsInterop.PlayTopBarVideoOtherAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error playing top bar animation: {ex.Message}");
+        }
+    }
+
+    /* ------------- model ------------- */
+    private class NavItem
+    {
+        public string  Name { get; init; } = default!;
+        public string  Href { get; init; } = default!;
+        public Func<Icon> ActiveIcon   { get; init; } = default!;
+        public Func<Icon> InactiveIcon { get; init; } = default!;
+        public string  RolloverClass   { get; set; } = "ro-off";
+        public bool    UsesPngIcon     { get; init; }
+        public string  ActivePngPath   { get; init; } = "";
+        public string  InactivePngPath { get; init; } = "";
+        public NavItem() { }
+        public NavItem(string n,string h,Func<Icon> a,Func<Icon> i) { Name=n; Href=h; ActiveIcon=a; InactiveIcon=i; }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+        _stateService.OnUserPreferencesChanged -= HandlePrefsChanged;
+    }
+}

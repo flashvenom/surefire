@@ -1,0 +1,910 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using System.Linq
+@using System.Globalization
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Interfaces
+@using Quickfire.Blazor.Data
+@using Quickfire.Blazor.Components
+@using Quickfire.Blazor.Components.Layout
+@using Quickfire.Blazor.Domain.Ember
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Quickfire.Blazor.Domain.Clients.Models
+@using System.Threading.Tasks
+@inject IEmailTemplateService EmailTemplateService
+@inject PolicyService PolicyService
+@inject EmberService EmberService
+@inject IToastService ToastService
+@inject IJSRuntime JS
+@inject ClientService ClientService
+
+<div class="email-functions-combined">
+    <FluentStack>
+        <div class="template-selector">
+            <FluentSelect TOption="object"
+                          Label="Template/Function"
+                          Items="@allOptions"
+                          @bind-SelectedOption="@selectedOption"
+                          OptionText="@(o => GetOptionName(o))"
+                          OptionValue="@(o => GetOptionId(o))"
+                          Placeholder="-- Select One --" />
+        </div>
+        @if (selectedOption != null)
+        {
+            @if (IsCustomFunction("LossRunRequester"))
+            {
+                <div>LOSS RUN DROPDOWN</div>
+            }
+            else
+            {
+                @if (NeedsPolicy)
+                {
+                    <div class="form-group">
+                        @if (CurrentPolicies != null)
+                        {
+                            <FluentSelect TOption="Policy"
+                                          Label="Policy"
+                                          Items="@CurrentPolicies"
+                                          @bind-SelectedOption="@selectedPolicy"
+                                          OptionText="@(p => $"{p.Product.LineName} - {p.PolicyNumber}")"
+                                          OptionValue="@(p => p.PolicyId.ToString())"
+                                          OnSelectedOptionChanged="@((Policy _) => StateHasChanged())" />
+                        }
+                    </div>
+                }
+                @if (NeedsContact)
+                {
+                    <div class="form-group">
+                        @if (Contacts != null)
+                        {
+                            <FluentSelect TOption="Contact"
+                                          Label="Recipient"
+                                          Items="@FilteredContacts"
+                                          @bind-SelectedOption="@selectedContact"
+                                          OptionText="@(c => $"{c.FirstName} {c.LastName} ({GetContactEmail(c)})")"
+                                          OptionValue="@(c => c.ContactId.ToString())"
+                                          OnSelectedOptionChanged="@((Contact _) => StateHasChanged())" />
+                        }
+                    </div>
+                }
+                @if (NeedsPayment)
+                {
+                    <div class="form-group">
+                        <FluentNumberField @bind-Value="@paymentAmount"
+                                           Label="Payment Amount"
+                                           Placeholder="Enter payment amount"
+                                           OnValueChanged="@((decimal? _) => StateHasChanged())" />
+                    </div>
+                }
+                @if (NeedsDownPayment)
+                {
+                    <div class="form-group">
+                        <FluentNumberField @bind-Value="@downPaymentAmount"
+                                           Label="Down Payment Amount"
+                                           Placeholder="Enter down payment amount"
+                                           OnValueChanged="@((decimal? _) => StateHasChanged())" />
+                    </div>
+                }
+            }
+        }
+    </FluentStack>
+    @if (selectedOption != null)
+    {
+        @if (IsCustomFunction("LossRunRequester"))
+        {
+            <LossRunsRequester CurrentPolicies="@CurrentPolicies"
+                               PastPolicies="@PastPolicies"
+                               ClientName="@ClientName">
+            </LossRunsRequester>
+        }
+        else
+        {
+            <div class="email-preview-container">
+                @if (selectedOption == null || (NeedsPolicy && selectedPolicy == null) || (NeedsContact && selectedContact == null))
+                {
+                    <div class="preview-placeholder">
+                        <p>Select all required fields to see the preview.</p>
+                    </div>
+                }
+                else
+                {
+                    <FluentStack>
+                        <div class="btn-compose" onclick="@SendOutlookEmail">
+                            <FluentIcon Value="@(new Icons.Regular.Size32.MailEdit())" Color="Color.Custom" CustomColor="#4c4c4c;" /><br />
+                            Draft
+                        </div>
+                        <div>
+                        </div>
+                        <div>
+                            <div class="preview-contact" style="margin:0rem 1rem;">
+                                <span class="efield"><label>To:</label></span>
+                                <span>@GetContactEmail(selectedContact)</span>
+                            </div>
+                            <div class="preview-subject" style="margin:0rem 1rem;">
+                                <span class="efield"><label>Subject:</label></span>
+                                <span>@GetProcessedSubject()</span>
+                            </div>
+                        </div>
+                    </FluentStack>
+                    <div class="preview-body">
+                        <div class="preview-content" @ref="previewRef">
+                            @((MarkupString)GetProcessedBody())
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="no-selection-placeholder">
+            <p>Please select a template or function from the dropdown.</p>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<Policy> CurrentPolicies { get; set; }
+    [Parameter] public List<Policy> PastPolicies { get; set; }
+    [Parameter] public List<Contact> Contacts { get; set; }
+    [Parameter] public string ClientName { get; set; }
+    [Parameter] public int? ClientId { get; set; }
+
+    private List<EmailTemplate> templates;
+    private List<object> allOptions = new List<object>();
+    private Policy selectedPolicy;
+    private Contact selectedContact;
+    private ElementReference previewRef;
+    private int? _lastLoadedClientId;
+    private object selectedOption;
+    private decimal? paymentAmount;
+    private decimal? downPaymentAmount;
+    private string? selectedTemplateId;
+    private string? selectedPolicyId;
+    private string? selectedContactId;
+    private string? clientFallbackEmail;
+    private Contact? generalClientContact;
+    private bool NeedsPolicy => (selectedOption is EmailTemplate template) && template.NeedsPolicy;
+    private bool NeedsContact => (selectedOption is EmailTemplate template) && template.NeedsContact;
+    private bool NeedsProduct => (selectedOption is EmailTemplate template) && template.NeedsProduct;
+    private bool NeedsPayment => (selectedOption is EmailTemplate template) && template.NeedsPayment;
+    private bool NeedsDownPayment => (selectedOption is EmailTemplate template) && template.NeedsDownPayment;
+    private IEnumerable<Contact> FilteredContacts => Contacts?.Where(c => (c.EmailAddresses?.Any() == true) || c.PrimaryEmail != null) ?? Enumerable.Empty<Contact>();
+
+    private static readonly string[] ExposureCurrencyKeywords = new[] { "payroll", "sales", "sale", "expense", "expenses", "revenue" };
+
+    // Main Functions
+    protected override async Task OnParametersSetAsync()
+    {
+        // If all manual parameters are provided, use them (legacy mode)
+        bool hasManualData = (CurrentPolicies != null && CurrentPolicies.Any()) &&
+                             (Contacts != null && Contacts.Any()) &&
+                             !string.IsNullOrEmpty(ClientName);
+
+        if (!hasManualData && ClientId.HasValue && ClientId != _lastLoadedClientId)
+        {
+            var client = await ClientService.GetClientDetailsById(ClientId.Value);
+            if (client != null)
+            {
+                CurrentPolicies = client.Policies
+                    .Where(p => p.EffectiveDate <= p.ExpirationDate && p.ExpirationDate >= DateTime.Today)
+                    .OrderByDescending(p => p.EffectiveDate)
+                    .ToList() ?? new List<Policy>();
+                PastPolicies = client.Policies?.Where(p => p.ExpirationDate < DateTime.Today)
+                    .OrderByDescending(p => p.EffectiveDate)
+                    .ToList() ?? new List<Policy>();
+                Contacts = client.Contacts?.ToList() ?? new List<Contact>();
+                ClientName = client.Name;
+                clientFallbackEmail = client.Email;
+            }
+            else
+            {
+                clientFallbackEmail = null;
+            }
+            _lastLoadedClientId = ClientId;
+        }
+        else if (hasManualData)
+        {
+            clientFallbackEmail = null;
+        }
+
+        EnsureGeneralClientContact();
+
+        // Set default selected policy/contact if not already set
+        if (CurrentPolicies != null && CurrentPolicies.Any() && selectedPolicy == null)
+        {
+            selectedPolicy = CurrentPolicies.FirstOrDefault();
+        }
+        if (Contacts != null && Contacts.Any())
+        {
+            if (selectedContact == null || string.IsNullOrEmpty(GetContactEmailInternal(selectedContact, allowFallback: false)))
+            {
+                selectedContact = Contacts.FirstOrDefault(c => !string.IsNullOrEmpty(GetContactEmailInternal(c, allowFallback: false)));
+            }
+        }
+        if (selectedContact == null && generalClientContact != null)
+        {
+            selectedContact = generalClientContact;
+        }
+
+        await LoadTemplates();
+        BuildOptionsList();
+    }
+
+    private async Task LoadTemplates()
+    {
+        templates = await EmailTemplateService.GetAllTemplatesAsync();
+    }
+    private void BuildOptionsList()
+    {
+        allOptions.Clear();
+
+        // Add standard email templates
+        if (templates != null)
+        {
+            foreach (var template in templates.Where(t => t.IsActive && string.IsNullOrEmpty(t.CustomFunction)))
+            {
+                allOptions.Add(template);
+            }
+        }
+
+        // Add custom functions
+        var lossRunsTemplate = new EmailTemplate
+        {
+            EmailTemplateId = -1,
+            Name = "Loss Runs Request",
+            CustomFunction = "LossRunRequester",
+            NeedsPolicy = false,
+            NeedsContact = false
+        };
+
+        allOptions.Add(lossRunsTemplate);
+
+        // Sort all options by name
+        allOptions = allOptions
+            .OrderBy(o => GetOptionName(o))
+            .ToList();
+    }
+    private void SendOutlookEmail()
+    {
+        string toEmail = GetContactEmail(selectedContact);
+        string subject = GetProcessedSubject();
+        string body = GetProcessedBody();
+        _ = OutlookNewEmail(toEmail, subject, body);
+    }
+    private string GetOptionName(object option)
+    {
+        return option is EmailTemplate template ? template.Name : "Unknown Option";
+    }
+    private string GetOptionId(object option)
+    {
+        if (option is EmailTemplate template)
+        {
+            return template.CustomFunction != null ? $"cf_{template.CustomFunction}" : template.EmailTemplateId.ToString();
+        }
+        return string.Empty; // Empty value for the placeholder option
+    }
+    private void EnsureGeneralClientContact()
+    {
+        if (Contacts == null)
+        {
+            return;
+        }
+
+        if (generalClientContact != null)
+        {
+            Contacts.Remove(generalClientContact);
+            generalClientContact = null;
+        }
+
+        if (string.IsNullOrWhiteSpace(clientFallbackEmail))
+        {
+            return;
+        }
+
+        var existing = Contacts.FirstOrDefault(c => string.Equals(GetContactEmailInternal(c, allowFallback: false), clientFallbackEmail, StringComparison.OrdinalIgnoreCase));
+        if (existing != null)
+        {
+            generalClientContact = existing;
+            return;
+        }
+
+        var generalEmail = new EmailAddress
+        {
+            Email = clientFallbackEmail!,
+            IsPrimary = true,
+            Label = "General"
+        };
+
+        generalClientContact = new Contact
+        {
+            ContactId = -1,
+            FirstName = !string.IsNullOrWhiteSpace(ClientName) ? ClientName : "Client",
+            LastName = string.Empty,
+            EmailAddresses = new List<EmailAddress> { generalEmail },
+            PrimaryEmail = generalEmail
+        };
+
+        Contacts.Insert(0, generalClientContact);
+    }
+
+    private string GetContactEmail(Contact? contact)
+    {
+        return GetContactEmailInternal(contact, allowFallback: true);
+    }
+
+    private string GetContactEmailInternal(Contact? contact, bool allowFallback)
+    {
+        if (contact == null)
+        {
+            return allowFallback && !string.IsNullOrWhiteSpace(clientFallbackEmail) ? clientFallbackEmail! : string.Empty;
+        }
+
+        if (contact.PrimaryEmail != null && !string.IsNullOrWhiteSpace(contact.PrimaryEmail.Email))
+        {
+            return contact.PrimaryEmail.Email;
+        }
+
+        if (contact.EmailAddresses != null)
+        {
+            var firstEmail = contact.EmailAddresses.FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.Email))?.Email;
+            if (!string.IsNullOrWhiteSpace(firstEmail))
+            {
+                return firstEmail!;
+            }
+        }
+
+        return allowFallback && !string.IsNullOrWhiteSpace(clientFallbackEmail) ? clientFallbackEmail! : string.Empty;
+    }
+
+    private string FormatExposureValue(RatingBasis? ratingBasis)
+    {
+        if (ratingBasis == null || string.IsNullOrWhiteSpace(ratingBasis.Exposure))
+        {
+            return "(Not Available)";
+        }
+
+        var trimmedExposure = ratingBasis.Exposure.Trim();
+
+        if (!ShouldFormatExposureAsCurrency(ratingBasis))
+        {
+            return trimmedExposure;
+        }
+
+        if (TryParseExposureDecimal(trimmedExposure, out var numericValue))
+        {
+            var hasFraction = numericValue != Math.Truncate(numericValue);
+            return numericValue.ToString(hasFraction ? "C2" : "C0", CultureInfo.CurrentCulture);
+        }
+
+        return trimmedExposure;
+    }
+
+    private bool ShouldFormatExposureAsCurrency(RatingBasis ratingBasis)
+    {
+        foreach (var field in new[] { ratingBasis.ClassCode, ratingBasis.ClassDescription, ratingBasis.Basis })
+        {
+            if (string.IsNullOrWhiteSpace(field))
+            {
+                continue;
+            }
+
+            if (ExposureCurrencyKeywords.Any(keyword => field.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryParseExposureDecimal(string value, out decimal parsed)
+    {
+        parsed = 0m;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var sanitized = value.Replace("$", string.Empty)
+                             .Replace(",", string.Empty)
+                             .Trim();
+
+        if (sanitized.StartsWith("(", StringComparison.Ordinal) && sanitized.EndsWith(")", StringComparison.Ordinal) && sanitized.Length > 2)
+        {
+            sanitized = "-" + sanitized.Substring(1, sanitized.Length - 2);
+        }
+
+        return decimal.TryParse(sanitized, NumberStyles.Number | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out parsed);
+    }
+    private string GetProcessedSubject()
+    {
+        if (selectedOption is not EmailTemplate selectedTemplate ||
+            (NeedsPolicy && selectedPolicy == null) ||
+            (NeedsContact && selectedContact == null))
+        {
+            return string.Empty;
+        }
+
+        var processedSubject = selectedTemplate.Subject;
+
+        if (NeedsPolicy && selectedPolicy != null)
+        {
+            var clientName = selectedPolicy.Client?.Name ?? ClientName ?? string.Empty;
+            var clientEmail = selectedPolicy.Client?.PrimaryContact?.PrimaryEmail?.Email ??
+                              selectedPolicy.Client?.PrimaryContact?.EmailAddresses?.FirstOrDefault()?.Email ??
+                              string.Empty;
+            var policyType = selectedPolicy.Product?.LineName ?? "Unknown";
+
+            processedSubject = processedSubject
+                .Replace("{PolicyType}", policyType)
+                .Replace("{PolicyType64}", Uri.EscapeDataString(policyType))
+                .Replace("{PolicyNumber}", selectedPolicy.PolicyNumber ?? "Unknown")
+                .Replace("{ExpirationDate}", selectedPolicy.ExpirationDate.ToShortDateString())
+                .Replace("{ClientName}", clientName)
+                .Replace("{ClientName64}", Uri.EscapeDataString(clientName))
+                .Replace("{ClientEmail}", clientEmail)
+                .Replace("{ClientEmail64}", Uri.EscapeDataString(clientEmail));
+        }
+
+        if (NeedsContact && selectedContact != null)
+        {
+            processedSubject = processedSubject
+                .Replace("{ContactFirstName}", selectedContact.FirstName ?? "Client")
+                .Replace("{ContactEmail}", GetContactEmail(selectedContact));
+        }
+
+        return processedSubject;
+    }
+    private string GetProcessedBody()
+    {
+        if (selectedOption is not EmailTemplate selectedTemplate ||
+            (NeedsPolicy && selectedPolicy == null) ||
+            (NeedsContact && selectedContact == null) ||
+            (NeedsPayment && !paymentAmount.HasValue) ||
+            (NeedsDownPayment && !downPaymentAmount.HasValue))
+        {
+            return string.Empty;
+        }
+
+        var processedBody = selectedTemplate.Body;
+
+        if (NeedsPolicy && selectedPolicy != null)
+        {
+            var clientName = selectedPolicy.Client?.Name ?? ClientName ?? string.Empty;
+            var clientEmail = selectedPolicy.Client?.PrimaryContact?.PrimaryEmail?.Email ?? 
+                             selectedPolicy.Client?.PrimaryContact?.EmailAddresses?.FirstOrDefault()?.Email ?? 
+                             string.Empty;
+            var policyType = selectedPolicy.Product?.LineName ?? "Unknown";
+
+            processedBody = processedBody
+                .Replace("{PolicyType}", policyType)
+                .Replace("{PolicyType64}", Uri.EscapeDataString(policyType))
+                .Replace("{PolicyNumber}", selectedPolicy?.PolicyNumber ?? "Unknown")
+                .Replace("{ExpirationDate}", selectedPolicy.ExpirationDate.ToShortDateString())
+                .Replace("{ClientName}", clientName)
+                .Replace("{ClientName64}", Uri.EscapeDataString(clientName))
+                .Replace("{ClientEmail}", clientEmail)
+                .Replace("{ClientEmail64}", Uri.EscapeDataString(clientEmail));
+
+            // Handle line history placeholder if present
+            if (processedBody.Contains("{LineHistoryForPolicy}"))
+            {
+                var policyHistory = PolicyService.GetPolicyLineHistoryAsync(selectedPolicy, 5).GetAwaiter().GetResult();
+                var formattedHistory = PolicyService.FormatPolicyLineHistory(policyHistory);
+                processedBody = processedBody.Replace("{LineHistoryForPolicy}", formattedHistory);
+            }
+        }
+
+        if (NeedsContact && selectedContact != null)
+        {
+            processedBody = processedBody
+                .Replace("{ContactFirstName}", selectedContact?.FirstName ?? "Client")
+                .Replace("{ContactEmail}", GetContactEmail(selectedContact));
+        }
+
+        if (NeedsPayment && paymentAmount.HasValue)
+        {
+            processedBody = processedBody
+                .Replace("{PaymentAmount}", paymentAmount.Value.ToString("0.00"));
+        }
+
+        if (NeedsDownPayment && downPaymentAmount.HasValue)
+        {
+            processedBody = processedBody
+                .Replace("{DownPaymentAmount}", downPaymentAmount.Value.ToString("0.00"));
+        }
+
+        // Date replacements
+        processedBody = processedBody
+            .Replace("{DateInOneWeek}", DateTime.Today.AddDays(7).ToShortDateString())
+            .Replace("{DateInTwoWeeks}", DateTime.Today.AddDays(14).ToShortDateString())
+            .Replace("{DateInOneMonth}", DateTime.Today.AddDays(30).ToShortDateString());
+
+        processedBody = Task.Run(() => ProcessBusinessDetailsReplacements(processedBody)).GetAwaiter().GetResult();
+
+        processedBody = Task.Run(() => ProcessRowReplacements(processedBody)).GetAwaiter().GetResult();
+
+        return processedBody;
+    }
+
+    private async Task<string> ProcessBusinessDetailsReplacements(string body)
+    {
+
+        if (selectedPolicy?.Client == null && ClientId == null)
+        {
+            Console.WriteLine("[EMAIL] No client available, returning original body");
+            return body;
+        }
+
+        // Get the client and business details
+        var client = selectedPolicy?.Client;
+        if (client == null && ClientId.HasValue)
+        {
+            client = await ClientService.GetClientDetailsById(ClientId.Value).ConfigureAwait(false);
+        }
+
+        if (client == null)
+        {
+            Console.WriteLine("[EMAIL] Client is null after attempting to load, returning original body");
+            return body;
+        }
+
+        BusinessDetails businessDetails = null;
+        businessDetails = await ClientService.GetBusinessDetailsByClientId(client.ClientId).ConfigureAwait(false);
+
+        // Helper function to replace null/empty values with "(Not Available)"
+        string SafeValue(object value) => string.IsNullOrEmpty(value?.ToString()) ? "(Not Available)" : value.ToString();
+
+        string SafeCurrencyValue(object value)
+        {
+            if (value == null)
+            {
+                return "(Not Available)";
+            }
+
+            if (value is string s && string.IsNullOrWhiteSpace(s))
+            {
+                return "(Not Available)";
+            }
+
+            decimal decimalValue;
+
+            switch (value)
+            {
+                case decimal d:
+                    decimalValue = d;
+                    break;
+                case double dbl:
+                    decimalValue = Convert.ToDecimal(dbl);
+                    break;
+                case float flt:
+                    decimalValue = Convert.ToDecimal(flt);
+                    break;
+                case int i:
+                    decimalValue = i;
+                    break;
+                case long l:
+                    decimalValue = l;
+                    break;
+                case short sh:
+                    decimalValue = sh;
+                    break;
+                case string stringValue:
+                    if (!TryParseStringToDecimal(stringValue, out decimalValue))
+                    {
+                        return SafeValue(value);
+                    }
+                    break;
+                default:
+                    return SafeValue(value);
+            }
+
+            decimalValue = decimal.Round(decimalValue, 2, MidpointRounding.AwayFromZero);
+            if (decimalValue % 1m != 0m)
+            {
+                decimalValue = decimal.Ceiling(decimalValue);
+            }
+
+            return decimalValue.ToString("C0", CultureInfo.CurrentCulture);
+        }
+
+        bool TryParseStringToDecimal(string input, out decimal decimalValue)
+        {
+            if (decimal.TryParse(input, NumberStyles.Currency, CultureInfo.CurrentCulture, out decimalValue))
+            {
+                return true;
+            }
+
+            if (decimal.TryParse(input, NumberStyles.Currency, CultureInfo.InvariantCulture, out decimalValue))
+            {
+                return true;
+            }
+
+            decimalValue = 0m;
+            return false;
+        }
+
+        // String replacers for BusinessDetails
+        body = body.Replace("{EstimatedGrossSales}", SafeCurrencyValue(businessDetails?.AnnualGrossSalesRevenueReceipts));
+        body = body.Replace("{EstimatedPayroll}", SafeCurrencyValue(businessDetails?.AnnualPayrollHazardExposure));
+        body = body.Replace("{EstimatedSubcontractingExpenses}", SafeCurrencyValue(businessDetails?.EstimatedSubcontractingExpenses));
+        body = body.Replace("{BusinessPersonalPropertyTotal}", SafeCurrencyValue(businessDetails?.BusinessPersonalPropertyBPP));
+
+        // Business description - choose the longer one
+        var shortDesc = businessDetails?.ShortDescription ?? "";
+        var longDesc = businessDetails?.LongDescription ?? "";
+        var businessDescription = longDesc.Length > shortDesc.Length ? longDesc : shortDesc;
+        body = body.Replace("{BusinessDescription}", SafeValue(businessDescription));
+
+        // Primary address
+        var primaryAddress = "";
+        if (client.Address != null)
+        {
+            var addressParts = new List<string>();
+            if (!string.IsNullOrEmpty(client.Address.AddressLine1))
+                addressParts.Add(client.Address.AddressLine1);
+            if (!string.IsNullOrEmpty(client.Address.City))
+                addressParts.Add(client.Address.City);
+            if (!string.IsNullOrEmpty(client.Address.State) && !string.IsNullOrEmpty(client.Address.PostalCode))
+                addressParts.Add($"{client.Address.State} {client.Address.PostalCode}");
+            primaryAddress = string.Join(", ", addressParts);
+        }
+
+        body = body.Replace("{PrimaryAddress}", SafeValue(primaryAddress));
+
+        // Primary email and phone from client
+        body = body.Replace("{PrimaryEmail}", SafeValue(client.Email));
+        body = body.Replace("{PrimaryPhone}", SafeValue(client.PhoneNumber));
+
+        return body;
+    }
+
+    private async Task<string> ProcessRowReplacements(string body)
+    {
+        try
+        {
+            if (selectedPolicy == null)
+            {
+                return body;
+            }
+
+            // Fix the ProductId null check - ProductId is likely int, not int?
+            var productId = selectedPolicy.Product?.ProductId.ToString() ?? "null";
+
+            // -----------------------------------------------------------------------------------------------  Process WorkCompClassCodeRows
+            if (body.Contains("{WorkCompClassRows}"))
+            {
+                if (selectedPolicy.Product != null && selectedPolicy.Product.ProductId == 2) // Work Comp policy
+                {
+
+                    var workCompRatingBases = await PolicyService.GetWorkCompRatingBasesByPolicyIdAsync(selectedPolicy.PolicyId).ConfigureAwait(false);
+                    var workCompRows = "";
+
+                    if (workCompRatingBases != null)
+                    {
+                        foreach (var item in workCompRatingBases)
+                        {
+                            var classCode = !string.IsNullOrEmpty(item?.ClassCode) ? item.ClassCode : "(Not Available)";
+                            var classDescription = !string.IsNullOrEmpty(item?.ClassDescription) ? item.ClassDescription : "(Not Available)";
+                            var payroll = item?.Payroll?.ToString("C2") ?? "(Not Available)";
+                            var fullTimeEmployees = item?.FullTimeEmployees?.ToString() ?? "0";
+                            var partTimeEmployees = item?.PartTimeEmployees?.ToString() ?? "0";
+
+                            workCompRows += $@"
+<tr>
+<td style=""padding:8px;border:1px solid #DDD;text-align:center;""><strong>{classCode} - {classDescription}<strong></td>
+<td style=""padding:8px;border:1px solid #DDD;text-align:center;color:#7F7F7F;"">{payroll}</td>
+<td style=""padding:8px;border:1px solid #DDD;background:#FFFFB9;text-align:center;"">&nbsp;</td>
+</tr>
+<tr>
+<td style=""padding:2px;border:1px solid #DDD;text-align:center;""><span style=""font-size:9pt;"">Full Time Employees</span></td>
+<td style=""padding:2px;border:1px solid #DDD;text-align:center;color:#7F7F7F;"">{fullTimeEmployees}</td>
+<td style=""padding:2px;border:1px solid #DDD;background:#FFFFB9;text-align:center;"">&nbsp;</td>
+</tr>
+<tr style=""border-bottom:3px solid #ccc;"">
+<td style=""padding:2px;border:1px solid #DDD;text-align:center;border-left:1px solid #ddd;""><span style=""font-size:9pt;"">Part Time Employees</span></td>
+<td style=""padding:2px;border:1px solid #DDD;text-align:center;color:#7F7F7F;"">{partTimeEmployees}</td>
+<td style=""padding:2px;border:1px solid #DDD;background:#FFFFB9;text-align:center;"">&nbsp;</td>
+</tr>";
+                        }
+                    }
+
+                    // Find the first </tr> after the placeholder and insert the repeated rows right after the </tr>
+                    var placeholderIndex = body.IndexOf("{WorkCompClassRows}");
+                    if (placeholderIndex >= 0)
+                    {
+                        var firstTrCloseIndex = body.IndexOf("</tr>", placeholderIndex);
+                        if (firstTrCloseIndex >= 0)
+                        {
+                            var insertPosition = firstTrCloseIndex + 5;
+                            body = body.Insert(insertPosition, workCompRows);
+                        }
+                    }
+
+                    // Remove the placeholder
+                    body = body.Replace("{WorkCompClassRows}", "");
+                    body = body.Replace("{WorkCompClassTable}", workCompRows);
+                    body = body.Replace("{WCTEST}", "TESTINGONETWOTHREE");
+                }
+            }
+
+            // -----------------------------------------------------------------------------------------------  Process GeneralLiabilityCodeRows
+            if (body.Contains("{GeneralLiabilityCodeRows}"))
+            {
+                Console.WriteLine("Contains GL rows");
+                if (selectedPolicy.Product != null && selectedPolicy.Product.ProductId == 3) // General Liability policy
+                {
+                    var glRows = "";
+
+                    if (selectedPolicy.RatingBases != null)
+                    {
+                        Console.WriteLine("Contains GL not null");
+                        foreach (var item in selectedPolicy.RatingBases)
+                        {
+                            Console.WriteLine("Contains GL ROW GO");
+                            if (item != null)
+                            {
+                                Console.WriteLine("Contains GL ROW NOT NULL: " + item.ClassCode);
+                                var classCode = !string.IsNullOrEmpty(item.ClassCode) ? item.ClassCode : "(Not Available)";
+                                var classDescription = !string.IsNullOrEmpty(item.ClassDescription) ? item.ClassDescription : "(Not Available)";
+                                var basis = !string.IsNullOrEmpty(item.Basis) ? item.Basis : "(Not Available)";
+                                var exposure = FormatExposureValue(item);
+                                glRows += $@"
+<tr>
+  <td style=""padding:8px;border:1px solid #DDD;text-align:center;"">{classCode} - {classDescription} - {basis}</td>
+  <td style=""padding:8px;border:1px solid #DDD;text-align:center;color:#7F7F7F;"">{exposure}</td>
+  <td style=""padding:8px;border:1px solid #DDD;background:#FFFFB9;text-align:center;"">&nbsp;</td>
+</tr>";
+                            }
+                        }
+                    }
+
+                    // Insert the repeated rows right after the placeholder's first closing </tr>
+                    var placeholderIndex = body.IndexOf("{GeneralLiabilityCodeRows}");
+                    if (placeholderIndex >= 0)
+                    {
+                        var firstTrCloseIndex = body.IndexOf("</tr>", placeholderIndex);
+                        if (firstTrCloseIndex >= 0)
+                        {
+                            var insertPosition = firstTrCloseIndex + 5;
+                            body = body.Insert(insertPosition, glRows);
+                        }
+                    }
+
+                    // Remove the placeholder
+                    body = body.Replace("{GeneralLiabilityCodeRows}", "");
+                }
+            }
+
+            // -----------------------------------------------------------------------------------------------  Process VehiclesRows
+            if (body.Contains("{VehiclesRows}"))
+            {
+                if (selectedPolicy.Product != null && selectedPolicy.Product.ProductId == 4) // Auto policy
+                {
+                    var vehicleCount = selectedPolicy.Vehicles?.Count ?? 0;
+                    var vehiclesRows = "";
+
+                    if (selectedPolicy.Vehicles != null)
+                    {
+                        foreach (var item in selectedPolicy.Vehicles)
+                        {
+                            if (item != null)
+                            {
+                                var year = !string.IsNullOrEmpty(item.Year) ? item.Year : "(Not Available)";
+                                var make = !string.IsNullOrEmpty(item.Make) ? item.Make : "(Not Available)";
+                                var model = !string.IsNullOrEmpty(item.Model) ? item.Model : "(Not Available)";
+
+                                vehiclesRows += $@"
+<tr>
+  <td style=""padding:8px;border:1px solid #DDD;text-align:left;"" colspan=""2"">{year} {make} {model}</td>
+  <td style=""padding:8px;border:1px solid #DDD;background:#FFFFB9;text-align:center;"">&nbsp;</td>
+</tr>";
+                            }
+                        }
+                    }
+
+                    // Find the first </tr> after the placeholder and insert the repeated rows right after the </tr>
+                    var placeholderIndex = body.IndexOf("{VehiclesRows}");
+                    if (placeholderIndex >= 0)
+                    {
+                        var firstTrCloseIndex = body.IndexOf("</tr>", placeholderIndex);
+                        if (firstTrCloseIndex >= 0)
+                        {
+                            var insertPosition = firstTrCloseIndex + 5;
+                            body = body.Insert(insertPosition, vehiclesRows);
+                        }
+                    }
+
+                    body = body.Replace("{VehiclesRows}", "");
+                }
+            }
+
+            // Process DriversRows
+            if (body.Contains("{DriversRows}"))
+            {
+                if (selectedPolicy.Product != null && selectedPolicy.Product.ProductId == 4) // Auto policy
+                {
+                    var driverCount = selectedPolicy.Drivers?.Count ?? 0;
+                    var driversRows = "";
+
+                    if (selectedPolicy.Drivers != null)
+                    {
+                        foreach (var item in selectedPolicy.Drivers)
+                        {
+                            if (item != null)
+                            {
+                                var fullName = !string.IsNullOrEmpty(item.FullName) ? item.FullName : "(Not Available)";
+                                var dateOfBirth = item.DateOfBirth?.ToShortDateString() ?? "(Not Available)";
+
+                                driversRows += $@"
+<tr>
+  <td style=""padding:8px;border:1px solid #DDD;text-align:left;"" colspan=""2"">{fullName} ({dateOfBirth})</td>
+  <td style=""padding:8px;border:1px solid #DDD;background:#FFFFB9;text-align:center;"">&nbsp;</td>
+</tr>";
+                            }
+                        }
+                    }
+
+                    // Find the first </tr> after the placeholder and insert the repeated rows right after the </tr>
+                    var placeholderIndex = body.IndexOf("{DriversRows}");
+                    if (placeholderIndex >= 0)
+                    {
+                        var firstTrCloseIndex = body.IndexOf("</tr>", placeholderIndex);
+                        if (firstTrCloseIndex >= 0)
+                        {
+                            var insertPosition = firstTrCloseIndex + 5;
+                            body = body.Insert(insertPosition, driversRows);
+                        }
+                    }
+
+                    // Remove the placeholder
+                    body = body.Replace("{DriversRows}", "");
+                }
+            }
+
+            return body;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR in ProcessRowReplacements: {ex.Message}");
+            Console.WriteLine($"ERROR Stack Trace: {ex.StackTrace}");
+            return body; // Return original body on error
+        }
+    }
+
+    private bool IsReadyToSend()
+    {
+        if (selectedOption is not EmailTemplate selectedTemplate)
+        {
+            return false;
+        }
+
+        return (!selectedTemplate.NeedsPolicy || selectedPolicy != null) &&
+               (!selectedTemplate.NeedsContact || selectedContact != null) &&
+               (!selectedTemplate.NeedsPayment || paymentAmount.HasValue) &&
+               (!selectedTemplate.NeedsDownPayment || downPaymentAmount.HasValue);
+    }
+    private bool IsCustomFunction(string functionName)
+    {
+        return selectedOption is EmailTemplate template &&
+               template.CustomFunction == functionName;
+    }
+
+    public async Task OutlookNewEmail(string toEmail = null, string subject = null, string body = null)
+    {
+        if (toEmail != null && subject != null && body != null)
+        {
+            var myParams = new List<string> { toEmail, subject, body };
+            await EmberService.RunEmberFunction("OutlookEmail_CreateNew", myParams);
+            ToastService.ShowSuccess("Email created successfully!");
+        }
+    }
+}

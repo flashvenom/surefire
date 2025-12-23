@@ -1,0 +1,105 @@
+﻿@namespace Quickfire.Blazor.Domain.Renewals.Components.Dialogs
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Syncfusion.Blazor.Inputs
+
+<FluentDialog @bind-Hidden="Hidden" @ref="DialogRef" TrapFocus="true" Modal="true" Title="@(CurrentViewModel.TaskGroupId > 0 ? "Edit Task Group" : "Add Task Group")">
+    <div class="dialog-content">
+        @if (EditContext != null)
+        {
+            <EditForm EditContext="@EditContext">
+                <FluentStack>
+                    <div class="form-group" style="width:100%;">
+                        <SfTextBox @bind-Value="CurrentViewModel.Name" Placeholder="Task Group Name" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="form-group" style="width:100%;">
+                        <SfTextBox @bind-Value="CurrentViewModel.Description" Placeholder="Description" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                </FluentStack>
+            </EditForm>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveTaskGroup">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelDialog">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "taskgroup-dialog";
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+    [Parameter] public EventCallback<TaskGroupDialogViewModel> OnSave { get; set; }
+    [Parameter] public TaskGroup TaskGroup { get; set; }
+    [Inject] public SurefireDialogService DialogService { get; set; }
+    
+    public TaskGroupDialogViewModel CurrentViewModel { get; set; } = new TaskGroupDialogViewModel();
+    public EditContext EditContext { get; set; }
+    public FluentDialog DialogRef { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (TaskGroup != null && TaskGroup.TaskGroupId > 0)
+        {
+            CurrentViewModel = new TaskGroupDialogViewModel
+            {
+                TaskGroupId = TaskGroup.TaskGroupId,
+                Name = TaskGroup.Name,
+                Description = TaskGroup.Description
+            };
+        }
+        else
+        {
+            CurrentViewModel = new TaskGroupDialogViewModel();
+        }
+        EditContext = new EditContext(CurrentViewModel);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrEmpty(DialogId))
+        {
+            DialogService.RegisterDialog(DialogId, DialogRef);
+        }
+    }
+
+    public void ShowDialog(TaskGroup taskGroup = null)
+    {
+        if (taskGroup != null)
+        {
+            TaskGroup = taskGroup;
+            CurrentViewModel = new TaskGroupDialogViewModel
+            {
+                TaskGroupId = taskGroup.TaskGroupId,
+                Name = taskGroup.Name,
+                Description = taskGroup.Description
+            };
+        }
+        else
+        {
+            TaskGroup = null;
+            CurrentViewModel = new TaskGroupDialogViewModel();
+        }
+        EditContext = new EditContext(CurrentViewModel);
+        Hidden = false;
+        HiddenChanged.InvokeAsync(Hidden);
+        StateHasChanged();
+    }
+
+    private async Task SaveTaskGroup()
+    {
+        if (EditContext.Validate())
+        {
+            await OnSave.InvokeAsync(CurrentViewModel);
+            CancelDialog();
+        }
+    }
+
+    private void CancelDialog()
+    {
+        Hidden = true;
+        HiddenChanged.InvokeAsync(Hidden);
+    }
+}

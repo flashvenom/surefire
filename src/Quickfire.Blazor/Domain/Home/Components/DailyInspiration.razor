@@ -1,0 +1,231 @@
+@using System.Text.Json
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Shared.Models
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+@inject StateService StateService
+@implements IDisposable
+
+@if (StateService.HomepageLayout.Inspiration != InspirationMode.Off)
+{
+    <div class="daily-inspiration-container">
+        <div class="inspiration-content">
+            @if (isLoading)
+            {
+                <div class="loading-text">Loading inspiration...</div>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="error-text">@errorMessage</div>
+            }
+            else if (inspiration != null)
+            {
+                <div class="verse-text">@inspiration.Text</div>
+                <div class="verse-reference">@inspiration.Reference</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private Inspiration? inspiration;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    public class Inspiration
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Reference { get; set; } = string.Empty;
+    }
+
+    public class ZenQuoteResponse
+    {
+        public string q { get; set; } = string.Empty;
+        public string a { get; set; } = string.Empty;
+        public string h { get; set; } = string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        StateService.OnUserPreferencesChanged += HandleUserPreferencesChanged;
+        await LoadInspiration();
+    }
+
+    private void HandleUserPreferencesChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            await LoadInspiration();
+        });
+    }
+
+    private async Task LoadInspiration()
+    {
+        var mode = StateService.HomepageLayout.Inspiration;
+        
+        if (mode == InspirationMode.Off)
+        {
+            inspiration = null;
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            
+            if (mode == InspirationMode.BibleVerses)
+            {
+                await LoadBibleVerse();
+            }
+            else if (mode == InspirationMode.Quotes)
+            {
+                await LoadQuote();
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Something went wrong loading today's inspiration.";
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task LoadBibleVerse()
+    {
+        try
+        {
+            var response = await HttpClient.GetStringAsync("https://beta.ourmanna.com/api/v1/get").ConfigureAwait(false);
+            
+            if (!string.IsNullOrEmpty(response))
+            {
+                ParseBibleVerse(response);
+            }
+            else
+            {
+                errorMessage = "No verse received from service.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to connect to inspiration service.";
+        }
+        catch (TaskCanceledException)
+        {
+            errorMessage = "Request timed out. Please try again.";
+        }
+    }
+
+    private async Task LoadQuote()
+    {
+        try
+        {
+            var response = await HttpClient.GetStringAsync("https://zenquotes.io/api/today").ConfigureAwait(false);
+            
+            if (!string.IsNullOrEmpty(response))
+            {
+                ParseQuote(response);
+            }
+            else
+            {
+                errorMessage = "No quote received from service.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Unable to connect to quote service.";
+        }
+        catch (TaskCanceledException)
+        {
+            errorMessage = "Request timed out. Please try again.";
+        }
+    }
+
+    private void ParseBibleVerse(string response)
+    {
+        try
+        {
+            // The API returns a plain string like "For God so loved the world... - John 3:16"
+            // Look for the last dash which typically separates text from reference
+            var lastDashIndex = response.LastIndexOf(" - ");
+            
+            if (lastDashIndex > 0)
+            {
+                // Text comes before the last dash, reference after
+                var text = response.Substring(0, lastDashIndex).Trim();
+                var reference = response.Substring(lastDashIndex + 3).Trim(); // +3 to skip " - "
+                
+                inspiration = new Inspiration
+                {
+                    Text = text,
+                    Reference = reference
+                };
+            }
+            else
+            {
+                // Fallback: look for any dash
+                var dashIndex = response.IndexOf(" - ");
+                if (dashIndex > 0)
+                {
+                    var text = response.Substring(0, dashIndex).Trim();
+                    var reference = response.Substring(dashIndex + 3).Trim();
+                    
+                    inspiration = new Inspiration
+                    {
+                        Text = text,
+                        Reference = reference
+                    };
+                }
+                else
+                {
+                    // No dash found - use entire text
+                    inspiration = new Inspiration
+                    {
+                        Text = response.Trim(),
+                        Reference = "Scripture"
+                    };
+                }
+            }
+        }
+        catch
+        {
+            errorMessage = "Unable to format today's inspiration.";
+        }
+    }
+
+    private void ParseQuote(string response)
+    {
+        try
+        {
+            // ZenQuotes API returns an array with a single quote object
+            var quotes = JsonSerializer.Deserialize<ZenQuoteResponse[]>(response);
+            
+            if (quotes != null && quotes.Length > 0)
+            {
+                var quote = quotes[0];
+                inspiration = new Inspiration
+                {
+                    Text = quote.q,
+                    Reference = quote.a
+                };
+            }
+            else
+            {
+                errorMessage = "Unable to parse quote.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Unable to format today's quote.";
+        }
+    }
+
+    public void Dispose()
+    {
+        StateService.OnUserPreferencesChanged -= HandleUserPreferencesChanged;
+    }
+} 

@@ -1,0 +1,192 @@
+﻿@namespace Quickfire.Blazor.Domain.Renewals.Components.Dialogs
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Data
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.RichTextEditor
+@using Syncfusion.Blazor.DropDowns
+@inject StateService _stateService
+
+<FluentDialog @bind-Hidden="Hidden" @ref="DialogRef" TrapFocus="true" Modal="true" Title="@(CurrentViewModel.TaskMasterId > 0 ? "Edit Task Master" : "Add Task Master")">
+    <div class="dialog-content">
+        @if (EditContext != null)
+        {
+            <EditForm EditContext="@EditContext">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <div class="form-group" style="width:100%;">
+                        <SfTextBox @bind-Value="CurrentViewModel.TaskName" Placeholder="Task Name" FloatLabelType="FloatLabelType.Always" />
+                    </div>
+                    <div class="form-group" style="width:100%;">
+                        <SfRichTextEditor @ref="RichTextEditor" Height="200px" @bind-Value="CurrentViewModel.Description">
+                            <RichTextEditorToolbarSettings Items="@Tools" />
+                        </SfRichTextEditor>
+                        @* <SfTextBox @bind-Value="CurrentViewModel.Description" Placeholder="Description" FloatLabelType="FloatLabelType.Always" /> *@
+                    </div>
+                    <div class="form-group" style="width:100%;">
+                        <label>Default Assigned Staff</label>
+                        <SfDropDownList TValue="string" TItem="ApplicationUser"
+                                        DataSource="AllUsers"
+                                        @bind-Value="CurrentViewModel.DefaultAssignedToId"
+                                        Placeholder="Select Staff Member"
+                                        FloatLabelType="FloatLabelType.Always">
+                            <DropDownListFieldSettings Value="Id" Text="FullName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                    </div>
+                    <FluentStack>
+                        <div>
+                            <SfNumericTextBox TValue="int?" @bind-Value="CurrentViewModel.DaysBeforeExpiration" Placeholder="Days Before Expiration" FloatLabelType="FloatLabelType.Always" />
+                        </div>
+                        <div>
+                            <SfTextBox @bind-Value="CurrentViewModel.ForType" Placeholder="For Type" FloatLabelType="FloatLabelType.Always" />
+                        </div>
+                        <div style="padding-top: 15px;">
+                            <FluentCheckbox Label="Important" @bind-Value="CurrentViewModel.Important" />
+                        </div>
+                    </FluentStack>
+                    <div class="form-group" style="width:100%;">
+                        <label>Master SubTasks</label>
+                        <ul>
+                            @foreach (var subtask in CurrentViewModel.MasterSubTasks.OrderBy(x => x.OrderNumber))
+                            {
+                                <li>@subtask.TaskName (@subtask.Description)</li>
+                            }
+                        </ul>
+                        <span style="font-size:smaller;">(Editing subtasks coming soon)</span>
+                    </div>
+                </FluentStack>
+            </EditForm>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveTaskMaster">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelDialog">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "taskmaster-dialog";
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+    [Parameter] public EventCallback<TaskMasterDialogViewModel> OnSave { get; set; }
+    [Parameter] public TaskMaster TaskMaster { get; set; }
+    [Inject] public SurefireDialogService DialogService { get; set; }
+    private SfRichTextEditor RichTextEditor;
+    private string NoteText { get; set; }
+
+    public TaskMasterDialogViewModel CurrentViewModel { get; set; } = new TaskMasterDialogViewModel();
+    public EditContext EditContext { get; set; }
+    public FluentDialog DialogRef { get; set; }
+    public List<ApplicationUser> AllUsers { get; set; } = new List<ApplicationUser>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_stateService != null)
+        {
+            AllUsers = await _stateService.AllUsers;
+        }
+        Console.WriteLine($"TaskMasterDialog OnInitialized - Initial Hidden state: {Hidden}");
+        if (TaskMaster != null && TaskMaster.TaskMasterId > 0)
+        {
+            // Populate view model for editing.
+            CurrentViewModel = new TaskMasterDialogViewModel
+            {
+                TaskMasterId = TaskMaster.TaskMasterId,
+                TaskName = TaskMaster.TaskName,
+                Description = TaskMaster.Description,
+                DaysBeforeExpiration = TaskMaster.DaysBeforeExpiration,
+                ForType = TaskMaster.ForType,
+                Important = TaskMaster.Important,
+                DefaultAssignedToId = TaskMaster.DefaultAssignedToId,
+                MasterSubTasks = TaskMaster.MasterSubTasks?.OrderBy(x => x.OrderNumber).Select(x => new MasterSubTaskViewModel
+                {
+                    MasterSubTaskId = x.MasterSubTaskId,
+                    TaskName = x.TaskName,
+                    Description = x.Description,
+                    OrderNumber = x.OrderNumber
+                }).ToList() ?? new List<MasterSubTaskViewModel>()
+            };
+        }
+        else
+        {
+            CurrentViewModel = new TaskMasterDialogViewModel();
+        }
+        EditContext = new EditContext(CurrentViewModel);
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrEmpty(DialogId))
+        {
+            DialogService.RegisterDialog(DialogId, DialogRef);
+        }
+    }
+    public void ShowDialog(TaskMaster taskMaster = null)
+    {
+        if (taskMaster != null)
+        {
+            TaskMaster = taskMaster;
+            CurrentViewModel = new TaskMasterDialogViewModel
+            {
+                TaskMasterId = taskMaster.TaskMasterId,
+                TaskName = taskMaster.TaskName,
+                Description = taskMaster.Description,
+                DaysBeforeExpiration = taskMaster.DaysBeforeExpiration,
+                ForType = taskMaster.ForType,
+                Important = taskMaster.Important,
+                DefaultAssignedToId = taskMaster.DefaultAssignedToId,
+                MasterSubTasks = taskMaster.MasterSubTasks?.OrderBy(x => x.OrderNumber).Select(x => new MasterSubTaskViewModel
+                {
+                    MasterSubTaskId = x.MasterSubTaskId,
+                    TaskName = x.TaskName,
+                    Description = x.Description,
+                    OrderNumber = x.OrderNumber
+                }).ToList() ?? new List<MasterSubTaskViewModel>()
+            };
+        }
+        else
+        {
+            TaskMaster = null;
+            CurrentViewModel = new TaskMasterDialogViewModel();
+        }
+        EditContext = new EditContext(CurrentViewModel);
+        Hidden = false;
+        HiddenChanged.InvokeAsync(Hidden);
+        StateHasChanged();
+    }
+
+    private async Task SaveTaskMaster()
+    {
+        if (EditContext.Validate())
+        {
+            string noteTextSave = await RichTextEditor.GetXhtmlAsync();
+            CurrentViewModel.Description = noteTextSave;
+            await OnSave.InvokeAsync(CurrentViewModel);
+            CancelDialog();
+        }
+    }
+
+    private void CancelDialog()
+    {
+        Hidden = true;
+        HiddenChanged.InvokeAsync(Hidden);
+    }
+    private List<ToolbarItemModel> Tools = new List<ToolbarItemModel>()
+    {
+        new ToolbarItemModel() { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel() { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel() { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel() { Command = ToolbarCommand.StrikeThrough },
+        new ToolbarItemModel() { Command = ToolbarCommand.FontColor },
+        new ToolbarItemModel() { Command = ToolbarCommand.FontSize },
+        new ToolbarItemModel() { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.OrderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.UnorderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel() { Command = ToolbarCommand.SourceCode },
+        new ToolbarItemModel() { Command = ToolbarCommand.ClearFormat }
+
+    };
+}

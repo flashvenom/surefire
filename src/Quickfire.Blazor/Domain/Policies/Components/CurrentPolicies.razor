@@ -1,0 +1,182 @@
+@namespace Quickfire.Blazor.Domain.Policies.Components
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Policies.Models
+@using System.Collections.Generic
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Attachments.Components
+@using Microsoft.AspNetCore.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Navigation
+@inject RenewalService RenewalService
+
+@if (selectedClient != null)
+{
+    <div class="policy-container">
+        @foreach (var policy in currentPolicies)
+        {
+            <DropzoneContainer PolicyId="policy?.PolicyId ?? 0" ClientId="selectedClient?.ClientId ?? 0" FileBrowserButton="Hidden">
+                <div class="@GetPolicyClass(policy.PolicyId)">
+
+                    <FluentStack @onclick="() => ToggleExpand(policy.PolicyId)">
+                        <div class="ff1 togglehover">
+                            <FluentIcon Class="@(expandedPolicies.Contains(policy.PolicyId) ? "smallicon rotate-90" : "smallicon rotate-0")" Value="@(new Icons.Regular.Size16.ChevronRight())" Color="Color.Fill" />
+                            <span class="policy-linename">@policy.Product?.LineName</span>
+                            @if (policy.Renewals != null && policy.Renewals.Any())
+                            {
+                                var renewal = policy.Renewals.FirstOrDefault();
+                                if (renewal != null)
+                                {
+                                    <a class="renew-soon-pill" title="Renews Soon!" @onclick="(e => GoToRenewal(renewal.RenewalId))">
+                                        <FluentIcon Class="cakeicon" Value="@(new Icons.Regular.Size12.FoodCake())" Color="Color.Custom" CustomColor="#fff" />
+                                        <span class="renew-text">Renews Soon</span>
+                                    </a>
+                                }
+                            }
+                            @{
+                                var iconId = policy.CustomLabel switch
+                                {
+                                    CustomLabel.HartfordServiceCenter => $"hart-serv-{policy.PolicyId}",
+                                    CustomLabel.HartfordAgencyService => $"hart-agency-{policy.PolicyId}",
+                                    _ => $"icon-{policy.PolicyId}"
+                                };
+                            }
+
+                            @if (policy.CustomLabel.HasValue)
+                            {
+                                @if (policy.CustomLabel == CustomLabel.HartfordServiceCenter)
+                                {
+                                    <span class="custom-label-icon-fillservice" id="@iconId">
+                                        <FluentIcon Id="HartServ" Class="custom-label-icon-inner" Value="@(new Icons.Regular.Size12.Briefcase())" Color="Color.Fill" />
+                                    </span>
+                                    <FluentTooltip Anchor="@iconId">Hartford Service Center</FluentTooltip>
+                                }
+                                else if (policy.CustomLabel == CustomLabel.HartfordAgencyService)
+                                {
+                                    <span class="custom-label-icon-fillagency" id="@iconId">
+                                        <FluentIcon Id="HartAgency" Class="custom-label-icon-inner" Value="@(new Icons.Regular.Size12.Organization())" Color="Color.Fill" />
+                                    </span>
+                                    <FluentTooltip Anchor="@iconId">Hartford Agency Service</FluentTooltip>
+                                }
+                            }
+                        </div>
+                        <div class="ff2 togglehover">
+                            <span class="edate full-date">@policy.EffectiveDate.ToShortDateString() -&nbsp;</span>
+                            <span class="xdate full-date">@policy.ExpirationDate.ToShortDateString()</span>
+                            <span class="compact-date">@GetCompactDateRange(policy.EffectiveDate, policy.ExpirationDate)</span>
+                        </div>
+                    </FluentStack>
+                   
+                
+                    <div class="policy-carriers">
+
+                        @if (!string.IsNullOrEmpty(policy.Carrier?.CarrierName))
+                        {
+                            <span class="carrier-name"><a href="/Carriers/@policy.Carrier?.CarrierId">@StringHelper.CropCarrierName(policy.Carrier?.CarrierName)</a></span>
+                        }
+                        @if (!string.IsNullOrEmpty(policy.Wholesaler?.CarrierName))
+                        {
+                            <span class="lighter">|</span>
+                            <span class="carrier-name"><a href="/Carriers/@policy.Wholesaler?.CarrierId">@StringHelper.CropCarrierName(policy.Wholesaler?.CarrierName)</a></span>
+                        }
+                        @if (!string.IsNullOrEmpty(policy.PolicyNumber))
+                        {
+                            <span class="lighter">|</span>
+                            <span class="carrier-name">@policy.PolicyNumber</span>
+                        }
+                        @if (policy.Premium > 0)
+                        {
+                            <span class="lighter">|</span>
+                            <span class="carrier-name">@policy.Premium.ToString("C0")</span>
+                        }
+                        @if (!string.IsNullOrEmpty(policy.Status))
+                        {
+                            <span class="lighter">|</span>
+                            <span class="carrier-name">@policy.Status</span>
+                        }
+                    </div>
+                    <div class="additional-links" style="@GetLinksStyle(policy.PolicyId)" id="links-@policy.PolicyId">
+                        <a class="smalltool" href="/Policies/Details/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Open())" Color="Color.Fill" />Open Policy</a>
+                        <a class="smalltool" href="/Policies/Edit/@(policy.PolicyId)"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Fill" />Edit Policy</a>
+                        <a class="smalltool" @onclick="@((e) => CreateAndRedirectToRenewal(policy.PolicyId))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.ArrowRepeatAll())" Color="Color.Fill" />Renewal</a>
+                        <a class="smalltool" @onclick="@(() => OnOutlookSearchForPolicy.InvokeAsync(policy.PolicyNumber))"><FluentIcon Class="smallicon" Value="@(new Icons.Regular.Size16.Search())" Color="Color.Fill" />Search Outlook</a>
+                    </div>
+                </div>
+            </DropzoneContainer>
+        }
+    </div>
+}
+@if (selectedClient != null && currentPolicies.Count == 0)
+{
+    <div class="policy-container">
+        <div class="policy">No policies found</div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public Client selectedClient { get; set; }
+
+    [Parameter]
+    public List<Policy> currentPolicies { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<string> OnOutlookSearchForPolicy { get; set; }
+
+    [Inject]
+    private Quickfire.Blazor.Domain.Shared.Services.StateService _stateService { get; set; }
+    [Inject]
+    private Quickfire.Blazor.Domain.Clients.Services.ClientStateService ClientStateService { get; set; }
+
+    private HashSet<int> expandedPolicies = new HashSet<int>();
+
+    private string GetPolicyClass(int policyId)
+    {
+        return expandedPolicies.Contains(policyId) ? "policy expanded" : "policy";
+    }
+
+    private string GetLinksStyle(int policyId)
+    {
+        return expandedPolicies.Contains(policyId) ? "display: block;" : "display: block;";
+    }
+
+    private void ToggleExpand(int policyId)
+    {
+        if (expandedPolicies.Contains(policyId))
+        {
+            expandedPolicies.Remove(policyId);
+        }
+        else
+        {
+            expandedPolicies.Add(policyId);
+        }
+    }
+
+    private void CreateAndRedirectToRenewal(int policyid)
+    {
+        // Redirect to a special page that allows us to pick a TaskGroup
+        Navigation.NavigateTo($"/Renewals/CreateFromPolicyId/{policyid}");
+    }
+
+    private void GoToRenewal(int renewalId)
+    {
+        _stateService.HtmlView = "details";
+        _stateService.HtmlRenewalId = renewalId;
+        if (selectedClient != null)
+        {
+            ClientStateService.SelectedClientId = selectedClient.ClientId;
+        }
+        Navigation.NavigateTo($"/Renewals/Details/{renewalId}");
+    }
+
+    private string GetCompactDateRange(DateTime effectiveDate, DateTime expirationDate)
+    {
+        // Format: MM/dd/yy-yy (e.g., "10/23/25-26")
+        var startYear = effectiveDate.Year.ToString().Substring(2);
+        var endYear = expirationDate.Year.ToString().Substring(2);
+        
+        return $"{effectiveDate.Month:D2}/{effectiveDate.Day:D2}/{startYear}-{endYear}";
+    }
+
+}

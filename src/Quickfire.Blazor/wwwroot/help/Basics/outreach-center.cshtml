@@ -1,0 +1,250 @@
+<h1>Outreach Center</h1>
+
+<p>
+    The Outreach Center is where you plan, create, and manage email campaigns. Whether you're sending newsletters, renewal reminders, or marketing messages, the Outreach Center helps you reach the right people with the right message at the right time.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Full-page screenshot of the Outreach Center showing campaign cards with status indicators (Scheduled, Running, Finished) and metrics. Show the campaign list/grid layout with counts and status badges. Include labels for key areas. -->
+
+<h2>Understanding Campaigns</h2>
+
+<p>
+    A campaign is a planned email send to a group of recipients. Each campaign has:
+</p>
+
+<ul>
+    <li><strong>A template</strong> – The email content (subject, body, images)</li>
+    <li><strong>A segment</strong> – Who will receive the email (filtered list of clients/leads)</li>
+    <li><strong>A schedule</strong> – When it will be sent</li>
+    <li><strong>A status</strong> – Where it is in the process (Draft, Scheduled, Running, Finished)</li>
+</ul>
+
+<p>
+    Campaigns help you send consistent, professional emails to many people at once while tracking who received what and when.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Visual diagram showing the components of a campaign: Template + Segment + Schedule = Campaign. Use boxes and arrows to show how these pieces fit together. Include icons or simple illustrations for each component. -->
+
+<h2>Campaign Status and Health</h2>
+
+<p>
+    Each campaign card shows its status and key metrics at a glance:
+</p>
+
+<ul>
+    <li><strong>Scheduled</strong> – Campaign is set up and waiting to start</li>
+    <li><strong>Running</strong> – Campaign is actively sending emails</li>
+    <li><strong>Finished</strong> – Campaign has completed sending</li>
+    <li><strong>Draft</strong> – Campaign is being created but not ready to send</li>
+</ul>
+
+<p>
+    You'll also see quick metrics like:
+</p>
+
+<ul>
+    <li>How many emails were sent</li>
+    <li>How many were delivered</li>
+    <li>How many bounced or failed</li>
+    <li>Recent send activity</li>
+</ul>
+
+<p>
+    This helps you spot issues quickly and understand campaign performance at a glance.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of a campaign card showing status badge, metrics (sent, delivered, failed counts), and a small chart or activity indicator. Use color coding (green for good, yellow for warning, red for issues) to make status clear. -->
+
+<h2>Blasters</h2>
+
+<p>
+    A "blaster" is the system that actually sends your emails. Think of it as the email delivery engine. Quickfire uses email delivery providers (like Microsoft Graph) to send campaigns.
+</p>
+
+<p>
+    <strong>Key concepts:</strong>
+</p>
+
+<ul>
+    <li><strong>Delivery provider</strong> – The service that sends the emails (configured per campaign)</li>
+    <li><strong>Throttling</strong> – The system limits how fast emails are sent to avoid being flagged as spam</li>
+    <li><strong>Batch processing</strong> – Emails are sent in batches rather than all at once</li>
+    <li><strong>Rate limits</strong> – Daily, hourly, and total send limits to protect your sending reputation</li>
+</ul>
+
+<p>
+    The blaster handles all the technical details of sending emails reliably and safely.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Simple diagram showing how a blaster works: Campaign → Blaster → Email Provider → Recipients. Include icons for each step. Show throttling/batching with visual indicators (like a queue or flow diagram). -->
+
+<h2>Templates</h2>
+
+<p>
+    Templates are the email content for your campaigns. They live in the Template Library and can be reused across multiple campaigns.
+</p>
+
+<p>
+    <strong>Template features:</strong>
+</p>
+
+<ul>
+    <li><strong>HTML body</strong> – Rich, formatted email content with images and styling</li>
+    <li><strong>Plain text version</strong> – A text-only fallback for email clients that don't support HTML</li>
+    <li><strong>Subject line</strong> – The email subject (can include variables that get filled in)</li>
+    <li><strong>Merge fields</strong> – Placeholders like {ClientName} that get replaced with actual data</li>
+    <li><strong>Headers and footers</strong> – Consistent branding that appears on all emails</li>
+</ul>
+
+<p>
+    You can edit templates in the Library, and changes will affect future campaigns that use that template (but not campaigns that have already been sent).
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the Template Library showing a template being edited. Highlight the HTML body editor, subject line field, and show an example of merge fields (like {ClientName}) in the content. Include the header/footer sections. -->
+
+<h2>Segments</h2>
+
+<p>
+    Segments define who receives your campaign. They're filtered lists of clients or leads based on criteria you specify.
+</p>
+
+<p>
+    <strong>Segment criteria examples:</strong>
+</p>
+
+<ul>
+    <li><strong>By product type</strong> – All clients with Workers' Comp policies</li>
+    <li><strong>By expiration date</strong> – Policies expiring in the next 30 days</li>
+    <li><strong>By location</strong> – Clients in a specific state or city</li>
+    <li><strong>By status</strong> – Active clients, new leads, etc.</li>
+    <li><strong>By custom fields</strong> – Any other criteria you've set up</li>
+</ul>
+
+<p>
+    Segments are saved in the Library so you can reuse them. For example, you might have a "Renewals This Month" segment that you use for multiple campaigns.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the Segment Library or segment editor showing filter criteria being set. Show dropdowns or checkboxes for different filter options. Include a preview showing how many recipients match the segment. -->
+
+<h2>The Library</h2>
+
+<p>
+    The Library is where you manage templates and segments. It's organized into sections:
+</p>
+
+<ul>
+    <li><strong>Templates</strong> – All your email templates</li>
+    <li><strong>Segments</strong> – All your recipient segments</li>
+</ul>
+
+<p>
+    From the Library, you can:
+</p>
+
+<ul>
+    <li>Create new templates or segments</li>
+    <li>Edit existing ones</li>
+    <li>Preview how they'll look</li>
+    <li>See which campaigns use each template or segment</li>
+    <li>Test templates with sample data</li>
+</ul>
+
+<p>
+    The Library makes it easy to refine your email content and recipient lists without leaving the Outreach Center.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the Library view showing both Templates and Segments sections. Show a template and segment side by side, or show tabs for switching between them. Include action buttons (Edit, Preview, etc.). -->
+
+<h2>Creating a Campaign</h2>
+
+<p>
+    Here's the typical flow for creating a campaign:
+</p>
+
+<ol>
+    <li><strong>Choose or create a template</strong> – Select an existing template from the Library or create a new one</li>
+    <li><strong>Choose or create a segment</strong> – Select who should receive the email</li>
+    <li><strong>Set the schedule</strong> – Decide when to send (immediately or scheduled for later)</li>
+    <li><strong>Configure settings</strong> – Set send limits, approval requirements, and other options</li>
+    <li><strong>Review and approve</strong> – Preview the campaign and approve it for sending</li>
+    <li><strong>Monitor progress</strong> – Watch as emails are sent and track delivery</li>
+</ol>
+
+<p>
+    The Outreach Center guides you through each step and shows you exactly what will happen before you send.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Step-by-step screenshots or a flowchart showing the campaign creation process. Use numbered steps or a visual flow diagram. Show key screens: template selection, segment selection, schedule settings, preview, and approval. -->
+
+<h2>Provider Diagnostics</h2>
+
+<p>
+    Before sending a large campaign, it's wise to check Provider Diagnostics. This shows you:
+</p>
+
+<ul>
+    <li><strong>DNS status</strong> – Whether your email domain is properly configured</li>
+    <li><strong>Throttling status</strong> – Current rate limits and sending capacity</li>
+    <li><strong>Adapter health</strong> – Whether the email delivery system is working correctly</li>
+</ul>
+
+<p>
+    Running diagnostics before a big send helps you avoid surprises and ensures your emails will be delivered successfully.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the Provider Diagnostics page showing DNS status, throttling information, and adapter health checks. Use green/yellow/red indicators to show status. Include explanations or tooltips for each diagnostic item. -->
+
+<h2>Change Requests</h2>
+
+<p>
+    Sometimes plans change and you need to modify a campaign that's already scheduled or running. Change Requests let you:
+</p>
+
+<ul>
+    <li><strong>Pause a campaign</strong> – Stop sending if something comes up</li>
+    <li><strong>Change the status</strong> – Move a campaign between Draft, Scheduled, and other statuses</li>
+    <li><strong>Update settings</strong> – Modify send limits or other configuration</li>
+    <li><strong>Cancel a campaign</strong> – Stop it completely if needed</li>
+</ul>
+
+<p>
+    Change Requests help you stay in control and adapt when circumstances change.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing a Change Request dialog or interface. Show options for pausing, changing status, or canceling. Include a confirmation step to prevent accidental changes. -->
+
+<h2>Safety Features</h2>
+
+<p>
+    The Outreach Center includes several safety features to prevent mistakes:
+</p>
+
+<ul>
+    <li><strong>Approval requirements</strong> – Campaigns can require approval before sending</li>
+    <li><strong>Safety seed addresses</strong> – Test emails sent to specific addresses before the full campaign</li>
+    <li><strong>Send limits</strong> – Daily, hourly, and total limits to prevent accidental mass sends</li>
+    <li><strong>Deduplication</strong> – Prevents sending the same email to the same person multiple times</li>
+</ul>
+
+<p>
+    These features help ensure campaigns are sent correctly and safely.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of campaign settings showing safety features: approval toggle, safety seed addresses field, send limit settings, and deduplication options. Highlight these with callouts or labels. -->
+
+<h2>Tips for Successful Campaigns</h2>
+
+<ul>
+    <li><strong>Test with safety seeds first</strong> – Always send test emails to yourself or a small group before the full campaign</li>
+    <li><strong>Check diagnostics regularly</strong> – Make sure your email infrastructure is healthy</li>
+    <li><strong>Use segments wisely</strong> – Target the right audience for better results</li>
+    <li><strong>Preview templates</strong> – See how emails will look before sending</li>
+    <li><strong>Monitor during sending</strong> – Watch for issues and be ready to pause if needed</li>
+    <li><strong>Review metrics after</strong> – Learn from delivery rates and engagement</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: A simple infographic or checklist showing the tips above with icons or illustrations. Make it visually appealing and easy to reference. -->
+
+<p>
+    <strong>Next Steps:</strong> Learn about <a href="/help/Basics/templates">Email Templates</a> to understand how to create effective email content, or read about <a href="/help/Basics/leads">Leads</a> to see how campaigns can target your lead pipeline.
+</p>

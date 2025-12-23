@@ -1,0 +1,66 @@
+﻿.page-content {
+    background: none;
+    position: relative;
+    z-index: 100;
+    height: calc(100vh - 75px);
+    padding-left: 20px;
+}
+
+.img-fluid {
+    width:100%;
+}
+.bottom-right {
+    position: sticky;
+    bottom: 100px;
+    right: 0;
+    z-index: 1;
+    opacity: .25;
+    background: none;
+    pointer-events: none;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: minmax(650px, 2fr) minmax(200px, 1.8fr) minmax(200px, 1fr); 
+    gap: 20px;
+    height: calc(100vh - 75px);
+    padding: 15px 0 0;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+}
+.parCol {
+    position: relative;
+    will-change: transform; /* let the GPU handle it */
+}
+/* ========== 2‑column laptop / tablet (<1500 px) ========== */
+@media(max-width:1500px) {
+    .dashboard {
+        grid-template-columns: minmax(650px,1fr) minmax(300px,1fr);
+    }
+
+    .col-right {
+        display: none;
+    }
+}
+
+/* ========== 1‑column mobile (<900 px) ========== */
+@media(max-width:900px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .col-right {
+        display: block;
+    }
+    .sticky-col {
+        top: 60px;
+    }
+}
+.rounded-corn {
+    border-radius: 10px;
+    box-shadow: 2px 2px 4px #ffffff7f;
+    overflow:hidden;
+}

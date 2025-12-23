@@ -1,0 +1,380 @@
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Microsoft.AspNetCore.Components.Web
+@using Syncfusion.Blazor.RichTextEditor
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.JSInterop
+@inject ClientService ClientService
+@inject StateService StateService
+@inject IJSRuntime JS
+
+@implements IAsyncDisposable
+
+<div class="global-notes-container togglevis-@(ShowNotes)">
+    @if (Notes == null)
+    {
+        <div class="loading-notes">Loading notes...</div>
+    }
+    else if (Notes.Count == 0)
+    {
+        <FluentStack>
+            <div class="note-card-blank">
+                <img src="/img/pencil-gsse.png" />
+                @* <span class="nothing-found">No Notes Found</span> *@
+            </div>
+            <div class="btn-add-note add-sp" @onclick="ShowAddNoteDialog">
+                <span class="iconc">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Add())" Color="Color.Custom" CustomColor="#fff;" />
+                </span>
+            </div>
+        </FluentStack>
+    }
+    else
+    {
+        <FluentStack Class="notes-list" HorizontalAlignment="HorizontalAlignment.Left" Style="flex-basis: content;" HorizontalGap="0">
+            @{
+                var pinnedNotes = FilteredNotes.Where(n => n.Pinned).ToList();
+                var unpinnedNotes = FilteredNotes.Where(n => !n.Pinned).ToList();
+            }
+            <div class="notes-layout-container">
+                <div class="notes-section" @ref="notesSectionElement">
+                    @if (pinnedNotes.Any())
+                    {
+                        @foreach (var note in pinnedNotes)
+                        {
+                            <NoteCard Note="@note"
+                                      OnDelete="@(async () => await DeleteNote(note.Id))"
+                                      OnPin="@(async () => await TogglePin(note.Id))"
+                                      OnEdit="@(() => EditNote(note))"
+                                      @key="@($"pinned_{note.Id}")" />
+                        }
+                    }
+                    @if (unpinnedNotes.Any())
+                    {
+                        @foreach (var note in unpinnedNotes)
+                        {
+                            <NoteCard Note="@note"
+                                      OnDelete="@(async () => await DeleteNote(note.Id))"
+                                      OnPin="@(async () => await TogglePin(note.Id))"
+                                      OnEdit="@(() => EditNote(note))"
+                                      @key="@($"unpinned_{note.Id}")" />
+                        }
+                    
+                    }
+                </div>
+                <div class="btn-add-note add-sp" @onclick="ShowAddNoteDialog">
+                    <span class="iconc">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Add())" Color="Color.Custom" CustomColor="#fff;" />
+                    </span>
+                </div>
+            </div>
+        </FluentStack>
+    }
+
+    <FluentDialog Hidden="!IsAddNoteDialogOpen" TrapFocus="true" Modal="true" style="width:auto;">
+        <FluentDialogHeader>
+            <span class="txt-label">@(EditingNote == null ? "Add New Note" : "Edit Note")</span>
+        </FluentDialogHeader>
+        <FluentDialogBody>
+            <div class="note-editor">
+                <SfRichTextEditor @ref="RichTextEditor" Height="200px" Value="@NoteText">
+                    <RichTextEditorToolbarSettings Items="@Tools" />
+                </SfRichTextEditor>
+
+                <FluentStack>
+                    <div class="tags-section" style="display:none;">
+                        <FluentLabel For="tags">Tags (comma separated)</FluentLabel>
+                        <FluentTextField @bind-Value="TagText" Placeholder="#renewal, #finance, #important" />
+                    </div>
+                    <div><FluentCheckbox @bind-Value="IsPinned" Label="Pin to top" /></div>
+                    <div class="reminder-section">
+                        <FluentCheckbox @bind-Value="HasReminder" Label="Set reminder" />
+                        @if (ShowReminderPicker)
+                        {
+                            <FluentDatePicker @bind-Value="ReminderDate" Placeholder="Select date" />
+                        }
+                    </div>
+                </FluentStack>
+
+            </div>
+        </FluentDialogBody>
+        <FluentDialogFooter>
+            <FluentButton Appearance="Appearance.Outline" OnClick="CloseAddNoteDialog">Cancel</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="SaveNote">Save Note</FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+
+</div>
+
+@code {
+    [Parameter] public EntityType EntityType { get; set; }
+    [Parameter] public int EntityId { get; set; }
+    [Parameter] public string ClientName { get; set; }
+    [Parameter] public bool ShowNotes { get; set; }
+
+    private List<GlobalNote> Notes { get; set; }
+    private List<GlobalNote> FilteredNotes => ApplyFilters();
+    private HashSet<string> AllTags { get; set; } = new HashSet<string>();
+
+    private bool IsAddNoteDialogOpen { get; set; } = false;
+
+    private GlobalNote EditingNote { get; set; }
+    private string NoteText { get; set; }
+    private string TagText { get; set; }
+    private bool IsPinned { get; set; } = false;
+    private bool HasReminder { get; set; } = false;
+    private bool ShowReminderPicker { get; set; } = false;
+    private DateTime? ReminderDate { get; set; }
+
+    private bool IsSearchVisible { get; set; } = false;
+    private bool ShowPinnedOnly { get; set; }
+    private bool ShowWithReminderOnly { get; set; }
+    private string SearchTerm { get; set; }
+    private string TagFilter { get; set; } = string.Empty;
+
+    private SfRichTextEditor RichTextEditor;
+
+    private ElementReference notesSectionElement;
+    private IJSObjectReference? module;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotes();
+    }
+    private List<ToolbarItemModel> Tools = new List<ToolbarItemModel>()
+    {
+        new ToolbarItemModel() { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel() { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel() { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel() { Command = ToolbarCommand.StrikeThrough },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.OrderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.UnorderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Undo },
+        new ToolbarItemModel() { Command = ToolbarCommand.Redo }
+    };
+    protected override void OnParametersSet()
+    {
+        // Ensure all dialogs are closed when navigating to a different entity
+        IsAddNoteDialogOpen = false;
+        IsSearchVisible = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadNotes();
+    }
+
+    private async Task LoadNotes()
+    {
+        Notes = await ClientService.GetGlobalNotesByEntityAsync(EntityType, EntityId);
+        ExtractAllTags();
+    }
+
+    private void ExtractAllTags()
+    {
+        AllTags.Clear();
+
+        if (Notes == null) return;
+
+        foreach (var note in Notes)
+        {
+            if (string.IsNullOrEmpty(note.Tags)) continue;
+
+            var tags = note.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => t.Trim())
+                .Where(t => !string.IsNullOrEmpty(t));
+
+            foreach (var tag in tags)
+            {
+                AllTags.Add(tag);
+            }
+        }
+    }
+
+    private List<GlobalNote> ApplyFilters()
+    {
+        if (Notes == null) return new List<GlobalNote>();
+
+        var filtered = Notes.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filtered = filtered.Where(n =>
+                (n.Text?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (n.Tags?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (n.AuthorName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        // Apply tag filter
+        if (!string.IsNullOrEmpty(TagFilter))
+        {
+            filtered = filtered.Where(n => n.Tags?.Contains(TagFilter, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
+        // Apply pinned filter
+        if (ShowPinnedOnly)
+        {
+            filtered = filtered.Where(n => n.Pinned);
+        }
+
+        // Apply reminder filter
+        if (ShowWithReminderOnly)
+        {
+            filtered = filtered.Where(n => n.ReminderDate.HasValue);
+        }
+
+        return filtered.ToList();
+    }
+
+    private void ShowAddNoteDialog()
+    {
+        EditingNote = null;
+        NoteText = string.Empty;
+        TagText = string.Empty;
+        IsPinned = false;
+        HasReminder = false;
+        ShowReminderPicker = false;
+        ReminderDate = null;
+        IsAddNoteDialogOpen = true;
+        StateHasChanged();
+    }
+
+    private void EditNote(GlobalNote note)
+    {
+        EditingNote = note;
+        NoteText = note.Text;
+        TagText = note.Tags;
+        IsPinned = note.Pinned;
+        HasReminder = note.ReminderDate.HasValue;
+        ShowReminderPicker = note.ReminderDate.HasValue;
+        ReminderDate = note.ReminderDate;
+        IsAddNoteDialogOpen = true;
+        StateHasChanged();
+    }
+
+    private void CloseAddNoteDialog()
+    {
+        IsAddNoteDialogOpen = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveNote()
+    {
+        string noteText = await RichTextEditor.GetXhtmlAsync();
+
+        if (string.IsNullOrWhiteSpace(noteText))
+        {
+            // Show validation error
+            return;
+        }
+
+        if (EditingNote == null)
+        {
+            // Create new note
+            var newNote = new GlobalNote
+                {
+                    EntityType = EntityType,
+                    EntityId = EntityId,
+                    Text = noteText,
+                    Tags = TagText,
+                    Pinned = IsPinned,
+                    ReminderDate = HasReminder ? ReminderDate : null,
+                    HasMarkdown = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+            await ClientService.AddGlobalNoteAsync(newNote);
+        }
+        else
+        {
+            // Update existing note
+            EditingNote.Text = noteText;
+            EditingNote.Tags = TagText;
+            EditingNote.Pinned = IsPinned;
+            EditingNote.ReminderDate = HasReminder ? ReminderDate : null;
+            EditingNote.HasMarkdown = true;
+
+            await ClientService.UpdateGlobalNoteAsync(EditingNote);
+        }
+
+        await LoadNotes();
+        IsAddNoteDialogOpen = false;
+    }
+
+    private async Task DeleteNote(int noteId)
+    {
+        // Consider adding confirmation
+        await ClientService.DeleteGlobalNoteAsync(noteId);
+        await LoadNotes();
+    }
+
+    private async Task TogglePin(int noteId)
+    {
+        await ClientService.TogglePinGlobalNoteAsync(noteId);
+        await LoadNotes();
+    }
+
+    private void ToggleSearchPanel()
+    {
+        IsSearchVisible = !IsSearchVisible;
+
+        if (!IsSearchVisible)
+        {
+            // Reset search parameters when hiding search panel
+            SearchTerm = string.Empty;
+            TagFilter = string.Empty;
+            ShowPinnedOnly = false;
+            ShowWithReminderOnly = false;
+        }
+    }
+
+    private async Task SearchNotes()
+    {
+        // The filtering is handled by the FilteredNotes property
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Ensure the JS module is loaded only once
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./Domain/Shared/Components/GlobalNotes.razor.js");
+        }
+
+        // Check if the notes section is rendered and the module is loaded
+        if (module != null && Notes?.Count > 0) 
+        {
+             // Check if notesSectionElement has a value (it might not immediately after loading)
+            if (!string.IsNullOrEmpty(notesSectionElement.Id)) // A simple check if the element ref is populated
+            {
+               await module.InvokeVoidAsync("initializeDragScroll", notesSectionElement);
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender); // Call base method if necessary
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module != null)
+        {
+            try
+            {
+                await module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Circuit already disconnected, JS object is likely already gone.
+                // No further action needed.
+            }
+        }
+    }
+} 

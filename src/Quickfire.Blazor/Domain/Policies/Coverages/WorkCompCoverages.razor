@@ -1,0 +1,311 @@
+﻿@namespace Quickfire.Blazor.Components.Policies.Coverages
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Attachments.Services
+@inject PolicyService PolicyService
+@inject AttachmentService AttachmentService
+@inject AppJsInterop JsInterop
+
+@if (WorkCompCoverage is not null)
+{
+    <div class="workcomp-container">
+        <!-- Policy Limits Section -->
+        <FluentCard Class="coverage-section">
+            <div class="section-title">
+                <FluentIcon Value="@(new Icons.Regular.Size20.MoneyCalculator())" Color="Color.Custom" CustomColor="#000" />
+                Policy Limits
+            </div>
+            
+            <div class="field-group">
+                <div class="field-row">
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Each Accident</FluentLabel>
+                        <FluentNumberField @bind-Value="WorkCompCoverage.EachAccident"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Disease - Policy Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="WorkCompCoverage.DiseasePolicyLimit"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Disease - Each Employee</FluentLabel>
+                        <FluentNumberField @bind-Value="WorkCompCoverage.DiseaseEachEmployee"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+            </div>
+        </FluentCard>
+
+        <FluentStack>
+            <!-- Coverage Options Section -->
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" Color="Color.Custom" CustomColor="#000" />
+                    Coverage Options
+                </div>
+            
+                <div class="field-group">
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(WorkCompCoverage.OwnersOfficersExcluded ?? false)"
+                                      ValueChanged="@(async (bool value) => { WorkCompCoverage.OwnersOfficersExcluded = value; await UpdateCoverageAsync(); })">
+                            Owners/Officers Excluded
+                        </FluentSwitch>
+                    </div>
+                
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(WorkCompCoverage.PerStatute ?? false)"
+                                      ValueChanged="@(async (bool value) => { WorkCompCoverage.PerStatute = value; await UpdateCoverageAsync(); })">
+                            Per Statute
+                        </FluentSwitch>
+                    </div>
+                
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(WorkCompCoverage.PerOther ?? false)"
+                                      ValueChanged="@(async (bool value) => { WorkCompCoverage.PerOther = value; await UpdateCoverageAsync(); })">
+                            Per Other
+                        </FluentSwitch>
+                    </div>
+                </div>
+            </FluentCard>
+
+            <!-- Waiver of Subrogation Section -->
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentAdd())" Color="Color.Custom" CustomColor="#000" />
+                    Waiver of Subrogation
+                </div>
+            
+                <div class="field-group">
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(WorkCompCoverage.WaiverOfSub ?? false)"
+                                      ValueChanged="@(async (bool value) => { WorkCompCoverage.WaiverOfSub = value; await UpdateCoverageAsync(); })">
+                            Waiver of Subrogation Required
+                        </FluentSwitch>
+                    </div>
+                
+                    @if (WorkCompCoverage.WaiverOfSub == true)
+                    {
+                        <div class="attachment-section @(WorkCompCoverage.WaiverOfSubAttachment != null ? "has-file" : "")">
+                            @if (WorkCompCoverage.WaiverOfSubAttachment != null)
+                            {
+                                <div class="file-display">
+                                    <div class="file-icon">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.DocumentPdf())" />
+                                    </div>
+                                    <div class="file-info">
+                                        <div class="file-name">@WorkCompCoverage.WaiverOfSubAttachment.OriginalFileName</div>
+                                        <div class="file-size">Uploaded @WorkCompCoverage.WaiverOfSubAttachment.DateCreated.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                    <FluentButton Appearance="Appearance.Outline"
+                                                  OnClick="@(async () => await ViewFile(WorkCompCoverage.WaiverOfSubAttachment))"
+                                                  Class="file-action-btn">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" Slot="start" />
+                                        View
+                                    </FluentButton>
+                                    <FluentButton Appearance="Appearance.Outline"
+                                                  OnClick="@(() => RemoveFileAsync("wc-wos"))"
+                                                  Class="file-action-btn">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                                        Remove
+                                    </FluentButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="upload-area">
+                                    <FluentIcon Value="@(new Icons.Regular.Size48.CloudArrowUp())" Class="upload-icon" />
+                                    <div class="upload-text">Drop files here or click to browse</div>
+                                    <div class="upload-hint">Supports PDF, TXT files</div>
+                                    <InputFile OnChange="OnFileSelected" accept=".pdf,.txt" style="margin-top: 16px;" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </FluentCard>
+        </FluentStack>
+        <!-- Rating Basis Section -->
+        @if (WorkCompRatingBases != null && WorkCompRatingBases.Count > 0)
+        {
+            <div class="rating-basis-section">
+                <div class="rating-table-header">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Table())" />
+                    Workers' Compensation Rating Basis
+                </div>
+                
+                <table class="rating-table">
+                    <thead>
+                        <tr>
+                            <th>Class Code</th>
+                            <th>Description</th>
+                            <th>Payroll</th>
+                            <th>Base Rate</th>
+                            <th>Premium</th>
+                            <th>Full Time</th>
+                            <th>Part Time</th>
+                            <th>Location</th>
+                            <th>State</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ratingBasis in WorkCompRatingBases)
+                        {
+                            <tr>
+                                <td><span class="code-cell">@ratingBasis.ClassCode</span></td>
+                                <td>@ratingBasis.ClassDescription</td>
+                                <td class="currency-cell">@(ratingBasis.Payroll?.ToString("C2"))</td>
+                                <td>@(ratingBasis.BaseRate?.ToString("N4"))</td>
+                                <td class="currency-cell">@(ratingBasis.Premium?.ToString("C2"))</td>
+                                <td>@ratingBasis.FullTimeEmployees</td>
+                                <td>@ratingBasis.PartTimeEmployees</td>
+                                <td>@ratingBasis.LocationNumberNote</td>
+                                <td>@ratingBasis.LocationState</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <FluentCard Class="coverage-section">
+                <div class="empty-state">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.TableSimple())" Class="empty-state-icon" />
+                    <div>No rating basis information available</div>
+                </div>
+            </FluentCard>
+        }
+    </div>
+}
+else
+{
+    <div class="loading-spinner">
+        <FluentProgressRing />
+        <span style="margin-left: 12px;">Loading Workers' Compensation coverage...</span>
+    </div>
+}
+
+@code {
+    [Parameter] public int PolicyId { get; set; }
+
+    public WorkCompCoverage? WorkCompCoverage { get; set; }
+    public List<WorkCompRatingBasis> WorkCompRatingBases { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        // Load WorkCompCoverage for this policy
+        WorkCompCoverage = await PolicyService.GetWorkCompCoverageByPolicyIdAsync(PolicyId);
+        
+        // If no coverage exists, create one
+        if (WorkCompCoverage == null)
+        {
+            WorkCompCoverage = new WorkCompCoverage
+            {
+                PolicyId = PolicyId,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow,
+                OwnersOfficersExcluded = false,
+                PerStatute = true,
+                PerOther = false,
+                WaiverOfSub = false
+            };
+            WorkCompCoverage = await PolicyService.UpsertWorkCompCoverageAsync(WorkCompCoverage);
+        }
+
+        // Load WorkCompRatingBases for this policy
+        WorkCompRatingBases = await PolicyService.GetWorkCompRatingBasesByPolicyIdAsync(PolicyId);
+    }
+
+    private async Task UpdateCoverageAsync()
+    {
+        if (WorkCompCoverage != null)
+        {
+            WorkCompCoverage.DateModified = DateTime.UtcNow;
+            await PolicyService.UpsertWorkCompCoverageAsync(WorkCompCoverage);
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null) return;
+
+            // Save file to uploads directory
+            var uploadsPath = Path.Combine("wwwroot", "uploads");
+            Directory.CreateDirectory(uploadsPath);
+            
+            var fileName = $"{Guid.NewGuid()}_{file.Name}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream); // 10MB limit
+            }
+
+            // Create and assign the attachment
+            var attachment = await AttachmentService.AddPolicyAttachmentAsync(fileName, WorkCompCoverage!.WorkCompCoverageId, "wc-wos");
+
+            if (attachment != null)
+            {
+                WorkCompCoverage.WaiverOfSubAttachment = attachment;
+                await PolicyService.UpsertWorkCompCoverageAsync(WorkCompCoverage);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveFileAsync(string attachmentType)
+    {
+        try
+        {
+            if (attachmentType.ToLower() == "wc-wos" && WorkCompCoverage?.WaiverOfSubAttachment != null)
+            {
+                await AttachmentService.RemovePolicyAttachmentAsync(WorkCompCoverage.WorkCompCoverageId, attachmentType);
+                WorkCompCoverage.WaiverOfSubAttachment = null;
+                await PolicyService.UpsertWorkCompCoverageAsync(WorkCompCoverage);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing file: {ex.Message}");
+        }
+    }
+
+    private async Task ViewFile(Attachment attachment)
+    {
+        // Open file in new tab
+        var url = $"/uploads/{attachment.OriginalFileName}";
+        await JsInterop.OpenWindowAsync(url, "_blank");
+    }
+}

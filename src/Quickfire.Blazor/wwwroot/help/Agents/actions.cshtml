@@ -1,0 +1,248 @@
+<h1>Agent Actions</h1>
+
+<p>
+    Actions are the <strong>steps an agent performs for you</strong> once you click a button or trigger it from chat. Think of them as a checklist the system runs automatically: send an email, open a page, or perform another task using the data you provide.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the agent designer "Actions" tab showing an email action with its template selection, parameter mappings, and configuration options. Show the action list with one action expanded to show details. -->
+
+<h2>What Are Actions?</h2>
+
+<p>
+    Actions define what your agent actually does. Each agent can have one or more actions that execute in sequence. Common actions include:
+</p>
+
+<ul>
+    <li><strong>Send Email</strong> – Sends an email using an Outlook template</li>
+    <li><strong>Open Page</strong> – Navigates to a specific page in Quickfire</li>
+    <li><strong>Create Record</strong> – Creates a new record (renewal, task, etc.)</li>
+    <li><strong>Update Record</strong> – Updates an existing record</li>
+    <li>Other actions may be available depending on your configuration</li>
+</ul>
+
+<p>
+    Actions use the parameters you've defined to know exactly what to do—for example, which client to email or which page to open.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Visual diagram showing how actions work: Agent triggered → Action 1 executes → Action 2 executes → Action 3 executes → Complete. Show the flow with icons for different action types. -->
+
+<h2>How Actions Run</h2>
+
+<p>
+    Understanding how actions execute helps you build better agents:
+</p>
+
+<ul>
+    <li><strong>Sequential execution</strong> – Actions run from top to bottom in the order you configure them</li>
+    <li><strong>One at a time</strong> – Each action completes before the next one starts</li>
+    <li><strong>Error handling</strong> – If an action fails and is set to "stop on failure," the agent stops and shows an error</li>
+    <li><strong>Success continuation</strong> – If an action succeeds, the agent continues to the next action</li>
+</ul>
+
+<p>
+    This sequential approach means you can chain actions together—for example, create a renewal, then send an email about it.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the actions list showing multiple actions in order, with visual indicators showing the execution flow. Show how actions are numbered or ordered. -->
+
+<h2>Email Actions (Outlook)</h2>
+
+<p>
+    The most common action type sends emails using Outlook templates. This lets you send polished, consistent messages every time while filling in client and policy details automatically.
+</p>
+
+<h3>Setting Up an Email Action</h3>
+
+<ol>
+    <li><strong>Choose an email template</strong> – Select from your Outlook templates (these are created in Outlook, not in Quickfire)</li>
+    <li><strong>Map template fields</strong> – Connect each field in your email template to an agent parameter:
+        <ul>
+            <li>To: field → Contact Email parameter</li>
+            <li>Subject: field → Subject parameter (or use template's subject)</li>
+            <li>Body fields → Client Name, Policy Details, etc.</li>
+        </ul>
+    </li>
+    <li><strong>Configure options</strong> – Set whether to stop on failure, save to sent items, etc.</li>
+</ol>
+
+<p>
+    When the agent runs, those fields are automatically filled with real data from the page or from what the user enters.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Close-up screenshot of the email action configuration, with arrows or labels pointing from agent parameters (Client, Policy, Contact) to the matching fields in the email template. Show the mapping interface clearly. -->
+
+<h2>Mapping Parameters to Actions</h2>
+
+<p>
+    Actions rely on <strong>parameters</strong> to know exactly what to do. When you set up an action, you connect each required field in the action to a parameter from your agent.
+</p>
+
+<h3>Required vs. Optional Fields</h3>
+
+<ul>
+    <li><strong>Required fields</strong> – If a field is required in your email template, make sure it's mapped to a <strong>required parameter</strong> on the agent</li>
+    <li><strong>Optional fields</strong> – Optional fields can be mapped to optional parameters or left empty</li>
+</ul>
+
+<h3>Hidden vs. Visible Parameters</h3>
+
+<ul>
+    <li><strong>Hidden parameters</strong> – Use these when the value can be pulled straight from the page (for example, the current client ID). The user never sees these.</li>
+    <li><strong>Visible parameters</strong> – Use these when you want the user to confirm or enter a value when the agent runs (for example, a custom message or date).</li>
+</ul>
+
+<p>
+    This mapping ensures that when the agent runs, all the right information flows into the action.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing parameter mapping with examples: hidden parameters (Client ID from page) vs. visible parameters (Custom Message from user). Show how they map to action fields. -->
+
+<h2>Stop on Success / Failure</h2>
+
+<p>
+    Each action can control whether the agent should continue if something goes wrong or if a certain condition is met:
+</p>
+
+<h3>Stop on Failure</h3>
+<ul>
+    <li>If this action fails, the agent stops and shows an error</li>
+    <li>Prevents subsequent actions from running with bad data</li>
+    <li>Use this for critical actions that must succeed</li>
+    <li>Example: If sending an email fails, don't try to create a follow-up task</li>
+</ul>
+
+<h3>Stop on Success</h3>
+<ul>
+    <li>Useful for "try this, otherwise fall back" setups</li>
+    <li>The next action should only run if the first one did not complete</li>
+    <li>Example: Try to send via primary email, but if that fails, stop and let the user know</li>
+</ul>
+
+<p>
+    These options give you fine-grained control over how your agent handles different scenarios.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot highlighting the "Stop on failure / Stop on success" toggles for an action, with a short caption explaining when to use each. Show examples of both scenarios. -->
+
+<h2>Action Configuration Options</h2>
+
+<p>
+    Different action types have different configuration options:
+</p>
+
+<h3>Email Actions</h3>
+<ul>
+    <li><strong>Template selection</strong> – Choose which Outlook template to use</li>
+    <li><strong>Field mapping</strong> – Map template fields to agent parameters</li>
+    <li><strong>Save to sent items</strong> – Whether to save the email to your sent folder</li>
+    <li><strong>Stop on failure</strong> – Whether to stop if email sending fails</li>
+</ul>
+
+<h3>Navigation Actions</h3>
+<ul>
+    <li><strong>Target page</strong> – Which page to navigate to</li>
+    <li><strong>Parameters for URL</strong> – What data to include in the page URL</li>
+</ul>
+
+<p>
+    Each action type will have its own specific configuration options based on what it does.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing different action types with their configuration options. Show an email action and a navigation action side-by-side to illustrate the differences. -->
+
+<h2>Testing and Maintaining Actions</h2>
+
+<p>
+    Always test your agents before sharing them:
+</p>
+
+<ol>
+    <li><strong>Test from action zone</strong> – Run the agent from the page where it will appear</li>
+    <li><strong>Test from Enhanced AI Chat</strong> – Try triggering it via chat to ensure it works there too</li>
+    <li><strong>Review the results</strong> – Check that emails were sent correctly, pages opened, etc.</li>
+    <li><strong>Verify field mapping</strong> – Ensure all template fields were filled with the right data</li>
+    <li><strong>Test error scenarios</strong> – Try running with missing data to see how errors are handled</li>
+</ol>
+
+<p>
+    <strong>Maintenance tips:</strong>
+</p>
+<ul>
+    <li>Whenever you change the underlying email template or business rule, <strong>update the action mappings</strong> and republish the agent</li>
+    <li>Review agent usage periodically to see if actions need adjustment</li>
+    <li>Update actions when workflows change</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing the agent test interface with test results displayed. Show a successful test with the email that was sent, or show an error message if something failed. -->
+
+<h2>Common Action Patterns</h2>
+
+<p>
+    Here are some common patterns for combining actions:
+</p>
+
+<h3>Simple Email</h3>
+<ul>
+    <li>One action: Send Email</li>
+    <li>Use for: Welcome emails, reminders, notifications</li>
+</ul>
+
+<h3>Create and Notify</h3>
+<ul>
+    <li>Action 1: Create Record (renewal, task, etc.)</li>
+    <li>Action 2: Send Email (notify about the created record)</li>
+    <li>Use for: Creating renewals and notifying clients</li>
+</ul>
+
+<h3>Try Primary, Fallback to Secondary</h3>
+<ul>
+    <li>Action 1: Send Email (primary method) - Stop on Success</li>
+    <li>Action 2: Send Email (fallback method)</li>
+    <li>Use for: Contacting clients via preferred method, with backup</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual examples showing these action patterns with flowcharts or diagrams. Show how actions chain together for each pattern. -->
+
+<h2>Best Practices</h2>
+
+<ul>
+    <li><strong>Keep actions focused</strong> – Each action should do one thing well</li>
+    <li><strong>Order matters</strong> – Place actions in the order they need to execute</li>
+    <li><strong>Handle errors gracefully</strong> – Use "Stop on Failure" for critical actions</li>
+    <li><strong>Test thoroughly</strong> – Always test actions with real data before publishing</li>
+    <li><strong>Map parameters clearly</strong> – Ensure all required template fields are mapped</li>
+    <li><strong>Document complex flows</strong> – If actions have complex logic, document it in the agent description</li>
+    <li><strong>Update when templates change</strong> – Keep action mappings in sync with email templates</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual checklist showing best practices with icons: focus icon, order icon, error handling icon, testing icon. -->
+
+<h2>Troubleshooting</h2>
+
+<h3>Email Not Sending</h3>
+<ul>
+    <li>Verify email integration is configured (Microsoft Graph, etc.)</li>
+    <li>Check that all required template fields are mapped to parameters</li>
+    <li>Ensure parameters have values when the agent runs</li>
+    <li>Review error messages for specific issues</li>
+</ul>
+
+<h3>Wrong Data in Email</h3>
+<ul>
+    <li>Check parameter mappings—ensure fields are mapped to the correct parameters</li>
+    <li>Verify parameters are pulling the right data from the page</li>
+    <li>Test with different clients/policies to see if the issue is consistent</li>
+</ul>
+
+<h3>Actions Not Running in Order</h3>
+<ul>
+    <li>Verify actions are in the correct order in the action list</li>
+    <li>Check "Stop on Failure" settings—an early failure might prevent later actions</li>
+    <li>Review action execution logs if available</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of an error message that might appear when an action fails, with annotations explaining what it means and how to resolve it. -->
+
+<p>
+    <strong>Next Steps:</strong> Learn about <a href="/help/Agents/parameters">Agent Parameters</a> to understand what information actions need, or read the <a href="/help/Agents/agents-intro">Agents Overview</a> for a complete introduction.
+</p>

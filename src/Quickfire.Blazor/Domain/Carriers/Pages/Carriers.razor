@@ -1,0 +1,78 @@
+﻿@page "/Carriers"
+@page "/Carriers/Create"
+@page "/Carriers/{CarrierId:int}"
+@page "/Carriers/Edit/{CarrierId:int}"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Carriers.Components
+@using Microsoft.AspNetCore.Components.Routing
+@inherits CarriersPageBase
+
+
+<div class="page-toolbar">
+    <FluentMenuButton Text="Create New" OnMenuChanged="HandleOnMenuChanged">
+        <FluentMenuItem Id="Carrier"><FluentIcon Value="@(new Icons.Regular.Size20.BuildingBank())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Carrier</FluentMenuItem>
+        @if (selectedCarrierId != 0)
+        {
+            <FluentMenuItem Id="Contact"><FluentIcon Value="@(new Icons.Regular.Size20.Person())" Color="Color.Custom" CustomColor="#000" Slot="start" /> Contact</FluentMenuItem>
+        }
+    </FluentMenuButton>
+
+    <a class="tb-link tb-link-first @(currentView == ViewMode.List ? "tb-disabled" : "")" @onclick="@(() => ShowListView())">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+    <a class="tb-link @(currentView == ViewMode.Edit ? "tb-disabled" : "")" @onclick="@(() => ShowEditView())">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+    <a class="tb-link @(currentView == ViewMode.View ? "tb-disabled" : "")" @onclick="@(() => ShowViewView())">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+        <span class="toolbar-text">View</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <FluentSearch Placeholder="Search..." @bind-Value="SearchTerm" @oninput="HandleSearchInput" />
+
+    <span class="sf-verthr2"></span>
+</div>
+
+<div class="page-content">
+    @switch (currentView)
+    {
+        case ViewMode.List:
+            <List @bind-SelectedCarrierId="selectedCarrierId" SearchTerm="@SearchTerm" />
+            break;
+
+        case ViewMode.Edit:
+            @if (selectedCarrierId != 0)
+            {
+                <Edit @bind-SelectedCarrierId="@selectedCarrierId" />
+            }
+            else
+            {
+                <div class="no-selection-message">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.Building())" />
+                    <h3>Please select a valid carrier to edit.</h3>
+                </div>
+            }
+            break;
+        case ViewMode.Create:
+            <CarrierCreate CarrierCreated="HandleCarrierCreated" />
+            break;
+        case ViewMode.View:
+            @if (selectedCarrierId != 0)
+            {
+                <View @bind-SelectedCarrierId="@selectedCarrierId" />
+            }
+            else
+            {
+                <div class="no-selection-message">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.Building())" />
+                    <h3>Please select a valid carrier to view.</h3>
+                </div>
+            }
+            break;
+    }
+</div>

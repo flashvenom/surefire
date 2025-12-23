@@ -1,0 +1,46 @@
+@if (IsOpen)
+{
+    <div class="user-submenu" style="left: @(X)px; top: @(Y)px;">
+        <div class="submenu-header">
+            <span>Assign to:</span>
+        </div>
+        <div class="user-list">
+            @if (Users?.Any() == true)
+            {
+                @foreach (var user in Users)
+                {
+                    <div class="user-item" @onclick="() => UserSelected.InvokeAsync(new UserAssignmentInfo { UserId = user.Id, TaskId = TaskId })">
+                        @if (!string.IsNullOrEmpty(user.PictureUrl))
+                        {
+                            <img src="@Quickfire.Blazor.Domain.Shared.Helpers.StaffPhotoHelper.BuildUrl(user.PictureUrl)" alt="@user.FirstName @user.LastName" class="user-picture" />
+                        }
+                        else
+                        {
+                            <div class="user-initials">@(user.FirstName?.Substring(0, 1))@(user.LastName?.Substring(0, 1))</div>
+                        }
+                        <span class="user-name">@user.FirstName @user.LastName</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-users">No users available</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int TaskId { get; set; }
+    [Parameter] public List<ApplicationUser> Users { get; set; } = new();
+    [Parameter] public int X { get; set; }
+    [Parameter] public int Y { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<UserAssignmentInfo> UserSelected { get; set; }
+    
+    public class UserAssignmentInfo
+    {
+        public string UserId { get; set; }
+        public int TaskId { get; set; }
+    }
+} 

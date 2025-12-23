@@ -1,0 +1,94 @@
+.template-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+}
+
+.form-top-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.name-field {
+    flex: 2;
+}
+
+.description-field {
+    flex: 3;
+}
+
+.status-toggle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-top: 20px;
+}
+
+.form-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--neutral-stroke-rest);
+    margin: 10px 0;
+}
+
+.subject-field ::deep input {
+    font-size: 1.2rem;
+    font-weight: 500;
+    padding: 12px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.status-help {
+    font-size: 0.85rem;
+    color: var(--neutral-foreground-hint);
+    margin-top: 4px;
+}
+
+.editor-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--neutral-foreground-rest);
+    margin-bottom: 8px;
+}
+
+.editor-wrapper {
+    border: 1px solid var(--neutral-stroke-rest);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+::deep .e-richtexteditor {
+    border: none;
+}
+
+::deep .e-toolbar {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--neutral-stroke-rest);
+    background-color: var(--neutral-layer-1);
+}
+
+::deep .e-content {
+    border-radius: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .form-top-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .status-toggle {
+        padding-top: 0;
+    }
+} 

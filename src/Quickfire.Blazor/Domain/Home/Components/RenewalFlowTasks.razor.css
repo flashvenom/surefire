@@ -1,0 +1,189 @@
+﻿:root tr td {
+    padding: 0px 0px;
+    height: 20px;
+}
+.sectiontitletab {
+    font-family: "montserrat", sans-serif;
+    font-weight: 300;
+    font-size: 1.3em;
+    padding-top: 8px;
+    padding-bottom: 6px;
+    padding-left: 15px;
+    padding-right: 15px;
+    color: #fff !important;
+    text-align: left;
+    z-index: 98;
+    position: relative;
+}
+.fluentswitcher {
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size:.7em;
+    display: flex;
+    color:#b1b1b1;
+}
+.sf-link {
+    color: #5a5a77 !important;
+    text-decoration: none !important;
+    font-weight: 400 !important;
+    font-size: 1.1em !important;
+    padding-left: 5px;
+}
+.rentask-container {
+    box-shadow: 0px 0px 25px #0000007e;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    overflow: hidden;
+    /*position: relative;
+    top: -50px;*/
+}
+.thetaskname {
+    position: relative;
+    top: -3px;
+}
+.parenttaskname {
+    color: #687176 !important;
+    font-weight: normal;
+    position: relative;
+    top: -3px;
+}
+.parentcaret {
+    position: relative;
+    top:1px;
+}
+.background-default {
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#767676+0,4c4c4c+49,3d3d3d+100 */
+    background: linear-gradient(to right, rgba(118,118,118,1) 0%,rgba(76,76,76,1) 49%,rgba(61,61,61,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+.background-darkpurple {
+    background-color: #4e1359;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#e35049+1,5e5e5e+49,3d3d3d+100 */
+    background: linear-gradient(to bottom, rgba(227,80,73,1) 1%,rgba(94,94,94,1) 49%,rgba(61,61,61,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+/*.home-box {
+    overflow: hidden;
+    box-shadow: 0px 0px 15px #000000b9;
+}*/
+#tasktable {
+    padding-top: 10px;
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    z-index:99;
+}
+.ttable {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+    font-size: 1em;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#dbdbdb+0,ffffff+45,dbdbdb+100&0.99+0,0.99+100 */
+    background: linear-gradient(to bottom, rgba(219,219,219,0.99) 0%,rgba(255,255,255,0.99) 45%,rgba(219,219,219,0.99) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+tr .trow {
+    display: block;
+    margin-top: 5px !important;
+    padding: 20px;
+}
+.tcname {
+    font-family: "montserrat", sans-serif;
+    font-weight: 300;
+    max-width: 150px !important;
+    height: 10px;
+    font-size: .8em;
+}
+.ttname {
+    height: 10px;
+    font-size: .9em;
+    font-weight: bold;
+    max-width: 160px !important;
+}
+    .ttname a {
+        text-decoration: none;
+    }
+.clientcoly {
+    padding-right: 10px !important;
+    width: 140px;
+}
+.policycoly {
+    width: 50px;
+}
+.taskcoly {
+    width: auto;
+}
+.ttpri {
+    height: 10px;
+    font-size: .7em;
+    width: 150px;
+    width: 85px;
+}
+.tbg tr {
+    background-color: #767676 !important;
+}
+.hprod {
+    color: #e6e6e6;
+    background-color: #767676 !important;
+    padding-left: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 4px;
+    font-size: .9em;
+    font-weight: bold;
+    min-width: 90px;
+    height: 100%;
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
+    letter-spacing: 1.5px;
+}
+.hprodbg-default {
+    background-color: #6858c7;
+}
+.hprodbg-darkpurple {
+    background-color: #4e1359;
+}
+
+
+.hexp {
+    background-color: #ffffffa7;
+    color: #424242;
+    padding-left: 3px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    font-size: .9em;
+    font-family: "mono45-headline", monospace;
+    font-weight: 500;
+    font-style: normal;
+}
+
+
+.rentask-link a:hover {
+    cursor:pointer;
+}
+.rentask-link:hover {
+    cursor: pointer;
+}
+.blurred {
+    filter: blur(2px);
+    opacity: 0.4;
+    transition: filter .6s linear, opacity .6s linear;
+}
+.priority-toggle {
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: background 0.6s, color 0.6s, box-shadow 0.6s;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+.priority-toggle:hover, .priority-toggle:focus {
+    background: #eaeaea;
+    color: #201e60;
+    box-shadow: 0 0 4px #bdbdbd;
+    outline: none;
+}

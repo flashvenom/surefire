@@ -1,0 +1,184 @@
+﻿@page "/Clients"
+@page "/Clients/{LoadClientId:int}"
+@inherits ClientsBase
+@using Quickfire.Blazor.Domain.Attachments.Components
+@using Quickfire.Blazor.Domain.Policies.Components
+@using Quickfire.Blazor.Domain.Clients.Components
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Forms.Components
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Utilities
+@using Syncfusion.Blazor.Spinner
+
+@if (!(_stateService.GetUserPreferences()?.EnableSimpleMode ?? false))
+{
+<_toolbar ClientId="@(selectedClient?.ClientId ?? 0)" OnNewPolicy="@SetShowCreatePolicy" OnNewForm="@ShowNewFormDialog" OnNewCertificate="@CreateNewCertificate" ClientLoaded="@(selectedClient != null)" EmailAddresses="@GetAllEmailAddresses()" ClientName="@(selectedClient?.Name ?? "Unknown Client")" PageName="Browse" OnShowNotes="EventCallback.Factory.Create(this, () => showNotesToggle())" />
+}
+
+<div class="page-content-client">
+    <div class="@dynamicClass">
+        <FluentTextField @bind-Value="searchTerm" @oninput="OnInputChanged" Placeholder="Search for a client..." Class="sf-searchquick" AutoComplete="off">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" Color="Color.Custom" CustomColor="#cf4640" />
+        </FluentTextField>
+        <div class="client-list">
+            @foreach (var item in filteredClients)
+            {
+                <div class="client-list-item" @key="item.ClientId" @onclick="async () => await LoadClientClickHandler(item.ClientId)">
+                    @item.Name
+                </div>
+            }
+            @if (filteredClients.Count == 0)
+            {
+                <div class="client-list-empty">No matching clients.</div>
+            }
+        </div>
+    </div>
+
+    <div class="sf-selected">
+        <div class="tinyexpander" @onclick="() => ExpandDetails()"><img src="/img/tinyexpand.png" /></div>
+        <div class="client-top">
+            <ClientHeader selectedClient="@selectedClient" />
+        </div>
+        @if (selectedClient != null)
+        {
+            <GlobalNotes EntityType="EntityType.Client" EntityId="@selectedClient.ClientId" ClientName="@selectedClient.Name" ShowNotes="@showNotes" />
+        }
+        <div class="client-main">
+            <div class="btn-notestog"><img src="/img/tinyexpand-right.png" @onclick="@(() => showNotesToggle())"></div>
+            <FluentTabs @ref="tabInterface" @bind-ActiveTabId="ClientStateService.ActiveTab" @bind-ActiveTabId:after="OnActiveTabChanged" Size="TabSize.Medium" Style="padding:0;">
+                <FluentTab Id="tab-1" Label="Overview" Class="sf-tab-client">
+                    <!-- ------- ------ ----- --- --  -  --  ---   -----     -----    --------  --   -----    ---------  ------------- Overview --->
+                    <div class="sf-col-container">
+                        <div class="sf-col sf-col-1">
+                            <div class="std-module-container-alt">
+                                @if (selectedClient != null)
+                                {
+                                <FluentStack>
+                                    @if (!string.IsNullOrEmpty(selectedClient.LogoFilename))
+                                    {
+                                        <div class="client-logo-section-sf">
+                                            <div class="client-logo-container-sf">
+                                                <img src="/uploads/logos/@selectedClient.LogoFilename" alt="@selectedClient.Name Logo" class="client-logo-sf" 
+                                                        onerror="this.style.display='none'; this.parentElement.parentElement.parentElement.querySelector('.no-logo-fallback').style.display='flex';" />
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="fallback-logo-container enhanced-fallback">
+                                            <img src="/img/icons/briefcase.png" alt="Business" class="fallback-logo-img" />
+                                            <div class="fallback-business-text">
+                                                @{
+                                                    var businessName = selectedClient?.Name ?? "Business";
+                                                    var words = businessName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                                }
+                                                @if (words.Length == 3)
+                                                {
+                                                    <div class="business-name-line1">@words[0]</div>
+                                                    <div class="business-name-line2">@words[1] @words[2]</div>
+                                                }
+                                                else if (words.Length >= 4)
+                                                {
+                                                    <div class="business-name-line1">@words[0] @words[1]</div>
+                                                    <div class="business-name-line2">@string.Join(" ", words.Skip(2))</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="business-name-line1">@businessName</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    <div class="quickstats-col-1 enhanced-stats">
+                                        <div class="stat-row">
+                                            <span class="stat-icon"><FluentIcon Value="@(new Icons.Regular.Size16.Document())" Color="Color.Neutral" /></span>
+                                            <span class="stat-content"><b>Active Policies:</b> <span class="stat-number">@(currentPolicies?.Count ?? 0)</span></span>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span class="stat-icon"><FluentIcon Value="@(new Icons.Regular.Size16.DocumentCopy())" Color="Color.Neutral" /></span>
+                                            <span class="stat-content"><b>Total Policies:</b> <span class="stat-number">@GetTotalPolicyCount()</span></span>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span class="stat-icon"><FluentIcon Value="@(new Icons.Regular.Size16.Money())" Color="Color.Neutral" /></span>
+                                            <span class="stat-content"><b>Premium Volume:</b> <span class="stat-number highlight">@GetTotalActivePremium()</span></span>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span class="stat-icon"><FluentIcon Value="@(new Icons.Regular.Size16.Briefcase())" Color="Color.Neutral" /></span>
+                                            <span class="stat-content"><b>Client Since:</b> <span class="stat-number">@GetClientSinceDate()</span></span>
+                                        </div>
+                                    </div>
+                                </FluentStack>
+                                }
+                            </div>
+
+                            <div class="pol-tweak">
+                                <div class="std-module-title">CURRENT <b>POLICIES</b></div>
+                                <CurrentPolicies selectedClient="@selectedClient" currentPolicies="@currentPolicies" OnOutlookSearchForPolicy="OutlookSearchForThisPolicy" />
+                            </div>
+
+                        </div>
+
+                        <div class="sf-col sf-col-2">
+                            <div class="std-module-title">CLIENT <b>CONTACTS</b></div>
+                            <div class="std-module-container">
+                                @if (selectedClient != null)
+                                {
+                                    <ListContactsForParent Contacts="@contactList" ParentType="Client" ParentId="@selectedClient.ClientId" PrimaryContactId="@selectedClient.PrimaryContactId" />
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </FluentTab>
+                <FluentTab Id="tab-2" Label="Policies" Class="sf-tab-client tabcontentsnopad">
+                    <!-- ------- ------ ----- --- --  -  --  ---   -----     -----    --------  --   -----    ---------  ------------- Policies --->
+                    @if (selectedClient != null)
+                    {
+                        @if (showCreatePolicy)
+                        {
+                            <CreatePolicyForClient ClientId="@selectedClient.ClientId" OnCloseCreatePolicy="@SetHideCreatePolicy" />
+                        }
+                        else
+                        {
+                            <PolicyListGrid policyList="@selectedClient.Policies.AsQueryable()" />
+                        }
+                    }
+                </FluentTab>
+                <FluentTab Id="tab-3" Label="Attachments" Class="sf-tab-client-noscroll tabcontents">
+                    <!-- ------- ------ ----- --- --  -  --  ---   -----     -----    --------  --   -----    ---------  ------------- Attachments --->
+                    @if (selectedClient != null)
+                    {
+                        <DropzoneContainer ClientId="@selectedClient.ClientId" OnAttachmentAdded="HandleAttachmentAdded">
+                            <AttachmentListGrid ClientId="@selectedClient.ClientId" />
+                        </DropzoneContainer>
+                    }
+                    
+                </FluentTab>
+                <FluentTab Id="tab-4" Label="Forms" Class="sf-tab-client tabcontents">
+                    <!-- ------- ------ ----- --- --  -  --  ---   -----     -----    --------  --   -----    ---------  ------------- Forms and Certificates -->
+                    @if (selectedClient != null)
+                    {
+                        <FormDocList @ref="formDocListComponent" formDocList="@selectedClient.FormDocs.ToList()" EntityType="client" EntityId="@selectedClient.ClientId" OnCreateNewFormRequested="ShowNewFormDialog" />
+                        <CertificateList certList="@selectedClient.Certificates.ToList()" OnCreateNewCertificateRequested="CreateNewCertificate" />
+                    }
+                </FluentTab>
+
+                <FluentTab Id="tab-4b" Label="Details" Class="sf-tab-client">
+                    <!-- ------- ------ ----- --- --  -  --  ---   -----     -----    --------  --   -----    ---------  ------------- Business Details -->
+                    @if (selectedClient != null)
+                    {
+                        <BusinessDetails ClientId="@selectedClient.ClientId" />
+                    }
+                </FluentTab>
+                <FluentTab Id="tab-6" Label="Utilities" Class="sf-tab-client tabcontentsnopad">
+                    <!-- ------- ------ ----- --- --  -  --  ---   -----     -----    --------  --   -----    ---------  ------------- Utilities -->
+                    @if (selectedClient != null)
+                    {
+                        <Utilities ClientId="@selectedClient.ClientId" PolicyId="@currentPolicies.FirstOrDefault()?.PolicyId" ContactId="@selectedClient.PrimaryContact?.ContactId" OnDataUpdated="@HandleUtilityDataUpdated" />
+                    }
+                </FluentTab>
+            </FluentTabs>
+        </div>
+        <div class="top-loader top-loader-@isLoading"><SfSpinner Type="SpinnerType.Bootstrap5" Visible="true" Size="100" CssClass="e-spin-overlay"></SfSpinner></div>
+    </div>
+    <div style="clear:both;"></div>
+</div>

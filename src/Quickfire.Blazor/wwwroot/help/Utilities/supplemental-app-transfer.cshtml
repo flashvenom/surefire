@@ -1,0 +1,268 @@
+<h1>Supplemental App Transfer</h1>
+
+<p>
+    The Supplemental App Transfer utility extracts data from an old supplemental application and transfers it into a new form. This saves significant time by automatically filling forms with information from previous applications, eliminating manual data entry.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the Supplemental App Transfer utility showing: old supplemental application upload area, target form selector, "Update Business Details" checkbox, "Create New Form" button, and the output form preview. Show the before/after comparison. -->
+
+<h2>What the Supplemental App Transfer Does</h2>
+
+<p>
+    This utility enables you to:
+</p>
+
+<ul>
+    <li><strong>Extract data from old forms</strong> – Uses document intelligence to read information from existing supplemental applications</li>
+    <li><strong>Transfer to new forms</strong> – Automatically fills new form templates with extracted data</li>
+    <li><strong>Support multiple form types</strong> – Works with various supplemental application formats (Kinsale, Amwins, CS, etc.)</li>
+    <li><strong>Auto-detect form type</strong> – Can automatically identify which form type to use</li>
+    <li><strong>Update business details</strong> – Optionally updates client business information during transfer</li>
+    <li><strong>Generate clean output</strong> – Creates a new, properly filled form ready to send or sign</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual diagram showing the transfer workflow: 1) Upload old supplemental app, 2) Select target form, 3) Extract data with AI, 4) Fill new form, 5) Download/output new form. Use icons and progress indicators. -->
+
+<h2>Using the Supplemental App Transfer</h2>
+
+<p>
+    To transfer data from an old form to a new one:
+</p>
+
+<ol>
+    <li><strong>Upload the old supplemental application</strong> – Drag and drop or select the PDF of the old form you want to extract data from</li>
+    <li><strong>Select the target form</strong> – Choose which form template to use:
+        <ul>
+            <li><strong>Autodetect</strong> – Let the system identify the form type automatically</li>
+            <li><strong>Kinsale</strong> – Kinsale supplemental application format</li>
+            <li><strong>Amwins</strong> – Amwins supplemental application format</li>
+            <li><strong>CS</strong> – CS supplemental application format</li>
+            <li>Or other available form types</li>
+        </ul>
+    </li>
+    <li><strong>Configure options</strong>:
+        <ul>
+            <li><strong>Update Business Details</strong> – Check this if you want to update the client's business information in Quickfire with data from the form</li>
+        </ul>
+    </li>
+    <li><strong>Create the new form</strong> – Click <strong>Create New Form</strong> to start the transfer process</li>
+    <li><strong>Monitor progress</strong> – Watch as the system:
+        <ul>
+            <li>Extracts text from the PDF</li>
+            <li>Uses AI to identify and extract form fields</li>
+            <li>Fills the new form template</li>
+            <li>Attaches the completed form</li>
+        </ul>
+    </li>
+    <li><strong>Review and use</strong> – Once complete, download or open the output document, then send or sign as usual</li>
+</ol>
+
+<!-- IMAGE PLACEHOLDER: Step-by-step screenshots: 1) Upload area with old form, 2) Target form selector dropdown, 3) Options checkboxes, 4) "Create New Form" button, 5) Progress indicator, 6) Completed form preview. Use numbered annotations. -->
+
+<h2>Understanding Form Types</h2>
+
+<p>
+    The utility supports multiple supplemental application formats:
+</p>
+
+<h3>Autodetect</h3>
+<ul>
+    <li>Automatically identifies the form type from the uploaded document</li>
+    <li>Best when you're not sure which form type to use</li>
+    <li>May take slightly longer as it analyzes the document first</li>
+</ul>
+
+<h3>Specific Form Types</h3>
+<ul>
+    <li><strong>Kinsale</strong> – For Kinsale Insurance supplemental applications</li>
+    <li><strong>Amwins</strong> – For Amwins supplemental applications</li>
+    <li><strong>CS</strong> – For CS supplemental applications</li>
+    <li>Other form types may be available depending on your configuration</li>
+</ul>
+
+<p>
+    Selecting the correct form type ensures the best field mapping and extraction accuracy.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the form type selector showing all available options. Show a brief description or example for each form type if available. -->
+
+<h2>Update Business Details Option</h2>
+
+<p>
+    When enabled, the "Update Business Details" option:
+</p>
+
+<ul>
+    <li><strong>Extracts business information</strong> – Pulls business name, address, operations, and other details from the form</li>
+    <li><strong>Updates client record</strong> – Automatically updates the client's business information in Quickfire</li>
+    <li><strong>Keeps data current</strong> – Ensures your client records reflect the latest information</li>
+</ul>
+
+<p>
+    <strong>When to use:</strong>
+</p>
+<ul>
+    <li>When the form contains updated business information</li>
+    <li>When you want to keep client records synchronized with form data</li>
+    <li>When business details have changed since the last update</li>
+</ul>
+
+<p>
+    <strong>When to skip:</strong>
+</p>
+<ul>
+    <li>When business details haven't changed</li>
+    <li>When you only want to transfer form data, not update records</li>
+    <li>When you prefer to update business details manually</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing the "Update Business Details" checkbox with a tooltip or explanation. Show what business details would be updated. -->
+
+<h2>Advanced Mode</h2>
+
+<p>
+    Advanced mode provides additional control and visibility:
+</p>
+
+<ul>
+    <li><strong>Inspect extracted text</strong> – View the raw text extracted from the PDF</li>
+    <li><strong>Review field extraction</strong> – See what fields were identified and extracted</li>
+    <li><strong>Manual adjustments</strong> – Make corrections or adjustments to extracted data</li>
+    <li><strong>Debug issues</strong> – Troubleshoot problems with extraction or field mapping</li>
+</ul>
+
+<p>
+    <strong>When to use Advanced mode:</strong>
+</p>
+<ul>
+    <li>When extraction isn't working as expected</li>
+    <li>When you need to verify what data was extracted</li>
+    <li>When you want more control over the transfer process</li>
+    <li>When troubleshooting form transfer issues</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of Advanced mode showing: extracted text panel, field extraction results, and manual editing options. Show the toggle to enable Advanced mode. -->
+
+<h2>The Transfer Process</h2>
+
+<p>
+    The transfer happens in several stages:
+</p>
+
+<h3>Stage 1: Text Extraction</h3>
+<ul>
+    <li>PDF is processed to extract all text</li>
+    <li>Text is saved for field extraction</li>
+    <li>Progress: "Extracting text from PDF..."</li>
+</ul>
+
+<h3>Stage 2: Field Extraction</h3>
+<ul>
+    <li>AI analyzes the extracted text</li>
+    <li>Identifies form fields and their values</li>
+    <li>Maps fields to the target form template</li>
+    <li>Progress: "Extracting fields with AI..."</li>
+</ul>
+
+<h3>Stage 3: Form Filling</h3>
+<ul>
+    <li>New form template is populated with extracted data</li>
+    <li>Fields are filled accurately based on mapping</li>
+    <li>Form is validated and finalized</li>
+    <li>Progress: "Filling PDF and attaching..."</li>
+</ul>
+
+<h3>Stage 4: Completion</h3>
+<ul>
+    <li>Completed form is attached to the client record</li>
+    <li>Ready to download, send, or sign</li>
+    <li>Progress: "Done!"</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the progress indicator showing all stages with percentages. Show the progress bar and status messages for each stage. -->
+
+<h2>Managing Uploaded Files</h2>
+
+<p>
+    You can manage files directly in the upload areas:
+</p>
+
+<ul>
+    <li><strong>Remove files</strong> – Click the remove/delete icon to remove an uploaded file</li>
+    <li><strong>Replace files</strong> – Upload a new file to replace the current one</li>
+    <li><strong>Drag and drop</strong> – Easily add files by dragging them into the upload zone</li>
+    <li><strong>File validation</strong> – System checks that files are valid PDFs</li>
+</ul>
+
+<p>
+    If you upload the wrong file, simply remove it and upload the correct one before clicking "Create New Form".
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the file upload areas showing: drag-and-drop zones, uploaded file previews, and remove/replace options. Show how to manage files. -->
+
+<h2>Best Practices</h2>
+
+<ul>
+    <li><strong>Use clear, readable PDFs</strong> – Ensure the old form is a clear, high-quality PDF for best extraction results</li>
+    <li><strong>Select the correct form type</strong> – Choose the right target form for accurate field mapping</li>
+    <li><strong>Review the output</strong> – Always check the completed form to ensure all fields were filled correctly</li>
+    <li><strong>Update business details when needed</strong> – Use the "Update Business Details" option when information has changed</li>
+    <li><strong>Use Advanced mode for troubleshooting</strong> – Enable Advanced mode if extraction isn't working as expected</li>
+    <li><strong>Keep original forms</strong> – Save the original forms as attachments for reference</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual checklist showing best practices with icons: quality icon, review icon, update icon, troubleshooting icon. -->
+
+<h2>Troubleshooting</h2>
+
+<h3>Extraction Not Working</h3>
+<ul>
+    <li>Ensure the PDF is clear and not corrupted</li>
+    <li>Check that the PDF is not password-protected</li>
+    <li>Verify document intelligence integration is configured (Azure or LLMWhisperer)</li>
+    <li>Try using Advanced mode to see what text was extracted</li>
+    <li>Ensure the form type is correct for the document</li>
+</ul>
+
+<h3>Fields Not Filling Correctly</h3>
+<ul>
+    <li>Review the extracted text in Advanced mode to see what was read</li>
+    <li>Check that the form type matches the target form format</li>
+    <li>Verify that the old form has the data you're trying to transfer</li>
+    <li>Some fields may require manual entry if they're not clearly readable</li>
+</ul>
+
+<h3>Form Type Detection Failing</h3>
+<ul>
+    <li>If Autodetect doesn't work, manually select the correct form type</li>
+    <li>Check that the form type is supported</li>
+    <li>Verify the uploaded document is actually a supplemental application</li>
+</ul>
+
+<h3>Business Details Not Updating</h3>
+<ul>
+    <li>Ensure "Update Business Details" is checked</li>
+    <li>Verify the form contains business information to extract</li>
+    <li>Check that you have permission to update client records</li>
+    <li>Review the extracted data in Advanced mode to see what was found</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of an error message or warning that might appear, with annotations explaining what it means and how to resolve it. -->
+
+<h2>When to Use This Utility</h2>
+
+<p>
+    The Supplemental App Transfer is particularly useful when:
+</p>
+
+<ul>
+    <li><strong>Renewing policies</strong> – Transferring data from old supplemental apps to new renewal forms</li>
+    <li><strong>Switching carriers</strong> – Moving information to a new carrier's form format</li>
+    <li><strong>Updating applications</strong> – Refreshing forms with current information from previous versions</li>
+    <li><strong>Standardizing formats</strong> – Converting forms to a standard format</li>
+    <li><strong>Saving time</strong> – Avoiding manual data entry for repetitive form filling</li>
+</ul>
+
+<p>
+    <strong>Next Steps:</strong> Learn about other utilities like <a href="/help/Utilities/gap-highlighter">Gap Highlighter</a> to analyze coverage, or explore <a href="/help/Renewals/renewals-intro">Renewals</a> to understand the renewal workflow.
+</p>

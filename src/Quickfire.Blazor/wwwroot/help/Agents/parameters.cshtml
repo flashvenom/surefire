@@ -1,0 +1,255 @@
+<h1>Agent Parameters</h1>
+
+<p>
+    Parameters are the <strong>pieces of information an agent needs</strong> to do its job. Examples include the client, policy, contact, amount, or date range. You can think of them as the blanks in a form that the agent fills in for your email, link, or workflow.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the agent designer "Parameters" table with example rows for Client, Policy, Contact Email, and Due Date. Show the table with columns for Display Name, Type, Required, Default Value, and Hidden/Visible. -->
+
+<h2>What Are Parameters?</h2>
+
+<p>
+    Parameters define what information your agent needs before it can run. When someone triggers your agent, they either:
+</p>
+
+<ul>
+    <li><strong>Provide the information</strong> – Enter values in a dialog or chat</li>
+    <li><strong>Pull it from context</strong> – The system automatically gets it from the current page (which client is open, which policy is selected, etc.)</li>
+</ul>
+
+<p>
+    For example, a "Send Renewal Reminder" agent might need:
+</p>
+
+<ul>
+    <li><strong>Client</strong> – Which client to send the reminder to</li>
+    <li><strong>Policy</strong> – Which policy is renewing</li>
+    <li><strong>Contact Email</strong> – Where to send the email</li>
+    <li><strong>Due Date</strong> – When the renewal is due</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual example showing a "Send Renewal Reminder" agent with its parameters listed. Show how these parameters are used when the agent runs—perhaps showing them being filled in a dialog or email template. -->
+
+<h2>Required vs. Optional</h2>
+
+<p>
+    Parameters can be either required or optional:
+</p>
+
+<ul>
+    <li><strong>Required parameters</strong> – Must have a value before the agent can run (for example, client or main contact). The agent won't start without these.</li>
+    <li><strong>Optional parameters</strong> – Nice to have but not strictly necessary (for example, note to the underwriter or CC recipient). The agent can run without these, using default values if provided.</li>
+</ul>
+
+<p>
+    <strong>Best practice:</strong> Use required parameters for anything your email template or action cannot work without. Make everything else optional to keep agents flexible.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing required vs. optional parameters in the parameter list. Use visual indicators (asterisks, checkmarks, etc.) to show which are required. Show an example of an agent that won't run because a required parameter is missing. -->
+
+<h2>Parameter Types</h2>
+
+<p>
+    Choose a type that matches what the user should enter:
+</p>
+
+<ul>
+    <li><strong>Text</strong> – Names, notes, or short descriptions
+        <ul>
+            <li>Use for: Client names, custom messages, notes</li>
+            <li>Example: "Welcome message" parameter</li>
+        </ul>
+    </li>
+    <li><strong>Number</strong> – Amounts, counts, or percentages
+        <ul>
+            <li>Use for: Premium amounts, policy counts, percentages</li>
+            <li>Example: "Premium amount" parameter</li>
+        </ul>
+    </li>
+    <li><strong>Date</strong> – Effective dates, due dates, or time periods
+        <ul>
+            <li>Use for: Renewal dates, effective dates, deadlines</li>
+            <li>Example: "Renewal due date" parameter</li>
+        </ul>
+    </li>
+    <li><strong>Toggle / Yes-No</strong> – Boolean options like "Include certificates?" or "Mark as urgent"
+        <ul>
+            <li>Use for: Yes/no choices, feature toggles, options</li>
+            <li>Example: "Include attachments?" parameter</li>
+        </ul>
+    </li>
+    <li><strong>Client</strong> – Reference to a client record
+        <ul>
+            <li>Use for: Selecting which client the action applies to</li>
+            <li>Example: "Client" parameter</li>
+        </ul>
+    </li>
+    <li><strong>Policy</strong> – Reference to a policy record
+        <ul>
+            <li>Use for: Selecting which policy the action applies to</li>
+            <li>Example: "Policy" parameter</li>
+        </ul>
+    </li>
+</ul>
+
+<p>
+    Where it makes sense, set a <strong>default value</strong> so common choices are pre-filled and users only adjust when needed.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Close-up of a parameter edit panel showing fields for Display Name, Type dropdown, Required toggle, Default Value, and Hidden/Visible toggle. Show examples of different parameter types being configured. -->
+
+<h2>Hidden vs. Visible Parameters</h2>
+
+<p>
+    Not every parameter needs to be shown to the user. Some values can be pulled from the page automatically.
+</p>
+
+<h3>Hidden Parameters</h3>
+<ul>
+    <li>Filled in behind the scenes from the current context</li>
+    <li>Examples: Current client ID, selected renewal, primary contact email</li>
+    <li>User never sees these—they're automatically populated</li>
+    <li>Use to keep the run dialog clean and avoid re-entering information the system already knows</li>
+</ul>
+
+<h3>Visible Parameters</h3>
+<ul>
+    <li>Appear in the run dialog so users can review or type a value</li>
+    <li>Examples: Custom message, specific date, amount to include</li>
+    <li>User sees and can edit these before the agent runs</li>
+    <li>Use when the user needs to provide input or confirm a value</li>
+</ul>
+
+<p>
+    <strong>Tip:</strong> Use hidden parameters for data that's always available from the page context. Use visible parameters when the user needs to make a choice or enter custom information.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Side-by-side comparison showing an agent run dialog with all visible parameters vs. the same agent with most parameters hidden. Show how hidden parameters make the dialog cleaner and easier to use. -->
+
+<h2>Using Presets and Context</h2>
+
+<p>
+    When adding parameters, you can often start from <strong>presets</strong> that already know how to pull data from the page:
+</p>
+
+<ul>
+    <li><strong>Current Client</strong> – Automatically gets the client from the current page</li>
+    <li><strong>Selected Renewal</strong> – Gets the renewal that's currently selected</li>
+    <li><strong>Primary Contact Email</strong> – Gets the main contact's email for the current client</li>
+    <li><strong>Policy Number</strong> – Gets the policy number from the current context</li>
+    <li>Other presets may be available depending on the context</li>
+</ul>
+
+<p>
+    This keeps your agents consistent and reduces setup mistakes. Presets are pre-configured to pull the right data automatically.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of adding a new parameter using a preset, with a dropdown showing available presets like "Current Client", "Selected Renewal", etc. Show a hint or tooltip explaining what each preset does. -->
+
+<h2>How Parameters Connect to Actions</h2>
+
+<p>
+    Every action (such as sending an email) uses parameters to fill in its fields. When you set up an action, you map each field to a parameter.
+</p>
+
+<p>
+    For example, a "Send renewal reminder" agent might map:
+</p>
+
+<ul>
+    <li><strong>Client</strong> parameter → Email greeting ("Dear [Client Name]") and subject line</li>
+    <li><strong>Policy</strong> parameter → Policy details in the body of the email</li>
+    <li><strong>Contact Email</strong> parameter → "To" field in the Outlook template</li>
+    <li><strong>Due Date</strong> parameter → A line in the message reminding the client when to respond</li>
+</ul>
+
+<p>
+    When the agent runs, the system takes the parameter values and plugs them into the corresponding fields in your email template or action.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Visual diagram showing parameter-to-action mapping: Parameters on the left (Client, Policy, Contact Email, Due Date) with arrows pointing to email template fields on the right (Greeting, Body, To field, Reminder text). Show the connection clearly. -->
+
+<h2>Default Values</h2>
+
+<p>
+    Setting default values makes agents easier to use:
+</p>
+
+<ul>
+    <li><strong>Pre-fill common choices</strong> – Users can accept the default or change it if needed</li>
+    <li><strong>Reduce typing</strong> – Especially useful for frequently used values</li>
+    <li><strong>Provide examples</strong> – Defaults can show users what format is expected</li>
+</ul>
+
+<p>
+    <strong>Examples of good defaults:</strong>
+</p>
+
+<ul>
+    <li>Date parameter: Today's date or a date 30 days from now</li>
+    <li>Toggle parameter: Most common choice (usually "No" or unchecked)</li>
+    <li>Text parameter: A helpful placeholder or example text</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing parameters with default values filled in. Show how these defaults appear in the run dialog, and how users can change them. -->
+
+<h2>Cleaning Up and Iterating</h2>
+
+<p>
+    As you use agents, you'll learn what works and what doesn't:
+</p>
+
+<ul>
+    <li><strong>Remove unused parameters</strong> – If an agent has become complicated, remove parameters that are no longer used and simplify the form</li>
+    <li><strong>Test from real pages</strong> – Test the agent from a real page to confirm that parameters are pulled from context correctly</li>
+    <li><strong>Adjust based on usage</strong> – As you learn how teammates use the agent, adjust parameter names and defaults to make it faster and more obvious</li>
+    <li><strong>Make required parameters hidden</strong> – If a parameter is always available from the page, make it hidden to simplify the interface</li>
+    <li><strong>Add helpful descriptions</strong> – Add tooltips or descriptions to parameters to explain what they're for</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Before-and-after example showing a long parameter list simplified into a smaller, clearer set of required fields. Show how the run dialog becomes cleaner and easier to use. -->
+
+<h2>Best Practices</h2>
+
+<ul>
+    <li><strong>Keep it simple</strong> – Only ask for information you actually need</li>
+    <li><strong>Use hidden parameters</strong> – Pull data from the page automatically when possible</li>
+    <li><strong>Set helpful defaults</strong> – Pre-fill common values to save users time</li>
+    <li><strong>Name clearly</strong> – Use descriptive parameter names that explain what's needed</li>
+    <li><strong>Make required obvious</strong> – Clearly mark which parameters are required</li>
+    <li><strong>Test thoroughly</strong> – Verify that parameters pull the right data in different contexts</li>
+    <li><strong>Iterate based on feedback</strong> – Adjust parameters as you learn how agents are actually used</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual checklist showing best practices with icons: simplicity icon, hidden parameters icon, defaults icon, clear naming icon. -->
+
+<h2>Troubleshooting</h2>
+
+<h3>Parameter Not Getting Value</h3>
+<ul>
+    <li>For hidden parameters, verify the page context has the data you need</li>
+    <li>Check that the preset is configured correctly</li>
+    <li>Ensure the parameter type matches the data type</li>
+    <li>Test from different pages to see if the issue is context-specific</li>
+</ul>
+
+<h3>Wrong Value in Parameter</h3>
+<ul>
+    <li>Review the preset or context source—it might be pulling from the wrong place</li>
+    <li>Check that the page has the expected data available</li>
+    <li>Verify parameter mappings in actions</li>
+</ul>
+
+<h3>Required Parameter Missing</h3>
+<ul>
+    <li>Ensure required parameters have values before the agent runs</li>
+    <li>Check if the parameter should be hidden and pulled from context</li>
+    <li>Verify the page context provides the needed data</li>
+    <li>Consider making the parameter optional if it's not always needed</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of an error message showing a missing required parameter, with annotations explaining what it means and how to resolve it. -->
+
+<p>
+    <strong>Next Steps:</strong> Learn about <a href="/help/Agents/actions">Agent Actions</a> to see how parameters are used, or read the <a href="/help/Agents/agents-intro">Agents Overview</a> for a complete introduction.
+</p>

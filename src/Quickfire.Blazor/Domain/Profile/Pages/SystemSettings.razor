@@ -1,0 +1,24 @@
+@page "/System"
+@inherits AppComponentBase
+@using Quickfire.Blazor.Domain.Profile.Components
+
+<_Toolbar currentView="_Toolbar.ViewMode.System" />
+
+<div class="qf-scroll-panel">
+    <div class="qf-scroll-panel__alt-container">
+        <div class="qf-container__header qf-header-pad">
+            <span class="qf-container__icon"><FluentIcon Value="@(new Icons.Regular.Size48.Settings())" Color="Color.Custom" CustomColor="#a0a0a0" /></span>
+            <div>
+                <h3 class="qf-container__title">System Settings</h3>
+                <p class="qf-container__subtitle">Integration Key configuration and Epic-related controls have been removed.</p>
+            </div>
+        </div>
+
+        <FluentMessageBar Intent="MessageIntent.Info">
+            This build no longer exposes integration key storage or Epic configuration UI. Existing settings are ignored; update code or configuration files if new integrations are required.
+        </FluentMessageBar>
+    </div>
+</div>
+
+@code {
+}

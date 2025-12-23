@@ -1,0 +1,375 @@
+﻿@page "/Users"
+@using Quickfire.Blazor.Domain.Users.Services
+@using Quickfire.Blazor.Domain.Profile.Components
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using System.Linq
+@inject UserService UserService
+@inject IDialogService DialogService
+
+<_Toolbar currentView="_Toolbar.ViewMode.Users" />
+
+<div class="qf-scroll-panel">
+    <div class="qf-scroll-panel__alt-container users-page">
+        <div class="users-page__header">
+            <div class="users-page__heading">
+                <span class="qf-container__icon">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.People())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                </span>
+                <div>
+                    <h3 class="qf-container__title">User Management</h3>
+                    <p class="qf-container__subtitle">Invite teammates, manage desktops, and keep Quickfire.Blazor.Tray + Outlook interop humming.</p>
+                </div>
+            </div>
+            <FluentButton Appearance="Appearance.Accent" OnClick="ShowAddDialog">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" Color="Color.Fill" />
+                Add user
+            </FluentButton>
+        </div>
+
+        <FluentMessageBar Intent="MessageIntent.Info" Class="users-page__desktop-tip" AllowDismiss="false">
+            Desktop Username matches the Windows login you see on the lock screen, Task Manager → Users, or by running <code>whoami</code>.
+            Make sure it is exact — Quickfire.Blazor.Tray and the Quickfire ↔ Outlook integration rely on it to route activity to the right person.
+        </FluentMessageBar>
+
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <FluentMessageBar Intent="@statusIntent" OnDismiss="@(() => statusMessage = null)">
+                @statusMessage
+            </FluentMessageBar>
+        }
+
+        <div class="users-page__grid">
+            @if (users == null)
+            {
+                <div class="users-page__loading">
+                    <FluentProgressRing Width="36px" />
+                    <span>Loading users...</span>
+                </div>
+            }
+            else if (!users.Any())
+            {
+                <div class="users-page__empty">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.People())" Color="Color.Custom" CustomColor="#c5c5c5" />
+                    <p>No users yet. Use “Add user” to add your first teammate.</p>
+                </div>
+            }
+            else
+            {
+                <div class="users-table">
+                    <div class="users-table__header">
+                        <div class="users-table__cell users-table__cell--user">User</div>
+                        <div class="users-table__cell users-table__cell--desktop">Desktop Username</div>
+                        <div class="users-table__cell users-table__cell--phone">Phone</div>
+                        <div class="users-table__cell users-table__cell--login">Last Login</div>
+                        <div class="users-table__cell users-table__cell--actions">Actions</div>
+                    </div>
+                    <div class="users-table__body">
+                        @foreach (var user in PaginatedUsers)
+                        {
+                            var headshot = StaffPhotoHelper.BuildUrl(user.PictureUrl);
+                            var initials = GetInitials(user);
+                            
+                            <div class="users-table__row" @ondblclick="() => NavigateToEditUser(user.Id)">
+                                <div class="users-table__cell users-table__cell--user">
+                                    <button type="button" class="users-grid__person" @onclick="() => NavigateToEditUser(user.Id)">
+                                        <FluentPersona Initials="@initials" ImageSize="42px" Class="txt-persona" Image="@headshot" />
+                                        <div>
+                                            <div class="users-grid__name">@GetUserDisplay(user)</div>
+                                            <div class="users-grid__email">@user.Email</div>
+                                        </div>
+                                    </button>
+                                </div>
+                                <div class="users-table__cell users-table__cell--desktop">
+                                    <span class="users-grid__mono">@(!string.IsNullOrWhiteSpace(user.DesktopUsername) ? user.DesktopUsername : "—")</span>
+                                </div>
+                                <div class="users-table__cell users-table__cell--phone">
+                                    <span>@GetPhoneDisplay(user)</span>
+                                </div>
+                                <div class="users-table__cell users-table__cell--login">
+                                    <span>@FormatLastLogin(user.LastLogin)</span>
+                                </div>
+                                <div class="users-table__cell users-table__cell--actions">
+                                    <div class="users-grid__actions">
+                                        <FluentButton Appearance="Appearance.Lightweight"
+                                                      OnClick="() => NavigateToEditUser(user.Id)">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" Slot="start" />
+                                            Manage
+                                        </FluentButton>
+                                        <FluentButton Appearance="Appearance.Lightweight"
+                                                      OnClick="() => OpenResetDialog(user)">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Slot="start" />
+                                            Reset password
+                                        </FluentButton>
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Delete())"
+                                                    Class="users-grid__delete"
+                                                    OnClick="() => ShowDeleteConfirmation(user)" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="users-table__pagination">
+                    <FluentPaginator State="@pagination" />
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<FluentDialog @bind-Hidden="deleteDialogHidden">
+    <FluentDialogHeader>
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Delete())" />
+            <FluentLabel>Delete user</FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+    <FluentDialogBody>
+        @if (userToDelete == null)
+        {
+            <p>Select a user to delete.</p>
+        }
+        else
+        {
+            <p>Are you sure you want to remove <strong>@GetUserDisplay(userToDelete)</strong>? This immediately revokes their access.</p>
+        }
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmDelete" Disabled="@(userToDelete == null)">
+            Delete
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Neutral" OnClick="CancelDelete">
+            Cancel
+        </FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<FluentDialog @bind-Hidden="resetDialogHidden">
+    <FluentDialogHeader>
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Key())" />
+            <FluentLabel>Reset password</FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+    <FluentDialogBody>
+        @if (resetTarget == null)
+        {
+            <p>Select a user to reset.</p>
+        }
+        else if (string.IsNullOrEmpty(resetPasswordValue))
+        {
+            <p>Generate a temporary password for <strong>@GetUserDisplay(resetTarget)</strong>? Share it with them right away.</p>
+            @if (!string.IsNullOrEmpty(resetErrorMessage))
+            {
+                <FluentMessageBar Intent="MessageIntent.Error">@resetErrorMessage</FluentMessageBar>
+            }
+        }
+        else
+        {
+            <FluentMessageBar Intent="MessageIntent.Success">
+                Temporary password: <code>@resetPasswordValue</code>
+            </FluentMessageBar>
+            <p>Copy the password above — it will disappear after closing this dialog.</p>
+        }
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        @if (string.IsNullOrEmpty(resetPasswordValue))
+        {
+            <FluentButton Appearance="Appearance.Accent"
+                          OnClick="ResetPasswordAsync"
+                          Disabled="@isResettingPassword">
+                @(isResettingPassword ? "Resetting..." : "Reset password")
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Neutral" OnClick="CloseResetDialog">
+                Cancel
+            </FluentButton>
+        }
+        else
+        {
+            <FluentButton Appearance="Appearance.Accent" OnClick="CloseResetDialog">
+                Done
+            </FluentButton>
+        }
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    private List<ApplicationUser>? users;
+    private PaginationState pagination = new() { ItemsPerPage = 15 };
+    
+    private IEnumerable<ApplicationUser> PaginatedUsers
+    {
+        get
+        {
+            if (users == null) return Enumerable.Empty<ApplicationUser>();
+            
+            var startIndex = pagination.CurrentPageIndex * pagination.ItemsPerPage;
+            return users.Skip(startIndex).Take(pagination.ItemsPerPage);
+        }
+    }
+
+    private bool deleteDialogHidden = true;
+    private ApplicationUser? userToDelete;
+
+    private bool resetDialogHidden = true;
+    private ApplicationUser? resetTarget;
+    private bool isResettingPassword;
+    private string? resetPasswordValue;
+    private string? resetErrorMessage;
+
+    private string? statusMessage;
+    private MessageIntent statusIntent = MessageIntent.Info;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshUsersAsync();
+    }
+
+    private async Task RefreshUsersAsync()
+    {
+        users = await UserService.GetAllUsersAsync();
+        // pagination.TotalItemCount = users?.Count ?? 0;
+    }
+
+    private string GetUserDisplay(ApplicationUser user)
+    {
+        var fullName = user.FullName?.Trim();
+        return string.IsNullOrWhiteSpace(fullName) ? user.Email ?? "Unknown user" : fullName;
+    }
+
+    private string GetInitials(ApplicationUser user)
+    {
+        var firstInitial = string.IsNullOrWhiteSpace(user.FirstName) ? string.Empty : user.FirstName.Substring(0, 1).ToUpperInvariant();
+        var lastInitial = string.IsNullOrWhiteSpace(user.LastName) ? string.Empty : user.LastName.Substring(0, 1).ToUpperInvariant();
+        var combined = $"{firstInitial}{lastInitial}";
+        return string.IsNullOrWhiteSpace(combined) ? "??" : combined;
+    }
+
+    private string GetPhoneDisplay(ApplicationUser user)
+    {
+        if (string.IsNullOrWhiteSpace(user.PhoneNumber))
+        {
+            return "—";
+        }
+
+        return StringHelper.FormatPhoneNumber(user.PhoneNumber);
+    }
+
+    private string FormatLastLogin(DateTime? lastLogin)
+    {
+        if (!lastLogin.HasValue)
+        {
+            return "Never";
+        }
+
+        return lastLogin.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt");
+    }
+
+    private void ShowDeleteConfirmation(ApplicationUser user)
+    {
+        userToDelete = user;
+        deleteDialogHidden = false;
+    }
+
+    private void CancelDelete()
+    {
+        deleteDialogHidden = true;
+        userToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (userToDelete == null)
+        {
+            return;
+        }
+
+        await UserService.DeleteUserAsync(userToDelete.Id);
+        SetStatusMessage($"Deleted {GetUserDisplay(userToDelete)}.", MessageIntent.Success);
+        userToDelete = null;
+        deleteDialogHidden = true;
+        await RefreshUsersAsync();
+    }
+
+    private void ShowAddDialog() => _ = OpenUserDialog(new ApplicationUser());
+
+    private async Task OpenUserDialog(ApplicationUser user)
+    {
+        var dialog = await DialogService.ShowDialogAsync<DialogUser>(user, new DialogParameters()
+        {
+            Title = "Add User",
+            Width = "400px",
+            PreventDismissOnOverlayClick = true
+        });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data is ApplicationUser updatedUser)
+        {
+            await UserService.AddUserAsync(updatedUser);
+            SetStatusMessage($"Added {GetUserDisplay(updatedUser)}.", MessageIntent.Success);
+
+            await RefreshUsersAsync();
+        }
+    }
+
+    private void NavigateToEditUser(string userId)
+    {
+        Navigation.NavigateTo($"/Users/{userId}");
+    }
+
+    private void OpenResetDialog(ApplicationUser user)
+    {
+        resetTarget = user;
+        resetPasswordValue = null;
+        resetErrorMessage = null;
+        resetDialogHidden = false;
+    }
+
+    private void CloseResetDialog()
+    {
+        resetDialogHidden = true;
+        resetTarget = null;
+        resetPasswordValue = null;
+        resetErrorMessage = null;
+        isResettingPassword = false;
+    }
+
+    private async Task ResetPasswordAsync()
+    {
+        if (resetTarget == null)
+        {
+            return;
+        }
+
+        isResettingPassword = true;
+        resetErrorMessage = null;
+
+        try
+        {
+            var (success, password, errors) = await UserService.ResetPasswordAsync(resetTarget.Id);
+            if (success)
+            {
+                resetPasswordValue = password;
+                SetStatusMessage($"Reset {GetUserDisplay(resetTarget)}'s password.", MessageIntent.Success);
+            }
+            else
+            {
+                resetErrorMessage = errors != null ? string.Join("; ", errors) : "Unable to reset the password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            resetErrorMessage = $"Unable to reset the password: {ex.Message}";
+        }
+        finally
+        {
+            isResettingPassword = false;
+        }
+    }
+
+    private void SetStatusMessage(string message, MessageIntent intent)
+    {
+        statusMessage = message;
+        statusIntent = intent;
+    }
+}

@@ -1,0 +1,146 @@
+﻿@namespace Quickfire.Blazor.Domain.Carriers.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.EntityFrameworkCore
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Carriers.Services
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Components
+@inject CarrierService CarrierService
+@inject NavigationManager NavigationManager
+
+
+<div class="home-list home-list-stretch">
+    <div class="fluent-data-grid fdg-stretch">
+        <FluentDataGrid @ref="grid" Items="@FilteredCarriers" ResizableColumns="true" Pagination="@pagination" ShowHover="true" AutoFit="true" AutoItemsPerPage="true">
+            <ChildContent>
+                <TemplateColumn Title="Id" Width="60px" Sortable="true" SortBy="@(GridSort<Carrier>.ByDescending(p => p.CarrierId))">
+                    <div class="fdg-col-id">@context.CarrierId.ToString("D3")</div>
+                </TemplateColumn>
+                <TemplateColumn Title="Name" Width="350px" Sortable="true" IsDefaultSortColumn="true" SortBy="@(GridSort<Carrier>.ByAscending(p => p.CarrierName))">
+                    <a class="fdg-link" @onclick="@(() => NavigationManager.NavigateTo($"/Carriers/{context.CarrierId}"))">@context.CarrierName</a>
+                </TemplateColumn>
+                <TemplateColumn Title="Phone" Sortable="true" SortBy="@(GridSort<Carrier>.ByDescending(p => p.Phone))">
+                    @if (!string.IsNullOrWhiteSpace(context.Phone))
+                    {
+                        <Trigger Value="@StringHelper.FormatPhoneNumber(context.Phone ?? "")" Type="Trigger.ClickType.Phone" />
+                    }
+                </TemplateColumn>
+                <TemplateColumn Title="Website" Sortable="true" SortBy="@(GridSort<Carrier>.ByDescending(p => p.Website))">
+                    @if (!string.IsNullOrWhiteSpace(context.Website))
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size12.Globe())" Color="Color.Custom" CustomColor="#9a9a9a" Class="fdg-tinyicon" />
+                        <a href="@(StringHelper.CleanUrl(context.Website ?? ""))" target="_blank">@(StringHelper.GetDomainName(context.Website))</a>
+                    }
+                </TemplateColumn>
+                <TemplateColumn Title="Tools" Sortable="true" SortBy="@(GridSort<Carrier>.ByDescending(p => p.QuotingWebsite))">
+                    @if (!string.IsNullOrWhiteSpace(context.LossRunsEmail))
+                    {
+                        <a href="mailto:@(context.LossRunsEmail)" class="fdg-btn-tiny">
+                            <FluentIcon Value="@(new Icons.Regular.Size12.Mail())" Color="Color.Custom" CustomColor="#9a9a9a" Class="fdg-tinyicon" Slot="start" />
+                            <span class="fdg-tinytxt">Srv</span>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(context.QuotingWebsite))
+                    {
+                        <a href="@(StringHelper.CleanUrl(context.QuotingWebsite ?? ""))" target="_blank" class="fdg-btn-tiny">
+                            <FluentIcon Value="@(new Icons.Regular.Size12.Globe())" Color="Color.Custom" CustomColor="#9a9a9a" Class="fdg-tinyicon" Slot="start" />
+                            <span class="fdg-tinytxt">Quo</span>
+                        </a>
+                    }
+                    
+                    @if (!string.IsNullOrWhiteSpace(context.LossRunsEmail))
+                    {
+                        <a href="mailto:@(context.LossRunsEmail)" class="fdg-btn-tiny">
+                            <FluentIcon Value="@(new Icons.Regular.Size12.Mail())" Color="Color.Custom" CustomColor="#9a9a9a" Class="fdg-tinyicon" Slot="start" />
+                            <span class="fdg-tinytxt">LRs</span>
+                        </a>
+                    }
+                    
+                    
+                </TemplateColumn>
+                
+                <PropertyColumn Property="@(p => p.StreetAddress)" Title="Street Address" Sortable="true" />
+                <PropertyColumn Property="@(p => p.City)" Title="City" Sortable="true" />
+                <PropertyColumn Property="@(p => p.State)" Title="State" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Wholesaler)" Title="MGA" Sortable="true" />
+            </ChildContent>
+            <EmptyContent>
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="10">
+                    <FluentIcon Value="@(new Icons.Filled.Size24.Crown())" Color="@Color.Accent" />
+                    <div>No carriers found.</div>
+                </FluentStack>
+            </EmptyContent>
+        </FluentDataGrid>
+    </div>
+    <div class="fluent-data-grid__bottombar">
+        <div class="fluent-data-grid__pagination">
+            <FluentPaginator State="@pagination" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int selectedCarrierId { get; set; }
+    [Parameter] public string SearchTerm { get; set; } = string.Empty;
+    [Parameter] public EventCallback<int> SelectedCarrierIdChanged { get; set; }
+    
+    private FluentDataGrid<Carrier>? grid;
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 18 };
+    private IQueryable<Carrier> CarrierData { get; set; }
+    private IQueryable<Carrier> FilteredCarriers { get; set; }
+    private System.Timers.Timer debounceTimer;
+
+    protected override async Task OnInitializedAsync()
+    {        
+        grid?.SetLoadingState(true);
+        CarrierData = CarrierService.GetAllCarriers().OrderByDescending(c => c.DateCreated);
+        FilteredCarriers = CarrierData;
+        
+        debounceTimer = new System.Timers.Timer(300);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += async (sender, e) =>
+        {
+            await InvokeAsync(ApplySearchFilter);
+        };
+        
+        await base.OnInitializedAsync();
+        grid?.SetLoadingState(false);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {        
+        if (SearchTerm != null && !string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            debounceTimer.Stop();
+            debounceTimer.Start(); // Start the debounce timer
+        }
+        else
+        {
+            FilteredCarriers = CarrierData;
+        }
+        
+        await base.OnParametersSetAsync();
+    }
+
+    private void ApplySearchFilter()
+    {        
+        FilteredCarriers = string.IsNullOrWhiteSpace(SearchTerm)
+        ? CarrierData
+        : CarrierData.Where(c =>
+              EF.Functions.Like(c.CarrierName.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Phone.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.Website.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.StreetAddress.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.City.ToLower(), $"%{SearchTerm.ToLower()}%")
+           || EF.Functions.Like(c.State.ToLower(), $"%{SearchTerm.ToLower()}%"));
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {        
+        debounceTimer?.Dispose();
+    }
+}

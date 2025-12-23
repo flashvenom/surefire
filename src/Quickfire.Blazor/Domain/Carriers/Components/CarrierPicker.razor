@@ -1,0 +1,336 @@
+@namespace Quickfire.Blazor.Domain.Carriers.Components
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs
+@using System.ComponentModel.DataAnnotations
+@inherits CarrierPickerBase
+
+<div class="carrier-picker">
+    <div class="picker-layout">
+        <!-- Left Side - Carriers List -->
+        <div class="carriers-list-panel">
+            <div class="carriers-header">
+                <h3>Carriers & Wholesalers</h3>
+                <div class="results-count">
+                    @FilteredCarriers.Count of @AllCarriers.Count carriers
+                    @if (HasActiveFilters())
+                    {
+                        <span class="filter-indicator">(filtered)</span>
+                    }
+                </div>
+            </div>
+            
+            <div class="carriers-scroll">
+                @foreach (var carrier in FilteredCarriers)
+                {
+                    <div class="carrier-item @(SelectedCarrier?.CarrierId == carrier.CarrierId ? "selected" : "")" @onclick="@(() => SelectCarrier(carrier))">
+                        <div class="carrier-name">
+                            <span class="carrier-type-indicator @(carrier.Wholesaler ? "wholesaler" : "carrier")">
+                                @(carrier.Wholesaler ? "W" : "C")
+                            </span>
+                            <span class="name">@carrier.CarrierName</span>
+                            @if (carrier.IsFavorite)
+                            {
+                                <FluentIcon Value="@(new Icons.Filled.Size16.Star())" Color="Color.Custom" CustomColor="#f5b301" Title="Favorite" />
+                            }
+                            @if (SelectedProductId.HasValue && CarrierIsSpecialtyFor(carrier, SelectedProductId.Value))
+                            {
+                                <span class="specialty-indicator" title="Specialty product line">⭐</span>
+                            }
+                        </div>
+                        @if (SelectedProductId.HasValue)
+                        {
+                            var carrierProduct = carrier.CarrierProducts?.FirstOrDefault(cp => cp.ProductId == SelectedProductId.Value && cp.IsActive);
+                            @if (carrierProduct != null && !string.IsNullOrEmpty(carrierProduct.Notes))
+                            {
+                                <div class="product-notes">@carrierProduct.Notes</div>
+                            }
+                        }
+                    </div>
+                }
+                
+                @if (!FilteredCarriers.Any())
+                {
+                    <div class="no-results">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Search())" />
+                        <p>No carriers match your filters</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Side - Filters and Info -->
+        <div class="filters-info-panel">
+            <!-- Filters Section -->
+            <FluentStack HorizontalAlignment="HorizontalAlignment.Stretch">
+                <div class="filter-item">
+                    <label>Search</label>
+                    <SfTextBox @bind-Value="SearchFilter" Placeholder="Search carrier name..." OnChange="OnSearchInput" />
+                </div>
+                <div class="filter-item">
+                    <label>Product Line</label>
+                    <SfDropDownList TValue="int?" TItem="Product"
+                                    Placeholder="All product lines"
+                                    DataSource="@AllProducts"
+                                    AllowFiltering="true"
+                                    FilterType="FilterType.Contains"
+                                    ShowClearButton="true"
+                                    @bind-Value="SelectedProductId">
+                        <DropDownListEvents TValue="int?" TItem="Product" ValueChange="@OnProductChanged" />
+                        <DropDownListFieldSettings Value="ProductId" Text="LineName"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
+                <div class="filter-item">
+                    <label>Search Notes</label>
+                    <SfTextBox @bind-Value="NotesSearchFilter" Placeholder="Search in notes..." OnChange="OnNotesSearchInput" />
+                </div>
+            </FluentStack>
+            <div style="height:5px;"></div>
+            <FluentStack HorizontalAlignment="HorizontalAlignment.Stretch">
+                <div class="filter-item">
+                    <div class="checkbox-group">
+                        <FluentCheckbox @bind-Value="AdmittedFilterValue">
+                            Admitted Only
+                        </FluentCheckbox>
+                    </div>
+                </div>
+                <div class="filter-item">
+                    <div class="checkbox-group">
+                        <FluentCheckbox @bind-Value="PEOFilterValue">
+                            PEO Only
+                        </FluentCheckbox>
+                    </div>
+                </div>
+                <div class="filter-item shrink-btn">
+                    <FluentButton Appearance="Appearance.Outline" OnClick="ClearAllFilters">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Slot="start" />
+                        Clear All Filters
+                    </FluentButton>
+                </div>
+            </FluentStack>
+
+
+            <!-- Carrier Info Section -->
+           
+                <div class="carrier-info-section">
+                @if (SelectedCarrier != null)
+                {
+                    <div class="info-card">
+                        <div class="info-header">
+                            <h5>@SelectedCarrier.CarrierName</h5>
+                            <span class="carrier-type @(SelectedCarrier.Wholesaler ? "wholesaler" : "carrier")">
+                                @(SelectedCarrier.Wholesaler ? "Wholesaler" : "Carrier")
+                            </span>
+                        </div>
+                        <FluentStack HorizontalAlignment="HorizontalAlignment.Stretch">
+                            <div id="first-column">
+                                <!-- Products Section -->
+                                @if (SelectedCarrier.CarrierProducts?.Any() == true)
+                                {
+                                    <div class="products-section">
+                                        <h6>Product Lines</h6>
+                                        <div class="product-list">
+                                            @foreach (var carrierProduct in SelectedCarrier.CarrierProducts.Where(cp => cp.IsActive).OrderBy(cp => cp.Product?.LineName))
+                                            {
+                                                <span class="product-item @(carrierProduct.ProductSpecialty ? "specialty" : "")">
+                                                    <span class="product-name">@(!string.IsNullOrEmpty(carrierProduct.Product?.LineNickname) ? carrierProduct.Product.LineNickname : carrierProduct.Product?.LineName)</span>
+                                                    @if (carrierProduct.ProductSpecialty)
+                                                    {
+                                                        <span class="specialty-badge">Specialty</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(carrierProduct.Notes))
+                                                    {
+                                                        <div class="product-item-notes">@carrierProduct.Notes</div>
+                                                    }
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Contact Information -->
+                                @if (SelectedCarrier.Contacts?.Any() == true)
+                                {
+                                    <div class="contacts-section">
+                                        <h6>Contacts</h6>
+                                        @foreach (var contact in SelectedCarrier.Contacts.Take(3))
+                                        {
+                                            <div class="contact-item">
+                                                <strong>@contact.FirstName @contact.LastName</strong>
+                                                @if (contact.EmailAddresses?.Any() == true)
+                                                {
+                                                    <div>@contact.EmailAddresses.First().Email</div>
+                                                }
+                                                @if (contact.PhoneNumbers?.Any() == true)
+                                                {
+                                                    <div>@contact.PhoneNumbers.First().Number</div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                <div class="favorite-action" style="margin-top:10px;">
+                                    @if (SelectedCarrier.IsFavorite)
+                                    {
+                                        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => ToggleFavorite(SelectedCarrier))">
+                                            <FluentIcon Value="@(new Icons.Filled.Size16.Star())" Slot="start" Color="Color.Custom" CustomColor="#f5b301" />
+                                            Unfavorite
+                                        </FluentButton>
+                                    }
+                                    else
+                                    {
+                                        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => ToggleFavorite(SelectedCarrier))">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Slot="start" Color="Color.Custom" CustomColor="#f5b301" />
+                                            Favorite
+                                        </FluentButton>
+                                    }
+                                    
+                                </div>
+                            </div>
+                            
+
+                            <!-- Carrier Relationships -->
+                            <div id="second-column" class="relationships-section">
+                                @if (SelectedCarrier.Wholesaler)
+                                {
+                                    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => OnCreateSubmission.InvokeAsync(new SubmissionCreateRequest { CarrierId = null, WholesalerId = SelectedCarrier.CarrierId }))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" Color="Color.Fill" />
+                                        Wholesaler Submission (Carriers TBD)
+                                    </FluentButton>
+                                    <div style="height:20px;"></div>
+
+                                    <!-- Show carriers this wholesaler has access to -->
+                                    <h6>
+                                        <span class="relationship-icon">🔗</span>
+                                        Carrier Access (@(SelectedCarrier.WholesalerAccess?.Count(wa => wa.IsActive) ?? 0))
+                                    </h6>
+                                    @if (SelectedCarrier.WholesalerAccess?.Any(wa => wa.IsActive) == true)
+                                    {
+                                        <div class="relationship-list">
+                                            @foreach (var access in SelectedCarrier.WholesalerAccess.Where(wa => wa.IsActive))
+                                            {
+                                                <div class="relationship-item">
+                                                    <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                                        <div>
+                                                            <div class="relationship-name">
+                                                                <span class="carrier-indicator">C</span>
+                                                                @access.Carrier.CarrierName
+                                                            </div>
+                                                            @if (!string.IsNullOrEmpty(access.Notes))
+                                                            {
+                                                                <div class="relationship-notes">@access.Notes</div>
+                                                            }
+                                                        </div>
+                                                        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => OnCreateSubmission.InvokeAsync(new SubmissionCreateRequest { CarrierId = access.Carrier.CarrierId, WholesalerId = SelectedCarrier.CarrierId }))">
+                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" Color="Color.Fill" />
+                                                            Add
+                                                        </FluentButton>
+                                                    </FluentStack>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="no-relationships">No carrier access configured</div>
+                                    }
+
+                                    
+                                }
+                                else if (SelectedCarrier.IssuingCarrier)
+                                {
+
+                                    <!-- Direct access create button for carrier -->
+                                    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => OnCreateSubmission.InvokeAsync(new SubmissionCreateRequest { CarrierId = SelectedCarrier.CarrierId, WholesalerId = null }))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" Color="Color.Fill" />
+                                        Direct Appointment Submission
+                                    </FluentButton>
+                                    <div style="height:20px;"></div>
+
+                                    <!-- Show wholesalers that have access to this carrier -->
+                                    <h6>
+                                        <span class="relationship-icon">🏢</span>
+                                        Available Through Wholesalers (@WholesalersForCarrier.Count)
+                                    </h6>
+                                    @if (WholesalersForCarrier.Any())
+                                    {
+                                        <div class="relationship-list">
+                                            @foreach (var wholesaler in WholesalersForCarrier)
+                                            {
+                                                <div class="relationship-item">
+                                                    <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                                        <div class="relationship-name">
+                                                            <span class="wholesaler-indicator">W</span>
+                                                            @wholesaler.CarrierName
+                                                        </div>
+                                                        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => OnCreateSubmission.InvokeAsync(new SubmissionCreateRequest { CarrierId = SelectedCarrier.CarrierId, WholesalerId = wholesaler.CarrierId }))">
+                                                            <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" Color="Color.Fill" />
+                                                            Add
+                                                        </FluentButton>
+                                                    </FluentStack>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="no-relationships">Direct access only</div>
+                                    }
+
+                                }
+                            </div>
+
+                            <div id="third-column">
+                                <!-- Quick Actions -->
+                                <div class="quick-actions">
+                                    @if (!string.IsNullOrEmpty(SelectedCarrier.Website))
+                                    {
+                                        <FluentButton Appearance="Appearance.Outline"
+                                                      OnClick="@(() => OpenUrl(SelectedCarrier.Website))">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" Slot="start" />
+                                            Website
+                                        </FluentButton>
+                                    }
+                                    @if (!string.IsNullOrEmpty(SelectedCarrier.QuotingWebsite))
+                                    {
+                                        <FluentButton Appearance="Appearance.Outline"
+                                                      OnClick="@(() => OpenUrl(SelectedCarrier.QuotingWebsite))">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Calculator())" Slot="start" />
+                                            Quote Portal
+                                        </FluentButton>
+                                    }
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(SelectedCarrier.Notes))
+                                {
+                                    <div class="notes-section">
+                                        <h6>Notes & Specialty Markets</h6>
+                                        <p>@SelectedCarrier.Notes</p>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(SelectedCarrier.AppetiteJson))
+                                {
+                                    <div class="appetite-section">
+                                        <h6>Appetite Information</h6>
+                                        <p>@SelectedCarrier.AppetiteJson</p>
+                                    </div>
+                                }
+
+                            </div>
+                        </FluentStack>
+
+
+                        
+                        
+                    </div>
+                    }
+                </div>
+            
+        </div>
+    </div>
+
+    <!-- Bottom Action Bar removed: creation happens via relationship buttons -->
+</div> 

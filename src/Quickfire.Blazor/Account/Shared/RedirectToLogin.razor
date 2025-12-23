@@ -1,0 +1,9 @@
+﻿@namespace Quickfire.Blazor.Components.Account.Shared
+@inject NavigationManager NavigationManager
+@code {
+    protected override void OnInitialized()
+    {
+        Console.WriteLine($"Redr                                RENDERMODE: {RendererInfo.IsInteractive}");
+        NavigationManager.NavigateTo($"Account/Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}", forceLoad: true);
+    }
+}

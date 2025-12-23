@@ -1,0 +1,182 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@inject SearchService SearchService
+@inject SharedService SharedService
+@inject NavigationManager NavigationManager
+
+<div class="associations-container">
+    <span class="sf-section-title">ASSOCIATIONS</span><br />
+    <div class="sf-section-container">
+        @if (PrimaryAssociation != null)
+        {
+            <div class="primary-association">
+                <span class="primassoc">Main:</span> <strong><span class="clickable-client" @onclick="() => NavigateToEntity(PrimaryAssociation)">@(PrimaryAssociation.Primary)</span></strong>
+            </div>
+        }
+        
+        @if (AssociationList.Count > 0)
+        {
+            <table class="flauxentTable mt-2">
+                <thead class="sf-txt-column">
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Relationship</th>
+                        <th class="shmedium">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var assoc in AssociationList)
+                    {
+                        <tr>
+                            <td>@assoc.Primary</td>
+                            <td>@assoc.DataType</td>
+                            <td>@(assoc.Parent?.Replace(" (Loose)", ""))</td>
+                            <td>
+                                <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" OnClick="@(() => NavigateToEntity(assoc))" Title="View">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Open())" />
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" OnClick="@(() => ShowDeleteAssociationConfirmation(assoc))" Title="Remove Association">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" />
+                                </FluentButton>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else if (PrimaryAssociation == null)
+        {
+            <div class="empty-message">No associations available.</div>
+        }
+        
+        <span class="sf-button-small" @onclick="OpenAddAssociationDialog">
+            <FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Slot="start" Color="Color.Custom" CustomColor="#0473ce" /> Add Association
+        </span>
+    </div>
+</div>
+
+<!-- Add Association Dialog -->
+<FluentDialog @bind-Hidden="addAssociationDialogHidden" @ref="addAssociationDialogRef" TrapFocus="true" Modal="true" Title="Add Association" Style="min-width: 550px;">
+    <div class="dialog-content">
+        @if (selectedResult == null)
+        {
+            <div class="form-group">
+                <span class="txt-label mb-2">Filter Results</span>
+                <SfDropDownList TItem="string" TValue="string" DataSource="@entityTypes" @bind-Value="selectedEntityType" Placeholder="Select Entity Type" CssClass="mb-3">
+                </SfDropDownList>
+            </div>
+            
+            <div class="form-group">
+                <span class="txt-label mb-2">Search for @selectedEntityType</span>
+                <div class="search-box">
+                    <SfTextBox @bind-Value="searchTerm" Placeholder="Start typing to search..." @oninput="HandleSearchInput" />
+                    @if (isSearching)
+                    {
+                        <div class="search-spinner">
+                            <FluentProgressRing Size="ProgressRingSize.Tiny" />
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            @if (searchResults.Count > 0)
+            {
+                <div class="search-results-container">
+                    <table class="search-results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Parent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var result in searchResults
+                                .Where(r => selectedEntityType == "All" || r.DataType.Equals(selectedEntityType, StringComparison.OrdinalIgnoreCase))
+                                .Take(10))
+                            {
+                                <tr class="search-result-row" @onclick="() => SelectSearchResult(result)">
+                                    <td>@result.Primary</td>
+                                    <td>@result.DataType</td>
+                                    <td>@result.Parent</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(searchTerm) && !isSearching)
+            {
+                <div class="empty-search-results">No matching results found. Try a different search term.</div>
+            }
+        }
+        
+        @if (selectedResult != null)
+        {
+            <div class="selected-result">
+                <div class="selected-result-header">Selected @selectedResult.DataType:</div>
+                <div class="selected-result-name">@selectedResult.Primary</div>
+                @if (!string.IsNullOrEmpty(selectedResult.Parent))
+                {
+                    <div class="selected-result-parent">@selectedResult.Parent</div>
+                }
+            </div>
+            
+            <div class="form-group mt-4">
+                <span class="txt-label mb-2">Relationship Type</span>
+                <SfDropDownList TItem="RelationshipTypeItem" TValue="RelationshipType"
+                    DataSource="@filteredRelationshipTypes"
+                    @bind-Value="selectedRelationshipType"
+                    TItemType="RelationshipTypeItem">
+                    <DropDownListFieldSettings Text="DisplayName" Value="Value" />
+                    <DropDownListTemplates TItem="RelationshipTypeItem">
+                        <HeaderTemplate>
+                            <div class="relationship-category-header">
+                                <span>Category</span>
+                                <span>Relationship Type</span>
+                            </div>
+                        </HeaderTemplate>
+                        <ItemTemplate>
+                            <div class="relationship-type-item">
+                                <span class="category-badge @context.Category.ToString().ToLower()">@context.Category</span>
+                                <span>@context.DisplayName</span>
+                            </div>
+                        </ItemTemplate>
+                    </DropDownListTemplates>
+                </SfDropDownList>
+            </div>
+            
+            <div class="form-group">
+                <span class="txt-label mb-2">Notes (Optional)</span>
+                <SfTextBox @bind-Value="associationNotes" Placeholder="Additional notes about this association" Multiline="true" />
+            </div>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="AddAssociation" Disabled="@(!CanAddAssociation())">Add Association</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelAddAssociationDialog">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<!-- Delete Association Confirmation Dialog -->
+<FluentDialog @bind-Hidden="deleteAssociationDialogHidden" TrapFocus="true" Modal="true" Title="Confirm Remove Association">
+    <div class="dialog-content">
+        <p>Are you sure you want to remove this association?</p>
+        @if (associationToDelete != null)
+        {
+            <p><strong>@associationToDelete.Primary</strong> (@associationToDelete.DataType)</p>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmDeleteAssociation">Remove</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelDeleteAssociation">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>

@@ -1,0 +1,156 @@
+/* Console-style log formatting */
+.log-console {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 16px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.log-header {
+    color: #569cd6;
+    font-weight: bold;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+}
+
+.log-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 2px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.log-entry:hover {
+    background-color: #2d2d30;
+    margin: 0 -8px;
+    padding: 2px 8px;
+    border-radius: 2px;
+}
+
+.log-timestamp {
+    color: #808080;
+    font-weight: normal;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.log-level {
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+.log-message {
+    flex: 1;
+    word-break: break-word;
+}
+
+/* Log level specific colors */
+.log-level-info {
+    color: #4ec9b0; /* Teal for Information */
+}
+
+.log-level-warning {
+    color: #dcdcaa; /* Yellow for Warning */
+}
+
+.log-level-error {
+    color: #f44747; /* Red for Error */
+}
+
+.log-level-debug {
+    color: #9cdcfe; /* Light blue for Debug */
+}
+
+.log-level-trace {
+    color: #c586c0; /* Purple for Trace */
+}
+
+.log-level-unknown {
+    color: #d4d4d4; /* Default gray */
+}
+
+.log-empty {
+    color: #808080;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Loading spinner in dark theme */
+.log-console .fluent-progress-ring {
+    margin: 20px auto;
+    display: block;
+}
+
+/* Scrollbar styling for dark theme */
+.log-console::-webkit-scrollbar {
+    width: 12px;
+}
+
+.log-console::-webkit-scrollbar-track {
+    background: #2d2d30;
+    border-radius: 6px;
+}
+
+.log-console::-webkit-scrollbar-thumb {
+    background: #464647;
+    border-radius: 6px;
+}
+
+.log-console::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5c;
+}
+
+/* Path highlighting for file paths */
+.log-message {
+    /* Highlight file paths */
+}
+
+.log-message:has-text("C:\\") {
+    /* This would need JavaScript or a more complex solution */
+}
+
+/* Alternative: Use a data attribute or class for path highlighting */
+.log-path {
+    color: #ce9178; /* Orange for file paths */
+    text-decoration: underline;
+    text-decoration-color: transparent;
+}
+
+.log-path:hover {
+    text-decoration-color: #ce9178;
+}
+
+/* Highlight important keywords */
+.log-keyword {
+    color: #569cd6; /* Blue for keywords */
+    font-weight: bold;
+}
+
+/* Highlight numbers and IDs */
+.log-number {
+    color: #b5cea8; /* Green for numbers */
+}
+
+/* Selection styling */
+.log-console ::selection {
+    background-color: #264f78;
+    color: #ffffff;
+}

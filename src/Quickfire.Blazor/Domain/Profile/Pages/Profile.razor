@@ -1,0 +1,532 @@
+﻿@page "/Profile"
+@using Microsoft.AspNetCore.Identity
+@using System.ComponentModel.DataAnnotations
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Profile.Components
+@using Quickfire.Blazor.Domain.Shared.Components
+@using static Quickfire.Blazor.Domain.Shared.Models.HomepageItemVisibility
+@using static Quickfire.Blazor.Domain.Shared.Models.InspirationMode
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IMessageService MessageService
+@inject SharedService SharedService
+@inject StateService StateService
+@inject NavigationManager NavigationManager
+
+<_Toolbar currentView="_Toolbar.ViewMode.Profile" />
+
+<div class="qf-scroll-panel">
+    <div class="qf-scroll-panel__alt-container">
+        <div class="qf-container__header qf-header-pad">
+            <span class="qf-container__icon"><FluentIcon Value="@(new Icons.Regular.Size48.Settings())" Color="Color.Custom" CustomColor="#a0a0a0" /></span>
+            <div>
+                <h3 class="qf-container__title">General Settings</h3>
+                <p class="qf-container__subtitle">Change the way Quickfire looks, feels and sounds.</p>
+            </div>
+        </div>
+        <FluentMessageBarProvider />
+
+        <div class="sf-profile">
+            @if (_user != null)
+            {
+                <div class="grid-container">
+                    <div class="grid-profile">
+                        <FluentCard class="grid-card">
+                            <div class="sf-profile__card-header">
+                                <div class="sf-profile__card-icon">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Person())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                                </div>
+                                <h4 class="sf-profile__card-title">Profile Information</h4>
+                            </div>
+                            <div class="sf-profile__card-body">
+                                <div>
+                                    <div class="sf-profile__section-title">Basic Details</div>
+                                    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16">
+                                        <FluentTextField @bind-Value="_firstName" Label="First Name" />
+                                        <FluentTextField @bind-Value="_lastName" Label="Last Name" />
+                                        <FluentTextField @bind-Value="_email" Label="Email Address" />
+                                        <div class="sf-profile__form-actions">
+                                            <FluentButton Appearance="Appearance.Accent" @onclick="UpdateProfileAsync">
+                                                <FluentIcon Value="@(new Icons.Regular.Size16.Save())" Color="Color.Fill" Slot="start" />
+                                                Save
+                                            </FluentButton>
+                                        </div>
+                                    </FluentStack>
+                                    
+                                </div>
+                                <FluentDivider />
+                                <div>
+                                    <div class="sf-profile__section-title">Password Reset</div>
+                                    <div class="sf-profile__section-helper">Choose a strong password. This will sign you out of other devices.</div>
+                                    <div class="sf-profile__password-grid">
+                                        <FluentStack>
+                                            <FluentTextField @bind-Value="_currentPassword"
+                                                             Label="Current Password"
+                                                             TextFieldType="TextFieldType.Password" />
+                                            <FluentTextField @bind-Value="_newPassword"
+                                                             Label="New Password"
+                                                             TextFieldType="TextFieldType.Password" />
+                                            <FluentTextField @bind-Value="_confirmPassword"
+                                                             Label="Confirm New Password"
+                                                             TextFieldType="TextFieldType.Password" />
+                                        </FluentStack>
+                                    </div>
+                                    <div class="sf-profile__form-actions">
+                                        <FluentButton Id="UpdatePassword" Appearance="Appearance.Accent" @onclick="ShowPasswordChangeConfirmation">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Key())" Color="Color.Fill" Slot="start" />
+                                            Update Password
+                                        </FluentButton>
+                                    </div>
+                                </div>
+                            </div>
+                        </FluentCard>
+                    </div>
+                    <div class="grid-prefs">
+                        <FluentCard class="grid-card">
+                            <div class="sf-profile__card-header">
+                                <div class="sf-profile__card-icon">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Settings())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                                </div>
+                                <h4 class="sf-profile__card-title">User Preferences</h4>
+                            </div>
+                            <div class="sf-profile__card-body">
+                                <div class="sf-profile__preference-list">
+                                    <div class="sf-profile__preference-row">
+                                        <div class="sf-profile__preference-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size24.Speaker2())" />
+                                        </div>
+                                        <div class="sf-profile__preference-toggle">
+                                            <FluentSwitch @bind-Value="_userPreferences.EnableAudio"
+                                                          @onchange="OnAudioToggleChanged" />
+                                        </div>
+                                        <div class="sf-profile__preference-text">
+                                            <span class="sf-profile__preference-title">Audio Enabled</span>
+                                            <span class="sf-profile__preference-description">Enable sound effects and audio notifications</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="sf-profile__preference-row">
+                                        <div class="sf-profile__preference-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size24.Sparkle())" />
+                                        </div>
+                                        <div class="sf-profile__preference-toggle">
+                                            <FluentSwitch @bind-Value="_userPreferences.EnableAnimations"
+                                                          @onchange="OnAnimationsToggleChanged" />
+                                        </div>
+                                        <div class="sf-profile__preference-text">
+                                            <span class="sf-profile__preference-title">Spicy Visuals</span>
+                                            <span class="sf-profile__preference-description">Enable animations and visual effects</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="sf-profile__preference-row">
+                                        <div class="sf-profile__preference-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size24.Shield())" />
+                                        </div>
+                                        <div class="sf-profile__preference-toggle">
+                                            <FluentSwitch @bind-Value="_userPreferences.EnableSimpleMode"
+                                                          @onchange="OnSimpleModeToggleChanged" />
+                                        </div>
+                                        <div class="sf-profile__preference-text">
+                                            <span class="sf-profile__preference-title">Safety's On</span>
+                                            <span class="sf-profile__preference-description">Enable simplified interface mode</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </FluentCard>
+                    </div>
+                    <div class="grid-homepagelayout">
+                        <FluentCard class="grid-card">
+                            <div class="sf-profile__card-header">
+                                <div class="sf-profile__card-icon">
+                                    <FluentIcon Value="@(new Icons.Regular.Size32.Home())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                                </div>
+                                <h4 class="sf-profile__card-title">Homepage Layout</h4>
+                            </div>
+                            <div class="sf-profile__card-body">
+                                <div class="sf-profile__homepage-list">
+                                    <div class="sf-profile__homepage-row">
+                                        <div class="sf-profile__homepage-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size24.DocumentText())" />
+                                        </div>
+                                        <div class="sf-profile__homepage-details">
+                                            <div class="sf-profile__homepage-heading">
+                                                <span class="sf-profile__homepage-title">Proposals</span>
+                                                <FluentRadioGroup Class="sf-profile__homepage-visibility"
+                                                                  @bind-Value="_userPreferences.HomepageLayout.Proposals.Vis"
+                                                                  @onchange="OnHomepageLayoutChanged">
+                                                    <FluentRadio Value="HomepageItemVisibility.Visible">Visible</FluentRadio>
+                                                    <FluentRadio Value="HomepageItemVisibility.Collapsed">Collapsed</FluentRadio>
+                                                    <FluentRadio Value="HomepageItemVisibility.Hidden">Hidden</FluentRadio>
+                                                </FluentRadioGroup>
+                                            </div>
+                                            <div class="sf-profile__homepage-controls">
+                                                <span>Display</span>
+                                                <FluentNumberField Class="sf-profile__homepage-count"
+                                                                   @bind-Value="_userPreferences.HomepageLayout.Proposals.Len"
+                                                                   @bind-Value:after="OnHomepageLayoutChanged"
+                                                                   Min="0"
+                                                                   Max="100" />
+                                                <span>most recent sent proposals</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sf-profile__homepage-row">
+                                        <div class="sf-profile__homepage-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size24.Certificate())" />
+                                        </div>
+                                        <div class="sf-profile__homepage-details">
+                                            <div class="sf-profile__homepage-heading">
+                                                <span class="sf-profile__homepage-title">Certificate Requests</span>
+                                                <FluentRadioGroup Class="sf-profile__homepage-visibility"
+                                                                  @bind-Value="_userPreferences.HomepageLayout.Certs.Vis"
+                                                                  @onchange="OnHomepageLayoutChanged">
+                                                    <FluentRadio Value="HomepageItemVisibility.Visible">Visible</FluentRadio>
+                                                    <FluentRadio Value="HomepageItemVisibility.Collapsed">Collapsed</FluentRadio>
+                                                    <FluentRadio Value="HomepageItemVisibility.Hidden">Hidden</FluentRadio>
+                                                </FluentRadioGroup>
+                                            </div>
+                                            <div class="sf-profile__homepage-controls">
+                                                <span>Display</span>
+                                                <FluentNumberField Class="sf-profile__homepage-count"
+                                                                   @bind-Value="_userPreferences.HomepageLayout.Certs.Len"
+                                                                   @bind-Value:after="OnHomepageLayoutChanged"
+                                                                   Min="0"
+                                                                   Max="100" />
+                                                <span>most recent completed cert requests</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sf-profile__homepage-row">
+                                        <div class="sf-profile__homepage-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size24.People())" />
+                                        </div>
+                                        <div class="sf-profile__homepage-details">
+                                            <div class="sf-profile__homepage-heading">
+                                                <span class="sf-profile__homepage-title">Leads</span>
+                                                <FluentRadioGroup Class="sf-profile__homepage-visibility"
+                                                                  @bind-Value="_userPreferences.HomepageLayout.Leads.Vis"
+                                                                  @onchange="OnHomepageLayoutChanged">
+                                                    <FluentRadio Value="HomepageItemVisibility.Visible">Visible</FluentRadio>
+                                                    <FluentRadio Value="HomepageItemVisibility.Collapsed">Collapsed</FluentRadio>
+                                                    <FluentRadio Value="HomepageItemVisibility.Hidden">Hidden</FluentRadio>
+                                                </FluentRadioGroup>
+                                            </div>
+                                            <div class="sf-profile__homepage-controls">
+                                                <span>Display</span>
+                                                <FluentNumberField Class="sf-profile__homepage-count"
+                                                                   @bind-Value="_userPreferences.HomepageLayout.Leads.Len"
+                                                                   @bind-Value:after="OnHomepageLayoutChanged"
+                                                                   Min="0"
+                                                                   Max="100" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sf-profile__homepage-row">
+                                        <div class="sf-profile__homepage-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size24.Lightbulb())" />
+                                        </div>
+                                        <div class="sf-profile__homepage-details">
+                                            <div class="sf-profile__homepage-heading">
+                                                <span class="sf-profile__homepage-title">Daily Inspiration</span>
+                                            </div>
+                                            <div class="sf-profile__homepage-controls">
+                                                <span>Show</span>
+                                                <FluentSelect TOption="string"
+                                                              Value="_userPreferences.HomepageLayout.Inspiration.ToString()"
+                                                              ValueChanged="OnInspirationModeChanged"
+                                                              Style="width: 200px; margin: 0 8px;">
+                                                    <FluentOption Value="@nameof(InspirationMode.BibleVerses)">Bible Verses</FluentOption>
+                                                    <FluentOption Value="@nameof(InspirationMode.Quotes)">Inspirational Quotes</FluentOption>
+                                                    <FluentOption Value="@nameof(InspirationMode.Off)">Off</FluentOption>
+                                                </FluentSelect>
+                                                <span>on the homepage</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </FluentCard>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<ConfirmationDialog DialogId="password-change-confirmation"
+                    Title="Update Password"
+                    Message="Changing your password will immediately sign you out. You'll need to log back in with the new password."
+                    ConfirmText="Log out and update"
+                    CancelText="Cancel"
+                    @bind-Hidden="_passwordConfirmationHidden"
+                    OnConfirm="HandlePasswordChangeConfirmation" />
+
+@code {
+    private ApplicationUser _user;
+    private string _firstName;
+    private string _lastName;
+    private string _email = string.Empty;
+    private string _currentPassword;
+    private string _newPassword;
+    private string _confirmPassword;
+    private bool _passwordConfirmationHidden = true;
+    private static readonly EmailAddressAttribute EmailValidator = new();
+
+    // User preferences object
+    private UserPreferences _userPreferences = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await UserManager.GetUserAsync(SignInManager.Context.User);
+        if (_user != null)
+        {
+            _firstName = _user.FirstName;
+            _lastName = _user.LastName;
+            _email = _user.Email ?? string.Empty;
+
+            // Get user preferences from StateService
+            _userPreferences = StateService.GetUserPreferences();
+        }
+    }
+
+    // Auto-save preference methods
+    private async Task OnAudioToggleChanged()
+    {
+        await SaveUserPreference();
+    }
+
+    private async Task OnAnimationsToggleChanged()
+    {
+        await SaveUserPreference();
+    }
+
+    private async Task OnSimpleModeToggleChanged()
+    {
+        await SaveUserPreference();
+    }
+
+    private async Task OnHomepageLayoutChanged()
+    {
+        Console.WriteLine($"Homepage layout changed - saving preferences...");
+        await SaveUserPreference();
+    }
+
+    private async Task OnInspirationModeChanged(string value)
+    {
+        if (Enum.TryParse<InspirationMode>(value, out var parsed))
+        {
+            _userPreferences.HomepageLayout.Inspiration = parsed;
+            await SaveUserPreference();
+        }
+    }
+
+    private async Task SaveUserPreference()
+    {
+        try
+        {
+            // Debug: Log the current homepage layout values
+            Console.WriteLine($"Saving homepage layout: Proposals.Len={_userPreferences.HomepageLayout.Proposals.Len}, Leads.Len={_userPreferences.HomepageLayout.Leads.Len}");
+
+            var result = await SharedService.SaveCurrentUserProfile(_userPreferences);
+
+            if (result.Success)
+            {
+                // Update StateService with new preferences
+                StateService.UpdateUserPreferences(_userPreferences);
+
+                // Show success message
+                MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Preference Updated";
+                    options.Body = "Your preference has been saved automatically";
+                    options.Intent = MessageIntent.Success;
+                    options.Timeout = 2000;
+                });
+            }
+            else
+            {
+                MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = result.Message;
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageService.ShowMessageBar(options =>
+            {
+                options.Title = "Error";
+                options.Body = $"An error occurred while saving preference: {ex.Message}";
+                options.Intent = MessageIntent.Error;
+                options.Timeout = 4000;
+            });
+        }
+    }
+
+    private async Task UpdateProfileAsync()
+    {
+        if (_user == null)
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = "User not found";
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        var trimmedEmail = _email?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(trimmedEmail) || !EmailValidator.IsValid(trimmedEmail))
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = "Enter a valid email address.";
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        var emailChanged = !string.Equals(_user.Email, trimmedEmail, StringComparison.OrdinalIgnoreCase);
+        if (emailChanged)
+        {
+            var existing = await UserManager.FindByEmailAsync(trimmedEmail);
+            if (existing is not null && !string.Equals(existing.Id, _user.Id, StringComparison.Ordinal))
+            {
+                MessageService.ShowMessageBar(options =>
+                    {
+                        options.Title = "Error";
+                        options.Body = "That email address is already being used by another account.";
+                        options.Intent = MessageIntent.Error;
+                        options.Timeout = 4000;
+                    }
+                );
+                return;
+            }
+        }
+
+        _user.FirstName = _firstName;
+        _user.LastName = _lastName;
+        _user.Email = trimmedEmail;
+        _user.UserName = trimmedEmail;
+
+        var result = await UserManager.UpdateAsync(_user);
+        if (result.Succeeded)
+        {
+            _email = trimmedEmail;
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Success";
+                    options.Body = "Profile updated successfully";
+                    options.Intent = MessageIntent.Success;
+                }
+            );
+        }
+        else
+        {
+            var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = errors;
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+        }
+    }
+
+    private void ShowPasswordChangeConfirmation()
+    {
+        _passwordConfirmationHidden = false;
+    }
+
+    private async Task HandlePasswordChangeConfirmation(bool confirmed)
+    {
+        if (confirmed)
+        {
+            await ChangePasswordAsync();
+        }
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        if (_user == null)
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = "User not found";
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_currentPassword) ||
+            string.IsNullOrEmpty(_newPassword) ||
+            string.IsNullOrEmpty(_confirmPassword))
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = "Please fill in all password fields";
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        if (_newPassword != _confirmPassword)
+        {
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Intent = MessageIntent.Error;
+                    options.Body = "New password and confirmation do not match";
+                    options.Title = "Error";
+                    options.Timeout = 4000;
+                }
+            );
+            return;
+        }
+
+        var result = await UserManager.ChangePasswordAsync(_user,
+            _currentPassword, _newPassword);
+
+        if (result.Succeeded)
+        {
+            // Clear password fields
+            _currentPassword = _newPassword = _confirmPassword = string.Empty;
+            NavigationManager.NavigateTo("/Account/Logout", forceLoad: true);
+            return;
+        }
+        else
+        {
+            var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+            MessageService.ShowMessageBar(options =>
+                {
+                    options.Title = "Error";
+                    options.Body = errors;
+                    options.Intent = MessageIntent.Error;
+                    options.Timeout = 4000;
+                }
+            );
+        }
+    }
+}

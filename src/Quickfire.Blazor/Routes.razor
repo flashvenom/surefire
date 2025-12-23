@@ -1,0 +1,45 @@
+﻿@using Quickfire.Blazor.Data
+@using Quickfire.Blazor.Components
+@using Quickfire.Blazor.Components.Layout
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Services
+@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.JSInterop
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Spinner
+@inject NavigationManager Navigation
+@namespace Quickfire.Blazor.Components
+@using Quickfire.Blazor.Components.Account.Shared
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+    
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+    }
+}

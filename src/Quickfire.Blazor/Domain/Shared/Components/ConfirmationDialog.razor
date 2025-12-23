@@ -1,0 +1,46 @@
+@namespace Quickfire.Blazor.Domain.Shared.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Shared.Services
+
+<BaseDialog DialogId="@DialogId" 
+            Title="@Title"
+            @bind-Hidden="Hidden">
+    <ChildContent>
+        <div class="confirmation-message">
+            @Message
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmAction">@ConfirmText</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelDialog">@CancelText</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "confirmation-dialog";
+    [Parameter] public string Title { get; set; } = "Confirm";
+    [Parameter] public string Message { get; set; } = "Are you sure you want to proceed?";
+    [Parameter] public string ConfirmText { get; set; } = "Yes";
+    [Parameter] public string CancelText { get; set; } = "No";
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnConfirm { get; set; }
+
+    private async Task ConfirmAction()
+    {
+        await OnConfirm.InvokeAsync(true);
+        await CloseDialogAsync();
+    }
+
+    private async Task CancelDialog()
+    {
+        await CloseDialogAsync();
+    }
+
+    // Central method to hide the dialog and notify the parent
+    private async Task CloseDialogAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+}

@@ -1,0 +1,254 @@
+@page "/Renewals/Edit/{RenewalId:int}"
+@using Microsoft.EntityFrameworkCore
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Renewals.Components
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Spinner
+@inject RenewalService RenewalService
+@inject StateService _stateService
+@inject NavigationManager Navigation
+@inject IDbContextFactory<ApplicationDbContext> _dbContextFactory
+
+<_toolbar PageName="Edit" />
+
+<div class="page-content">
+    <div class="mh1">Edit Renewal</div>
+    @if (Renewal is null || Products is null || Carriers is null || Wholesalers is null || Users is null)
+    {
+        <p><em>Loading...</em></p><SfSpinner Visible="true"></SfSpinner>
+    }
+    else
+    {
+        <EditForm Model="Renewal" OnValidSubmit="UpdateRenewal">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="layout-flow">
+                <div class="surface-card">
+                    <div class="section-title">BASICS</div>
+                    <div class="form-stack">
+                        <FluentStack>
+                            <div class="form-stack_split">
+                                <SfDatePicker TValue="DateTime" @bind-Value="Renewal.RenewalDate" Placeholder="Renewal Date" FloatLabelType="FloatLabelType.Always" />
+                                <ValidationMessage For="() => Renewal.RenewalDate" class="text-danger" />
+                            </div>
+                            <div class="form-stack_split">
+                                <SfDropDownList TValue="string" TItem="ApplicationUser" DataSource="@Users" Placeholder="Assigned To" @bind-Value="Renewal.AssignedToId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="FirstName" Value="Id" />
+                                </SfDropDownList>
+                                <ValidationMessage For="() => Renewal.AssignedToId" class="text-danger" />
+                            </div>
+                        </FluentStack>
+                        <FluentStack>
+                            <div class="form-stack_split">
+                                <SfNumericTextBox TValue="decimal?" @bind-Value="Renewal.ExpiringPremium" Placeholder="Expiring Premium" FloatLabelType="FloatLabelType.Always" Format="C2" Readonly="true" />
+                                <ValidationMessage For="() => Renewal.ExpiringPremium" class="text-danger" />
+                            </div>
+                            <div class="form-stack_split">
+                                <SfTextBox @bind-Value="Renewal.ExpiringPolicyNumber" Placeholder="Expiring Policy Number" FloatLabelType="FloatLabelType.Always" Readonly="true" />
+                                <ValidationMessage For="() => Renewal.ExpiringPolicyNumber" class="text-danger" />
+                            </div>
+                        </FluentStack>
+                    </div>
+                </div>
+
+                <div class="surface-card">
+                    <div class="section-title">COMPANY</div>
+                    <div class="form-stack">
+                        <div>
+                            <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Carriers" Placeholder="Carrier" @bind-Value="Renewal.CarrierId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                                <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                            </SfDropDownList>
+                            <ValidationMessage For="() => Renewal.CarrierId" class="text-danger" />
+                        </div>
+                        <div>
+                            <SfDropDownList TValue="int?" TItem="Carrier" DataSource="@Wholesalers" Placeholder="Wholesaler" @bind-Value="Renewal.WholesalerId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                                <DropDownListFieldSettings Text="CarrierName" Value="CarrierId" />
+                            </SfDropDownList>
+                            <ValidationMessage For="() => Renewal.WholesalerId" class="text-danger" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layout-flow">
+            <div class="surface-card">
+                    <div class="section-title">DETAILS</div>
+                    <div class="form-stack">
+                        <FluentStack>
+                            <div class="form-stack_split">
+                                <SfDropDownList TValue="int" TItem="Product" DataSource="@Products" Placeholder="Product" @bind-Value="Renewal.ProductId" AllowFiltering="true" PopupHeight="230px" ShowClearButton="true" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="LineName" Value="ProductId" />
+                                </SfDropDownList>
+                                <ValidationMessage For="() => Renewal.ProductId" class="text-danger" />
+                            </div>
+                            <div class="form-stack_split">
+                                <SfDropDownList TValue="string" TItem="KeyValuePair<string, string>" DataSource="@RenewalStatusOptions" Placeholder="Renewal Status" @bind-Value="Renewal.RenewalStatus" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="Value" Value="Key" />
+                                </SfDropDownList>
+                            </div>
+                        </FluentStack>
+                        <FluentStack>
+                            <div class="form-stack_split">
+                                <SfDropDownList TValue="string" TItem="KeyValuePair<string, string>" DataSource="@BillTypeOptions" Placeholder="Bill Type" @bind-Value="Renewal.BillType" FloatLabelType="FloatLabelType.Always">
+                                    <DropDownListFieldSettings Text="Value" Value="Key" />
+                                </SfDropDownList>
+                            </div>
+                            <div class="form-stack_split">
+                                <FluentCheckbox @bind-Value="Renewal.PriorityNeeded">Priority Needed</FluentCheckbox>
+                                <ValidationMessage For="() => Renewal.PriorityNeeded" class="text-danger" />
+                            </div>
+                        </FluentStack>
+                    </div>
+                </div>
+
+                <div class="surface-card">
+                    <div class="section-title">Danger Zone</div>
+                    <div class="form-stack">
+                        <p class="text-danger">These actions rebuild the renewal's tracked tasks and cannot be undone.</p>
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" Wrap="true">
+                            <FluentButton Appearance="Appearance.Outline" Type="ButtonType.Button" OnClick="ReformatRenFlowMarketed">Reformat RenFlow - Marketed</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" Type="ButtonType.Button" OnClick="ReformatRenFlowNonMarketed">Reformat RenFlow - Simple</FluentButton>
+                        </FluentStack>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Renewal</FluentButton>
+                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Outline" OnClick="GoBack">Cancel</FluentButton>
+                <FluentButton Type="ButtonType.Button" Appearance="Appearance.Neutral" OnClick="CompleteAllTasks">Complete All Tasks</FluentButton>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int RenewalId { get; set; }
+
+    private Renewal? Renewal { get; set; }
+    private List<Product> Products { get; set; }
+    private List<Carrier> Carriers { get; set; }
+    private List<Carrier> Wholesalers { get; set; }
+    private List<ApplicationUser> Users { get; set; }
+    
+    // Options for dropdown fields
+    private List<KeyValuePair<string, string>> RenewalStatusOptions { get; set; } = new List<KeyValuePair<string, string>>
+    {
+        new KeyValuePair<string, string>("In Progress", "In Progress"),
+        new KeyValuePair<string, string>("Renewed", "Renewed"),
+        new KeyValuePair<string, string>("Non-Renewed", "Non-Renewed")
+    };
+    
+    private List<KeyValuePair<string, string>> BillTypeOptions { get; set; } = new List<KeyValuePair<string, string>>
+    {
+        new KeyValuePair<string, string>("Direct Bill", "Direct Bill"),
+        new KeyValuePair<string, string>("Agency Bill", "Agency Bill")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Renewal = await RenewalService.GetRenewalByIdTrackAsync(RenewalId);
+        Products = await _stateService.AllProducts;
+        Carriers = await _stateService.AllCarriers;
+        Wholesalers = await _stateService.AllWholesalers;
+        Users = await _stateService.AllUsers;
+        
+        // Set default BillType if it's null to prevent database error
+        if (string.IsNullOrEmpty(Renewal.BillType))
+        {
+            Renewal.BillType = "Direct Bill";
+        }
+        
+        // Set default RenewalStatus if it's null to prevent database error
+        if (string.IsNullOrEmpty(Renewal.RenewalStatus))
+        {
+            Renewal.RenewalStatus = "In Progress";
+        }
+    }
+
+    private async Task UpdateRenewal()
+    {
+        if (Renewal is null)
+        {
+            return;
+        }
+
+        if (!Renewal.CarrierId.HasValue)
+        {
+            Renewal.Carrier = null;
+        }
+
+        if (!Renewal.WholesalerId.HasValue)
+        {
+            Renewal.Wholesaler = null;
+        }
+
+        await RenewalService.UpdateRenewalAsync(Renewal);
+        Navigation.NavigateTo($"/Renewals/Details/{Renewal.RenewalId}");
+    }
+
+    public void GoBack()
+    {
+        Navigation.NavigateTo($"/Renewals/Details/{RenewalId}");
+    }
+
+    private async Task CompleteAllTasks()
+    {
+        await RenewalService.CompleteAllTasksAsync(RenewalId);
+        Navigation.NavigateTo($"/Renewals/Details/{RenewalId}");
+    }
+    
+    private async Task ReformatRenFlowMarketed()
+    {
+        if (Renewal == null) return;
+        
+        try
+        {
+            // First delete all existing track tasks
+            using var context = await _dbContextFactory.CreateDbContextAsync();
+            var existingTasks = await context.TrackTasks
+                .Where(t => t.RenewalId == RenewalId)
+                .ToListAsync();
+            
+            context.TrackTasks.RemoveRange(existingTasks);
+            await context.SaveChangesAsync();
+
+            // Now create new tasks with task group 3
+            int renewalId = await RenewalService.CreateRenewalWithTaskGroupAsync(Renewal.PolicyId!.Value, 3, true);
+            Navigation.NavigateTo($"/Renewals/Details/{renewalId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reformatting renewal: {ex.Message}");
+        }
+    }
+    private async Task ReformatRenFlowNonMarketed()
+    {
+        if (Renewal == null) return;
+        
+        try
+        {
+            // First delete all existing track tasks
+            using var context = await _dbContextFactory.CreateDbContextAsync();
+            var existingTasks = await context.TrackTasks
+                .Where(t => t.RenewalId == RenewalId)
+                .ToListAsync();
+            
+            context.TrackTasks.RemoveRange(existingTasks);
+            await context.SaveChangesAsync();
+
+            // Now create new tasks with task group 3
+            int renewalId = await RenewalService.CreateRenewalWithTaskGroupAsync(Renewal.PolicyId!.Value, 4, true);
+            Navigation.NavigateTo($"/Renewals/Details/{renewalId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reformatting renewal: {ex.Message}");
+        }
+    }
+}

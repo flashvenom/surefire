@@ -1,0 +1,121 @@
+﻿@page "/Forms/Certificate/{CertificateId:int}"
+@using System.IO
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Syncfusion.Pdf
+@using Syncfusion.Pdf.Parsing
+@using Syncfusion.Blazor.SfPdfViewer
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@inject FormService FormService
+@inject ClientService ClientService
+@inject PolicyService PolicyService
+@inject IWebHostEnvironment Environment
+@inject IHttpClientFactory _http
+@inject AppJsInterop JsInterop
+@inject ILogger<CertificateEditor> Logger
+@inject NavigationManager Navigation
+
+<div class="page-toolbar">
+    <SfButton CssClass="e-primary" IconCss="e-icons e-plus-icon">New Certificate</SfButton>
+
+    <span class="sf-verthr2"></span>
+
+    @* Policies *@
+    <a class="toolbar-link" id="myPopoverButtonr" @onclick="() => _policiesVisible = !_policiesVisible"> 
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentBulletList())" />
+        <span class="toolbar-text">Policies</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myPopoverButtonr" @bind-Open="_policiesVisible">
+        <Header>Select Policies</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                @foreach (var policy in policies)
+                {
+                    <FluentCheckbox Checked="@IsPolicySelected(policy)" @onchange="(e) => TogglePolicySelection(e, policy)">
+                        @policy.PolicyNumber (@policy.Product.LineNickname)
+                    </FluentCheckbox>
+                }
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => HandleLoadEverything(true, true, true, true)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    @* Attachments *@
+    <a class="toolbar-link" id="myAttachButtonr" @onclick="() => _attachmentsVisible = !_attachmentsVisible">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Attach())" />
+        <span class="toolbar-text">Attachments</span>
+    </a>
+    <FluentPopover Style="width: 300px;" VerticalThreshold="170" AnchorId="myAttachButtonr" @bind-Open="_attachmentsVisible">
+        <Header>Attachment Options</Header>
+        <Body>
+            <FluentStack Orientation="Microsoft.FluentUI.AspNetCore.Components.Orientation.Vertical">
+                Use the checkboxes in the certificate to attach a policy's AI/WoS/P&NC endorsements to this certificate. If you don't want to attach anything, check below...<br><br>
+                    <FluentCheckbox Checked="@certificate.BlockAttachments" @onchange="(e) => ToggleBlockAttachments(e, certificate)"> Block Attachments</FluentCheckbox>
+                
+            </FluentStack>
+        </Body>
+        <Footer>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => SaveToDatabase(false)">Update</FluentButton>
+        </Footer>
+    </FluentPopover>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Reset" class="toolbar-link" @onclick="ResetForm">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eraser())" />
+        <span class="toolbar-text">Reset</span>
+    </a>
+
+    <a id="Duplicate" class="toolbar-link" @onclick="DuplicateCertificate">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentCopy())" />
+        <span class="toolbar-text">Duplicate</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Email" class="toolbar-link" @onclick="() => ExportCertificate(true, false, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.OpenFolder())" />
+        <span class="toolbar-text">Open</span>
+    </a>
+
+    <a id="Save" class="toolbar-link" @onclick="() => ExportCertificate(false, false, false, true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentPdf())" />
+        <span class="toolbar-text">Save</span>
+    </a>
+
+    <a id="Print" class="toolbar-link" @onclick="() => ExportCertificate(false, true, false, false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Print())" />
+        <span class="toolbar-text">Print</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <a id="Sync" class="toolbar-link" @onclick="() => SaveToDatabase(false)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.ArrowSync())" />
+        <span class="toolbar-text">Sync</span>
+    </a>
+
+    <a id="Approve" class="toolbar-link" @onclick="() => SaveToDatabase(true)">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Checkmark())" />
+        <span class="toolbar-text">Approve</span>
+    </a>
+
+    <a id="Cancel" class="toolbar-link" href="@($"/Clients/{clientId}")">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Dismiss())" />
+        <span class="toolbar-text">Cancel</span>
+    </a>
+   
+</div>
+
+<div class="control-section" style="height:784px;">
+    <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath" Height="784px" Width="90%">
+        <PdfViewerEvents DocumentLoaded="LoadJsonDataIntoPdfAsync"></PdfViewerEvents>
+    </SfPdfViewer2>
+</div>

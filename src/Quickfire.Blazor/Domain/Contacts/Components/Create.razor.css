@@ -1,0 +1,172 @@
+﻿.form-section {
+    margin-bottom: 10px;
+}
+
+.phone-type-options {
+    display: flex;
+    gap: 4px;
+    margin: 8px 0;
+}
+
+    .phone-type-options .fluent-button {
+        padding: 2px 6px;
+        border-radius: 4px;
+        background-color: #f5f5f5;
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+    }
+
+        .phone-type-options .fluent-button.selected {
+            background-color: #1976d2;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .phone-type-options .fluent-button:hover {
+            background-color: #e3f2fd;
+        }
+
+        .phone-type-options .fluent-button.selected:hover {
+            background-color: #1565c0;
+        }
+
+.add-another-button {
+    margin-top: 8px;
+    font-size: 0.9em;
+}
+
+.phone-item, .email-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+    .phone-item.primary, .email-item.primary {
+        background-color: #e3f2fd;
+        border-left: 3px solid #1976d2;
+    }
+
+.primary-badge {
+    background-color: #1976d2;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.phone-input-container,
+.email-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.phone-list,
+.email-list {
+    margin-top: 20px;
+}
+
+.phone-item,
+.email-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.sms-badge {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.carrier-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.input-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+.subColumnOne {
+    flex: 1;
+    max-width:400px;
+}
+.subColumnTwo {
+    flex: 1;
+}
+.subColumnThree {
+    flex: 1;
+}
+.form-section {
+    padding: 0px;
+    margin:0;
+}
+.pol-section-title {
+    font-family: "montserrat", sans-serif;
+    font-size: 1.25em;
+    font-weight: 400;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 5px 20px 3px 5px;
+    border-top-right-radius: 20px;
+    text-shadow: 1px 1px 1px #fff;
+}
+.pol-section-container {
+    border-left: 5px solid #c8c8c8;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#ffffff+0,ffffff+35,ffffff+99&1+0,0.26+35,0.89+99 */
+    background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,0.26) 35%,rgba(255,255,255,0.89) 99%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+.borderx {
+    
+}
+    .borderx::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: -10px; /* move border 10px right */
+        height: 200px;
+        width: 1px;
+        background-color:#000;
+        border-right: 2px solid #000;
+    }
+.hackline {
+    width:1px;
+    height:200px;
+    background-color:#0000003a;
+    float: right;
+    position: relative;
+    left: 23px;
+    top:10px;
+}

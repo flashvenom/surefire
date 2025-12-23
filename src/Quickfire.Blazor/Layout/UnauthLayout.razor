@@ -1,0 +1,71 @@
+﻿@namespace Quickfire.Blazor.Components.Layout
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Components.Layout
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
+@using System.Security.Claims;
+
+@inherits LayoutComponentBase
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@inject StateService _stateService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="top-bar">
+    <div class="left-icons">
+        <a href="/">
+            <img src="/img/agency-logo.png" alt="App Logo" class="app-logo" />
+        </a>
+    </div>
+
+    <div class="right-icons">
+        <AuthorizeView>
+            <Authorized>
+                <_profilemenu UserId="@UserId" />
+            </Authorized>
+            <NotAuthorized>
+                <a href="/Account/Manage" class="e-icon-btn e-icons">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Person())" />
+                </a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+<div class="page" >
+    <NavMenu />
+    <main>
+        <article>
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+<FluentToastProvider />
+<FluentDialogProvider />
+<FluentTooltipProvider />
+<FluentMessageBarProvider />
+<FluentMenuProvider />
+
+@code {
+    private ClaimsPrincipal User { get; set; } = default!;
+    public string UserId { get; set; } = string.Empty;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        User = (await authenticationStateTask).User;
+        UserId = UserManager.GetUserId(User);
+    }
+
+}

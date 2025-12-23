@@ -1,0 +1,119 @@
+@using Quickfire.Blazor.Data
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Renewals.Dialogs
+@using Quickfire.Blazor.Domain.Users.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject TaskService TaskService
+@inject UserService UserService
+@inject StateService StateService
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<FluentDialog Hidden="false">
+    <FluentDialogHeader>
+        <FluentStack Horizontal="true" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="8">
+            <span class="sf-dialog-he">New Sub Task</span>
+        </FluentStack>
+    </FluentDialogHeader>
+    <FluentDialogBody>
+        <div style="margin-bottom: 20px;">
+            <FluentTextField Label="Task Name" @bind-Value="TaskName" Style="width:100%" />
+        </div>
+        <FluentStack>
+            <div>
+                <FluentDatePicker Label="Goal Date" @bind-Value="GoalDate" />
+            </div>
+            <div>
+                <FluentSelect TOption="ApplicationUser"
+                              Label="Assigned To"
+                              Items="AllUsers"
+                              @bind-SelectedOption="SelectedUser"
+                              OptionText="@(u => u?.UserName ?? u?.Email ?? u?.Id)"
+                              OptionValue="@(u => u?.Id)"
+                              Placeholder="-- Select User --" />
+            </div>
+        </FluentStack>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+            <FluentButton Appearance="Appearance.Neutral" OnClick="OnCancel">Cancel</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="CreateSubtask">Create</FluentButton>
+        </FluentStack>
+        </FluentDialogFooter>
+</FluentDialog>
+<style>
+    :root .fluent-dialog-header {
+        margin: 0;
+        padding: 0;
+    }
+
+    .sf-dialog-he {
+        font-size: 2em;
+        font-weight: 300;
+        font-family: "montserrat", sans-serif;
+        color: #a2a6b3;
+    }
+</style>
+@code {
+    [Parameter] public int ParentTaskId { get; set; }
+    [Parameter] public EventCallback OnSubtaskCreated { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string TaskName { get; set; } = string.Empty;
+    private DateTime? GoalDate { get; set; } = null;
+    private string AssignedToId { get; set; } = string.Empty;
+    private List<ApplicationUser> AllUsers { get; set; } = new();
+    private ApplicationUser? SelectedUser
+    {
+        get => AllUsers.FirstOrDefault(u => u.Id == AssignedToId);
+        set => AssignedToId = value?.Id ?? string.Empty;
+    }
+    private bool _disposed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AllUsers = await UserService.GetAllUsersAsync();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+    }
+
+    private async Task CreateSubtask()
+    {
+        if (string.IsNullOrWhiteSpace(TaskName))
+            return;
+
+        var parentTask = await TaskService.GetTrackTaskById(ParentTaskId);
+        if (parentTask == null)
+            return;
+
+        var subtasks = await TaskService.GetSubtasksForTask(ParentTaskId);
+        var orderNumber = subtasks.Count > 0 ? subtasks.Max(st => st.OrderNumber) + 1 : 1;
+
+        var newSubtask = new TrackTask
+        {
+            TaskName = TaskName,
+            GoalDate = GoalDate,
+            AssignedTo = null,
+            AssignedToId = !string.IsNullOrEmpty(AssignedToId) ? AssignedToId : null,
+            ParentTaskId = ParentTaskId,
+            RenewalId = parentTask.RenewalId,
+            OrderNumber = orderNumber,
+            DateCreated = DateTime.UtcNow,
+            DateModified = DateTime.UtcNow,
+            Status = "Not Started",
+            Completed = false,
+            Hidden = false,
+            Highlighted = false
+        };
+        //Use the TaskService to add the new subtask
+        await TaskService.AddTrackTaskAsync(newSubtask);
+
+        if (!_disposed && OnSubtaskCreated.HasDelegate)
+            await OnSubtaskCreated.InvokeAsync();
+    }
+} 

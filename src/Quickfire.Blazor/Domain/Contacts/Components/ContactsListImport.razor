@@ -1,0 +1,87 @@
+﻿@namespace Quickfire.Blazor.Domain.Shared.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components.Routing
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@inject NavigationManager NavigationManager
+
+<div>
+    @if (Contacts == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (!Contacts.Any())
+    {
+        <p>No contacts found for this parent.</p>
+    }
+    else
+    {
+        foreach (var item in Contacts)
+        {
+            <div class="m-contact">
+                <a href="/Contacts/@(item.ContactId)">
+                    <span class="e-btnhover e-icons e-pencil-icon" style="float:right"></span>
+                </a>
+                <span class="m-name">@item.FirstName @item.LastName</span><br />
+                @if (item.Title != null)
+                {
+                    <span class="m-title">@item.Title</span><br />
+                }
+                @{
+                    var primaryEmail = item.EmailAddresses?.FirstOrDefault(e => e.IsPrimary)?.Email ?? item.EmailAddresses?.FirstOrDefault()?.Email;
+                    var primaryPhone = item.PhoneNumbers?.FirstOrDefault(p => p.IsPrimary && p.Type == PhoneType.Office)?.Number;
+                    var mobilePhone = item.PhoneNumbers?.FirstOrDefault(p => p.IsPrimary && p.Type == PhoneType.Mobile)?.Number;
+                }
+                @if (primaryEmail != null)
+                {
+                    <span class="m-email">@primaryEmail</span><br />
+                }
+                @if (primaryPhone != null)
+                {
+                    <span class="m-phone">Phone: @StringHelper.FormatPhoneNumber(primaryPhone)</span><br />
+                }
+                @if (mobilePhone != null)
+                {
+                    <span class="m-phone">Mobile: @StringHelper.FormatPhoneNumber(mobilePhone)</span><br />
+                }
+
+                @if (item.Notes != null)
+                {
+                    <span class="m-phone">Notes: @item.Notes</span><br />
+                }
+                <br>
+                <a href="javascript:void(0);" @onclick="() => RemoveContact(item)">[Remove]</a> <!-- Pass the contact to be removed -->
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ICollection<Contact> Contacts { get; set; }  // List of contacts passed from the parent component
+
+    [Parameter]
+    public string ParentType { get; set; }
+
+    [Parameter]
+    public int ParentId { get; set; }
+
+    private void NewContact()
+    {
+        NavigationManager.NavigateTo($"/Contacts/{ParentType}/{ParentId}");
+    }
+
+    private void RemoveContact(Contact contact)
+    {
+        Contacts.Remove(contact);  // Remove the selected contact from the list
+        StateHasChanged();         // Refresh the UI after removal
+    }
+
+    private void Dispose()
+    {
+        Contacts = null;
+    }
+
+}

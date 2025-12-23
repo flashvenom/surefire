@@ -1,0 +1,712 @@
+@page "/Forms/CertificateRequests"
+@using System.Globalization
+@using System.Linq
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Spinner
+@using Microsoft.Extensions.Logging
+@inject FormService FormService
+@inject ILogger<CertificateRequestsList> Logger
+@inject NavigationManager NavigationManager
+@inherits AppComponentBase
+
+<PageTitle>Certificate Requests</PageTitle>
+
+<div class="page-toolbar certificate-toolbar">
+    <a class="tb-link tb-link-first @(IsListMode ? "tb-disabled" : string.Empty)" @onclick="ShowListView">
+        <FluentIcon Value="@(new Icons.Regular.Size24.List())" />
+        <span class="toolbar-text">List</span>
+    </a>
+    <a class="tb-link @(currentView == RequestViewMode.Edit ? "tb-disabled" : string.Empty)" @onclick="ShowEditView">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
+        <span class="toolbar-text">Edit</span>
+    </a>
+    <a class="tb-link @(currentView == RequestViewMode.View ? "tb-disabled" : string.Empty)" @onclick="ShowViewMode">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" />
+        <span class="toolbar-text">View</span>
+    </a>
+
+    <span class="sf-verthr2"></span>
+
+    <FluentSearch @bind-Value="searchText"
+                  Placeholder="Search by holder, client, request ID or email"
+                  Disabled="@(!IsListMode)"
+                  @oninput="OnSearchTextChanged" />
+
+    <FluentSelect TOption="string"
+                  Placeholder="Status"
+                  Class="toolbar-select"
+                  Disabled="@(!IsListMode)"
+                  @bind-Value="statusFilter"
+                  OnValueChanged="OnStatusFilterChanged">
+        <FluentOption Value="">All statuses</FluentOption>
+        <FluentOption Value="Pending">Pending</FluentOption>
+        <FluentOption Value="Review">Review</FluentOption>
+        <FluentOption Value="Approved">Approved</FluentOption>
+        <FluentOption Value="Completed">Completed</FluentOption>
+        <FluentOption Value="Rejected">Rejected</FluentOption>
+    </FluentSelect>
+
+    <FluentSelect TOption="string"
+                  Placeholder="Date range"
+                  Class="toolbar-select"
+                  Disabled="@(!IsListMode)"
+                  @bind-Value="dateRangeFilter"
+                  OnValueChanged="OnDateRangeChanged">
+        <FluentOption Value="all">All time</FluentOption>
+        <FluentOption Value="today">Today</FluentOption>
+        <FluentOption Value="week">Past 7 days</FluentOption>
+        <FluentOption Value="month">Past 30 days</FluentOption>
+        <FluentOption Value="quarter">Past 90 days</FluentOption>
+        <FluentOption Value="year">Past 12 months</FluentOption>
+    </FluentSelect>
+
+    <FluentButton Appearance="Appearance.Stealth"
+                  IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                  Disabled="@(!IsListMode || !IsFilterActive)"
+                  OnClick="ResetFilters">
+        Clear
+    </FluentButton>
+
+    <span class="sf-verthr2"></span>
+
+    <FluentButton Appearance="Appearance.Accent"
+                  IconStart="@(new Icons.Regular.Size20.DocumentAdd())"
+                  OnClick="NavigateToNewRequest">
+        New request
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Outline"
+                  IconStart="@(new Icons.Regular.Size16.ArrowClockwise())"
+                  Disabled="@(!IsListMode || isRefreshing)"
+                  OnClick="async () => await RefreshRequests()">
+        @(isRefreshing ? "Refreshing…" : "Refresh")
+    </FluentButton>
+</div>
+
+<div class="cert-requests-page">
+    <div class="surface-card card-animate card-hover-stable overview-card">
+        <div class="overview-header">
+            <div class="overview-title">
+                <h1>Certificate Requests</h1>
+                <p>Monitor inbound submissions, track follow-ups, and keep your approvals moving.</p>
+            </div>
+        </div>
+
+        <div class="overview-metrics">
+            <div class="metric">
+                <div class="metric-label">Open</div>
+                <div class="metric-value">@OpenCount</div>
+                <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Warning">Includes review items</FluentBadge>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Needs review</div>
+                <div class="metric-value">@ReviewCount</div>
+                <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Neutral">Awaiting attention</FluentBadge>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Completed</div>
+                <div class="metric-value">@CompletedCount</div>
+                <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Success">Last 12 months</FluentBadge>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Showing</div>
+                <div class="metric-value">@FilteredCount</div>
+                <FluentBadge Appearance="Appearance.Lightweight" Color="Color.Neutral">of @TotalRequests total</FluentBadge>
+            </div>
+        </div>
+
+        <div class="overview-meta">
+            <span>Last updated @LastUpdatedText</span>
+            @if (IsFilterActive)
+            {
+                <span class="filter-pill">Filters active</span>
+            }
+        </div>
+    </div>
+
+    <div class="cert-main-list">
+        @if (IsListMode)
+        {
+            if (isLoading)
+            {
+                <div class="surface-card card-animate card-hover-stable state-card">
+                    <FluentProgressRing Size="ProgressRingSize.Large" />
+                    <p>Loading certificate requests…</p>
+                </div>
+            }
+            else if (hasError)
+            {
+                <div class="surface-card card-animate card-hover-stable state-card error-card">
+                    <FluentIcon Value="@(new Icons.Filled.Size20.DismissCircle())" Color="Color.Error" />
+                    <h3>We couldn't load the requests</h3>
+                    <p>@errorMessage</p>
+                    <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="RetryLoading">Try again</FluentButton>
+                </div>
+            }
+            else if (filteredRequests == null || filteredRequests.Count == 0)
+            {
+                <div class="surface-card card-animate card-hover-stable state-card empty-card">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.QuestionCircle())" Color="Color.Neutral" />
+                    <h3>No certificate requests match your filters</h3>
+                    <p>Adjust your filters or create a new request to get started.</p>
+                    <FluentButton Appearance="Appearance.Lightweight" OnClick="ResetFilters">Reset filters</FluentButton>
+                </div>
+            }
+            else
+            {
+                <div class="surface-card card-animate card-hover-stable grid-card">
+                    <SfGrid @ref="Grid"
+                            DataSource="@filteredRequests"
+                            AllowPaging="true"
+                            AllowSorting="true"
+                            AllowFiltering="false"
+                            AllowResizing="true"
+                            Height="100%"
+                            Width="100%">
+                        <GridEvents TValue="CertificateRequest" RowSelected="RowSelected"></GridEvents>
+                        <GridPageSettings PageSize="15" PageSizes="true"></GridPageSettings>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(CertificateRequest.CertificateRequestId) HeaderText="#" Width="80" TextAlign="TextAlign.Center">
+                                <Template>
+                                    @{ var request = (context as CertificateRequest)!; }
+                                    <FluentBadge Appearance="Appearance.Accent" Color="Color.Neutral">@request.CertificateRequestId</FluentBadge>
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(CertificateRequest.HolderName) HeaderText="Certificate holder" Width="220">
+                                <Template>
+                                    @{ var request = (context as CertificateRequest)!; }
+                                    <div class="grid-primary">
+                                        <span class="grid-primary__title">@request.HolderName</span>
+                                        @if (!string.IsNullOrWhiteSpace(request.HolderEmail))
+                                        {
+                                            <span class="grid-primary__meta">@request.HolderEmail</span>
+                                        }
+                                    </div>
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(CertificateRequest.ClientCompany) HeaderText="Client" Width="220">
+                                <Template>
+                                    @{ var request = (context as CertificateRequest)!; }
+                                    <div class="grid-primary">
+                                        <span class="grid-primary__title">@request.ClientCompany</span>
+                                        @if (!string.IsNullOrWhiteSpace(request.ClientName))
+                                        {
+                                            <span class="grid-primary__meta">@request.ClientName</span>
+                                        }
+                                    </div>
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(CertificateRequest.RequestDate) HeaderText="Requested" Width="190">
+                                <Template>
+                                    @{ var request = (context as CertificateRequest)!; }
+                                    <div class="grid-date">
+                                        <span class="grid-date__primary">@FormatDateTime(request.RequestDate)</span>
+                                        <span class="grid-date__meta">@GetRelativeTime(request.RequestDate)</span>
+                                    </div>
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(CertificateRequest.Status) HeaderText="Status" Width="140">
+                                <Template>
+                                    @{ var request = (context as CertificateRequest)!; var (appearance, color) = ResolveStatusBadge(request.Status); }
+                                    <FluentBadge Appearance="@appearance" Color="@color">@FormatStatus(request.Status)</FluentBadge>
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field=@nameof(CertificateRequest.IsImported) HeaderText="Source" Width="140">
+                                <Template>
+                                    @{ var request = (context as CertificateRequest)!; var (label, color) = ResolveSourceBadge(request.IsImported); }
+                                    <FluentBadge Appearance="Appearance.Lightweight" Color="@color">@label</FluentBadge>
+                                </Template>
+                            </GridColumn>
+                            <GridColumn HeaderText="Actions" Width="160" TextAlign="TextAlign.Center">
+                                <Template>
+                                    @{ var request = (context as CertificateRequest)!; }
+                                    <div class="grid-actions">
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      Title="View detail"
+                                                      IconStart="@(new Icons.Regular.Size16.Eye())"
+                                                      OnClick="() => NavigateToDetail(request.CertificateRequestId)" />
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      Title="Print certificate"
+                                                      IconStart="@(new Icons.Regular.Size16.Print())" />
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      Title="Email certificate"
+                                                      IconStart="@(new Icons.Regular.Size16.Mail())" />
+                                        <FluentButton Appearance="Appearance.Stealth"
+                                                      Title="Delete request"
+                                                      IconStart="@(new Icons.Regular.Size16.Delete())"
+                                                      OnClick="() => OpenConfirmDeleteDialog(request)" />
+                                    </div>
+                                </Template>
+                            </GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            }
+        }
+        else if (currentView == RequestViewMode.Edit)
+        {
+            <div class="surface-card card-animate card-hover-stable state-card placeholder-card">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" Color="Color.Neutral" />
+                <h3>Edit mode placeholder</h3>
+                <p>Select a request in list mode to enable future editing tools.</p>
+            </div>
+        }
+        else
+        {
+            <div class="surface-card card-animate card-hover-stable state-card placeholder-card">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Eye())" Color="Color.Neutral" />
+                <h3>View mode placeholder</h3>
+                <p>A focused request view will appear here in a future release.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<SfDialog @bind-Visible="@isDeleteDialogVisible" IsModal="true" Width="420px" ShowCloseIcon="false">
+    <DialogTemplates>
+        <Header>
+            <div class="dialog-title">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Color="Color.Error" />
+                Confirm delete
+            </div>
+        </Header>
+        <Content>
+            <p>Are you sure you want to delete the certificate request for <strong>@(requestToDelete?.HolderName ?? "")</strong>?</p>
+            <p class="warning-text">This action cannot be undone.</p>
+        </Content>
+        <FooterTemplate>
+            <div class="dialog-footer">
+                <FluentButton Appearance="Appearance.Accent"
+                              Class="danger-button"
+                              IconStart="@(new Icons.Regular.Size16.Delete())"
+                              OnClick="async () => await DeleteRequest()">
+                    Delete
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Stealth" OnClick="CloseDeleteDialog">Cancel</FluentButton>
+            </div>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
+@code {
+    private enum RequestViewMode
+    {
+        List,
+        Edit,
+        View
+    }
+
+    private List<CertificateRequest> allRequests = new();
+    private List<CertificateRequest> filteredRequests = new();
+    private bool isLoading = true;
+    private bool isRefreshing;
+    private string searchText = string.Empty;
+    private string statusFilter = string.Empty;
+    private string dateRangeFilter = "all";
+    private bool isDeleteDialogVisible;
+    private CertificateRequest? requestToDelete;
+    private SfGrid<CertificateRequest>? Grid;
+    private System.Timers.Timer? debounceTimer;
+    private bool hasError;
+    private string errorMessage = string.Empty;
+    private DateTime? lastUpdatedUtc;
+    private RequestViewMode currentView = RequestViewMode.List;
+
+    private int TotalRequests => allRequests.Count;
+    private int FilteredCount => filteredRequests.Count;
+    private int OpenCount => allRequests.Count(r => IsOpenStatus(r.Status));
+    private int ReviewCount => allRequests.Count(r => IsReviewStatus(r.Status));
+    private int CompletedCount => allRequests.Count(r => IsCompletedStatus(r.Status));
+    private bool IsFilterActive => !string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(statusFilter) || !string.Equals(dateRangeFilter, "all", StringComparison.OrdinalIgnoreCase);
+    private bool IsListMode => currentView == RequestViewMode.List;
+
+    private string LastUpdatedText => lastUpdatedUtc.HasValue
+        ? lastUpdatedUtc.Value.ToLocalTime().ToString("MMM d, h:mm tt", CultureInfo.InvariantCulture)
+        : "Not synced yet";
+
+    private static readonly HashSet<string> OpenStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Pending",
+        "In Progress",
+        "Sent",
+        "New"
+    };
+
+    private static readonly HashSet<string> ReviewStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Review",
+        "Needs Review",
+        "Pending Review"
+    };
+
+    private static readonly HashSet<string> CompletedStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Completed",
+        "Approved",
+        "Fulfilled",
+        "Issued",
+        "Signed"
+    };
+
+    private static readonly HashSet<string> DeclinedStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Rejected",
+        "Declined",
+        "Cancelled",
+        "Canceled"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        debounceTimer = new System.Timers.Timer(300);
+        debounceTimer.Elapsed += async (_, _) =>
+        {
+            await InvokeAsync(() =>
+            {
+                FilterRequests();
+                StateHasChanged();
+            });
+        };
+
+        await LoadRequests();
+    }
+
+    private async Task LoadRequests(bool showFullLoader = true)
+    {
+        if (showFullLoader)
+        {
+            isLoading = true;
+            StateHasChanged();
+        }
+
+        hasError = false;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var requests = await FormService.GetAllCertificateRequestsAsync();
+            allRequests = requests ?? new List<CertificateRequest>();
+            lastUpdatedUtc = DateTime.UtcNow;
+            FilterRequests();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading certificate requests");
+            hasError = true;
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            if (showFullLoader)
+            {
+                isLoading = false;
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshRequests()
+    {
+        if (isRefreshing)
+        {
+            return;
+        }
+
+        isRefreshing = true;
+        StateHasChanged();
+
+        try
+        {
+            var shouldShowLoader = !filteredRequests.Any();
+            await LoadRequests(showFullLoader: shouldShowLoader);
+        }
+        finally
+        {
+            isRefreshing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToNewRequest()
+    {
+        NavigationManager.NavigateTo("/Forms/CertificateRequest/New");
+    }
+
+    private void OnSearchTextChanged(ChangeEventArgs args)
+    {
+        searchText = args.Value?.ToString() ?? string.Empty;
+
+        if (debounceTimer is null)
+        {
+            FilterRequests();
+            return;
+        }
+
+        debounceTimer.Stop();
+        debounceTimer.Start();
+    }
+
+    private Task OnStatusFilterChanged(string? value)
+    {
+        statusFilter = value ?? string.Empty;
+        FilterRequests();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task OnDateRangeChanged(string? value)
+    {
+        dateRangeFilter = string.IsNullOrWhiteSpace(value) ? "all" : value;
+        FilterRequests();
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void ResetFilters()
+    {
+        debounceTimer?.Stop();
+        searchText = string.Empty;
+        statusFilter = string.Empty;
+        dateRangeFilter = "all";
+        FilterRequests();
+        StateHasChanged();
+    }
+
+    private void ShowListView()
+    {
+        currentView = RequestViewMode.List;
+        StateHasChanged();
+    }
+
+    private void ShowEditView()
+    {
+        currentView = RequestViewMode.Edit;
+        debounceTimer?.Stop();
+        StateHasChanged();
+    }
+
+    private void ShowViewMode()
+    {
+        currentView = RequestViewMode.View;
+        debounceTimer?.Stop();
+        StateHasChanged();
+    }
+
+    private void FilterRequests()
+    {
+        IEnumerable<CertificateRequest> query = allRequests ?? Enumerable.Empty<CertificateRequest>();
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            var term = searchText.Trim();
+            query = query.Where(r =>
+                ContainsTerm(r.HolderName, term) ||
+                ContainsTerm(r.ClientCompany, term) ||
+                ContainsTerm(r.HolderEmail, term) ||
+                ContainsTerm(r.ClientEmail, term) ||
+                r.CertificateRequestId.ToString(CultureInfo.InvariantCulture).Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            query = query.Where(r => string.Equals(r.Status, statusFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(dateRangeFilter) && !string.Equals(dateRangeFilter, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            var today = DateTime.Today;
+            query = dateRangeFilter switch
+            {
+                "today" => query.Where(r => r.RequestDate.Date == today),
+                "week" => query.Where(r => r.RequestDate >= today.AddDays(-7)),
+                "month" => query.Where(r => r.RequestDate >= today.AddMonths(-1)),
+                "quarter" => query.Where(r => r.RequestDate >= today.AddMonths(-3)),
+                "year" => query.Where(r => r.RequestDate >= today.AddYears(-1)),
+                _ => query
+            };
+        }
+
+        filteredRequests = query
+            .OrderByDescending(r => r.RequestDate)
+            .ThenByDescending(r => r.CertificateRequestId)
+            .ToList();
+    }
+
+    private static bool ContainsTerm(string? source, string term) =>
+        !string.IsNullOrWhiteSpace(source) &&
+        source.Contains(term, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsOpenStatus(string? status) =>
+        !string.IsNullOrWhiteSpace(status) && OpenStatuses.Contains(status);
+
+    private static bool IsReviewStatus(string? status) =>
+        !string.IsNullOrWhiteSpace(status) && ReviewStatuses.Contains(status);
+
+    private static bool IsCompletedStatus(string? status) =>
+        !string.IsNullOrWhiteSpace(status) && CompletedStatuses.Contains(status);
+
+    private static (Appearance appearance, string color) ResolveStatusBadge(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return (Appearance.Lightweight, "Color.Neutral");
+        }
+
+        if (CompletedStatuses.Contains(status))
+        {
+            return (Appearance.Accent, "Color.Success");
+        }
+
+        if (DeclinedStatuses.Contains(status))
+        {
+            return (Appearance.Accent, "Color.Error");
+        }
+
+        if (ReviewStatuses.Contains(status))
+        {
+            return (Appearance.Accent, "Color.Warning");
+        }
+
+        if (OpenStatuses.Contains(status))
+        {
+            return (Appearance.Accent, "Color.Warning");
+        }
+
+        return (Appearance.Lightweight, "Color.Neutral");
+    }
+
+    private static (string label, string color) ResolveSourceBadge(bool isImported) =>
+        isImported
+            ? ("External portal", "Color.Warning")
+            : ("Internal", "Color.Neutral");
+
+    private static string FormatStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return "Pending";
+        }
+
+        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(status.ToLowerInvariant());
+    }
+
+    private static string FormatDateTime(DateTime value)
+    {
+        var normalized = value.Kind switch
+        {
+            DateTimeKind.Utc => value.ToLocalTime(),
+            DateTimeKind.Local => value,
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToLocalTime()
+        };
+
+        return normalized.ToString("MMM d, yyyy h:mm tt", CultureInfo.InvariantCulture);
+    }
+
+    private static string GetRelativeTime(DateTime value)
+    {
+        var normalized = value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+
+        var delta = DateTime.UtcNow - normalized;
+
+        if (delta.TotalSeconds < -60)
+        {
+            return "Upcoming";
+        }
+
+        if (delta.TotalSeconds < 60)
+        {
+            return "Just now";
+        }
+
+        if (delta.TotalMinutes < 60)
+        {
+            var minutes = Math.Max(1, (int)Math.Floor(delta.TotalMinutes));
+            return $"{minutes} min ago";
+        }
+
+        if (delta.TotalHours < 24)
+        {
+            var hours = Math.Max(1, (int)Math.Floor(delta.TotalHours));
+            return $"{hours} hr ago";
+        }
+
+        if (delta.TotalDays < 7)
+        {
+            var days = Math.Max(1, (int)Math.Floor(delta.TotalDays));
+            return $"{days} day{(days > 1 ? "s" : string.Empty)} ago";
+        }
+
+        if (delta.TotalDays < 31)
+        {
+            var weeks = Math.Max(1, (int)Math.Floor(delta.TotalDays / 7));
+            return $"{weeks} wk{(weeks > 1 ? "s" : string.Empty)} ago";
+        }
+
+        return normalized.ToLocalTime().ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
+    }
+
+    private void NavigateToDetail(int requestId)
+    {
+        NavigationManager.NavigateTo($"/Forms/CertificateRequest/{requestId}");
+    }
+
+    private void RowSelected(RowSelectEventArgs<CertificateRequest> args)
+    {
+        NavigateToDetail(args.Data.CertificateRequestId);
+    }
+
+    private void OpenConfirmDeleteDialog(CertificateRequest request)
+    {
+        requestToDelete = request;
+        isDeleteDialogVisible = true;
+    }
+
+    private void CloseDeleteDialog()
+    {
+        isDeleteDialogVisible = false;
+        requestToDelete = null;
+    }
+
+    private async Task DeleteRequest()
+    {
+        if (requestToDelete is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var success = await FormService.DeleteCertificateRequestAsync(requestToDelete.CertificateRequestId);
+            if (success)
+            {
+                allRequests.Remove(requestToDelete);
+                FilterRequests();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"Error deleting certificate request {requestToDelete.CertificateRequestId}");
+        }
+        finally
+        {
+            CloseDeleteDialog();
+            StateHasChanged();
+        }
+    }
+
+    private void RetryLoading()
+    {
+        _ = LoadRequests();
+    }
+}

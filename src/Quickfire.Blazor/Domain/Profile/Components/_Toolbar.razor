@@ -1,0 +1,63 @@
+﻿@namespace Quickfire.Blazor.Domain.Profile.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject IJSRuntime JSRuntime
+@inject StateService StateService
+
+<div class="qf-toolbar qf-toolbar-shinybg">
+    <a class="qf-toolbar__inverse-link @(currentView == ViewMode.Profile ? "qf-toolbar__inverse-disabled" : "")" href="/Profile">
+        <FluentIcon Value="@(new Icons.Regular.Size20.PersonStarburst())" />
+        <span class="qf-toolbar__text">Profile</span>
+    </a>
+    <span class="qf-toolbar__divider"></span>
+    <a class="qf-toolbar__inverse-link @(currentView == ViewMode.Users ? "qf-toolbar__inverse-disabled" : "")" href="/Users">
+        <FluentIcon Value="@(new Icons.Regular.Size20.PeopleCommunity())" />
+        <span class="qf-toolbar__text">Users</span>
+    </a>
+    <span class="qf-toolbar__divider"></span>
+    <a class="qf-toolbar__inverse-link @(currentView == ViewMode.Templates ? "qf-toolbar__inverse-disabled" : "")" href="/Templates">
+        <FluentIcon Value="@(new Icons.Regular.Size20.MailTemplate())" />
+        <span class="qf-toolbar__text">Templates</span>
+    </a>
+    <span class="qf-toolbar__divider"></span>
+    <a class="qf-toolbar__inverse-link @(currentView == ViewMode.Tasks ? "qf-toolbar__inverse-disabled" : "")" href="/Tasks">
+        <FluentIcon Value="@(new Icons.Regular.Size20.TaskListSquareLtr())" />
+        <span class="qf-toolbar__text">Tasks</span>
+    </a>
+    <span class="qf-toolbar__divider"></span>
+    <a class="qf-toolbar__inverse-link @(currentView == ViewMode.System ? "qf-toolbar__inverse-disabled" : "") qf-toolbar-shinybg" href="/System">
+        <FluentIcon Value="@(new Icons.Regular.Size20.BrainCircuit())" />
+        <span class="qf-toolbar__text">System</span>
+    </a>
+    <span class="qf-toolbar__divider"></span>
+    <a class="qf-toolbar__inverse-link @(currentView == ViewMode.Logs ? "qf-toolbar__inverse-disabled" : "") qf-toolbar-shinybg" href="/Logs">
+        <FluentIcon Value="@(new Icons.Regular.Size20.BookDatabase())" />
+        <span class="qf-toolbar__text">Logs</span>
+    </a>
+</div>
+<style>
+    .toolbar-link {
+        position: relative;
+        top: 2px;
+    }
+
+    .toolbar-text {
+        position: relative;
+        top: -5px;
+        left: -1px;
+    }
+</style>
+@code {
+    [Parameter]
+    public ViewMode currentView { get; set; } = ViewMode.Profile;
+
+    public enum ViewMode
+    {
+        Profile,
+        Templates,
+        Tasks,
+        System,
+        Users,
+        Agency,
+        Logs
+    }
+}

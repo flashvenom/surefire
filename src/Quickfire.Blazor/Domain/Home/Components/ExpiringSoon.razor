@@ -1,0 +1,115 @@
+﻿@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Logs
+@using Syncfusion.Blazor.Notifications
+@inject Quickfire.Blazor.Domain.Clients.Services.ClientStateService ClientStateService
+@inject HomeService HomeService
+@inject ILoggingService _log
+@implements IDisposable
+
+<div class="homemodule-small-header">Upcoming Expirations</div>
+<div class="homemodule-small-container">
+    <table id="upcomingrenewals-table" cellspacing="0">
+        <tbody>
+            @if (upcomingRenewals == null || isLoading)
+            {
+                for (var i = 0; i < 7; i++)
+                {
+                    <tr>
+                        <td><SfSkeleton Shape=SkeletonType.Rectangle Width="100%" Height="15px" CssClass="e-customize" Visible="true"></SfSkeleton></td>
+                    </tr>
+                }
+            }
+            else if (!upcomingRenewals.Any())
+            {
+                <tr>
+                    <td><div class="nothingfound">Nothing found here.</div></td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var policy in upcomingRenewals)
+                {
+                    <tr class="trow2">
+                        <td class="intd"><span class="prodmeme">@StringHelper.GetSafeSubstring(policy.Product?.LineCode, 0, 3)</span><span class="hexp2">@policy.ExpirationDate.ToString("MM/dd")</span></td>
+                        <td class="ttname2"><a class="rentask-link ellipsis" @onclick="() => HandleRenewalClick(policy.ClientId)">@policy.Client?.Name</a></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-sm mt-2">
+        <small>@errorMessage</small>
+        <button type="button" class="btn btn-sm btn-outline-danger ms-2" @onclick="LoadData">Retry</button>
+    </div>
+}
+
+@code {
+    private List<Policy> upcomingRenewals = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    private Timer? refreshTimer;
+    private const int RefreshIntervalMinutes = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        
+        // Set up auto-refresh timer (every 5 minutes)
+        refreshTimer = new Timer(async _ => await InvokeAsync(LoadData), null, 
+            TimeSpan.FromMinutes(RefreshIntervalMinutes), 
+            TimeSpan.FromMinutes(RefreshIntervalMinutes));
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            StateHasChanged();
+
+            // Get upcoming renewals from HomeService
+            var allUpcomingRenewals = await HomeService.GetUpcomingRenewalsAsync();
+            
+            // Filter to next 14 days (matching Home.razor logic)
+            var today = DateTime.Today;
+            var in14Days = today.AddDays(14);
+            upcomingRenewals = allUpcomingRenewals
+                .Where(p => p.ExpirationDate >= today && p.ExpirationDate <= in14Days)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            await _log.LogAsync(LogLevel.Warning, $"Error loading upcoming renewals: {ex.Message}", "ExpiringSoon");
+            errorMessage = "Failed to load data.";
+            upcomingRenewals = new();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleRenewalClick(int clientId)
+    {
+        // Set the client state service to remember which client was selected
+        ClientStateService.SelectedClientId = clientId;
+        ClientStateService.ActiveTab = "tab-1";
+        await ClientStateService.SaveStateAsync();
+        
+        Navigation.NavigateTo($"/Clients/{clientId}");
+    }
+
+    public void Dispose()
+    {
+        refreshTimer?.Dispose();
+    }
+}

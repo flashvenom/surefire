@@ -1,0 +1,363 @@
+﻿@namespace Quickfire.Blazor.Components.Layout
+@inherits LayoutComponentBase
+@using Quickfire.Blazor.Data
+@using Quickfire.Blazor.Domain.Logs
+@using Quickfire.Blazor.Domain.Ember
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Components.Layout
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.Extensions.Configuration;
+@using Microsoft.Extensions.Logging;
+@using System.Security.Claims;
+@using System.Collections.Generic;
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@inject SharedService SharedService
+@inject StateService _stateService
+@inject EmberService EmberService
+@inject HomeService HomeService
+@inject AppJsInterop JsInterop
+@inject ILoggingService _log
+@inject IToastService ToastService
+@inject ILogger<MainLayout> Logger
+@inject IConfiguration Configuration
+
+<CascadingValue Value="_stateService">
+    <div id="sf-top-bar" class="top-bar">
+        <div class="left-icons">
+            <div class="surefire-main-logo" title="Quickfire">
+                <img src="/img/home/spinq/qspin00000.png" alt="App Logo" class="app-logo" />
+            </div>
+        </div>
+
+        <_searchbar />
+
+        <div class="right-icons">
+            <FluentStack HorizontalAlignment="@HorizontalAlignment.End" VerticalAlignment="@VerticalAlignment.Center" Style="height: 48px; position:relative; left:-20px;" Class="right-icons-stack">
+
+                @* SETTINGS *@
+                <a href="/Profile" class="profile-gear" @onclick="OnProfileGearClick">
+                    <FluentIcon Value="@(new Icons.Regular.Size28.Settings())" Color="Color.Custom" CustomColor="#fff" />
+                </a>
+
+                @* PROFILE *@
+                @if (AppUser != null)
+                {
+                    <FluentProfileMenu Image="@StaffPhotoHelper.BuildUrl(AppUser.PictureUrl)"
+                                       Status="@PresenceStatus.Available"
+                                       HeaderLabel="@companyName"
+                                       FullName="@(AppUser.FirstName + " " + AppUser.LastName)"
+                                       Initials="@(AppUser.FirstName[0].ToString().ToUpper() + " " + AppUser.LastName[0].ToString().ToUpper())"
+                                       EMail="@AppUser.Email"
+                                       PopoverStyle="min-width: 430px; padding-right:25px; position:relative; top:10px;"
+                                       OnFooterLinkClick="ManageAccount"
+                                       OnHeaderButtonClick="LogMeOut" />
+                }
+            </FluentStack>
+            <div class="swoopers-container-settings">
+                <img src="/img/home/right-settings.png" />
+            </div>
+        </div>
+    </div>
+
+    <div class="page">
+        <NavMenu />
+        <main>
+            <article>
+                @if (_stateService.IsInitialized && !forceLoader)
+                {
+                    @Body
+                }
+                else
+                {
+                    <div class="emptyLoader">
+                        <svg id="Layer_1" data-name="Layer 1" class="rotate-scale-down-hor" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 299.65">
+                            <image href="/img/q-logo.svg" xlink:href="/img/q-logo.svg" width="100%" height="100%" />
+                        </svg>
+                    </div>
+                }
+
+            </article>
+        </main>
+    </div>
+</CascadingValue>
+<div id="blazor-error-ui">An unhandled error has occurred.<a href="" class="reload">Reload</a><a class="dismiss">🗙</a></div>
+<_statusbar />
+<FluentToastProvider MaxToastCount="10" RemoveToastsOnNavigation="false" Position="ToastPosition.BottomRight" />
+<FluentDialogProvider />
+<FluentTooltipProvider />
+<FluentMessageBarProvider />
+<FluentMenuProvider />
+<FluentKeyCodeProvider />
+<script src="/js/enhanced-ai-chat.js"></script>
+<style>
+    :root .fluent-messagebar {
+        width: calc(100% - 39px);
+        margin-left: 5px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+</style>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+
+    public string UserId { get; set; } = string.Empty;
+    public int CallerClientId { get; set; }
+    public int CallerContactId { get; set; }
+    private bool isDisposed = false;
+    private bool forceLoader = false;
+    private bool isProfilePage = false;
+    private bool componentInitialized = false;
+    private string companyName = "Quickfire";
+    private HubConnection? hubConnection;
+    private ClaimsPrincipal User { get; set; } = default!;
+    private ApplicationUser? AppUser { get; set; }
+    private bool isCommsPage = false;
+
+    //Primary Methods
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        NavigationManager.LocationChanged += OnLocationChanged;
+        UpdatePageContextFlags();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        forceLoader = false;
+
+        try
+        {
+            if (!_stateService.IsInitialized)
+            {
+                await _stateService.InitializeStateAsync(AuthStateProvider.GetAuthenticationStateAsync());
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "StateService initialization failed");
+        }
+
+        await InitializeUserProfileAsync();
+        _ = StartSignalRAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsInterop.InitializeTopBarAnimationsAsync();
+        }
+    }
+
+
+    private async Task StartSignalRAsync()
+    {
+        try
+        {
+            hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub")).Build();
+            hubConnection.On<CallInfo>("ReceiveCallNotification", callInfo =>
+            {
+                _ = InvokeAsync(() => ShowIncomingCallToast(callInfo));
+            });
+            await hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to start SignalR connection");
+        }
+    }
+    private async Task InitializeUserProfileAsync()
+    {
+        companyName = Configuration["Agency:Company"] ?? "Quickfire";
+
+        try
+        {
+            var user = await SharedService.GetCurrentUserAsync();
+            if (user == null)
+            {
+                return;
+            }
+
+            AppUser = user;
+            UserId = AppUser.Id;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load current user for profile menu");
+        }
+    }
+    private async Task OnProfileGearClick()
+    {
+        await TriggerProfileFirebarAsync();
+    }
+    private async Task TriggerProfileFirebarAsync()
+    {
+        try
+        {
+            await JsInterop.PlayTopBarVideoAsync("Profile");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error playing top bar animation for profile menu");
+        }
+    }
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        UpdatePageContextFlags();
+    }
+
+    public async Task StartMainLogoLoadingAnimation()
+    {
+        await JsInterop.StartLogoLoadingAsync();
+    }
+    public async Task StopMainLogoLoadingAnimation()
+    {
+        await JsInterop.StopLogoLoadingAsync();
+    }
+    public async Task ShowIncomingCallToast(CallInfo callInfo)
+    {
+        try
+        {
+            if (callInfo == null)
+            {
+                Logger.LogWarning("Received null call info for incoming call toast.");
+                return;
+            }
+
+            // Extract caller ID and name from callInfo
+            string callerId = callInfo.CallerId;
+            var callerName = callInfo.CallerName;
+
+            // Skip internal extension calls (numbers with fewer than 7 digits)
+            if (!string.IsNullOrEmpty(callerId) && callerId.Count(c => char.IsDigit(c)) < 7)
+            {
+                return;
+            }
+
+            // Search for matches in the database and initialize notification parameters
+            var matches = await HomeService.GetCallerInfo(callInfo);
+            string title = "Incoming Call";
+            string message = $"From: {callerName}";
+            string clientId = null; // Default to null if no client match
+
+            if (matches == null)
+            {
+                ToastService.ShowInfo($"Incoming Call from {callerName} ({callerId}) - No matches found in database.", 20000);
+            }
+            else
+            {
+                // Common variable for matched client
+                var matchedClient = matches.MatchedClient;
+
+                // If we have a matched contact, use their client info
+                if (matches.MatchedContact != null)
+                {
+                    CallerContactId = matches.MatchedContact.ContactId;
+                    CallerClientId = matches.MatchedContact.Client.ClientId;
+                    matchedClient = matches.MatchedContact.Client;
+
+                    // Set contact-specific details
+                    title = $"Incoming Call from {matchedClient.Name}";
+                    message = $"CONTACT: {matches.MatchedContact.FirstName} {matches.MatchedContact.LastName}";
+                    clientId = CallerClientId.ToString();
+
+                    // Display success toast with contact information
+                    ToastService.ShowCommunicationToast(new ToastParameters<CommunicationToastContent>()
+                    {
+                        Intent = ToastIntent.Success,
+                        Title = title,
+                        Timeout = 30000,
+                        PrimaryAction = "Open Client Screen",
+                        OnPrimaryAction = EventCallback.Factory.Create<ToastResult>(this, ClickedPrimary),
+                        Content = new CommunicationToastContent()
+                        {
+                            Subtitle = message,
+                            Details = $"{callerName} ({callerId})",
+                        },
+                    });
+                }
+                // If we just have a client match without contact
+                else if (matchedClient != null)
+                {
+                    CallerClientId = matchedClient.ClientId;
+
+                    // Set client-specific details
+                    title = $"Incoming Call from {matchedClient.Name}";
+                    message = $"Call ID: {callerName}";
+                    clientId = CallerClientId.ToString();
+
+                    // Display success toast with client information
+                    ToastService.ShowCommunicationToast(new ToastParameters<CommunicationToastContent>()
+                    {
+                        Intent = ToastIntent.Success,
+                        Title = title,
+                        Timeout = 30000,
+                        PrimaryAction = "Open Client Screen",
+                        OnPrimaryAction = EventCallback.Factory.Create<ToastResult>(this, ClickedPrimary),
+                        Content = new CommunicationToastContent()
+                        {
+                            Subtitle = message,
+                            Details = $"Call Number: {callerId}",
+                        },
+                    });
+                }
+            }
+            var notificationParams = new List<string> { title, message, clientId };
+            await EmberService.RunEmberFunction("ShowTrayNotification", notificationParams);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.StackTrace);
+        }
+    }
+    public async Task ManageAccount()
+    {
+        await TriggerProfileFirebarAsync();
+        NavigationManager.NavigateTo("/Profile");
+    }
+
+    private void ClickedPrimary(ToastResult result)
+    {
+        Navigation.NavigateTo($"/Clients/{CallerClientId}");
+    }
+    private void UpdatePageContextFlags()
+    {
+        var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLowerInvariant();
+        isProfilePage = path.StartsWith("profile") || path.Contains("/profile") || path.StartsWith("account/manage");
+        isCommsPage = path.StartsWith("comms") || path.Contains("/comms");
+
+        Logger.LogInformation("[Swooper] UpdatePageContextFlags - path: {Path}, isProfilePage: {IsProfilePage}, isCommsPage: {IsCommsPage}", path, isProfilePage, isCommsPage);
+    }
+    public void LogMeOut()
+    {
+        NavigationManager.NavigateTo("/Account/Logout", true);
+    }
+
+    //Disposal
+    public async ValueTask DisposeAsync()
+    {
+        // Set disposed flag first to prevent any new operations
+        isDisposed = true;
+
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

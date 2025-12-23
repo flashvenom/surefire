@@ -1,0 +1,156 @@
+.utilities-container {
+    display: flex;
+    height: 100%;
+    padding-left: 5px;
+}
+
+.utilities-sidebar {
+    width: 280px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background-color:#f1f1f1;
+    box-shadow: inset -5px 0px 5px #00000012;
+    border-top-left-radius: 10px;
+}
+.utilities-search {
+    width: 80%;
+    opacity: .7;
+}
+.utilities-search:hover {
+    opacity: 1;
+}
+.utilities-sidebar-header {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e1e1e1;
+    padding-bottom: 1rem;
+}
+
+.utilities-list {
+    margin-top: 1rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.utility-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin: 0.25rem 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.utility-item:hover {
+    background-color: #f0f0f0;
+}
+
+.utility-item.selected {
+    background-color: #e6f3ff;
+    color: #0078d4;
+}
+
+.utility-item fluent-icon {
+    margin-right: 0.75rem;
+}
+
+.utility-item span {
+    padding-left: 4px;
+}
+
+.utilities-main {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    min-height: calc(100vh - 340px);
+    border-top: 1px solid #dcdcdc;
+}
+
+.utilities-home {
+   /* max-width: 1200px;*/
+    margin: 0 auto;
+}
+
+.utilities-home h2 {
+    margin-bottom: 2rem;
+    color: #323130;
+}
+
+.recent-tools, .frequent-tools {
+    margin-bottom: 2rem;
+}
+
+.recent-tools h3, .frequent-tools h3 {
+    margin-bottom: 1rem;
+    color: #605e5c;
+    font-size: 1.1rem;
+}
+
+.tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.tool-card {
+    background-color: white;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tool-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tool-card fluent-icon {
+    margin-bottom: 0.75rem;
+    color: #0078d4;
+}
+
+.tool-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.tool-header h2 {
+    margin: 0;
+    color: #323130;
+}
+
+.tool-content {
+    background-color: white;
+    border-radius: 4px;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+} 
+
+/* Make only the featured homepage utility button square (height = width) */
+.featured-tools .tool-card {
+    height:100px;
+    justify-content: center; /* vertical center icon + label */
+}
+
+/* Make featured icon larger only in featured button */
+.featured-tools .tool-card fluent-icon,
+.featured-tools .tool-card fluent-icon svg {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+.featured-tools .tool-card span {
+    text-align: center;
+}

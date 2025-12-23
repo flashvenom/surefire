@@ -1,0 +1,545 @@
+@namespace Quickfire.Blazor.Components.Policies.Coverages
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Attachments.Services
+@inject PolicyService PolicyService
+@inject AttachmentService AttachmentService
+@inject AppJsInterop JsInterop
+
+@if (GeneralLiabilityCoverage is not null)
+{
+    <div class="generalliability-container">
+        <!-- Policy Limits Section -->
+        <FluentCard Class="coverage-section">
+            <div class="section-title">
+                <FluentIcon Value="@(new Icons.Regular.Size20.MoneyCalculator())" Color="Color.Custom" CustomColor="#000" />
+                Policy Limits
+            </div>
+            
+            <div class="field-group">
+                <div class="field-row">
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Each Occurrence</FluentLabel>
+                        <FluentNumberField @bind-Value="GeneralLiabilityCoverage.EachOccurrence"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Damage to Premises</FluentLabel>
+                        <FluentNumberField @bind-Value="GeneralLiabilityCoverage.DamageToPremises"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Medical Expenses</FluentLabel>
+                        <FluentNumberField @bind-Value="GeneralLiabilityCoverage.MedicalExpenses"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Personal Injury</FluentLabel>
+                        <FluentNumberField @bind-Value="GeneralLiabilityCoverage.PersonalInjury"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">General Aggregate</FluentLabel>
+                        <FluentNumberField @bind-Value="GeneralLiabilityCoverage.GeneralAggregate"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Products Aggregate</FluentLabel>
+                        <FluentNumberField @bind-Value="GeneralLiabilityCoverage.ProductsAggregate"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Custom Coverage Name</FluentLabel>
+                        <FluentTextField @bind-Value="GeneralLiabilityCoverage.AdditionalCoverageName"
+                                         Placeholder="Enter coverage name"
+                                         @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                    
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Custom Coverage Limit</FluentLabel>
+                        <FluentNumberField @bind-Value="GeneralLiabilityCoverage.AdditionalCoverageLimit"
+                                           Format="C0"
+                                           Step="1000"
+                                           Min="0"
+                                           Placeholder="Enter limit"
+                                           @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                </div>
+            </div>
+        </FluentCard>
+
+        <FluentStack>
+            <!-- Coverage Type Section -->
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" Color="Color.Custom" CustomColor="#000" />
+                    Coverage Options
+                </div>
+        
+                <div class="field-group">
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(GeneralLiabilityCoverage.ClaimsMade ?? false)"
+                                      ValueChanged="@(async (bool value) => { GeneralLiabilityCoverage.ClaimsMade = value; await UpdateCoverageAsync(); })">
+                            Claims Made
+                        </FluentSwitch>
+                    </div>
+            
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(GeneralLiabilityCoverage.Occurence ?? false)"
+                                      ValueChanged="@(async (bool value) => { GeneralLiabilityCoverage.Occurence = value; await UpdateCoverageAsync(); })">
+                            Per Occurrence
+                        </FluentSwitch>
+                    </div>
+            
+                    <div class="switch-container">
+                        <FluentSwitch Value="@(GeneralLiabilityCoverage.AggregateAppliesPer.HasValue)"
+                                      ValueChanged="@(async (bool value) => { GeneralLiabilityCoverage.AggregateAppliesPer = value ? 0 : null; await UpdateCoverageAsync(); })">
+                            Aggregate Applies Per (Specify Amount)
+                        </FluentSwitch>
+                    </div>
+                
+                    @if (GeneralLiabilityCoverage.AggregateAppliesPer.HasValue)
+                    {
+                        <div class="field-item">
+                            <FluentLabel Class="field-label">Aggregate Amount</FluentLabel>
+                            <FluentNumberField @bind-Value="GeneralLiabilityCoverage.AggregateAppliesPer"
+                                               Format="C0"
+                                               Step="1000"
+                                               Min="0"
+                                               Placeholder="Enter amount"
+                                               @bind-Value:after="UpdateCoverageAsync" />
+                        </div>
+                    }
+                </div>
+            </FluentCard>
+
+            <!-- Additional Insured Section -->
+            <FluentCard Class="coverage-section">
+                <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentAdd())" Color="Color.Custom" CustomColor="#000" />
+                    Blanket Additional Insured
+                </div>
+        
+                <div class="field-group">
+                    <div class="field-item">
+                        <FluentLabel Class="field-label">Form Number</FluentLabel>
+                        <FluentTextField @bind-Value="GeneralLiabilityCoverage.AdditionalInsuredFormNumber"
+                                         Placeholder="Enter form number"
+                                         @bind-Value:after="UpdateCoverageAsync" />
+                    </div>
+                
+                    <div class="attachment-section @(GeneralLiabilityCoverage.AdditionalInsuredAttachment != null ? "has-file" : "")">
+                        @if (GeneralLiabilityCoverage.AdditionalInsuredAttachment != null)
+                        {
+                            <div class="file-display">
+                                <div class="file-icon">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.DocumentPdf())" />
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">@GeneralLiabilityCoverage.AdditionalInsuredAttachment.OriginalFileName</div>
+                                    <div class="file-size">Uploaded @GeneralLiabilityCoverage.AdditionalInsuredAttachment.DateCreated.ToString("MMM dd, yyyy")</div>
+                                </div>
+                                <FluentButton Appearance="Appearance.Outline"
+                                              OnClick="@(async () => await ViewFile(GeneralLiabilityCoverage.AdditionalInsuredAttachment))"
+                                              Class="file-action-btn">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" Slot="start" />
+                                    View
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Outline"
+                                              OnClick="@(() => RemoveAdditionalInsuredFileAsync())"
+                                              Class="file-action-btn">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                                    Remove
+                                </FluentButton>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="upload-area">
+                                <FluentIcon Value="@(new Icons.Regular.Size48.CloudArrowUp())" Class="upload-icon" />
+                                <div class="upload-text">Drop files here or click to browse</div>
+                                <div class="upload-hint">Supports PDF, TXT files</div>
+                                <InputFile OnChange="OnAdditionalInsuredFileSelected" accept=".pdf,.txt" style="margin-top: 16px;" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            </FluentCard>
+
+            <!-- Waiver of Subrogation Section -->
+            <FluentCard Class="coverage-section">
+            <div class="section-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.DocumentAdd())" Color="Color.Custom" CustomColor="#000" />
+                Waiver of Subrogation
+            </div>
+        
+            <div class="field-group">
+                <div class="switch-container">
+                    <FluentSwitch Value="@(GeneralLiabilityCoverage.WaiverOfSubAttachment != null)"
+                                  ValueChanged="@(async (bool value) => { if (!value) await RemoveWaiverFileAsync(); })">
+                        Waiver of Subrogation Required
+                    </FluentSwitch>
+                </div>
+            
+                @if (GeneralLiabilityCoverage.WaiverOfSubAttachment != null || true)
+                {
+                    <div class="attachment-section @(GeneralLiabilityCoverage.WaiverOfSubAttachment != null ? "has-file" : "")">
+                        @if (GeneralLiabilityCoverage.WaiverOfSubAttachment != null)
+                        {
+                            <div class="file-display">
+                                <div class="file-icon">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.DocumentPdf())" />
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">@GeneralLiabilityCoverage.WaiverOfSubAttachment.OriginalFileName</div>
+                                    <div class="file-size">Uploaded @GeneralLiabilityCoverage.WaiverOfSubAttachment.DateCreated.ToString("MMM dd, yyyy")</div>
+                                </div>
+                                <FluentButton Appearance="Appearance.Outline"
+                                              OnClick="@(async () => await ViewFile(GeneralLiabilityCoverage.WaiverOfSubAttachment))"
+                                              Class="file-action-btn">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" Slot="start" />
+                                    View
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Outline"
+                                              OnClick="@(() => RemoveWaiverFileAsync())"
+                                              Class="file-action-btn">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                                    Remove
+                                </FluentButton>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="upload-area">
+                                <FluentIcon Value="@(new Icons.Regular.Size48.CloudArrowUp())" Class="upload-icon" />
+                                <div class="upload-text">Drop files here or click to browse</div>
+                                <div class="upload-hint">Supports PDF, TXT files</div>
+                                <InputFile OnChange="OnFileSelected" accept=".pdf,.txt" style="margin-top: 16px;" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </FluentCard>
+        </FluentStack>
+
+        @* Rating Basis Section *@
+        @if (RatingBases != null && RatingBases.Count > 0)
+        {
+            <div class="rating-basis-section">
+                <div class="rating-table-header">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Table())" Color="Color.Custom" CustomColor="#000" />
+                    General Liability Rating Basis
+                </div>
+
+                <table class="rating-table">
+                    <thead>
+                        <tr>
+                            <th>Class Code</th>
+                            <th>Description</th>
+                            <th>Basis</th>
+                            <th>Exposure</th>
+                            <th>Base Rate</th>
+                            <th>Premium</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ratingBasis in RatingBases)
+                        {
+                            <tr>
+                                <td><span class="code-cell">@ratingBasis.ClassCode</span></td>
+                                <td>@ratingBasis.ClassDescription</td>
+                                <td>@ratingBasis.Basis</td>
+                                <td>@ratingBasis.Exposure</td>
+                                <td>@(ratingBasis.BaseRate?.ToString("N4"))</td>
+                                <td class="currency-cell">@(ratingBasis.Premium?.ToString("C2"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <FluentCard Class="coverage-section">
+                <div class="empty-state">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.TableSimple())" Class="empty-state-icon" />
+                    <div>No rating basis information available</div>
+                </div>
+            </FluentCard>
+        }
+    </div>
+}
+else
+{
+    <div class="loading-spinner">
+        <FluentProgressRing />
+        <span style="margin-left: 12px;">Loading General Liability coverage...</span>
+    </div>
+}
+
+@code {
+    [Parameter] public int PolicyId { get; set; }
+
+    public GeneralLiabilityCoverage? GeneralLiabilityCoverage { get; set; }
+    public List<RatingBasis> RatingBases { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        // Load GeneralLiabilityCoverage for this policy
+        GeneralLiabilityCoverage = await PolicyService.GetGeneralLiabilityCoverageByPolicyIdAsync(PolicyId);
+
+        // Load Rating Bases for this policy
+        RatingBases = await PolicyService.GetRatingBasesByPolicyIdAsync(PolicyId);
+        
+        // If no coverage exists, create one
+        if (GeneralLiabilityCoverage == null)
+        {
+            GeneralLiabilityCoverage = new GeneralLiabilityCoverage
+            {
+                PolicyId = PolicyId,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow,
+                ClaimsMade = false,
+                Occurence = true
+            };
+            GeneralLiabilityCoverage = await PolicyService.UpsertGeneralLiabilityCoverageAsync(GeneralLiabilityCoverage);
+        }
+    }
+
+    private async Task UpdateCoverageAsync()
+    {
+        if (GeneralLiabilityCoverage != null)
+        {
+            GeneralLiabilityCoverage.DateModified = DateTime.UtcNow;
+            await PolicyService.UpsertGeneralLiabilityCoverageAsync(GeneralLiabilityCoverage);
+        }
+    }
+
+    private async Task OnAdditionalInsuredFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null) return;
+
+            // Save file to uploads directory
+            var uploadsPath = Path.Combine("wwwroot", "uploads");
+            Directory.CreateDirectory(uploadsPath);
+            
+            var fileName = $"{Guid.NewGuid()}_{file.Name}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream); // 10MB limit
+            }
+
+            // Create and assign the attachment
+            var attachment = await AttachmentService.AddPolicyAttachmentAsync(fileName, GeneralLiabilityCoverage!.GeneralLiabilityCoverageId, "gl-ai");
+
+            if (attachment != null)
+            {
+                GeneralLiabilityCoverage.AdditionalInsuredAttachment = attachment;
+                await PolicyService.UpsertGeneralLiabilityCoverageAsync(GeneralLiabilityCoverage);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null) return;
+
+            // Save file to uploads directory
+            var uploadsPath = Path.Combine("wwwroot", "uploads");
+            Directory.CreateDirectory(uploadsPath);
+            
+            var fileName = $"{Guid.NewGuid()}_{file.Name}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream); // 10MB limit
+            }
+
+            // Create and assign the attachment
+            var attachment = await AttachmentService.AddPolicyAttachmentAsync(fileName, GeneralLiabilityCoverage!.GeneralLiabilityCoverageId, "gl-wos");
+
+            if (attachment != null)
+            {
+                GeneralLiabilityCoverage.WaiverOfSubAttachment = attachment;
+                await PolicyService.UpsertGeneralLiabilityCoverageAsync(GeneralLiabilityCoverage);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveAdditionalInsuredFileAsync()
+    {
+        try
+        {
+            if (GeneralLiabilityCoverage?.AdditionalInsuredAttachment != null)
+            {
+                await AttachmentService.RemovePolicyAttachmentAsync(GeneralLiabilityCoverage.GeneralLiabilityCoverageId, "gl-ai");
+                GeneralLiabilityCoverage.AdditionalInsuredAttachment = null;
+                await PolicyService.UpsertGeneralLiabilityCoverageAsync(GeneralLiabilityCoverage);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing file: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveWaiverFileAsync()
+    {
+        try
+        {
+            if (GeneralLiabilityCoverage?.WaiverOfSubAttachment != null)
+            {
+                await AttachmentService.RemovePolicyAttachmentAsync(GeneralLiabilityCoverage.GeneralLiabilityCoverageId, "gl-wos");
+                GeneralLiabilityCoverage.WaiverOfSubAttachment = null;
+                await PolicyService.UpsertGeneralLiabilityCoverageAsync(GeneralLiabilityCoverage);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing file: {ex.Message}");
+        }
+    }
+
+    private async Task ViewFile(Attachment attachment)
+    {
+        // Open file in new tab
+        var url = $"/uploads/{attachment.OriginalFileName}";
+        await JsInterop.OpenWindowAsync(url, "_blank");
+    }
+}
+
+<style>
+    .rating-basis-section {
+        margin-top: 24px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .rating-table-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 16px;
+        background-color: #f5f5f5;
+        font-weight: 600;
+        font-size: 16px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .rating-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .rating-table th {
+        text-align: left;
+        padding: 12px 16px;
+        background-color: #f9f9f9;
+        font-weight: 600;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .rating-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .rating-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .code-cell {
+        font-family: monospace;
+        background-color: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .currency-cell {
+        font-family: monospace;
+        font-weight: 500;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        color: #666;
+        text-align: center;
+    }
+
+    .empty-state-icon {
+        color: #ccc;
+        margin-bottom: 16px;
+    }
+</style>

@@ -1,0 +1,572 @@
+@namespace Quickfire.Blazor.Domain.Contacts.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Contacts.Services
+@using Quickfire.Blazor.Domain.Contacts.ViewModels
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Quickfire.Blazor.Domain.Carriers.Services
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Buttons
+@inject ContactService ContactService
+@inject ClientService ClientService
+@inject CarrierService CarrierService
+@inject NavigationManager NavigationManager
+
+
+<div class="mh1">Create New Contact</div>
+
+<EditForm Model="@viewModel" OnValidSubmit="HandleValidSubmit">
+    <ValidationSummary />
+    <DataAnnotationsValidator />
+
+    <FluentStack HorizontalGap="25" Width="100%">
+        <div class="subColumnOne">
+            <span class="pol-section-title">BASIC INFO</span>
+            <div class="pol-section-container">
+                <div class="form-group">
+                    <SfTextBox id="firstName" Placeholder="First Name" @bind-Value="viewModel.FirstName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="@(() => viewModel.FirstName)" />
+                </div>
+                <div class="form-group">
+                    <SfTextBox id="lastName" Placeholder="Last Name" @bind-Value="viewModel.LastName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="@(() => viewModel.LastName)" />
+                </div>
+                <div class="form-group">
+                    <SfTextBox id="title" Placeholder="Title" @bind-Value="viewModel.Title" FloatLabelType="FloatLabelType.Always" />
+                </div>
+            </div>
+
+            <div style="height:25px;"></div>
+
+            <span class="pol-section-title">NOTES</span>
+            <div class="pol-section-container">
+                <div class="form-group">
+                    <SfTextBox id="notes" Placeholder="Notes" @bind-Value="viewModel.Notes" FloatLabelType="FloatLabelType.Always" Multiline="true" />
+                </div>
+            </div>
+        </div>
+
+
+        <div class="subColumnTwo">
+            <span class="pol-section-title">CONTACT INFO</span>
+            <div class="pol-section-container">
+                <FluentStack HorizontalGap="50">
+
+                    <div class="form-group borderx" style="width:50%">
+                        <div class="hackline"></div>
+                        <div class="phone-input-container">
+                            <div class="phone-input-group">
+                                <SfTextBox id="phoneNumber" 
+                                          Placeholder="Phone Number" 
+                                          @bind-Value="currentPhone.Number" 
+                                          FloatLabelType="FloatLabelType.Always"
+                                          @oninput="HandlePhoneInput"
+                                          MaxLength="14" />
+                                <SfTextBox id="phoneExtension" 
+                                          Placeholder="Ext" 
+                                          @bind-Value="currentPhone.Extension" 
+                                          FloatLabelType="FloatLabelType.Always"
+                                          Style="width: 80px; margin-left: 8px;" />
+                            </div>
+                            @if (!string.IsNullOrEmpty(currentPhone.Number))
+                            {
+                                <div class="phone-preview">
+                                    <span class="preview-label">Preview:</span>
+                                    <span class="preview-number">@FormatPhoneNumber(currentPhone.Number)</span>
+                                    @if (!string.IsNullOrEmpty(currentPhone.Extension))
+                                    {
+                                        <span class="preview-extension">ext. @currentPhone.Extension</span>
+                                    }
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(phoneValidationError))
+                            {
+                                <div class="validation-error">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Error" />
+                                    <span>@phoneValidationError</span>
+                                </div>
+                            }
+                            <div class="phone-type-options">
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(() => SetPhoneType(PhoneType.Mobile))" Class="@(currentPhone.Type == PhoneType.Mobile ? "selected" : "mybtn")">Mobile</FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(() => SetPhoneType(PhoneType.Office))" Class="@(currentPhone.Type == PhoneType.Office ? "selected" : "mybtn")">Office</FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(() => SetPhoneType(PhoneType.Fax))" Class="@(currentPhone.Type == PhoneType.Fax ? "selected" : "mybtn")">Fax</FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(() => SetPhoneType(PhoneType.Home))" Class="@(currentPhone.Type == PhoneType.Home ? "selected" : "mybtn")">Home</FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(() => SetPhoneType(PhoneType.Other))" Class="@(currentPhone.Type == PhoneType.Other ? "selected" : "mybtn")">Other</FluentButton>
+                            </div>
+                            <FluentCheckbox Label="Can receive SMS" @bind-Value="currentPhone.SMS" />
+                            <FluentButton Appearance="Appearance.Lightweight" OnClick="AddPhoneNumber" Class="add-another-button" Disabled="@(!IsValidPhoneNumber(currentPhone.Number))">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" />
+                                Add Another
+                            </FluentButton>
+                        </div>
+
+                        @if (viewModel.PhoneNumbers.Any())
+                        {
+                            <div class="phone-list">
+                                <h4>Phone Numbers</h4>
+                                @foreach (var phone in viewModel.PhoneNumbers)
+                                {
+                                    <div class="phone-item @(phone.IsPrimary ? "primary" : "")">
+                                        <span>@FormatPhoneNumber(phone.Number)@(!string.IsNullOrEmpty(phone.Extension) ? $" ext. {phone.Extension}" : "") (@phone.Type)</span>
+                                        @if (phone.SMS)
+                                        {
+                                            <span class="sms-badge">SMS</span>
+                                        }
+                                        @if (phone.IsPrimary)
+                                        {
+                                            <span class="primary-badge">Primary</span>
+                                        }
+                                        <FluentButton Appearance="Appearance.Lightweight" OnClick="@(() => RemovePhone(phone))">Remove</FluentButton>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+
+                    <div class="form-group" style="width:50%">
+                        <div class="email-input-container">
+                            <SfTextBox id="email" Placeholder="Email Address" @bind-Value="currentEmail.Email" FloatLabelType="FloatLabelType.Always" />
+                            <SfTextBox id="emailLabel" Placeholder="Description (e.g., Work, Personal)" @bind-Value="currentEmail.Label" FloatLabelType="FloatLabelType.Always" />
+                            <FluentButton Appearance="Appearance.Lightweight" OnClick="AddEmail" Class="add-another-button">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" />
+                                Add Another
+                            </FluentButton>
+                        </div>
+                        @if (viewModel.EmailAddresses.Any())
+                        {
+                            <div class="email-list">
+                                <h4>Email Addresses</h4>
+                                @foreach (var email in viewModel.EmailAddresses)
+                                {
+                                    <div class="email-item @(email.IsPrimary ? "primary" : "")">
+                                        <span>@email.Email (@email.Label)</span>
+                                        @if (email.IsPrimary)
+                                        {
+                                            <span class="primary-badge">Primary</span>
+                                        }
+                                        <FluentButton Appearance="Appearance.Lightweight" OnClick="@(() => RemoveEmail(email))">Remove</FluentButton>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </FluentStack>
+            </div>
+        </div>
+
+        <div class="subColumnThree">
+            <span class="pol-section-title">ASSOCIATION</span>
+            <div class="pol-section-container">
+                @if (string.IsNullOrEmpty(PreSelectedEntityType))
+                {
+                    <div class="form-group">
+                        <FluentRadioGroup @bind-Value="viewModel.AssociationType" Name="associationType">
+                            <FluentRadio Value="@("Client")">Client</FluentRadio>
+                            <FluentRadio Value="@("Carrier")">Carrier</FluentRadio>
+                        </FluentRadioGroup>
+                    </div>
+
+                    @if (viewModel.AssociationType == "Client")
+                    {
+                        <div class="form-group">
+                            <SfDropDownList TValue="int?" TItem="ClientListItem" Placeholder="Select Client" DataSource="@clients" @bind-Value="viewModel.ClientId" FloatLabelType="FloatLabelType.Always" AllowFiltering="true">
+                                <DropDownListFieldSettings Value="ClientId" Text="Name"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </div>
+                    }
+                    else if (viewModel.AssociationType == "Carrier")
+                    {
+                        <div class="form-group">
+                            <SfDropDownList TValue="int?" TItem="CarrierListItem" Placeholder="Select Carrier" DataSource="@carriers" @bind-Value="viewModel.CarrierId" FloatLabelType="FloatLabelType.Always" AllowFiltering="true">
+                                <DropDownListFieldSettings Value="CarrierId" Text="Name"></DropDownListFieldSettings>
+                            </SfDropDownList>
+                        </div>
+
+                        <div class="carrier-options">
+                            <FluentCheckbox Label="Underwriter" @bind-Value="viewModel.Underwriter" />
+                            <FluentCheckbox Label="Service" @bind-Value="viewModel.Service" />
+                            <FluentCheckbox Label="Billing" @bind-Value="viewModel.Billing" />
+                            <FluentCheckbox Label="Account Rep" @bind-Value="viewModel.Representative" />
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="form-group">
+                        <div class="pre-selected-entity">
+                            @if (PreSelectedEntityType == "Client")
+                            {
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Building())" />
+                            }
+                            else
+                            {
+                                <FluentIcon Value="@(new Icons.Regular.Size20.BuildingBank())" />
+                            })
+                            <span>@EntityName</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </FluentStack>
+
+    <div class="form-actions">
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Contact</FluentButton>
+        <FluentButton OnClick="Cancel" Appearance="Appearance.Neutral">Cancel</FluentButton>
+    </div>
+</EditForm>
+
+<style>
+    
+
+    .selected {
+        border: 3px solid #b1b1b1;
+    }
+
+    .mybtn{
+        border: 3px solid #FFF;
+        
+    }
+
+    .pre-selected-entity {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+    }
+
+    .pre-selected-entity span {
+        font-weight: 500;
+    }
+
+    .phone-input-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .phone-preview {
+        margin-top: 4px;
+        font-size: 0.9rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .preview-label {
+        font-weight: 500;
+    }
+
+    .preview-number {
+        color: #0078d4;
+    }
+
+    .preview-extension {
+        color: #666;
+        font-style: italic;
+    }
+
+    .validation-error {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #d13438;
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+
+    .phone-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        margin-bottom: 4px;
+    }
+
+    .phone-item.primary {
+        background: #e6f2ff;
+    }
+
+    .sms-badge {
+        background: #107c10;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    .primary-badge {
+        background: #0078d4;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public EventCallback<int> OnSaved { get; set; }
+
+    [Parameter]
+    public string? PreSelectedEntityType { get; set; }
+
+    [Parameter]
+    public int? PreSelectedEntityId { get; set; }
+
+    [Parameter]
+    public string? ReturnUrl { get; set; }
+
+    private ContactCreateViewModel viewModel = new ContactCreateViewModel();
+    private EditContext editContext;
+    private List<ClientListItem> clients = new List<ClientListItem>();
+    private List<CarrierListItem> carriers = new List<CarrierListItem>();
+    private PhoneNumber currentPhone = new PhoneNumber();
+    private EmailAddress currentEmail = new EmailAddress();
+    private string? EntityName;
+    private string phoneValidationError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(viewModel);
+        await LoadClientsAndCarriers();
+
+        if (!string.IsNullOrEmpty(PreSelectedEntityType) && PreSelectedEntityId.HasValue)
+        {
+            viewModel.AssociationType = PreSelectedEntityType;
+            if (PreSelectedEntityType == "Client")
+            {
+                viewModel.ClientId = PreSelectedEntityId;
+                var client = clients.FirstOrDefault(c => c.ClientId == PreSelectedEntityId);
+                EntityName = client?.Name;
+            }
+            else if (PreSelectedEntityType == "Carrier")
+            {
+                viewModel.CarrierId = PreSelectedEntityId;
+                var carrier = carriers.FirstOrDefault(c => c.CarrierId == PreSelectedEntityId);
+                EntityName = carrier?.Name;
+            }
+        }
+    }
+
+    private async Task LoadClientsAndCarriers()
+    {
+        clients = await ClientService.GetClientListAsync();
+        carriers = await CarrierService.GetCarrierListAsync();
+    }
+
+    private void SetPhoneType(PhoneType type)
+    {
+        currentPhone.Type = type;
+    }
+
+    private void HandlePhoneInput(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? "";
+        // Remove all non-digit characters
+        var digitsOnly = new string(input.Where(char.IsDigit).ToArray());
+        
+        // Format the phone number as user types
+        if (digitsOnly.Length > 0)
+        {
+            if (digitsOnly.Length <= 3)
+            {
+                currentPhone.Number = $"({digitsOnly}";
+            }
+            else if (digitsOnly.Length <= 6)
+            {
+                currentPhone.Number = $"({digitsOnly.Substring(0, 3)}) {digitsOnly.Substring(3)}";
+            }
+            else
+            {
+                currentPhone.Number = $"({digitsOnly.Substring(0, 3)}) {digitsOnly.Substring(3, 3)}-{digitsOnly.Substring(6, Math.Min(4, digitsOnly.Length - 6))}";
+            }
+        }
+        else
+        {
+            currentPhone.Number = "";
+        }
+
+        ValidatePhoneNumber();
+    }
+
+    private void ValidatePhoneNumber()
+    {
+        if (string.IsNullOrEmpty(currentPhone.Number))
+        {
+            phoneValidationError = "";
+            return;
+        }
+
+        var digitsOnly = new string(currentPhone.Number.Where(char.IsDigit).ToArray());
+        
+        if (digitsOnly.Length < 10)
+        {
+            phoneValidationError = "Phone number must have at least 10 digits";
+        }
+        else if (digitsOnly.Length > 10)
+        {
+            phoneValidationError = "Phone number cannot have more than 10 digits";
+        }
+        else
+        {
+            phoneValidationError = "";
+        }
+    }
+
+    private bool IsValidPhoneNumber(string phoneNumber)
+    {
+        if (string.IsNullOrEmpty(phoneNumber))
+        {
+            return false;
+        }
+
+        var digitsOnly = new string(phoneNumber.Where(char.IsDigit).ToArray());
+        return digitsOnly.Length == 10;
+    }
+
+    private string FormatPhoneNumber(string phoneNumber)
+    {
+        if (string.IsNullOrEmpty(phoneNumber))
+        {
+            return "";
+        }
+
+        var digitsOnly = new string(phoneNumber.Where(char.IsDigit).ToArray());
+        if (digitsOnly.Length == 10)
+        {
+            return $"({digitsOnly.Substring(0, 3)}) {digitsOnly.Substring(3, 3)}-{digitsOnly.Substring(6)}";
+        }
+        return phoneNumber;
+    }
+
+    private void AddPhoneNumber()
+    {
+        if (!string.IsNullOrEmpty(currentPhone.Number) && IsValidPhoneNumber(currentPhone.Number))
+        {
+            viewModel.PhoneNumbers.Add(new PhoneNumber
+            {
+                Number = currentPhone.Number,
+                Extension = currentPhone.Extension,
+                Type = currentPhone.Type,
+                SMS = currentPhone.SMS,
+                IsPrimary = viewModel.PhoneNumbers.Count == 0,
+                DateCreated = DateTime.UtcNow
+            });
+            currentPhone = new PhoneNumber { Type = PhoneType.Mobile }; // Reset with default type
+            phoneValidationError = "";
+        }
+    }
+
+    private void RemovePhone(PhoneNumber phone)
+    {
+        viewModel.PhoneNumbers.Remove(phone);
+    }
+
+    private void AddEmail()
+    {
+        if (!string.IsNullOrEmpty(currentEmail.Email))
+        {
+            viewModel.EmailAddresses.Add(new EmailAddress
+            {
+                Email = currentEmail.Email,
+                Label = currentEmail.Label,
+                IsPrimary = viewModel.EmailAddresses.Count == 0,
+                DateCreated = DateTime.UtcNow
+            });
+            currentEmail = new EmailAddress();
+        }
+    }
+
+    private void RemoveEmail(EmailAddress email)
+    {
+        viewModel.EmailAddresses.Remove(email);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            // Add any pending phone number
+            if (!string.IsNullOrEmpty(currentPhone.Number))
+            {
+                viewModel.PhoneNumbers.Add(new PhoneNumber
+                {
+                    Number = currentPhone.Number,
+                    Extension = currentPhone.Extension,
+                    Type = currentPhone.Type,
+                    SMS = currentPhone.SMS,
+                    IsPrimary = viewModel.PhoneNumbers.Count == 0,
+                    DateCreated = DateTime.UtcNow
+                });
+            }
+
+            // Add any pending email
+            if (!string.IsNullOrEmpty(currentEmail.Email))
+            {
+                viewModel.EmailAddresses.Add(new EmailAddress
+                {
+                    Email = currentEmail.Email,
+                    Label = currentEmail.Label,
+                    IsPrimary = viewModel.EmailAddresses.Count == 0,
+                    DateCreated = DateTime.UtcNow
+                });
+            }
+
+            var contact = new Contact
+            {
+                FirstName = viewModel.FirstName,
+                LastName = viewModel.LastName,
+                Title = viewModel.Title,
+                Notes = viewModel.Notes,
+                DateCreated = DateTime.UtcNow,
+                ClientId = viewModel.ClientId,
+                CarrierId = viewModel.CarrierId,
+                Underwriter = viewModel.Underwriter,
+                Service = viewModel.Service,
+                Billing = viewModel.Billing,
+                Representative = viewModel.Representative,
+                PhoneNumbers = viewModel.PhoneNumbers,
+                EmailAddresses = viewModel.EmailAddresses
+            };
+
+            await ContactService.CreateContactAsync(contact);
+            await OnSaved.InvokeAsync(contact.ContactId);
+
+            if (!string.IsNullOrEmpty(ReturnUrl))
+            {
+                NavigationManager.NavigateTo(ReturnUrl);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error (could add error display to UI)
+            Console.WriteLine($"Error creating contact: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        if (!string.IsNullOrEmpty(ReturnUrl))
+        {
+            NavigationManager.NavigateTo(ReturnUrl);
+        }
+        else
+        {
+            viewModel = new ContactCreateViewModel();
+            OnSaved.InvokeAsync(0); // Pass 0 to indicate cancellation
+        }
+    }
+}

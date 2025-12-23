@@ -1,0 +1,417 @@
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Carriers.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@inherits AppComponentBase
+@inject CarrierService CarrierService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<div class="carrier-access-group">
+    <div class="surface-card">
+        <div class="section-title">Associations</div>
+        <div class="form-stack">
+            @if (!CanManageAccess)
+            {
+                <div class="empty-message">Carrier access becomes available once the record is saved.</div>
+            }
+            else if (!IsWholesaler)
+            {
+                <div class="empty-message">Carrier access is only available for wholesalers.</div>
+            }
+            else if (associations.Any())
+            {
+                <table class="flauxentTable mt-2">
+                    <thead class="sf-txt-column">
+                        <tr>
+                            <th>Carrier Name</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                            <th class="shmedium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var association in GetOrderedAssociations())
+                        {
+                            <tr>
+                                <td>@(association.Carrier?.CarrierName ?? "(Unknown Carrier)")</td>
+                                <td>
+                                    <span style="@($"font-weight:600;color:{GetAssociationStatusColor(association)};")">
+                                        @GetAssociationStatusLabel(association)
+                                    </span>
+                                </td>
+                                <td>@(association.Notes ?? string.Empty)</td>
+                                <td>
+                                    <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" OnClick="@(() => NavigateToCarrier(association.CarrierId))" Title="View Carrier">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Open())" />
+                                    </FluentButton>
+                                    @if (association.IsActive)
+                                    {
+                                        <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" OnClick="@(() => ShowRemoveCarrierConfirmation(association))" Title="Deactivate Access">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" />
+                                        </FluentButton>
+                                    }
+                                    else
+                                    {
+                                        <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" OnClick="@(() => ActivateCarrierAccessAsync(association))" Title="Activate Access">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.CheckmarkCircle())" />
+                                        </FluentButton>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="access-actions">
+                    <span class="sf-button-small" @onclick="OpenAddCarrierDialog">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Slot="start" Color="Color.Custom" CustomColor="#0473ce" /> Associate Carrier
+                    </span>
+                </div>
+            }
+            else
+            {
+                <div class="empty-message">No carrier associations available.</div>
+                <span class="sf-button-small" @onclick="OpenAddCarrierDialog">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Slot="start" Color="Color.Custom" CustomColor="#0473ce" /> Associate Carrier
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+<FluentDialog @bind-Hidden="addCarrierDialogHidden" TrapFocus="true" Modal="true" Title="Add Carrier Access" Style="min-width: 550px;">
+    <div class="dialog-content">
+        @if (selectedCarrierToAdd == null)
+        {
+            <div class="form-group">
+                <span class="txt-label mb-2">Search for Carrier</span>
+                <div class="search-box">
+                    <FluentTextField @bind-Value="carrierSearchTerm" Placeholder="Start typing to search carriers..." @oninput="HandleCarrierSearchInputAsync" />
+                    @if (isSearchingCarriers)
+                    {
+                        <div class="search-spinner">
+                            <FluentProgressRing Size="ProgressRingSize.Tiny" />
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (availableCarriers.Count > 0)
+            {
+                <div class="search-results-container">
+                    <table class="search-results-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var availableCarrier in availableCarriers.Take(10))
+                            {
+                                <tr class="search-result-row" @onclick="() => SelectCarrierToAdd(availableCarrier)">
+                                    <td>@availableCarrier.CarrierName</td>
+                                    <td>@(availableCarrier.Wholesaler ? "Wholesaler" : "Carrier")</td>
+                                    <td>@($"{availableCarrier.City}, {availableCarrier.State}".Trim(' ', ','))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(carrierSearchTerm) && !isSearchingCarriers)
+            {
+                <div class="empty-search-results">No matching carriers found. Try a different search term.</div>
+            }
+        }
+
+        @if (selectedCarrierToAdd != null)
+        {
+            <div class="selected-result">
+                <div class="selected-result-header">Selected Carrier:</div>
+                <div class="selected-result-name">@selectedCarrierToAdd.CarrierName</div>
+                @if (!string.IsNullOrEmpty(selectedCarrierToAdd.City) || !string.IsNullOrEmpty(selectedCarrierToAdd.State))
+                {
+                    <div class="selected-result-parent">@($"{selectedCarrierToAdd.City}, {selectedCarrierToAdd.State}".Trim(' ', ','))</div>
+                }
+            </div>
+
+            <div class="form-group mt-4">
+                <span class="txt-label mb-2">Notes (Optional)</span>
+                <FluentTextField @bind-Value="carrierAccessNotes" Placeholder="Additional notes about this carrier access" />
+            </div>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="AddCarrierAccessAsync" Disabled="@(selectedCarrierToAdd == null)">Add Access</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelAddCarrierDialog">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<FluentDialog @bind-Hidden="removeCarrierDialogHidden" TrapFocus="true" Modal="true" Title="Confirm Deactivate Carrier Access">
+    <div class="dialog-content">
+        <p>Are you sure you want to deactivate access to this carrier? You can reactivate it later.</p>
+        @if (associationPendingStatusChange?.Carrier != null)
+        {
+            <p><strong>@associationPendingStatusChange.Carrier.CarrierName</strong></p>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmRemoveCarrierAccessAsync">Deactivate Access</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelRemoveCarrierAccess">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public int CarrierId { get; set; }
+    [Parameter] public bool CanManageAccess { get; set; }
+    [Parameter] public bool IsWholesaler { get; set; }
+    [Parameter] public string? AppetiteJson { get; set; }
+    [Parameter] public EventCallback<string?> AppetiteJsonChanged { get; set; }
+    [Parameter] public string? QuotelinesJson { get; set; }
+    [Parameter] public EventCallback<string?> QuotelinesJsonChanged { get; set; }
+
+    private List<WholesalerCarrier> associations = new();
+    private bool addCarrierDialogHidden = true;
+    private bool removeCarrierDialogHidden = true;
+    private WholesalerCarrier? associationPendingStatusChange;
+    private List<Carrier> availableCarriers = new();
+    private Carrier? selectedCarrierToAdd;
+    private string carrierAccessNotes = string.Empty;
+    private string carrierSearchTerm = string.Empty;
+    private bool isSearchingCarriers;
+    private System.Timers.Timer? carrierSearchTimer;
+    private int? lastLoadedCarrierId;
+    private bool lastCanManageAccess;
+    private bool lastWholesalerFlag;
+
+    protected override void OnInitialized()
+    {
+        carrierSearchTimer = new System.Timers.Timer(500)
+        {
+            AutoReset = false
+        };
+        carrierSearchTimer.Elapsed += OnCarrierSearchTimerElapsed;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!CanManageAccess || !IsWholesaler || CarrierId <= 0)
+        {
+            if (associations.Count > 0)
+            {
+                associations = new();
+            }
+
+            lastLoadedCarrierId = null;
+            lastCanManageAccess = CanManageAccess;
+            lastWholesalerFlag = IsWholesaler;
+            return;
+        }
+
+        if (CarrierId != lastLoadedCarrierId || lastCanManageAccess != CanManageAccess || lastWholesalerFlag != IsWholesaler)
+        {
+            await LoadAssociationsAsync();
+            lastLoadedCarrierId = CarrierId;
+        }
+
+        lastCanManageAccess = CanManageAccess;
+        lastWholesalerFlag = IsWholesaler;
+    }
+
+    private async Task LoadAssociationsAsync()
+    {
+        try
+        {
+            associations = await CarrierService.GetWholesalerCarrierAssociationsAsync(CarrierId, includeInactive: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading carrier associations: {ex.Message}");
+            associations = new();
+        }
+
+        StateHasChanged();
+    }
+
+    private IEnumerable<WholesalerCarrier> GetOrderedAssociations() =>
+        associations.OrderByDescending(a => a.IsActive)
+                    .ThenBy(a => a.Carrier?.CarrierName ?? string.Empty);
+
+    private static string GetAssociationStatusLabel(WholesalerCarrier association) =>
+        association.IsActive ? "Active" : "Inactive";
+
+    private static string GetAssociationStatusColor(WholesalerCarrier association) =>
+        association.IsActive ? "#0b6a0b" : "#8a1f1f";
+
+    private void OpenAddCarrierDialog()
+    {
+        addCarrierDialogHidden = false;
+        selectedCarrierToAdd = null;
+        carrierAccessNotes = string.Empty;
+        carrierSearchTerm = string.Empty;
+        availableCarriers.Clear();
+        StateHasChanged();
+    }
+
+    private void CancelAddCarrierDialog()
+    {
+        addCarrierDialogHidden = true;
+        selectedCarrierToAdd = null;
+        carrierSearchTerm = string.Empty;
+        carrierAccessNotes = string.Empty;
+        availableCarriers.Clear();
+        isSearchingCarriers = false;
+        StateHasChanged();
+    }
+
+    private void ShowRemoveCarrierConfirmation(WholesalerCarrier association)
+    {
+        associationPendingStatusChange = association;
+        removeCarrierDialogHidden = false;
+        StateHasChanged();
+    }
+
+    private void CancelRemoveCarrierAccess()
+    {
+        removeCarrierDialogHidden = true;
+        associationPendingStatusChange = null;
+        StateHasChanged();
+    }
+
+    private Task HandleCarrierSearchInputAsync(ChangeEventArgs e)
+    {
+        carrierSearchTerm = e.Value?.ToString() ?? string.Empty;
+        selectedCarrierToAdd = null;
+
+        carrierSearchTimer?.Stop();
+        carrierSearchTimer?.Start();
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
+
+    private async Task SearchAvailableCarriersAsync()
+    {
+        if (CarrierId <= 0)
+        {
+            return;
+        }
+
+        var term = carrierSearchTerm?.Trim() ?? string.Empty;
+
+        if (term.Length < 2)
+        {
+            availableCarriers.Clear();
+            isSearchingCarriers = false;
+            StateHasChanged();
+            return;
+        }
+
+        isSearchingCarriers = true;
+        StateHasChanged();
+
+        try
+        {
+            var results = await CarrierService.GetAvailableCarriersForWholesalerAsync(CarrierId, term);
+            availableCarriers = results;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error searching carriers: {ex.Message}");
+            availableCarriers.Clear();
+        }
+        finally
+        {
+            isSearchingCarriers = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SelectCarrierToAdd(Carrier carrier)
+    {
+        selectedCarrierToAdd = carrier;
+        StateHasChanged();
+    }
+
+    private async Task AddCarrierAccessAsync()
+    {
+        if (CarrierId <= 0 || selectedCarrierToAdd == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await CarrierService.AddWholesalerCarrierAccessAsync(
+                CarrierId,
+                selectedCarrierToAdd.CarrierId,
+                string.IsNullOrWhiteSpace(carrierAccessNotes) ? null : carrierAccessNotes);
+
+            await LoadAssociationsAsync();
+            CancelAddCarrierDialog();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding carrier access: {ex.Message}");
+        }
+    }
+
+    private async Task ConfirmRemoveCarrierAccessAsync()
+    {
+        if (CarrierId <= 0 || associationPendingStatusChange == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await CarrierService.SetWholesalerCarrierAccessStatusAsync(CarrierId, associationPendingStatusChange.CarrierId, false);
+            await LoadAssociationsAsync();
+            CancelRemoveCarrierAccess();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing carrier access: {ex.Message}");
+        }
+    }
+
+    private async Task ActivateCarrierAccessAsync(WholesalerCarrier association)
+    {
+        if (CarrierId <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await CarrierService.SetWholesalerCarrierAccessStatusAsync(CarrierId, association.CarrierId, true);
+            await LoadAssociationsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error activating carrier access: {ex.Message}");
+        }
+    }
+
+    private void NavigateToCarrier(int carrierId)
+    {
+        NavigationManager.NavigateTo($"/Carriers/{carrierId}");
+    }
+
+    private async void OnCarrierSearchTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        await InvokeAsync(SearchAvailableCarriersAsync);
+    }
+
+    public void Dispose()
+    {
+        if (carrierSearchTimer != null)
+        {
+            carrierSearchTimer.Elapsed -= OnCarrierSearchTimerElapsed;
+            carrierSearchTimer.Dispose();
+        }
+    }
+}

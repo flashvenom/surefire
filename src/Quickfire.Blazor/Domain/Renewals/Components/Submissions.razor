@@ -1,0 +1,429 @@
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using System.Linq
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Navigations
+@using Quickfire.Blazor.Domain.Attachments.Components
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Renewals.Dialogs
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Carriers.Components
+@inherits SubmissionsRedesignedBase
+
+<div class="submissions-redesigned">
+    @if (CurrentView == "submissions")
+    {
+        @if (SubmissionsList != null && SubmissionsList.Any())
+        {
+            var collapsedWholesalerGroups = new List<(Carrier Wholesaler, List<Submission> Submissions, bool CollapseHeader)>();
+            var activeDirectAppointments = DirectAppointments.Where(sub => !IsSubmissionClosed(sub)).ToList();
+            var collapsedDirectAppointments = DirectAppointments.Where(IsSubmissionClosed).ToList();
+
+            RenderFragment<Submission> renderSubmissionRow = context => @<div class="@GetSubmissionRowClass(context)" @key="context.SubmissionId">
+                    <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                        <div class="carrier-name-column">
+                            <div class="carrier-name-display">
+                                @if (context.RejectedStatus != null)
+                                {
+                                    <button class="collapse-toggle-button @(ShouldCollapseSubmission(context) ? string.Empty : "is-open")"
+                                            type="button"
+                                            @onclick="(() => ToggleSubmissionCollapsed(context))"
+                                            @onclick:stopPropagation="true"
+                                            title="@(ShouldCollapseSubmission(context) ? "Expand submission details" : "Collapse submission details")">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.ChevronRight())" />
+                                    </button>
+                                }
+                                <h4>
+                                    @(context.Carrier?.CarrierName ?? "Unknown Carrier")
+                                    @if (IsIncumbentCarrier(context))
+                                    {
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Class="incumbent-star" title="Incumbent Carrier" />
+                                    }
+                                </h4>
+                            </div>
+                        </div>
+
+                        <div class="stepper-column @(context.RejectedStatus != null ? "rejected-opacity" : "")">
+                            <div class="stepper-fix">
+                                <SfStepper Orientation="StepperOrientation.Horizontal"
+                                          LabelPosition="StepperLabelPosition.Bottom"
+                                          @bind-ActiveStep="context.StatusInt"
+                                          StepClicked="@(args => OnStepperClicked(args, context.SubmissionId))"
+                                          Linear="false"
+                                          @key="context.SubmissionId">
+                                    <StepperSteps>
+                                        <StepperStep IconCss="e-icons x-plus-icon" Label="Created"></StepperStep>
+                                        <StepperStep IconCss="e-icons x-pencil-icon" Label="Started"></StepperStep>
+                                        <StepperStep IconCss="e-icons x-changes-icon" Label="Submitted"></StepperStep>
+                                        <StepperStep IconCss="e-icons x-send-icon" Label="Quoted"></StepperStep>
+                                        <StepperStep IconCss="e-icons x-signature-icon" Label="Proposed"></StepperStep>
+                                        <StepperStep IconCss="e-icons x-trash-icon" Label="Requested"></StepperStep>
+                                        <StepperStep IconCss="e-icons x-check-icon" Label="Bound"></StepperStep>
+                                    </StepperSteps>
+                                </SfStepper>
+                            </div>
+                        </div>
+
+                        <div class="premium-column @(context.RejectedStatus != null ? "rejected-opacity" : "")">
+                            <div class="premium-display">
+                                @if (context.Premium > 0)
+                                {
+                                    <span class="premium-amount">@context.Premium?.ToString("C0")</span>
+                                }
+                                else
+                                {
+                                    <span class="premium-tbd">TBD</span>
+                                }
+                                <button class="premium-edit-button" @onclick="@(() => ShowPremiumEditDialog(context))" title="Edit Premium">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="rejection-column">
+                            <div class="rejection-toggle-group">
+                                <button class="rejection-toggle @(context.RejectedStatus == RejectedStatus.Declined ? "active declined" : "")"
+                                        @onclick="@(() => ToggleRejectionStatus(context, RejectedStatus.Declined))">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
+                                    <span>Declined</span>
+                                </button>
+                                <button class="rejection-toggle @(context.RejectedStatus == RejectedStatus.Rejected ? "active rejected" : "")"
+                                        @onclick="@(() => ToggleRejectionStatus(context, RejectedStatus.Rejected))">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.ErrorCircle())" />
+                                    <span>Rejected</span>
+                                </button>
+                                <button class="rejection-toggle @(context.RejectedStatus == RejectedStatus.NonRenewed ? "active non-renewed" : "")"
+                                        @onclick="@(() => ToggleRejectionStatus(context, RejectedStatus.NonRenewed))">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.CircleOff())" />
+                                    <span><strong>Non</strong>Ren</span>
+                                </button>
+                            </div>
+                        </div>
+                    </FluentStack>
+                </div>;
+
+            <!-- Wholesaler (Carrier.Wholesaler) -->
+            @foreach (var wholesalerGroup in WholesalerGroups)
+            {
+                var activeSubmissions = wholesalerGroup.Value.Where(sub => !IsSubmissionClosed(sub)).ToList();
+                var collapsedSubmissions = wholesalerGroup.Value.Where(IsSubmissionClosed).ToList();
+                var collapseHeader = !activeSubmissions.Any();
+
+                if (activeSubmissions.Any())
+                {
+                    var firstActiveSubmission = activeSubmissions.First();
+                    <div class="wholesaler-container">
+                        <div class="contact-links-combined">
+                            <div class="carrier-name-area">
+                                <a href="/Carriers/@wholesalerGroup.Key.CarrierId" class="carrier-name-link">
+                                    <h3>@wholesalerGroup.Key.CarrierName</h3>
+                                    <span class="carrier-subtitle">Wholesaler</span>
+                                </a>
+                            </div>
+                            @if (wholesalerGroup.Key.Contacts != null && wholesalerGroup.Key.Contacts.Any())
+                            {
+                                <div class="contact-slider-area">
+                                    <ContactsSlider Contacts="@wholesalerGroup.Key.Contacts.ToList()" ParentType="submissionwholesaler" ParentId="@firstActiveSubmission.SubmissionId" DefaultContactId="@firstActiveSubmission.PrimaryWholesalerContactId" />
+                                </div>
+                            }
+                            <div class="square-buttons-grid">
+                                @if (!string.IsNullOrEmpty(wholesalerGroup.Key.Website))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(wholesalerGroup.Key.Website))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Globe())" />
+                                        <span>Website</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(wholesalerGroup.Key.QuotingWebsite))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(wholesalerGroup.Key.QuotingWebsite))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Calculator())" />
+                                        <span>Quote</span>
+                                    </div>
+                                }
+                                @* @if (!string.IsNullOrEmpty(wholesalerGroup.Key.ServicingWebsite))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(wholesalerGroup.Key.ServicingWebsite))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Settings())" />
+                                        <span>Service</span>
+                                    </div>
+                                } *@
+                                @if (!string.IsNullOrEmpty(wholesalerGroup.Key.NewSubmissionEmail))
+                                {
+                                    <div class="square-button" @onclick="@(() => OpenEmail(wholesalerGroup.Key.NewSubmissionEmail))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.MailAdd())" />
+                                        <span>Submit</span>
+                                    </div>
+                                }
+                                @* @if (!string.IsNullOrEmpty(wholesalerGroup.Key.ServicingEmail))
+                                {
+                                    <div class="square-button" @onclick="@(() => OpenEmail(wholesalerGroup.Key.ServicingEmail))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Mail())" />
+                                        <span>Support</span>
+                                    </div>
+                                } *@
+                                @if (!string.IsNullOrEmpty(wholesalerGroup.Key.LossRunsURL))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(wholesalerGroup.Key.LossRunsURL))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentData())" />
+                                        <span>Loss Runs</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(wholesalerGroup.Key.LossRunsEmail))
+                                {
+                                    <div class="square-button" @onclick="@(() => OpenEmail(wholesalerGroup.Key.LossRunsEmail))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentArrowDown())" />
+                                        <span>Loss Email</span>
+                                    </div>
+                                }
+                                @{
+                                    Contact? selectedContact = null;
+                                    if (wholesalerGroup.Key.Contacts != null && wholesalerGroup.Key.Contacts.Any())
+                                    {
+                                        selectedContact = GetSelectedContact(wholesalerGroup.Key.Contacts.ToList(), firstActiveSubmission.PrimaryWholesalerContactId);
+                                        if (selectedContact != null)
+                                        {
+                                            var primaryEmail = selectedContact.EmailAddresses?.FirstOrDefault(e => e.IsPrimary)?.Email ?? selectedContact.EmailAddresses?.FirstOrDefault()?.Email;
+                                            if (!string.IsNullOrEmpty(primaryEmail))
+                                            {
+                                                <div class="square-button accent-button" @onclick="@(() => OpenEmail(primaryEmail))">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size24.PersonMail())" Color="Color.Custom" CustomColor="#fff" />
+                                                    <span>Email</span>
+                                                </div>
+                                            }
+                                        }
+                                    }
+
+                                }
+                            </div>
+                        </div>
+
+                        <div class="carriers-list">
+                            @foreach (var submission in activeSubmissions)
+                            {
+                                @renderSubmissionRow(submission)
+                            }
+                        </div>
+                    </div>
+                }
+
+                if (collapsedSubmissions.Any())
+                {
+                    collapsedWholesalerGroups.Add((wholesalerGroup.Key, collapsedSubmissions, collapseHeader));
+                }
+            }
+
+            <!-- Direct Appointments (Carrier.IssuingCarrier) -->
+            @if (activeDirectAppointments.Any())
+            {
+                @foreach (var submission in activeDirectAppointments)
+                {
+                    <div class="direct-appointment-container">
+                        <div class="contact-links-combined">
+                            <div class="carrier-name-area">
+                                <div class="carrier-name-display direct-appointment-header">
+                                    <a href="/Carriers/@submission.Carrier?.CarrierId" class="carrier-name-link">
+                                        <h3>@(submission.Carrier?.CarrierName ?? "Unknown Carrier")</h3>
+                                        <span class="carrier-subtitle">Direct appointment</span>
+                                    </a>
+                                </div>
+                            </div>
+                        
+                            @if (submission.Carrier?.Contacts != null && submission.Carrier.Contacts.Any())
+                            {
+                                <div class="contact-slider-area">
+                                    <ContactsSlider Contacts="@submission.Carrier.Contacts.ToList()" 
+                                                   ParentType="submissioncarrier" 
+                                                   ParentId="@submission.SubmissionId" 
+                                                   DefaultContactId="@submission.PrimaryCarrierContactId" />
+                                </div>
+                            }
+                        
+                            <div class="square-buttons-grid">
+                                @if (!string.IsNullOrEmpty(submission.Carrier?.Website))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(submission.Carrier.Website))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Globe())" />
+                                        <span>Website</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(submission.Carrier?.QuotingWebsite))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(submission.Carrier.QuotingWebsite))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Calculator())" />
+                                        <span>Quote</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(submission.Carrier?.ServicingWebsite))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(submission.Carrier.ServicingWebsite))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Settings())" />
+                                        <span>Service</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(submission.Carrier?.NewSubmissionEmail))
+                                {
+                                    <div class="square-button" @onclick="@(() => OpenEmail(submission.Carrier.NewSubmissionEmail))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.MailAdd())" />
+                                        <span>Submit</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(submission.Carrier?.ServicingEmail))
+                                {
+                                    <div class="square-button" @onclick="@(() => OpenEmail(submission.Carrier.ServicingEmail))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.Mail())" />
+                                        <span>Support</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(submission.Carrier?.LossRunsURL))
+                                {
+                                    <div class="square-button" @onclick="@(async () => await OpenUrl(submission.Carrier.LossRunsURL))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentData())" />
+                                        <span>Loss Runs</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(submission.Carrier?.LossRunsEmail))
+                                {
+                                    <div class="square-button" @onclick="@(() => OpenEmail(submission.Carrier.LossRunsEmail))">
+                                        <FluentIcon Value="@(new Icons.Regular.Size24.DocumentArrowDown())" />
+                                        <span>Loss Email</span>
+                                    </div>
+                                }
+                                @if (submission.Carrier?.Contacts != null && submission.Carrier.Contacts.Any())
+                                {
+                                    var selectedContact = GetSelectedContact(submission.Carrier.Contacts.ToList(), submission.PrimaryCarrierContactId);
+                                    if (selectedContact != null)
+                                    {
+                                        var primaryEmail = selectedContact.EmailAddresses?.FirstOrDefault(e => e.IsPrimary)?.Email ?? selectedContact.EmailAddresses?.FirstOrDefault()?.Email;
+                                        if (!string.IsNullOrEmpty(primaryEmail))
+                                        {
+                                            <div class="square-button accent-button" @onclick="@(() => OpenEmail(primaryEmail))">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size24.PersonMail())" Color="Color.Custom" CustomColor="#fff" />
+                                                <span>Email</span>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+
+                        <div class="carriers-list">
+                            @renderSubmissionRow(submission)
+                        </div>
+                    </div>
+                }
+            }
+
+            @if (collapsedWholesalerGroups.Any() || collapsedDirectAppointments.Any())
+            {
+                <div class="collapsed-submissions-section">
+                    <h3 class="collapsed-submissions-title">Declined &amp; Closed Submissions</h3>
+
+                    @foreach (var group in collapsedWholesalerGroups)
+                    {
+                        <div class="collapsed-submissions-group @(group.CollapseHeader ? "all-collapsed" : "mixed-collapsed")">
+                            <div class="collapsed-group-header">
+                                <div class="collapsed-group-titles">
+                                    <span class="collapsed-group-name">@group.Wholesaler.CarrierName</span>
+                                    <span class="collapsed-group-subtitle">Wholesaler</span>
+                                </div>
+                                <span class="collapsed-group-note">
+                                    @(group.CollapseHeader ? "All submissions closed" : "Active submissions above")
+                                </span>
+                            </div>
+
+                            <div class="carriers-list collapsed-submissions-list">
+                                @foreach (var submission in group.Submissions)
+                                {
+                                    @renderSubmissionRow(submission)
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (collapsedDirectAppointments.Any())
+                    {
+                        <div class="collapsed-submissions-group direct-collapsed-group">
+                            <div class="collapsed-group-header">
+                                <div class="collapsed-group-titles">
+                                    <span class="collapsed-group-name">Direct appointments</span>
+                                </div>
+                                <span class="collapsed-group-note">
+                                    @(collapsedDirectAppointments.Count == 1 ? "1 submission closed" : $"{collapsedDirectAppointments.Count} submissions closed")
+                                </span>
+                            </div>
+
+                            <div class="carriers-list collapsed-submissions-list">
+                                @foreach (var submission in collapsedDirectAppointments)
+                                {
+                                    @renderSubmissionRow(submission)
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            }
+        else
+        {
+            <div class="empty-state">
+                <FluentIcon Value="@(new Icons.Regular.Size48.DocumentAdd())" Color="Color.Neutral" />
+                <h3>No submissions yet</h3>
+                <p>Create your first submission to get started.</p>
+                @if (RenewalId != 0 && SelectedRenewal?.CarrierId != null)
+                {
+                    <FluentButton Appearance="Appearance.Accent" OnClick="CreateIncumbentSubmission">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Color="Color.Custom" CustomColor="#fff" Slot="start" />
+                        Create Incumbent Submission
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" OnClick="ShowNewSubmissionView" Style="margin-top: 8px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" />
+                        Choose Different Carrier
+                    </FluentButton>
+                }
+                else
+                {
+                    <FluentButton Appearance="Appearance.Accent" OnClick="ShowNewSubmissionView">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Color="Color.Custom" CustomColor="#fff" Slot="start" />
+                        Create Submission
+                    </FluentButton>
+                }
+            </div>
+        }
+    }
+    else if (CurrentView == "new-submission")
+    {
+        <div class="new-submission-view">
+            <!-- Carrier Picker Component -->
+            <div class="carrier-picker-container">
+                <CarrierPicker InitialSelectedCarrier="@NewSubmissionCarrier" OnCreateSubmission="@HandleCreateSubmission" OnCancel="@CancelNewSubmission" />
+            </div>
+        </div>
+    }
+</div>
+
+<!-- View Toggle Button -->
+<div class="view-toggle-bar">
+    @if (CurrentView == "submissions")
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="ShowNewSubmissionView">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Slot="start" Color="Color.Fill" />
+            New Submission
+        </FluentButton>
+    }
+    else if (CurrentView == "new-submission")
+    {
+        <FluentButton Appearance="Appearance.Neutral" OnClick="CancelNewSubmission">
+            <FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Slot="start" />
+            Back to Submissions
+        </FluentButton>
+    }
+</div>
+
+<!-- SfStepper Style Hack -->
+<style>:root .x-plus-icon::before{content:'\e805'}:root .x-pencil-icon::before{content:'\e740'}:root .x-changes-icon::before{content:'\e7a8'}:root .x-send-icon::before{content:'\e71d'}:root .x-trash-icon::before{content:'\e8fb'}:root .x-check-icon::before{content:'\e727'}:root .x-signature-icon::before{content:'\e897'}</style>
+
+<!-- Premium Edit Dialog -->
+<PremiumEditDialog DialogId="premium-edit-dialog" @bind-Hidden="PremiumEditDialogHidden" SubmissionForEdit="SubmissionForPremiumEdit" OnSave="HandlePremiumSaved" />

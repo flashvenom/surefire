@@ -1,0 +1,308 @@
+﻿.email-functions-combined {
+    
+}
+
+.template-selector {
+    margin-bottom: 1rem;
+}
+
+.no-selection-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: var(--neutral-foreground-hint);
+    border: 1px dashed var(--neutral-stroke-rest);
+    border-radius: 4px;
+}
+
+.email-template-sender {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sender-form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+    .sender-form-row .form-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+.email-preview-container {
+    border: 1px solid var(--neutral-stroke-rest);
+    border-radius: 10px;
+    padding: .5rem;
+    background-color: #fff;
+}
+
+    .email-preview-container h4 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+
+.preview-placeholder {
+    padding: 2rem;
+    text-align: center;
+    color: var(--neutral-foreground-hint);
+}
+
+.preview-subject {
+    margin-bottom: 1rem;
+}
+
+    .preview-subject label {
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+
+.preview-body label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.preview-content {
+    border-top: 1px solid var(--neutral-stroke-rest);
+    padding: 1rem;
+    min-height: 200px;
+    margin-bottom: 1rem;
+    background-color: white;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+.btn-compose {
+    padding: 10px 20px;
+    border: 1px solid #939393;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    color: #494949;
+}
+    .btn-compose:hover {
+        border: 1px solid #959595;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        background-color: #d0d0d0;
+        color: #000000;
+        cursor:pointer;
+    }
+    .efield {
+        width:150px;
+        text-align:center;
+        font-weight:100;
+        color:#494949;
+    }
+
+.loss-runs-requester {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.product-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+}
+
+.no-data-message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: var(--neutral-fill-subtle-rest);
+    border-radius: 4px;
+    color: var(--neutral-foreground-hint);
+}
+
+.no-data-message p {
+    margin: 0;
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--accent-foreground-rest);
+    font-weight: 600;
+}
+
+.section-subtitle {
+    margin: 0.5rem 0 0;
+    color: var(--neutral-foreground-hint);
+    font-size: 0.9rem;
+}
+
+.policies-table {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.carrier-policy-group {
+    background-color: var(--neutral-fill-subtle-rest);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.carrier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.25rem;
+    background-color: var(--neutral-fill-rest);
+    border-bottom: 1px solid var(--neutral-stroke-rest);
+}
+
+.carrier-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+    margin-right: 1rem;
+}
+
+.carrier-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.carrier-name h4 {
+    margin: 0;
+    color: var(--accent-foreground-rest);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.carrier-email {
+    font-size: 0.9rem;
+    color: var(--neutral-foreground-hint);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.carrier-url {
+    font-size: 0.9rem;
+    color: var(--neutral-foreground-hint);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.carrier-url a {
+    color: var(--accent-foreground-rest);
+    text-decoration: none;
+}
+
+.carrier-url a:hover {
+    text-decoration: underline;
+}
+
+.carrier-note {
+    font-size: 0.9rem;
+    color: var(--neutral-foreground-hint);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background-color: var(--neutral-fill-subtle-rest);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-fill-rest);
+}
+
+.carrier-note span {
+    flex: 1;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.policy-grid {
+    padding: 1rem;
+    background-color:#fff;
+}
+
+.selection-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.selection-row fluent-select {
+    flex: 1;
+}
+
+.selection-row fluent-number-field {
+    width: 150px;
+}
+.fluent-input-label {
+    position: relative;
+    top:5px;
+}
+.send-all-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid var(--neutral-stroke-rest);
+    background-color: var(--neutral-fill-subtle-rest);
+    border-radius: 0 0 8px 8px;
+}
+
+.fluent-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    background: var(--accent-fill-rest);
+    color: #fff;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    min-height: 36px;
+    transition: background 0.15s;
+}
+
+.fluent-button:hover,
+.fluent-button:focus {
+    background: var(--accent-fill-hover);
+    color: #fff;
+    text-decoration: none;
+}
+
+.fluent-button:active {
+    background: var(--accent-fill-active);
+}
+
+.fluent-button.fallback {
+    background: #f3f3f3;
+    color: #333;
+    border: 1px solid #d1d1d1;
+}
+
+.fluent-button.fallback:hover,
+.fluent-button.fallback:focus {
+    background: #e0e0e0;
+    color: #222;
+    border: 1px solid #bcbcbc;
+}

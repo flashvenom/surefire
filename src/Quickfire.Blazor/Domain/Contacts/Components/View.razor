@@ -1,0 +1,724 @@
+@namespace Quickfire.Blazor.Domain.Contacts.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Contacts.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Contacts.Components.Dialogs
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Microsoft.AspNetCore.Components
+@inject ContactService ContactService
+@inject SurefireDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject SearchService SearchService
+@inject SharedService SharedService
+
+<div class="page-content">
+    <div class="contact-header">
+        @if (contact == null)
+        {
+            <div class="loading-container">
+                <FluentProgressRing />
+                <p>Loading contact details...</p>
+            </div>
+        }
+        else
+        {
+            <table>
+                <tr>
+                    <td>
+                        @{
+                            string nameInitials = "";
+                            if (!string.IsNullOrEmpty(contact.FirstName) && !string.IsNullOrEmpty(contact.LastName))
+                            {
+                                nameInitials = $"{contact.FirstName[0]}{contact.LastName[0]}";
+                            }
+                            string headshotImage = !string.IsNullOrEmpty(contact.HeadshotFilename) ? "/uploads/headshots/" + contact.HeadshotFilename : null;
+                        }
+                        <div class="persona-box">
+                            <FluentPersona Initials="@nameInitials" ImageSize="70px" Class="txt-persona" Image="@headshotImage" />
+                            <div class="edit-icon-container" @onclick="OpenHeadshotDialog">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" Color="Color.Custom" CustomColor="#4e4e4e" />
+                            </div>
+                        </div>
+                    </td>
+                    <td class="contact-header-td">
+                        <div class="contact-name">@contact.FirstName @contact.LastName</div>
+                        <div class="contact-title-row" style="display: flex; align-items: center; gap: 16px;">
+                            <div class="contact-title">@contact.Title</div>
+                            @if (contact.Client != null)
+                            {
+                                <a href="/Clients/@contact.Client.ClientId" class="primary-association-link" style="font-weight: bold; font-size:1.1em; color: #0473ce; text-decoration: none;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.Building())" style="vertical-align: middle; margin-right: 4px;" />
+                                    @contact.Client.Name
+                                </a>
+                            }
+                            else if (contact.Carrier != null)
+                            {
+                                <a href="/Carriers/@contact.Carrier.CarrierId" class="primary-association-link" style="font-weight: bold; font-size:1.1em; color: #0473ce; text-decoration: none;">
+                                    <FluentIcon Value="@(new Icons.Regular.Size20.BuildingBank())" style="vertical-align: middle; margin-right: 4px;" />
+                                    @contact.Carrier.CarrierName
+                                </a>
+                            }
+                        </div>
+                        <div class="edit-icon-container" @onclick="@(() => EditContactBasics(contact))">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+        }
+    </div>
+
+    <div class="contact-body">
+        @if (contact != null)
+        {
+            <FluentStack Wrap="true">
+
+                <div id="firstColumn">
+                    <span class="sf-section-title">PHONE NUMBERS</span><br />
+                    <div class="sf-section-container">
+                        @if (contact.PhoneNumbers != null && contact.PhoneNumbers.Any())
+                        {
+                            <table class="flauxentTable">
+                                <thead class="sf-txt-column">
+                                    <tr>
+                                        <th style="min-width:200px;">Number</th>
+                                        <th>Ext</th>
+                                        <th class="shmedium">Main</th>
+                                        <th class="shmedium">SMS</th>
+                                        <th>Type</th>
+                                        <th class="shmedium">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var phone in contact.PhoneNumbers)
+                                    {
+                                        <tr>
+                                            <td class="featuredrow"> <Trigger Value="@StringHelper.FormatPhoneNumber(phone.Number)" Type="Trigger.ClickType.Phone" Class="cphone" /></td>
+                                            <td>@phone.Extension</td>
+                                            <td>
+                                                <input class="fluent-radio" type="radio" name="primaryContacterId" value="@phone.PhoneNumberId" checked="@(phone.PhoneNumberId == primaryPhoneIdForContact)" @onchange="async () => await SetPrimaryPhone(phone.PhoneNumberId)" />
+                                            </td>
+                                            <td>
+                                                <FluentCheckbox Value="@phone.SMS" 
+                                                               ValueChanged="@(async (bool newValue) => {
+                                                                    phone.SMS = newValue;
+                                                                    await UpdatePhoneSMS(phone);
+                                                                })" />
+                                            </td>
+                                            <td>@phone.Type</td>
+                                            <td>
+                                                <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" OnClick="@(() => EditPhoneNumber(phone))"><FluentIcon Value="@(new Icons.Regular.Size16.Edit())" /></FluentButton>
+                                                <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" Title="Delete" OnClick="@(() => ShowDeletePhoneConfirmation(phone))"><FluentIcon Value="@(new Icons.Regular.Size16.Delete())" /></FluentButton>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="empty-message">No phone numbers added yet.</div>
+                        }
+                        <span @onclick="AddPhoneNumber" class="sf-button-small"><FluentIcon Value="@(new Icons.Regular.Size20.PhoneAdd())" Slot="start" Color="Color.Custom" CustomColor="#0473ce" /> Add Number</span>
+                    </div>
+
+                    <FluentDivider Style="height:20px;"></FluentDivider>
+
+                    <span class="sf-section-title">EMAIL ADDRESSES</span><br />
+                    <div class="sf-section-container">
+
+                        @if (contact.EmailAddresses != null && contact.EmailAddresses.Any())
+                        {
+                            <table class="flauxentTable">
+                                <thead class="sf-txt-column">
+                                    <tr>
+                                        <th>Email</th>
+                                        <th class="tlabel">Label</th>
+                                        <th class="shmedium">Main</th>
+                                        <th class="shmedium">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var email in contact.EmailAddresses)
+                                    {
+                                        <tr>
+                                            <td> <Trigger Value="@email.Email" Type="Trigger.ClickType.Email" /></td>
+                                            <td>@email.Label</td>
+                                            <td>
+                                                <input class="fluent-radio" type="radio" name="primaryEmailIdForContact" value="@email.EmailAddressId"
+                                                       checked="@(email.EmailAddressId == primaryEmailIdForContact)"
+                                                       @onchange="async () => await SetPrimaryEmail(email.EmailAddressId)" />
+                                            </td>
+                                            <td>
+                                                <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" Title="Edit" OnClick="@(() => EditEmailAddress(email))">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
+                                                </FluentButton>
+                                                <FluentButton Appearance="Appearance.Stealth" BackgroundColor="#fff0" Title="Delete" OnClick="@(() => ShowDeleteEmailConfirmation(email))">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" />
+                                                </FluentButton>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+
+                        else
+                        {
+                            <div class="empty-message">No email addresses added yet.</div>
+                        }
+                        <span class="sf-button-small" @onclick="AddEmailAddress"><FluentIcon Value="@(new Icons.Regular.Size20.MailAdd())" Slot="start" Color="Color.Custom" CustomColor="#0473ce" /> Add Email</span>
+                    </div>
+
+
+                </div><!-- End of first column -->
+
+
+                <div id="secondColumn">
+
+                    <div style="height:20px;"></div>
+                    <Associations EntityType="Contact"
+                                  EntityId="@ContactId"
+                                  PrimaryAssociation="@(contact?.Client != null ? new FireSearchResultViewModel { Primary = contact.Client.Name, DataType = "Client", Id = contact.Client.ClientId } : null)"
+                                  AssociationList="@associations"
+                                  OnAssociationsChanged="LoadAssociationsAsync" />
+
+
+                </div>
+            </FluentStack>
+
+            <!-- Delete Contact Button -->
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5e5;">
+                @if (isPrimaryContactForClient)
+                {
+                    <div style="margin-bottom: 16px; padding: 12px; background-color: #fff4e6; border: 1px solid #ffd591; border-radius: 4px;">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" Color="Color.Custom" CustomColor="#d46b08" style="margin-right: 8px;" />
+                        <span style="color: #d46b08; font-weight: 500;">
+                            This contact cannot be deleted because it is set as the primary contact for @primaryClientName. 
+                            Please change the primary contact first.
+                        </span>
+                    </div>
+                    <FluentButton Appearance="Appearance.Neutral" 
+                                 Disabled="true">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                        Delete Contact
+                    </FluentButton>
+                }
+                else
+                {
+                    <FluentButton Appearance="Appearance.Accent" 
+                                 BackgroundColor="#d13438" 
+                                 Color="#ffffff"
+                                 OnClick="@(() => ShowDeleteContactConfirmation())">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+                        Delete Contact
+                    </FluentButton>
+                }
+            </div>
+        }
+        else
+        {
+            <p><em>Loading...</em></p>
+        }
+
+    </div>
+</div>
+
+<!-- Dialog Components -->
+<PhoneNumberDialog DialogId="phone-number-dialog"
+                   @bind-Hidden="phoneDialogHidden"
+                   PhoneForEdit="phoneForEdit"
+                   ContactId="@ContactId"
+                   OnSave="HandlePhoneSaved" />
+
+<EmailAddressDialog DialogId="email-address-dialog"
+                    @bind-Hidden="emailDialogHidden"
+                    EmailForEdit="emailForEdit"
+                    ContactId="@ContactId"
+                    OnSave="HandleEmailSaved" />
+
+<ConfirmationDialog DialogId="delete-phone-dialog"
+                    @bind-Hidden="deletePhoneDialogHidden"
+                    Title="Confirm Delete"
+                    Message="@deletePhoneMessage"
+                    ConfirmText="Delete"
+                    OnConfirm="ConfirmDeletePhone" />
+
+<ConfirmationDialog DialogId="delete-email-dialog"
+                    @bind-Hidden="deleteEmailDialogHidden"
+                    Title="Confirm Delete"
+                    Message="@deleteEmailMessage"
+                    ConfirmText="Delete"
+                    OnConfirm="ConfirmDeleteEmail" />
+
+<ConfirmationDialog DialogId="error-dialog"
+                    @bind-Hidden="errorDialogHidden"
+                    Title="Error"
+                    Message="@errorMessage"
+                    ConfirmText="OK"
+                    OnConfirm="HandleErrorDialogClose" />
+
+<HeadshotDialog DialogId="headshot-dialog"
+                @bind-Hidden="headshotDialogHidden"
+                Contact="contact"
+                OnSave="HandleHeadshotSaved" />
+
+<BasicsDialog DialogId="basics-dialog"
+              @bind-Hidden="basicsDialogHidden"
+              ContactForEdit="basicsForEdit"
+              OnSave="HandleBasicsSaved" />
+
+<ConfirmationDialog DialogId="delete-contact-dialog"
+                    @bind-Hidden="deleteContactDialogHidden"
+                    Title="Confirm Delete Contact"
+                    Message="@deleteContactMessage"
+                    ConfirmText="Delete Contact"
+                    OnConfirm="ConfirmDeleteContact" />
+
+@code {
+    [Parameter] 
+    public int ContactId { get; set; }
+
+    private Contact contact;
+    private int? primaryPhoneIdForContact;
+    private int? primaryEmailIdForContact;
+    private List<FireSearchResultViewModel> associations = new List<FireSearchResultViewModel>();
+    private bool isPrimaryContactForClient = false;
+    private string primaryClientName = string.Empty;
+
+    // Dialog state variables
+    private bool phoneDialogHidden = true;
+    private bool emailDialogHidden = true;
+    private bool contactDialogHidden = true;
+    private bool deletePhoneDialogHidden = true;
+    private bool deleteEmailDialogHidden = true;
+    private bool deleteContactDialogHidden = true;
+    private bool errorDialogHidden = true;
+    private bool headshotDialogHidden = true;
+    private bool basicsDialogHidden = true;
+
+    // Dialog data context
+    private PhoneNumber? phoneForEdit = null;
+    private EmailAddress? emailForEdit = null;
+    private Contact? contactForEdit = null;
+    private PhoneNumber? phoneToDelete = null;
+    private EmailAddress? emailToDelete = null;
+    private string deletePhoneMessage = "";
+    private string deleteEmailMessage = "";
+    private string deleteContactMessage = "";
+    private string errorMessage = "";
+
+    private string ConfirmedParentType;
+
+    private Contact? basicsForEdit = null;
+
+    // Initialize
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadContactData();
+        await base.OnInitializedAsync();
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadContactData();
+        await base.OnParametersSetAsync();
+    }
+
+    // Basic Data Load
+    private async Task LoadContactData()
+    {
+        if (ContactId != 0)
+        {
+            contact = await ContactService.GetContactByIdAsync(ContactId);
+
+            // Set primary phone and email IDs from the contact
+            primaryPhoneIdForContact = contact?.PrimaryPhoneId;
+            primaryEmailIdForContact = contact?.PrimaryEmailId;
+
+            // Check if this contact is a primary contact for any client
+            var primaryContactCheck = await ContactService.CheckIfPrimaryContactAsync(ContactId);
+            isPrimaryContactForClient = primaryContactCheck.IsPrimaryContact;
+            primaryClientName = primaryContactCheck.ClientName;
+
+            // Load associations
+            await LoadAssociationsAsync();
+        }
+    }
+    private async Task SetPrimaryPhone(int phoneNumberId)
+    {
+        if (contact != null)
+        {
+            primaryPhoneIdForContact = phoneNumberId;
+            await ContactService.SetPhoneAsPrimaryAsync(phoneNumberId, contact.ContactId);
+
+            // Update local state so UI reflects new primary immediately
+            foreach (var ph in contact.PhoneNumbers)
+            {
+                ph.IsPrimary = ph.PhoneNumberId == phoneNumberId;
+            }
+            StateHasChanged();
+        }
+    }
+    private async Task SetPrimaryEmail(int emailAddressId)
+    {
+        if (contact != null)
+        {
+            primaryEmailIdForContact = emailAddressId;
+            await ContactService.SetEmailAsPrimaryAsync(emailAddressId, contact.ContactId);
+
+            foreach (var em in contact.EmailAddresses)
+            {
+                em.IsPrimary = em.EmailAddressId == emailAddressId;
+            }
+            StateHasChanged();
+        }
+    }
+
+    // Phone Dialog Methods
+    private void AddPhoneNumber()
+    {
+        phoneForEdit = null; // Signal Add mode
+        phoneDialogHidden = false; // Show dialog
+    }
+    
+    private void EditPhoneNumber(PhoneNumber phone)
+    {
+        phoneForEdit = phone; // Set phone for Edit mode
+        phoneDialogHidden = false; // Show dialog
+    }
+    
+    private void ShowDeletePhoneConfirmation(PhoneNumber phone)
+    {
+        // Prevent deletion if this is the primary phone
+        if (phone.IsPrimary)
+        {
+            errorMessage = "Cannot delete the primary phone number. Please set another phone number as primary first.";
+            errorDialogHidden = false;
+            return;
+        }
+        
+        phoneToDelete = phone;
+        deletePhoneMessage = $"Are you sure you want to delete the phone number {StringHelper.FormatPhoneNumber(phone.Number)}?";
+        deletePhoneDialogHidden = false;
+    }
+    
+    private async Task ConfirmDeletePhone(bool confirmed)
+    {
+        if (confirmed && phoneToDelete != null)
+        {
+            try
+            {
+                await ContactService.DeletePhoneNumberAsync(phoneToDelete.PhoneNumberId);
+                contact = await ContactService.GetContactByIdAsync(ContactId);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting phone number: {ex.Message}";
+                errorDialogHidden = false;
+            }
+        }
+        deletePhoneDialogHidden = true;
+        phoneToDelete = null;
+    }
+    
+    private async Task HandlePhoneSaved(PhoneNumber phone)
+    {
+        try
+        {
+            if (phone.PhoneNumberId > 0)
+            {
+                await ContactService.UpdatePhoneNumberAsync(phone);
+            }
+            else
+            {
+                await ContactService.AddPhoneNumberAsync(phone);
+            }
+            
+            if (phone.IsPrimary)
+            {
+                await ContactService.SetPhoneAsPrimaryAsync(phone.PhoneNumberId, ContactId);
+            }
+            
+            // Hide dialog first
+            phoneDialogHidden = true;
+            phoneForEdit = null;
+            
+            // Then reload data
+            contact = await ContactService.GetContactByIdAsync(ContactId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving phone number: {ex.Message}";
+            errorDialogHidden = false;
+        }
+    }
+
+    // Email Dialog Methods
+    private void AddEmailAddress()
+    {
+        emailForEdit = null; // Signal Add mode
+        emailDialogHidden = false; // Show dialog
+    }
+    
+    private void EditEmailAddress(EmailAddress email)
+    {
+        emailForEdit = email; // Set email for Edit mode
+        emailDialogHidden = false; // Show dialog
+    }
+    private void EditContactBasics(Contact contact)
+    {
+        basicsForEdit = contact; // Set email for Edit mode
+        basicsDialogHidden = false; // Show dialog
+    }
+    private void ShowDeleteEmailConfirmation(EmailAddress email)
+    {
+        // Prevent deletion if this is the primary email
+        if (email.IsPrimary)
+        {
+            errorMessage = "Cannot delete the primary email address. Please set another email as primary first.";
+            errorDialogHidden = false;
+            return;
+        }
+        
+        emailToDelete = email;
+        deleteEmailMessage = $"Are you sure you want to delete the email address {email.Email}?";
+        deleteEmailDialogHidden = false;
+    }
+    
+    private async Task ConfirmDeleteEmail(bool confirmed)
+    {
+        if (confirmed && emailToDelete != null)
+        {
+            try
+            {
+                await ContactService.DeleteEmailAddressAsync(emailToDelete.EmailAddressId);
+                contact = await ContactService.GetContactByIdAsync(ContactId);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting email address: {ex.Message}";
+                errorDialogHidden = false;
+            }
+        }
+        deleteEmailDialogHidden = true;
+        emailToDelete = null;
+    }
+
+    private async Task HandleBasicsSaved(Contact updatedContact)
+    {
+        try
+        {
+            // 1. Get the latest contact from the backend
+            var existingContact = await ContactService.GetContactByIdAsync(updatedContact.ContactId);
+
+            if (existingContact == null)
+            {
+                errorMessage = "Contact not found.";
+                errorDialogHidden = false;
+                return;
+            }
+
+            // 2. Update only the fields that are editable in the dialog
+            existingContact.FirstName = updatedContact.FirstName;
+            existingContact.LastName = updatedContact.LastName;
+            existingContact.Title = updatedContact.Title;
+            existingContact.Notes = updatedContact.Notes;
+            existingContact.Underwriter = updatedContact.Underwriter;
+            existingContact.Service = updatedContact.Service;
+            existingContact.Billing = updatedContact.Billing;
+            existingContact.Representative = updatedContact.Representative;
+            // Add any other fields that are editable in the dialog
+
+            // 3. Save the merged contact
+            await ContactService.UpdateContactAsync(existingContact);
+
+            // Hide the dialog and clear edit context
+            basicsDialogHidden = true;
+            basicsForEdit = null;
+
+            // Reload the contact data to reflect changes in the UI
+            contact = await ContactService.GetContactByIdAsync(ContactId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving contact information: {ex.Message}";
+            errorDialogHidden = false;
+        }
+    }
+    private async Task HandleEmailSaved(EmailAddress email)
+    {
+        try
+        {
+            if (email.EmailAddressId > 0)
+            {
+                await ContactService.UpdateEmailAddressAsync(email);
+            }
+            else
+            {
+                await ContactService.AddEmailAddressAsync(email);
+            }
+            
+            if (email.IsPrimary)
+            {
+                await ContactService.SetEmailAsPrimaryAsync(email.EmailAddressId, ContactId);
+            }
+            
+            // Hide dialog first
+            emailDialogHidden = true;
+            emailForEdit = null;
+            
+            // Then reload data
+            contact = await ContactService.GetContactByIdAsync(ContactId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving email address: {ex.Message}";
+            errorDialogHidden = false;
+        }
+    }
+    private async Task UpdatePhoneSMS(PhoneNumber phone)
+    {
+        if (contact != null)
+        {
+            try
+            {
+                await ContactService.UpdatePhoneNumberAsync(phone);
+            }
+            catch (Exception ex)
+            {
+                // If there's an error, revert the checkbox state
+                phone.SMS = !phone.SMS;
+                StateHasChanged();
+                errorMessage = $"An error occurred while updating SMS setting: {ex.Message}";
+                errorDialogHidden = false;
+            }
+        }
+    }
+
+    // Contact Delete Methods
+    private void ShowDeleteContactConfirmation()
+    {
+        if (contact != null)
+        {
+            deleteContactMessage = $"Are you sure you want to delete {contact.FirstName} {contact.LastName}? This action cannot be undone and will remove all associated phone numbers and email addresses.";
+            deleteContactDialogHidden = false;
+        }
+    }
+
+    private async Task ConfirmDeleteContact(bool confirmed)
+    {
+        if (confirmed && contact != null)
+        {
+            try
+            {
+                // Store navigation target before deletion
+                string navigationTarget = "/Contacts"; // Default fallback
+                
+                if (contact.Client != null)
+                {
+                    navigationTarget = $"/Clients/{contact.Client.ClientId}";
+                }
+                else if (contact.Carrier != null)
+                {
+                    navigationTarget = $"/Carriers/{contact.Carrier.CarrierId}";
+                }
+                
+                await ContactService.DeleteContactAsync(contact.ContactId);
+                
+                // Navigate to the appropriate entity or contacts list
+                NavigationManager.NavigateTo(navigationTarget);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting contact: {ex.Message}";
+                errorDialogHidden = false;
+            }
+        }
+        deleteContactDialogHidden = true;
+    }
+
+    private void HandleErrorDialogClose(bool confirmed)
+    {
+        errorDialogHidden = true;
+        errorMessage = string.Empty;
+    }
+
+    // Association Methods
+    private async Task LoadAssociationsAsync()
+    {
+        try
+        {
+            var allAssociations = await SearchService.GetAssociationsAsync("Contact", ContactId, CancellationToken.None);
+
+            // Filter out the direct client relationship since we're showing it separately at the top
+            allAssociations = allAssociations
+                .Where(a => !(a.Parent?.Contains("(Direct)") == true))
+                .ToList();
+
+            // Create a dictionary to track unique entities
+            var uniqueAssociations = new Dictionary<string, FireSearchResultViewModel>();
+
+            foreach (var assoc in allAssociations)
+            {
+                // Create a unique key based on entity type and ID
+                string key = $"{assoc.DataType}:{assoc.Id}";
+
+                // Only add if we haven't seen this entity before
+                if (!uniqueAssociations.ContainsKey(key))
+                {
+                    uniqueAssociations[key] = assoc;
+                }
+            }
+
+            // Convert dictionary values back to list
+            associations = uniqueAssociations.Values.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading associations: {ex.Message}");
+        }
+    }
+
+    private void OpenHeadshotDialog()
+    {
+        if (contact != null)
+        {
+            headshotDialogHidden = false;
+            // Contact is already bound via parameter
+        }
+    }
+
+    private void OpenBasicsDialog()
+    {
+        if (contact != null)
+        {
+            ConfirmedParentType = contact?.Client != null ? "Client" : contact?.Carrier != null ? "Carrier" : "None";
+            basicsForEdit = new Contact
+            {
+                ContactId = contact.ContactId,
+                FirstName = contact.FirstName,
+                LastName = contact.LastName,
+                Title = contact.Title,
+                Notes = contact.Notes,
+                Underwriter = contact.Underwriter,
+                Service = contact.Service,
+                Billing = contact.Billing,
+                Representative = contact.Representative,
+                Client = contact.Client,
+                Carrier = contact.Carrier
+                // Add other fields as needed
+            };
+            basicsDialogHidden = false;
+        }
+    }
+
+    private async Task HandleHeadshotSaved()
+    {
+        await LoadContactData();
+    }
+
+}

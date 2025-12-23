@@ -1,0 +1,385 @@
+@inherits AppComponentBase
+@implements IDisposable
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using System.ComponentModel.DataAnnotations
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Carriers.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Models
+@inject CarrierService CarrierService
+@inject NavigationManager NavigationManager
+
+@if (((carrier is null && SelectedCarrierId > 0) || editContext is null))
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="carrier-edit-pagesss">
+        <div class="sfc-top">
+            <div class="sfc-header-col-name">
+                <span class="biz-name">@DisplayCarrierName</span>
+            </div>
+        </div>
+
+        <div class="page-carrier-new">
+            <EditForm EditContext="@editContext" OnValidSubmit="SaveCarrierAsync">
+                <DataAnnotationsValidator />
+                <div class="layout-flow">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success">@successMessage</div>
+                    }
+                    <div class="surface-card">
+                        <div class="section-title">Company Record</div>
+                        <div class="form-stack">
+                            <FluentTextField @bind-Value="editModel.CarrierName" Label="Carrier name" Required="true" />
+                            <ValidationMessage For="@(() => editModel.CarrierName)" />
+                            <div class="ts"></div>
+                            <FluentStack>
+                                <div class="form-stack_split">
+                                    <FluentTextField @bind-Value="editModel.LookupCode" Label="Lookup code" Required="true" />
+                                    <ValidationMessage For="@(() => editModel.LookupCode)" />
+                                </div>
+                                <div class="form-stack_split">
+                                    <FluentTextField @bind-Value="editModel.CarrierNickname" Label="Nickname" />
+                                </div>
+                            </FluentStack>
+                            <div class="ts-line"></div>
+                            <FluentStack>
+                                <div class="form-stack_split">
+                                    <FluentCheckbox @bind-Value="editModel.QuickLink">Show on QuickLink</FluentCheckbox>
+                                </div>
+                                <div class="form-stack_split">
+                                    
+                                    <FluentCheckbox @bind-Value="editModel.IsFavorite">Mark as Favorite</FluentCheckbox>
+                                </div>
+                            </FluentStack>
+                        </div>
+                    </div>
+                    <div class="surface-card">
+                        <div class="section-title">Contact Details</div>
+                        <div class="form-stack">
+                            <FluentStack>
+                                <div class="form-stack_split">
+                                    <FluentTextField @bind-Value="editModel.Phone" Label="Main phone" Placeholder="(555) 123-4567" />
+                                </div>
+                                <div class="form-stack_split">
+                                    <FluentTextField @bind-Value="editModel.Website" Label="Website" Placeholder="https://" />
+                                </div>
+                            </FluentStack>
+                            <div class="ts"></div>
+                            <FluentTextField @bind-Value="editModel.StreetAddress" Label="Street" />
+                            <div class="ts"></div>
+                            <FluentStack>
+                                <div class="form-stack_split">
+                                    <FluentTextField @bind-Value="editModel.City" Label="City" />
+                                </div>
+                                <div class="form-stack_split">
+                                    <FluentTextField @bind-Value="editModel.State" Label="State" />
+                                </div>
+                                <div class="form-stack_split">
+                                    <FluentTextField @bind-Value="editModel.Zip" Label="Zip" />
+                                </div>
+                            </FluentStack>
+                        </div>
+                    </div>
+                    <div class="surface-card">
+                        <div class="section-title small">Loss runs</div>
+                        <div class="form-stack">
+                            <FluentTextField @bind-Value="editModel.LossRunsEmail" Label="Loss run email" Placeholder="lossruns@example.com" />
+                            <FluentTextField @bind-Value="editModel.LossRunsURL" Label="Loss run portal" Placeholder="https://" />
+                            <FluentTextArea @bind-Value="editModel.LossRunsNote" Label="Loss run notes" Rows="3" />
+                        </div>
+                    </div>
+                    <div class="surface-card">
+                        <div class="section-title">Appetite notes</div>
+                        <div class="form-stack">
+                            <FluentTextArea @bind-Value="editModel.AppetiteJson" Label="Appetite details" />
+                            <FluentTextArea @bind-Value="editModel.QuotelinesJson" Label="Quote lines" />
+                        </div>
+                    </div>
+                    <div class="surface-card">
+                        <div class="section-title">Quotes</div>
+                        <div class="form-stack">
+                            <FluentTextField @bind-Value="editModel.ServicingEmail" Label="Servicing Email" Placeholder="service@example.com" />
+                            <div class="ts"></div>
+                            <FluentTextField @bind-Value="editModel.ServicingWebsite" Label="Service Website" Placeholder="https://" />
+                        </div>
+                    </div>
+                    <div class="surface-card">
+                        <div class="section-title">Submissions</div>
+                        <div class="form-stack">
+                            <FluentTextField @bind-Value="editModel.NewSubmissionEmail" Label="Submissions Email" Placeholder="submissions@example.com" />
+                            <div class="ts"></div>
+                            <FluentTextField @bind-Value="editModel.QuotingWebsite" Label="Quoting website" Placeholder="https://" />
+                        </div>
+                    </div>
+                    <div class="surface-card">
+                        <div class="section-title">Extras</div>
+                        <div class="form-stack">
+                            <FluentStack>
+                                <div class="form-stack_split">
+                                    <FluentCheckbox @bind-Value="editModel.IssuingCarrier">Issuing carrier</FluentCheckbox><br />
+                                    <div class="ts"></div>
+                                    <FluentCheckbox @bind-Value="editModel.Wholesaler">Wholesaler</FluentCheckbox>
+                                </div>
+                                <div class="form-stack_split">
+                                    <FluentCheckbox @bind-Value="editModel.Admitted">Admitted</FluentCheckbox><br />
+                                    <div class="ts"></div>
+                                    <FluentCheckbox @bind-Value="editModel.IsPEO">PEO</FluentCheckbox>
+                                </div>
+                            </FluentStack>
+                            <div class="ts"></div>
+                            <FluentTextField @bind-Value="editModel.BrokerPaymentPortalUrl" Label="Broker payment portal" Placeholder="https://" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Disabled="isSaving">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Save())" Slot="start" Color="Color.Fill" />
+                        Save changes
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" Type="ButtonType.Button" Disabled="isSaving" OnClick="ResetForm">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.ArrowCounterclockwise())" Slot="start" />
+                        Reset
+                    </FluentButton>
+                    @if (SelectedCarrierId > 0)
+                    {
+                        <FluentButton Appearance="Appearance.Stealth" Type="ButtonType.Button" OnClick="@(() => NavigateToCarrier(SelectedCarrierId))">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Open())" Slot="start" />
+                            View profile
+                        </FluentButton>
+                    }
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+@code {
+    [Parameter] public int SelectedCarrierId { get; set; }
+    [Parameter] public EventCallback<int> SelectedCarrierIdChanged { get; set; }
+
+    private Carrier? carrier;
+    private CarrierEditModel editModel = new();
+    private EditContext editContext = default!;
+    private bool isSaving;
+    private string? successMessage;
+    private string? errorMessage;
+    private int? lastLoadedCarrierId;
+
+    private string DisplayCarrierName => !string.IsNullOrWhiteSpace(editModel.CarrierName) ? editModel.CarrierName : "Carrier";
+    private bool CanManageAccess => SelectedCarrierId > 0 && carrier != null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCarrierAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SelectedCarrierId != lastLoadedCarrierId)
+        {
+            successMessage = null;
+            await LoadCarrierAsync();
+        }
+    }
+
+    private async Task LoadCarrierAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (SelectedCarrierId <= 0)
+        {
+            carrier = null;
+            editModel = new CarrierEditModel();
+            editContext = new EditContext(editModel);
+            lastLoadedCarrierId = SelectedCarrierId;
+            return;
+        }
+
+        carrier = await CarrierService.GetCarrierByIdAsync(SelectedCarrierId);
+        if (carrier is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        editModel = CarrierEditModel.FromCarrier(carrier);
+        editModel.CarrierId = carrier.CarrierId;
+        editContext = new EditContext(editModel);
+        lastLoadedCarrierId = SelectedCarrierId;
+    }
+
+    private async Task SaveCarrierAsync()
+    {
+        if (editContext is null)
+        {
+            return;
+        }
+
+        errorMessage = null;
+        successMessage = null;
+
+        if (!editContext.Validate())
+        {
+            errorMessage = "Please fix the highlighted validation errors before saving.";
+            return;
+        }
+
+        if (SelectedCarrierId <= 0)
+        {
+            errorMessage = "Select a carrier before saving.";
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            var updates = editModel.ToCarrier();
+            updates.CarrierId = SelectedCarrierId;
+            await CarrierService.UpdateCarrierAsync(updates);
+
+            carrier = await CarrierService.GetCarrierByIdAsync(SelectedCarrierId);
+            if (carrier is null)
+            {
+                errorMessage = "We saved the carrier but couldn't reload the latest data.";
+                successMessage = null;
+                return;
+            }
+
+            editModel = CarrierEditModel.FromCarrier(carrier);
+            editModel.CarrierId = carrier.CarrierId;
+            editContext = new EditContext(editModel);
+            lastLoadedCarrierId = SelectedCarrierId;
+
+            successMessage = "Carrier details saved.";
+            await SelectedCarrierIdChanged.InvokeAsync(SelectedCarrierId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "We couldn't save the carrier right now. Please try again.";
+            Console.WriteLine($"Error saving carrier: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ResetForm()
+    {
+        successMessage = null;
+        await LoadCarrierAsync();
+        StateHasChanged();
+    }
+
+    private void NavigateToCarrier(int carrierId)
+    {
+        NavigationManager.NavigateTo($"/Carriers/{carrierId}");
+    }
+
+    private sealed class CarrierEditModel
+    {
+        [Required]
+        public string CarrierName { get; set; } = string.Empty;
+
+        [Required]
+        public string LookupCode { get; set; } = string.Empty;
+
+        public int CarrierId { get; set; }
+        public string? CarrierNickname { get; set; }
+        public string? StreetAddress { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? Zip { get; set; }
+        public string? Phone { get; set; }
+        public string? Website { get; set; }
+        public string? BrokerPaymentPortalUrl { get; set; }
+        public string? QuotingWebsite { get; set; }
+        public string? ServicingWebsite { get; set; }
+        public string? NewSubmissionEmail { get; set; }
+        public string? ServicingEmail { get; set; }
+        public string? LossRunsNote { get; set; }
+        public string? LossRunsEmail { get; set; }
+        public string? LossRunsURL { get; set; }
+        public bool IssuingCarrier { get; set; }
+        public bool Wholesaler { get; set; }
+        public bool Admitted { get; set; }
+        public bool IsPEO { get; set; }
+        public bool QuickLink { get; set; }
+        public bool IsFavorite { get; set; }
+        public string? AppetiteJson { get; set; }
+        public string? QuotelinesJson { get; set; }
+
+        public static CarrierEditModel FromCarrier(Carrier carrier) => new()
+        {
+            CarrierId = carrier.CarrierId,
+            CarrierName = carrier.CarrierName ?? string.Empty,
+            LookupCode = carrier.LookupCode ?? string.Empty,
+            CarrierNickname = carrier.CarrierNickname,
+            StreetAddress = carrier.StreetAddress,
+            City = carrier.City,
+            State = carrier.State,
+            Zip = carrier.Zip,
+            Phone = carrier.Phone,
+            Website = carrier.Website,
+            BrokerPaymentPortalUrl = carrier.BrokerPaymentPortalUrl,
+            QuotingWebsite = carrier.QuotingWebsite,
+            ServicingWebsite = carrier.ServicingWebsite,
+            NewSubmissionEmail = carrier.NewSubmissionEmail,
+            ServicingEmail = carrier.ServicingEmail,
+            LossRunsNote = carrier.LossRunsNote,
+            LossRunsEmail = carrier.LossRunsEmail,
+            LossRunsURL = carrier.LossRunsURL,
+            IssuingCarrier = carrier.IssuingCarrier,
+            Wholesaler = carrier.Wholesaler,
+            Admitted = carrier.Admitted,
+            IsPEO = carrier.IsPEO,
+            QuickLink = carrier.QuickLink,
+            IsFavorite = carrier.IsFavorite,
+            AppetiteJson = carrier.AppetiteJson,
+            QuotelinesJson = carrier.QuotelinesJson,
+        };
+
+        public Carrier ToCarrier() => new()
+        {
+            CarrierId = CarrierId,
+            CarrierName = CarrierName,
+            LookupCode = LookupCode,
+            CarrierNickname = CarrierNickname,
+            StreetAddress = StreetAddress,
+            City = City,
+            State = State,
+            Zip = Zip,
+            Phone = Phone,
+            Website = Website,
+            BrokerPaymentPortalUrl = BrokerPaymentPortalUrl,
+            Notes = BrokerPaymentPortalUrl,
+            QuotingWebsite = QuotingWebsite,
+            ServicingWebsite = ServicingWebsite,
+            NewSubmissionEmail = NewSubmissionEmail,
+            ServicingEmail = ServicingEmail,
+            LossRunsNote = LossRunsNote,
+            LossRunsEmail = LossRunsEmail,
+            LossRunsURL = LossRunsURL,
+            IssuingCarrier = IssuingCarrier,
+            Wholesaler = Wholesaler,
+            Admitted = Admitted,
+            IsPEO = IsPEO,
+            QuickLink = QuickLink,
+            IsFavorite = IsFavorite,
+            AppetiteJson = AppetiteJson,
+            QuotelinesJson = QuotelinesJson,
+        };
+    }
+}

@@ -1,0 +1,203 @@
+@page "/Utilities/{ClientId:int}"
+@namespace Quickfire.Blazor.Domain.Utilities
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+@using Quickfire.Blazor.Domain.Forms.Components
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Utilities
+@using Quickfire.Blazor.Domain.Utilities.Components
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<div class="utilities-container">
+    <div class="utilities-sidebar">
+        <FluentStack>
+            <div class="utilities-search">
+                <FluentSearch @bind-Value="@searchQuery" Placeholder="Search utilities..." @onclick="() => selectedTool = null" />
+            </div>
+            <FluentButton Appearance="Appearance.Stealth" OnClick="() => selectedTool = null" Title="Home"><FluentIcon Value="@(new Icons.Filled.Size16.Home())" Color="Color.Custom" CustomColor="#ccc" /></FluentButton>
+            <FluentButton Appearance="Appearance.Stealth" OnClick="ToggleAdvanced" Title="Toggle advanced utilities"><FluentIcon Value="@(new Icons.Filled.Size16.Settings())" Color="Color.Custom" CustomColor="#ccc" /></FluentButton>
+        </FluentStack>
+        
+        <div class="utilities-list">
+            @foreach (var tool in FilteredTools)
+            {
+                <div class="utility-item @(selectedTool?.Id == tool.Id ? "selected" : "")" 
+                     @onclick="() => SelectTool(tool)">
+                    <FluentIcon Value="@(tool.Icon())" />
+                    <span>@tool.Name</span>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <div class="utilities-main">
+        @if (selectedTool == null)
+        {
+            <div class="utilities-home">
+                <div class="featured-tools">
+                    <div class="tool-grid">
+                        @{
+                            var featured = allTools.FirstOrDefault(t => t.Id == "email");
+                        }
+                        @if (featured != null)
+                        {
+                            <div class="tool-card" @onclick="() => SelectTool(featured)">
+                                <FluentIcon Value="@(featured.Icon())" />
+                                <span>@featured.Name</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+                @if (recentTools.Count > 0)
+                {
+                    <div class="recent-tools">
+                        <h3>Recently Used</h3>
+                        <div class="tool-grid">
+                            @foreach (var tool in recentTools)
+                            {
+                                <div class="tool-card" @onclick="() => SelectTool(tool)">
+                                    <FluentIcon Value="@(tool.Icon())" />
+                                    <span>@tool.Name</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                <div class="frequent-tools">
+                    <h3>Frequently Used</h3>
+                    <div class="tool-grid">
+                        @foreach (var tool in frequentTools)
+                        {
+                            <div class="tool-card" @onclick="() => SelectTool(tool)">
+                                <FluentIcon Value="@(tool.Icon())" />
+                                <span>@tool.Name</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            @switch (selectedTool.Id)
+            {
+                case "email":
+                    <EmailFunctionsCombined 
+                        CurrentPolicies="@CurrentPolicies"
+                        PastPolicies="@PastPolicies"
+                        Contacts="@Contacts"
+                        ClientName="@ClientName"
+                        ClientId="@ClientId" />
+                    break;
+                case "policy-premium-summary":
+                    <PolicyPremiumSummary ClientId="@ClientId" />
+                    break;
+                case "loss-runs":
+                    <RequestLossRuns ClientId="@ClientId" RenewalId="@RenewalId" />
+                    break;
+            }
+         
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int? ClientId { get; set; }
+    
+    [Parameter]
+    public int? PolicyId { get; set; }
+    
+    [Parameter]
+    public int? ContactId { get; set; }
+    
+    [Parameter]
+    public int? RenewalId { get; set; }
+    
+    [Parameter]
+    public int? CarrierId { get; set; }
+    
+    [Parameter]
+    public EventCallback OnDataUpdated { get; set; }
+
+    private string searchQuery = "";
+    private UtilityTool? selectedTool;
+    private List<UtilityTool> allTools = new()
+    {
+        new UtilityTool 
+        { 
+            Id = "email", 
+            Name = "Send Smart Email", 
+            Icon = () => new Icons.Filled.Size24.MailEdit()
+        },
+        new UtilityTool
+        {
+            Id = "policy-premium-summary",
+            Name = "Policy Premium Summary",
+            Icon = () => new Icons.Filled.Size24.ChartMultiple()
+        },
+        new UtilityTool 
+        { 
+            Id = "loss-runs", 
+            Name = "Loss Runs Requester", 
+            Icon = () => new Icons.Filled.Size24.Document()
+        }
+    };
+
+    private List<UtilityTool> recentTools = new();
+    private List<UtilityTool> frequentTools = new();
+
+    private bool ShowPolicyWarning => !(PolicyId.HasValue && PolicyId.Value > 0 && RenewalId.HasValue && RenewalId.Value > 0);
+
+    private HashSet<string> advancedToolIds = new(new[] { "data-import", "attachment-import" });
+    private bool showAdvanced = false;
+
+    private IEnumerable<UtilityTool> FilteredTools =>
+        (string.IsNullOrWhiteSpace(searchQuery)
+            ? allTools
+            : allTools.Where(t => t.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)))
+        .Where(t => showAdvanced || !advancedToolIds.Contains(t.Id));
+
+    private void SelectTool(UtilityTool tool)
+    {
+        selectedTool = tool;
+        UpdateRecentTools(tool);
+    }
+
+    private void UpdateRecentTools(UtilityTool tool)
+    {
+        recentTools.Remove(tool);
+        recentTools.Insert(0, tool);
+        if (recentTools.Count > 5)
+        {
+            recentTools.RemoveAt(recentTools.Count - 1);
+        }
+    }
+
+    private void ToggleAdvanced()
+    {
+        showAdvanced = !showAdvanced;
+    }
+
+    // These properties would be populated from your services
+    private Client? CurrentClient { get; set; }
+    private Policy? CurrentPolicy { get; set; }
+    private Renewal? CurrentRenewal { get; set; }
+    private List<Policy>? CurrentPolicies { get; set; }
+    private List<Policy>? PastPolicies { get; set; }
+    private List<Contact>? Contacts { get; set; }
+    private string? ClientName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize with some default frequent tools
+        frequentTools = allTools.Take(3).ToList();
+    }
+}

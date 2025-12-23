@@ -3,9 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# Ignore sensitive configuration files
-.env
-
 # User-specific files
 *.rsuser
 *.suo
@@ -362,19 +359,8 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-# Surefire Stuff
-/Build/*
-/Surefire/Plugins/AppliedEpicCRM/*
-/Surefire/Plugins/ePayPolicy/*
-/Surefire/Plugins/RingCentral/*
-/Surefire/wwwroot/uploads/clients/*
-/Surefire/wwwroot/uploads/temp/*
-/Surefire/wwwroot/uploads/policies/*
-/Surefire/wwwroot/uploads/headshots/*
-/Surefire/wwwroot/uploads/logos/*
-/Surefire/Plugins/flashvenom.AppliedEpic/net9.0
-/Surefire/Plugins/flashvenom.RingCentral/net9.0
-/Plugins/*
-!/Plugins/Instructions.txt
-
 # Fody - auto-generated XML schema
+FodyWeavers.xsd
+/src/Quickfire.Blazor/.env
+/build/desktop
+/build/web

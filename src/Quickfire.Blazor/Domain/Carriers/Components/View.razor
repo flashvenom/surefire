@@ -1,0 +1,786 @@
+﻿@inherits AppComponentBase
+@implements IDisposable
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Buttons
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Policies.Models
+@using Quickfire.Blazor.Domain.Policies.Services
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Carriers.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Models
+@using Quickfire.Blazor.Data
+@inject CarrierService CarrierService
+@inject PolicyService PolicyService
+@inject SurefireDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject SearchService SearchService
+@inject SharedService SharedService
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+
+@if (carrier is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+    <div class="sfc-top">
+        <div class="sfc-header-col-name">
+            @if (!string.IsNullOrEmpty(carrier.CarrierName))
+            {
+                <span class="biz-name">@carrier.CarrierName</span>
+
+                <br />
+                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Location())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+            }
+
+            @if (!string.IsNullOrEmpty(carrier.StreetAddress))
+            {
+                <a class="biz-data" href="https://www.google.com/maps/search/?api=1&query=@Uri.EscapeDataString($"{carrier.StreetAddress} {carrier.City}, {carrier.State} {carrier.Zip}")" target="_blank">
+                    @carrier.StreetAddress @carrier.City @carrier.State @carrier.Zip
+                </a>
+            }
+
+            @if (!string.IsNullOrEmpty(carrier.ServicingEmail))
+            {
+                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Mail())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                <Trigger Value="@carrier.ServicingEmail" Type="Trigger.ClickType.Email" Class="biz-data" />
+            }
+
+            @if (!string.IsNullOrEmpty(carrier.Website))
+            {
+                <span class="data-icon"><FluentIcon Value="@(new Icons.Filled.Size20.Globe())" Slot="start" CustomColor="#454545" Color="Color.Custom" /></span>
+                <Trigger Value="@carrier.Website" Type="Trigger.ClickType.Url" Class="biz-data" />
+            }
+        </div>
+        <div class="sfc-header-col-phone">
+            <span class="client-phone">
+                <span class="phone-icon">
+                    <a href="tel:@StringHelper.FormatTelDialNumber(carrier.Phone)"><FluentIcon Value="@(new Icons.Regular.Size48.Phone())" Slot="start" CustomColor="#036ac4" Color="Color.Custom" /></a>
+                </span>
+                <Trigger Value="@StringHelper.FormatPhoneNumber(carrier.Phone)" Type="Trigger.ClickType.Phone" Class="client-phonenumber" />
+            </span>
+        </div>
+    </div>
+
+    <div class="carrier-content">
+        <FluentStack Class="carrier-sections-stack" Orientation="Orientation.Horizontal" Wrap="true" HorizontalGap="24" VerticalGap="24">
+            <div>
+                @if (carrier.LogoFilename != null)
+                {
+                    <img src="/uploads/logos/carrier/@carrier.LogoFilename" class="img-fluid carrier-logo" />
+                }
+                <div class="carrier-section-card carrier-profile-card">
+                    <div class="txt-section">Contacts</div>
+                    <div class="carrier-contacts">
+                        <ListContactsForParent Contacts="@carrier.Contacts" ParentType="Carrier" ParentId="@SelectedCarrierId" />
+                    </div>
+                </div>
+            </div>
+            <div class="carrier-section-card carrier-tools-card">
+                <div class="txt-section">TOOLS</div>
+                <div class="carrier-tools-panel">
+                    <div class="carrier-tool-group">
+                        @if (!string.IsNullOrEmpty(carrier.ServicingWebsite) || !string.IsNullOrEmpty(carrier.ServicingEmail))
+                        {
+                            <div class="agent-action-buttons-container carrier-tool-buttons">
+                                @if (!string.IsNullOrEmpty(carrier.ServicingWebsite))
+                                {
+                                    <a class="agent-action-btn carrier-tool-btn" href="@StringHelper.FormatUrl(carrier.ServicingWebsite)" target="_blank" rel="noopener noreferrer">
+                                        <FluentIcon Value="@(new Icons.Regular.Size32.Globe())" Color="Color.Custom" CustomColor="#0473ce" Class="agent-btn-icon" />
+                                        <span class="agent-btn-text">Service Site</span>
+                                    </a>
+                                }
+                                @if (!string.IsNullOrEmpty(carrier.ServicingEmail))
+                                {
+                                    <a class="agent-action-btn carrier-tool-btn" href="mailto:@(carrier.ServicingEmail)">
+                                        <FluentIcon Value="@(new Icons.Regular.Size32.Mail())" Color="Color.Custom" CustomColor="#0473ce" Class="agent-btn-icon" />
+                                        <span class="agent-btn-text">Service Email</span>
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state-container-small">
+                                <FluentIcon Value="@(new Icons.Regular.Size32.Globe())" Color="Color.Custom" CustomColor="#c7cdd6" />
+                                <span class="empty-state-text-small">None Found</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="carrier-tool-group">
+                        @if (!string.IsNullOrEmpty(carrier.QuotingWebsite) || !string.IsNullOrEmpty(carrier.NewSubmissionEmail))
+                        {
+                            <div class="agent-action-buttons-container carrier-tool-buttons">
+                                @if (!string.IsNullOrEmpty(carrier.QuotingWebsite))
+                                {
+                                    <a class="agent-action-btn carrier-tool-btn" href="@StringHelper.FormatUrl(carrier.QuotingWebsite)" target="_blank" rel="noopener noreferrer">
+                                        <FluentIcon Value="@(new Icons.Filled.Size32.Globe())" Color="Color.Custom" CustomColor="#0473ce" Class="agent-btn-icon" />
+                                        <span class="agent-btn-text">Quote Site</span>
+                                    </a>
+                                }
+                                @if (!string.IsNullOrEmpty(carrier.NewSubmissionEmail))
+                                {
+                                    <a class="agent-action-btn carrier-tool-btn" href="@($"mailto:{carrier.NewSubmissionEmail}")">
+                                        <FluentIcon Value="@(new Icons.Filled.Size32.Mail())" Color="Color.Custom" CustomColor="#0473ce" Class="agent-btn-icon" />
+                                        <span class="agent-btn-text">Quote Email</span>
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state-container-small">
+                                <FluentIcon Value="@(new Icons.Regular.Size32.DocumentFolder())" Color="Color.Custom" CustomColor="#c7cdd6" />
+                                <span class="empty-state-text-small">None Found</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                    <div class="txt-section spc">SPECIALTIES</div>
+                    <div class="carrier-section-actions">
+                        <a class="sf-add-button" @onclick="OpenProductsDialog">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Pen())" Color="Color.Custom" CustomColor="#036ac4" />
+                            Edit
+                        </a>
+                    </div>
+                </FluentStack>
+                
+                @if (allProducts != null && allProducts.Any())
+                {
+                    var activeProducts = carrier?.CarrierProducts?.Where(cp => cp.IsActive).ToList() ?? new List<CarrierProduct>();
+                    @if (activeProducts.Any())
+                    {
+                        <div class="carrier-specialty-tags">
+                            @foreach (var carrierProduct in activeProducts)
+                            {
+                                var product = allProducts.FirstOrDefault(p => p.ProductId == carrierProduct.ProductId);
+                                if (product != null)
+                                {
+                                    <span class="carrier-specialty-pill">
+                                        @(!string.IsNullOrEmpty(product.LineNickname) ? product.LineNickname : product.LineName)
+                                        @if (carrierProduct.ProductSpecialty)
+                                        {
+                                            <FluentIcon Value="@(new Icons.Filled.Size16.Star())" CustomColor="#ffa500" Color="Color.Custom" />
+                                        }
+                                    </span>
+                                }
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state-container-small">
+                            <FluentIcon Value="@(new Icons.Regular.Size32.Tag())" Color="Color.Custom" CustomColor="#c7cdd6" />
+                            <span class="empty-state-text-small">None Found</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <FluentProgressRing Size="ProgressRingSize.Small" />
+                }
+
+                
+                <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                    <div class="txt-section spc">NOTES</div>
+                    <div class="carrier-section-actions">
+                        <a class="sf-add-button" @onclick="EditNotes">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Pen())" Color="Color.Custom" CustomColor="#036ac4" />
+                            Edit
+                        </a>
+                    </div>
+                </FluentStack>
+                <div class="div-section carrier-notes-section">
+                    <div class="carrier-notepady">
+                        <div class="notepady-title">Notepad</div>
+                        @if (string.IsNullOrWhiteSpace(carrier.Notes))
+                        {
+                            <div class="carrier-notes-empty">
+                                <FluentIcon Value="@(new Icons.Regular.Size48.NoteAdd())" Color="Color.Custom" CustomColor="#c7cdd6" />
+                                <span>None Found</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="carrier-notes-body">@carrier.Notes</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="carrier-section-card carrier-specialty-card">
+                <div class="txt-section">CREDENTIALS</div>
+                <div class="div-section">
+                    @{
+                        Console.WriteLine(carrier.Credentials.Count);
+                    }
+                    <CredentialList CarrierId="@SelectedCarrierId" Credentials="@carrier.Credentials" OnCredentialChanged="OnCredentialChanged" />
+                </div>
+
+                @if (carrier.Wholesaler)
+                {
+                    <div class="txt-section spc">CARRIER ACCESS</div>
+                    <div class="div-section">
+                        @{
+                            var associations = GetOrderedAssociations().ToList();
+                        }
+                        @if (associations.Any())
+                        {
+                            <table class="carrier-access-table">
+                                <tbody>
+                                    @foreach (var association in associations)
+                                    {
+                                        <tr class="carrier-access-row" style="">
+                                            <td class="carrier-access-cell" style="@(association.IsActive ? "font-weight: 600;" : "color: #888;")">
+                                                <div class="carrier-access-name">
+                                                    @(association.Carrier?.CarrierName ?? "(Unknown Carrier)")
+                                                    @if (!association.IsActive)
+                                                    {
+                                                        <span style="font-size: 12px; color: #888;"> (Inactive)</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="carrier-access-cell-2">
+                                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="4">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Open())" OnClick="@(() => NavigateToCarrier(association.CarrierId))" Title="View Carrier" Style="cursor: pointer;" />
+                                                    @if (association.IsActive)
+                                                    {
+                                                        <FluentIcon Value="@(new Icons.Regular.Size20.Delete())" OnClick="@(() => ShowRemoveCarrierConfirmation(association))" Title="Deactivate Access" Style="cursor: pointer;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <FluentIcon Value="@(new Icons.Regular.Size20.CheckmarkCircle())" OnClick="@(() => ActivateCarrierAccess(association))" Title="Activate Access" Style="cursor: pointer; color: #0b6a0b;" />
+                                                    }
+                                                </FluentStack>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <span class="txt-bold">(No carrier associations)</span>
+                        }
+                    </div>
+                    <div class="carrier-section-actions">
+                        <a class="sf-add-button" @onclick="OpenAddCarrierDialog">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Color="Color.Custom" CustomColor="#036ac4" />
+                            Associate Carrier
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <div class="carrier-section-card carrier-policies-card">
+                <div class="txt-section">Policies</div>
+                <div class="div-section">
+                    <PolicyListSmall policyList="@carrierPolicies" />
+                </div>
+            </div>
+        </FluentStack>
+    </div>
+
+}
+
+<!-- Add Carrier Access Dialog -->
+<FluentDialog @bind-Hidden="addCarrierDialogHidden" @ref="addCarrierDialogRef" TrapFocus="true" Modal="true" Title="Add Carrier Access" Style="min-width: 650px; max-width: 750px;">
+    <div class="add-carrier-dialog-content">
+        <div class="search-section">
+            <FluentTextField @bind-Value="carrierSearchTerm" 
+                           Placeholder="Start typing to search carriers..." 
+                           @oninput="HandleCarrierSearchInput"
+                           Style="width: 100%;">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Search())" Slot="start" />
+            </FluentTextField>
+        </div>
+
+        <div class="results-section">
+            @if (isSearchingCarriers)
+            {
+                <div class="search-loading-state">
+                    <FluentProgressRing Size="ProgressRingSize.Small" />
+                    <span>Searching...</span>
+                </div>
+            }
+            else if (availableCarriers.Count > 0)
+            {
+                <div class="results-list-container">
+                    @foreach (var availableCarrier in availableCarriers.Take(10))
+                    {
+                        <div class="result-item">
+                            <div class="result-info">
+                                <div class="result-name">
+                                    @availableCarrier.CarrierName
+                                    <span class="result-type @(availableCarrier.Wholesaler ? "type-wholesaler" : "type-carrier")">
+                                        @(availableCarrier.Wholesaler ? "Wholesaler" : "Carrier")
+                                    </span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(availableCarrier.City) || !string.IsNullOrEmpty(availableCarrier.State))
+                                {
+                                    <div class="result-location">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Location())" />
+                                        @($"{availableCarrier.City}, {availableCarrier.State}".Trim(' ', ','))
+                                    </div>
+                                }
+                            </div>
+                            <div class="result-action">
+                                <FluentButton Appearance="Appearance.Accent" 
+                                            OnClick="@(() => AddCarrierAccessDirect(availableCarrier))"
+                                            IconEnd="@(new Icons.Regular.Size20.Add())">
+                                    Add
+                                </FluentButton>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(carrierSearchTerm))
+            {
+                <div class="empty-results-state">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.SearchSparkle())" Color="Color.Custom" CustomColor="#c7cdd6" />
+                    <span class="empty-results-text">No matching carriers found</span>
+                    <span class="empty-results-hint">Try a different search term</span>
+                </div>
+            }
+            else
+            {
+                <div class="empty-results-state">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.Search())" Color="Color.Custom" CustomColor="#c7cdd6" />
+                    <span class="empty-results-text">Start typing to search</span>
+                    <span class="empty-results-hint">Enter at least 2 characters</span>
+                </div>
+            }
+        </div>
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelAddCarrierDialog">Close</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<!-- Remove Carrier Access Confirmation Dialog -->
+<FluentDialog @bind-Hidden="removeCarrierDialogHidden" TrapFocus="true" Modal="true" Title="Confirm Deactivate Carrier Access">
+    <div class="dialog-content">
+        <p>Are you sure you want to deactivate access to this carrier? You can reactivate it later.</p>
+        @if (associationPendingStatusChange?.Carrier != null)
+        {
+            <p><strong>@associationPendingStatusChange.Carrier.CarrierName</strong></p>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmRemoveCarrierAccess">Deactivate Access</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelRemoveCarrierAccess">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<!-- Products Dialog -->
+<FluentDialog @bind-Hidden="productsDialogHidden" TrapFocus="true" Modal="true" Title="Manage Specialty Lines" Style="min-width: 600px;">
+    <div class="dialog-content">
+        @if (allProducts != null && allProducts.Any())
+        {
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                @foreach (var product in allProducts.OrderBy(p => p.LineName))
+                {
+                    var isChecked = productCheckStates.GetValueOrDefault(product.ProductId, false);
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <SfCheckBox Checked="@isChecked"
+                                    ValueChange="@(async (Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args) => await OnProductCheckboxChanged(product.ProductId, args))"
+                                    Label="@(!string.IsNullOrEmpty(product.LineNickname) ? product.LineNickname : product.LineName)" />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="CloseProductsDialog">Done</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<!-- Edit Notes Dialog -->
+<FluentDialog @bind-Hidden="notesDialogHidden" TrapFocus="true" Modal="true" Title="Edit Carrier Notes" Style="min-width: 600px; max-width: 800px;">
+    <div class="notes-dialog-content">
+        <FluentTextArea @bind-Value="editedNotes" 
+                       Placeholder="Enter notes about this carrier..."
+                       Rows="12"
+                       Resize="TextAreaResize.Vertical"
+                       Style="width: 100%;" />
+    </div>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveNotes">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Save())" Slot="start" />
+            Save
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelEditNotes">Cancel</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public int SelectedCarrierId { get; set; }
+    [Parameter] public EventCallback<int> SelectedCarrierIdChanged { get; set; }
+
+    Carrier? carrier;
+    private List<Policy> carrierPolicies = new();
+    private List<WholesalerCarrier> wholesalerCarrierAssociations = new();
+    private List<Product> allProducts = new();
+    private Dictionary<int, bool> productCheckStates = new();
+
+    // Add Carrier Dialog Properties
+    private bool addCarrierDialogHidden = true;
+    private FluentDialog? addCarrierDialogRef;
+    private bool isSearchingCarriers = false;
+    private string carrierSearchTerm = string.Empty;
+    private List<Carrier> availableCarriers = new();
+    private Carrier? selectedCarrierToAdd;
+    private string carrierAccessNotes = string.Empty;
+    private System.Timers.Timer? carrierSearchTimer;
+
+    // Remove Carrier Dialog Properties
+    private bool removeCarrierDialogHidden = true;
+    private WholesalerCarrier? associationPendingStatusChange;
+
+    // Products Dialog Properties
+    private bool productsDialogHidden = true;
+
+    // Notes Dialog Properties
+    private bool notesDialogHidden = true;
+    private string editedNotes = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load products and carrier data in parallel
+        await Task.WhenAll(LoadProductsData(), LoadCarrierData());
+
+        // Initialize search timer
+        carrierSearchTimer = new System.Timers.Timer(500); // 500ms debounce
+        carrierSearchTimer.AutoReset = false;
+        carrierSearchTimer.Elapsed += async (sender, e) => await SearchAvailableCarriers();
+    }
+
+    private async Task LoadCarrierData()
+    {
+        carrier = await CarrierService.GetCarrierByIdAsync(SelectedCarrierId);
+        if (carrier is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+        carrierPolicies = await PolicyService.GetCurrentPoliciesByCarrierIdAsync(SelectedCarrierId);
+
+        // Load wholesaler access carriers if this is a wholesaler
+        if (carrier.Wholesaler)
+        {
+            wholesalerCarrierAssociations = await CarrierService.GetWholesalerCarrierAssociationsAsync(SelectedCarrierId, includeInactive: true);
+        }
+        else
+        {
+            wholesalerCarrierAssociations = new List<WholesalerCarrier>();
+        }
+
+        // Initialize product check states
+        InitializeProductCheckStates();
+    }
+
+    private async Task LoadProductsData()
+    {
+        allProducts = await SharedService.GetAllProductsAsync();
+    }
+
+    private void InitializeProductCheckStates()
+    {
+        productCheckStates.Clear();
+        if (carrier?.CarrierProducts != null)
+        {
+            foreach (var product in allProducts)
+            {
+                productCheckStates[product.ProductId] = carrier.CarrierProducts.Any(cp => cp.ProductId == product.ProductId && cp.IsActive);
+            }
+        }
+    }
+
+    private IEnumerable<WholesalerCarrier> GetOrderedAssociations() =>
+        wholesalerCarrierAssociations
+            .OrderByDescending(a => a.IsActive)
+            .ThenBy(a => a.Carrier?.CarrierName ?? string.Empty);
+
+    private static string GetAssociationStatusLabel(WholesalerCarrier association) => association.IsActive ? "Active" : "Inactive";
+
+    private static string GetAssociationStatusColor(WholesalerCarrier association) => association.IsActive ? "#0b6a0b" : "#8a1f1f";
+
+    private bool GetProductCheckedProxy(int productId)
+    {
+        return productCheckStates.GetValueOrDefault(productId, false);
+    }
+
+    private async Task OnProductCheckboxChanged(int productId, Syncfusion.Blazor.Buttons.ChangeEventArgs<bool?> args)
+    {
+        var isChecked = args.Checked ?? false;
+
+        // Update the UI state immediately
+        productCheckStates[productId] = isChecked;
+        StateHasChanged();
+
+        try
+        {
+            if (isChecked)
+            {
+                await CarrierService.AddCarrierProductAsync(SelectedCarrierId, productId);
+            }
+            else
+            {
+                await CarrierService.RemoveCarrierProductAsync(SelectedCarrierId, productId);
+            }
+
+            // Reload carrier data to refresh the underlying data model
+            await LoadCarrierData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating carrier product: {ex.Message}");
+            // Revert the checkbox state on error
+            productCheckStates[productId] = !isChecked;
+            StateHasChanged();
+        }
+    }
+
+    // Dialog Management Methods
+    private async Task OpenAddCarrierDialog()
+    {
+        selectedCarrierToAdd = null;
+        carrierSearchTerm = string.Empty;
+        carrierAccessNotes = string.Empty;
+        availableCarriers.Clear();
+        addCarrierDialogHidden = false;
+        StateHasChanged();
+    }
+
+    private void CancelAddCarrierDialog()
+    {
+        addCarrierDialogHidden = true;
+        selectedCarrierToAdd = null;
+        carrierSearchTerm = string.Empty;
+        carrierAccessNotes = string.Empty;
+        availableCarriers.Clear();
+        StateHasChanged();
+    }
+
+    private void ShowRemoveCarrierConfirmation(WholesalerCarrier association)
+    {
+        associationPendingStatusChange = association;
+        removeCarrierDialogHidden = false;
+        StateHasChanged();
+    }
+
+    private void CancelRemoveCarrierAccess()
+    {
+        removeCarrierDialogHidden = true;
+        associationPendingStatusChange = null;
+        StateHasChanged();
+    }
+
+    private void OpenProductsDialog()
+    {
+        productsDialogHidden = false;
+        StateHasChanged();
+    }
+
+    private void CloseProductsDialog()
+    {
+        productsDialogHidden = true;
+        StateHasChanged();
+    }
+
+    private void EditNotes()
+    {
+        editedNotes = carrier?.Notes ?? string.Empty;
+        notesDialogHidden = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveNotes()
+    {
+        if (carrier == null) return;
+
+        try
+        {
+            await CarrierService.UpdateCarrierNotesAsync(SelectedCarrierId, editedNotes);
+            carrier.Notes = editedNotes;
+            notesDialogHidden = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving carrier notes: {ex.Message}");
+        }
+    }
+
+    private void CancelEditNotes()
+    {
+        notesDialogHidden = true;
+        editedNotes = string.Empty;
+        StateHasChanged();
+    }
+
+    // Search and Selection Methods
+    private async Task HandleCarrierSearchInput(ChangeEventArgs e)
+    {
+        carrierSearchTerm = e.Value?.ToString() ?? string.Empty;
+        selectedCarrierToAdd = null; // Clear selection when search changes
+
+        carrierSearchTimer?.Stop();
+        carrierSearchTimer?.Start();
+        StateHasChanged();
+    }
+
+    private async Task SearchAvailableCarriers()
+    {
+        if (string.IsNullOrWhiteSpace(carrierSearchTerm) || carrierSearchTerm.Length < 2)
+        {
+            await InvokeAsync(() =>
+            {
+                availableCarriers.Clear();
+                isSearchingCarriers = false;
+                StateHasChanged();
+            });
+            return;
+        }
+
+        await InvokeAsync(() =>
+        {
+            isSearchingCarriers = true;
+            StateHasChanged();
+        });
+
+        try
+        {
+            var results = await CarrierService.GetAvailableCarriersForWholesalerAsync(SelectedCarrierId, carrierSearchTerm);
+
+            await InvokeAsync(() =>
+            {
+                availableCarriers = results;
+                isSearchingCarriers = false;
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                availableCarriers.Clear();
+                isSearchingCarriers = false;
+                StateHasChanged();
+            });
+            Console.WriteLine($"Error searching carriers: {ex.Message}");
+        }
+    }
+
+    private void SelectCarrierToAdd(Carrier carrier)
+    {
+        selectedCarrierToAdd = carrier;
+        StateHasChanged();
+    }
+
+    // Action Methods
+    private async Task AddCarrierAccess()
+    {
+        if (selectedCarrierToAdd == null) return;
+
+        try
+        {
+            await CarrierService.AddWholesalerCarrierAccessAsync(
+                SelectedCarrierId,
+                selectedCarrierToAdd.CarrierId,
+                string.IsNullOrWhiteSpace(carrierAccessNotes) ? null : carrierAccessNotes);
+
+            await LoadCarrierData(); 
+            CancelAddCarrierDialog();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding carrier access: {ex.Message}");
+        }
+    }
+
+    private async Task AddCarrierAccessDirect(Carrier carrier)
+    {
+        if (carrier == null) return;
+
+        try
+        {
+            await CarrierService.AddWholesalerCarrierAccessAsync(
+                SelectedCarrierId,
+                carrier.CarrierId,
+                null); 
+
+            await LoadCarrierData(); 
+            
+            availableCarriers.Remove(carrier);
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding carrier access: {ex.Message}");
+        }
+    }
+
+    private async Task ConfirmRemoveCarrierAccess()
+    {
+        if (associationPendingStatusChange == null) return;
+
+        try
+        {
+            await CarrierService.SetWholesalerCarrierAccessStatusAsync(SelectedCarrierId, associationPendingStatusChange.CarrierId, false);
+            await LoadCarrierData(); // Refresh the data
+            CancelRemoveCarrierAccess();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing carrier access: {ex.Message}");
+        }
+    }
+
+    private async Task ActivateCarrierAccess(WholesalerCarrier association)
+    {
+        try
+        {
+            await CarrierService.SetWholesalerCarrierAccessStatusAsync(SelectedCarrierId, association.CarrierId, true);
+            await LoadCarrierData(); // Refresh the data
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error activating carrier access: {ex.Message}");
+        }
+    }
+
+    // Navigation Methods
+    private void NavigateToCarrier(int carrierId)
+    {
+        NavigationManager.NavigateTo($"/Carriers/{carrierId}");
+    }
+
+    private async Task OnCredentialChanged()
+    {
+        await LoadCarrierData();
+        StateHasChanged();
+    }
+
+    private void SaveContact(Contact contact)
+    {
+        //carrier.Contacts.Add(contact);
+    }
+
+    public void Dispose()
+    {
+        carrierSearchTimer?.Dispose();
+    }
+}

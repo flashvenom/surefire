@@ -1,0 +1,274 @@
+.cert-requests-page {
+    display: flex;
+    flex-direction: row;
+    gap: 18px;
+    padding: 18px 24px;
+    height: calc(100vh - 124px);
+    overflow-y: auto;
+}
+
+.certificate-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 24px 0;
+    flex-wrap: wrap;
+}
+
+.certificate-toolbar fluent-search {
+    min-width: 260px;
+}
+
+.certificate-toolbar .toolbar-select {
+    min-width: 160px;
+}
+
+.card-hover-stable:hover {
+    transform: none !important;
+    top: 0 !important;
+}
+
+.overview-card {
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f4f5ff 65%, #f9f9ff 100%);
+    min-width: 350px !important;
+    max-width: 450px !important;
+}
+
+.overview-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.overview-title h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #1f1d63;
+}
+
+.overview-title p {
+    margin: 6px 0 0;
+    color: #5d5f82;
+    max-width: 520px;
+}
+
+.overview-metrics {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.metric {
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 18px 38px -28px rgba(32, 30, 96, 0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metric-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7b7fa6;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #201f5e;
+}
+
+.overview-meta {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #6d7195;
+    align-items: center;
+}
+
+.filter-pill {
+    background: rgba(87, 103, 218, 0.12);
+    color: #5147c6;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.cert-main-list {
+    margin-top: 12px;
+}
+
+.state-card {
+    padding: 48px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    color: #5d5f82;
+}
+
+.state-card h3 {
+    margin: 0;
+    color: #1f1d63;
+}
+
+.state-card p {
+    margin: 0;
+    max-width: 420px;
+}
+
+.error-card {
+    color: #c3454a;
+}
+
+.empty-card p,
+.placeholder-card p {
+    color: #6d7195;
+}
+
+.grid-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.grid-card .e-grid {
+    border: none;
+}
+
+.grid-card .e-headercell {
+    background: #f5f6ff;
+    color: #444a7a;
+    font-weight: 600;
+}
+
+.grid-primary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.grid-primary__title {
+    font-weight: 600;
+    color: #1f2342;
+}
+
+.grid-primary__meta {
+    font-size: 12px;
+    color: #6d7195;
+}
+
+.grid-date {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.grid-date__primary {
+    font-weight: 600;
+    color: #1f2342;
+}
+
+.grid-date__meta {
+    font-size: 12px;
+    color: #1b8ce3;
+    font-weight: 600;
+}
+
+.grid-actions {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+.grid-actions fluent-button::part(control) {
+    border: none;
+    background: transparent;
+    color: #4f5476;
+    min-width: 32px;
+    height: 32px;
+}
+
+.grid-actions fluent-button::part(control):hover {
+    background: rgba(98, 110, 228, 0.12);
+    color: #2f3dad;
+}
+
+.dialog-title {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 600;
+    color: #1f1d63;
+}
+
+.warning-text {
+    color: #a94442;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.dialog-footer fluent-button.danger-button::part(control) {
+    background: #d94c43;
+    color: #ffffff;
+}
+
+.dialog-footer fluent-button.danger-button::part(control):hover {
+    background: #b43a33;
+}
+
+@media (max-width: 960px) {
+    .cert-requests-page {
+        padding: 16px;
+    }
+
+    .certificate-toolbar {
+        margin: 12px 16px 0;
+    }
+
+    .overview-card {
+        padding: 22px;
+    }
+}
+
+@media (max-width: 640px) {
+    .certificate-toolbar fluent-search {
+        min-width: 100%;
+    }
+
+    .certificate-toolbar .toolbar-select {
+        min-width: 140px;
+    }
+
+    .overview-title h1 {
+        font-size: 20px;
+    }
+
+    .metric {
+        padding: 14px;
+    }
+}
+.surface-card {
+    min-width: unset;
+    max-width: unset;
+}
+.sc-min {
+    min-width: 350px;
+    max-width: 450px;
+}

@@ -1,0 +1,404 @@
+@namespace Quickfire.Blazor.Domain.Attachments.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.JSInterop
+@using Quickfire.Blazor.Domain.Attachments.Services
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Quickfire.Blazor.Domain.Attachments.Components.Dialogs
+@using Quickfire.Blazor.Domain.Shared.Components
+@using System.Threading
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject AttachmentService AttachmentService
+@inject StateService StateService
+@inject IJSRuntime JSRuntime
+
+<div class="attachment-grid-wrapper">
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <FluentTextField @bind-Value="filterText"
+                             @bind-Value:after="ApplyFiltersAndRefreshAsync"
+                             Placeholder="Filter by name, filename, policy, folder, user..."
+                             Style="min-width: 320px;" />
+            <FluentSelect TOption="string"
+                          Items="@typeOptions"
+                          @bind-SelectedOption="typeFilter"
+                          @bind-SelectedOption:after="ApplyFiltersAndRefreshAsync"
+                          Style="min-width: 160px;"
+                          Label="Type" />
+        </div>
+        <div class="toolbar-right">
+            <div class="view-toggle" title="Switch between list and thumbnail views">
+                <FluentButton Appearance="@(viewMode == AttachmentViewMode.List ? Appearance.Accent : Appearance.Stealth)"
+                              OnClick="@(() => SetViewMode(AttachmentViewMode.List))">
+                    List
+                </FluentButton>
+                <FluentButton Appearance="@(viewMode == AttachmentViewMode.Thumbnails ? Appearance.Accent : Appearance.Stealth)"
+                              OnClick="@(() => SetViewMode(AttachmentViewMode.Thumbnails))">
+                    Thumbnails
+                </FluentButton>
+            </div>
+            <FluentButton Appearance="Appearance.Outline" OnClick="RefreshAttachmentList">
+                <FluentIcon Value="@(new Icons.Regular.Size24.ArrowCounterclockwise())" Slot="start" />Refresh
+            </FluentButton>
+        </div>
+    </div>
+
+    @if (viewMode == AttachmentViewMode.List)
+    {
+        <FluentDataGrid @ref="@attachmentDataGrid"
+                        Items="attachmentListQueryable"
+                        ResizableColumns="true"
+                        TGridItem="Attachment"
+                        ShowHover="true"
+                        OnRowClick="@((FluentDataGridRow<Attachment> row) => HandleRowClick(row))">
+            <PropertyColumn Property="@(p => p.Description ?? "")" Title="Name" Sortable="true" />
+            <PropertyColumn Property="@(p => p.OriginalFileName ?? "")" Title="Filename" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Folder != null ? p.Folder.Name : "")" Title="Folder" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Policy != null ? p.Policy.PolicyNumber : "")" Title="Policy" Sortable="true" />
+            <PropertyColumn Property="@(p => p.DateCreated)" Title="Created" Sortable="true" Format="MM-dd-yyyy" />
+            <PropertyColumn Property="@(p => StringHelper.RemoveHashedFileName(p.LocalPath, p.HashedFileName))" Title="Path" Sortable="true" />
+            <PropertyColumn Property="@(p => StringHelper.FormatSize(p.FileSize))" Title="Size" Sortable="true" />
+            <PropertyColumn Property="@(p => p.UploadedBy != null ? p.UploadedBy.FirstName : "")" Title="User" Sortable="true" />
+            <TemplateColumn Title="Actions">
+                <ChildContent>
+                    @if (context is Attachment a)
+                    {
+                        <div class="row-actions">
+                            <FluentButton Appearance="Appearance.Stealth" Title="Preview" OnClick="@(async _ => await OpenPreviewAsync(a))">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Document())" />
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Stealth" Title="Edit name" OnClick="@(() => OpenEditDialog(a))">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" />
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Stealth" Title="Delete" OnClick="@(() => OpenDeleteDialog(a))">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Delete())" />
+                            </FluentButton>
+                        </div>
+                    }
+                </ChildContent>
+            </TemplateColumn>
+        </FluentDataGrid>
+    }
+    else
+    {
+        <div class="attachment-thumb-grid">
+            @foreach (var attachment in GetVisibleAttachments())
+            {
+                <div class="attachment-thumb-card" @onclick="() => OpenPreviewAsync(attachment)">
+                    <div class="thumb-top">
+                        <div class="thumb-icon">
+                            <FileTypeIcon FileName="@GetFileNameForIcon(attachment)" />
+                        </div>
+                        <div class="thumb-text">
+                            <div class="thumb-title">@GetAttachmentTitle(attachment)</div>
+                            <div class="thumb-subtitle">@GetAttachmentSubtitle(attachment)</div>
+                        </div>
+                        <div class="thumb-size">@StringHelper.FormatSize(attachment.FileSize)</div>
+                    </div>
+                    <div class="thumb-meta">
+                        <span>@(attachment.Folder?.Name ?? "No folder")</span>
+                        <span>@GetPolicyLabel(attachment)</span>
+                    </div>
+                    <div class="thumb-meta">
+                        <span>@attachment.DateCreated.ToString("MMM dd, yyyy")</span>
+                        <span>@(attachment.UploadedBy?.FirstName ?? "Unknown user")</span>
+                    </div>
+                    <div class="thumb-actions">
+                        <button type="button" class="thumb-action" title="Preview" @onclick:stopPropagation="true" @onclick="@(async _ => await OpenPreviewAsync(attachment))">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Document())" />
+                        </button>
+                        <button type="button" class="thumb-action" title="Edit name" @onclick:stopPropagation="true" @onclick="() => OpenEditDialog(attachment)">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
+                        </button>
+                        <button type="button" class="thumb-action" title="Delete" @onclick:stopPropagation="true" @onclick="() => OpenDeleteDialog(attachment)">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" />
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+
+
+<!-- Preview Dialog uses AttachmentPreview -->
+<BaseDialog DialogId="attachment-preview-dialog" Title="Attachment" @bind-Hidden="previewDialogHidden">
+    <ChildContent>
+        @if (selectedAttachmentId.HasValue)
+        {
+            <AttachmentPreview attachmentId="selectedAttachmentId" />
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => { editDialogHidden = false; })">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Slot="start" />Rename
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => previewDialogHidden = true)">Close</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<!-- Edit name dialog -->
+<EditAttachmentDialog @bind-Hidden="editDialogHidden"
+                      Attachment="selectedAttachment"
+                      OnSaved="OnAttachmentEdited" />
+
+<!-- Delete dialog (direct from grid) -->
+<DeleteAttachmentDialog @bind-Hidden="deleteDialogHidden"
+                        Attachment="selectedAttachment"
+                        OnConfirm="HandleDeleteFromGrid" />
+
+@code {
+
+    [Parameter] public int ClientId { get; set; }
+    private List<Attachment> attachmentList;
+    private IQueryable<Attachment> attachmentListQueryable;
+    private int? selectedAttachmentId { get; set; }
+    private Attachment selectedAttachment;
+    private string filterText = string.Empty;
+    private string typeFilter = "All";
+    private List<string> typeOptions = new() { "All", "Pdf", "Image", "Doc" };
+    private string currentSortColumn = "Description";
+    private bool isAscending = true;
+    private FluentDataGrid<Attachment> attachmentDataGrid;
+    private bool previewDialogHidden = true;
+    private bool editDialogHidden = true;
+    private bool deleteDialogHidden = true;
+    private AttachmentViewMode viewMode = AttachmentViewMode.List;
+
+    protected override void OnInitialized()
+    {
+        StateService.OnAttachmentListUpdated += RefreshAttachmentListOnEvent;
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        await RefreshAttachmentList();
+    }
+
+    private async void RefreshAttachmentListOnEvent()
+    {
+        await RefreshAttachmentList();
+    }
+
+    private void HandleRowClick(FluentDataGridRow<Attachment> row)
+    {
+        if (row?.Item?.AttachmentId == null)
+        {
+            // Return if there's no valid attachment
+            selectedAttachmentId = null;
+            return;
+        }
+
+        selectedAttachmentId = row.Item.AttachmentId;
+        selectedAttachment = row.Item;
+        previewDialogHidden = false;
+    }
+
+    private async Task LoadAttachmentsAsync()
+    {
+        attachmentList = await AttachmentService.GetAttachmentsByClientIdAsync(ClientId);
+        ApplyFilters();
+    }
+
+    private async Task RefreshAttachmentList()
+    {
+        await LoadAttachmentsAsync();
+        if (attachmentDataGrid != null)
+        {
+            try
+            {
+                await attachmentDataGrid.RefreshDataAsync();
+            }
+            catch
+            {
+                Console.WriteLine("Can't update attachment list");
+            }
+        }
+
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ApplyFiltersAndRefreshAsync()
+    {
+        ApplyFilters();
+        if (attachmentDataGrid != null)
+        {
+            try { await attachmentDataGrid.RefreshDataAsync(); } catch { }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+    private void ApplyFilters()
+    {
+        IEnumerable<Attachment> query = attachmentList ?? new List<Attachment>();
+
+        if (!string.IsNullOrWhiteSpace(filterText))
+        {
+            var ft = filterText.Trim().ToLowerInvariant();
+            query = query.Where(a =>
+                (a.Description ?? string.Empty).ToLower().Contains(ft)
+                || (a.OriginalFileName ?? string.Empty).ToLower().Contains(ft)
+                || (a.Policy?.PolicyNumber ?? string.Empty).ToLower().Contains(ft)
+                || (a.Folder?.Name ?? string.Empty).ToLower().Contains(ft)
+                || (a.UploadedBy?.FirstName ?? string.Empty).ToLower().Contains(ft)
+                || (a.FileFormat ?? string.Empty).ToLower().Contains(ft)
+            );
+        }
+
+        switch (typeFilter)
+        {
+            case "Pdf":
+                query = query.Where(a => string.Equals(a.FileFormat, ".pdf", StringComparison.OrdinalIgnoreCase));
+                break;
+            case "Image":
+                query = query.Where(a => new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" }
+                    .Contains((a.FileFormat ?? string.Empty).ToLower()));
+                break;
+            case "Doc":
+                query = query.Where(a => new[] { ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".csv", ".rtf", ".odt", ".ods" }
+                    .Contains((a.FileFormat ?? string.Empty).ToLower()));
+                break;
+        }
+
+        attachmentListQueryable = query.AsQueryable();
+        ApplySorting();
+    }
+    private void ApplySorting()
+    {
+        attachmentListQueryable = currentSortColumn switch
+        {
+            "Description" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.Description ?? "")
+                : attachmentListQueryable.OrderByDescending(a => a.Description ?? ""),
+            "DateCreated" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.DateCreated)
+                : attachmentListQueryable.OrderByDescending(a => a.DateCreated),
+            "Folder" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.Folder != null ? a.Folder.Name : "")
+                : attachmentListQueryable.OrderByDescending(a => a.Folder != null ? a.Folder.Name : ""),
+            "OriginalFileName" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.OriginalFileName ?? "")
+                : attachmentListQueryable.OrderByDescending(a => a.OriginalFileName ?? ""),
+            "PolicyNumber" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.Policy != null ? a.Policy.PolicyNumber : "")
+                : attachmentListQueryable.OrderByDescending(a => a.Policy != null ? a.Policy.PolicyNumber : ""),
+            "LocalPath" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.LocalPath ?? "")
+                : attachmentListQueryable.OrderByDescending(a => a.LocalPath ?? ""),
+            "FileSize" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.FileSize)
+                : attachmentListQueryable.OrderByDescending(a => a.FileSize),
+            "UploadedBy" => isAscending
+                ? attachmentListQueryable.OrderBy(a => a.UploadedBy != null ? a.UploadedBy.FirstName : "")
+                : attachmentListQueryable.OrderByDescending(a => a.UploadedBy != null ? a.UploadedBy.FirstName : ""),
+            _ => attachmentListQueryable
+        };
+    }
+
+    private void ToggleSortOrder(string columnName)
+    {
+        if (currentSortColumn == columnName)
+            isAscending = !isAscending;
+        else
+        {
+            currentSortColumn = columnName;
+            isAscending = true;
+        }
+        ApplySorting();
+    }
+
+    private async Task OpenPreviewAsync(Attachment a)
+    {
+        selectedAttachment = a;
+        selectedAttachmentId = a.AttachmentId;
+        previewDialogHidden = false;
+        await InvokeAsync(StateHasChanged);
+    }
+    private void OpenEditDialog(Attachment a)
+    {
+        selectedAttachment = a;
+        editDialogHidden = false;
+    }
+    private void OpenDeleteDialog(Attachment a)
+    {
+        selectedAttachment = a;
+        deleteDialogHidden = false;
+    }
+
+    private async Task HandleDeleteFromGrid(Attachment a)
+    {
+        try
+        {
+            await AttachmentService.DeleteAttachmentAndFileAsync(a.AttachmentId);
+            StateService.NotifyAttachmentListUpdated();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting attachment: {ex.Message}");
+        }
+    }
+
+    private async Task OnAttachmentEdited(Attachment a)
+    {
+        // Refresh the list after an edit
+        await RefreshAttachmentList();
+    }
+
+    private void SetViewMode(AttachmentViewMode mode)
+    {
+        if (viewMode == mode)
+        {
+            return;
+        }
+
+        viewMode = mode;
+    }
+
+    private IEnumerable<Attachment> GetVisibleAttachments()
+    {
+        return attachmentListQueryable?.ToList() ?? Enumerable.Empty<Attachment>();
+    }
+
+    private static string GetAttachmentTitle(Attachment attachment)
+    {
+        return string.IsNullOrWhiteSpace(attachment.Description)
+            ? attachment.OriginalFileName ?? "Untitled"
+            : attachment.Description;
+    }
+
+    private static string GetAttachmentSubtitle(Attachment attachment)
+    {
+        return string.IsNullOrWhiteSpace(attachment.OriginalFileName)
+            ? "No filename"
+            : attachment.OriginalFileName;
+    }
+
+    private static string GetPolicyLabel(Attachment attachment)
+    {
+        return attachment.Policy?.PolicyNumber ?? "No policy";
+    }
+
+    private static string GetFileNameForIcon(Attachment attachment)
+    {
+        if (!string.IsNullOrWhiteSpace(attachment.OriginalFileName))
+        {
+            return attachment.OriginalFileName;
+        }
+
+        return attachment.Description ?? string.Empty;
+    }
+
+    public void Dispose()
+    {
+        StateService.OnAttachmentListUpdated -= RefreshAttachmentListOnEvent;
+    }
+
+    private enum AttachmentViewMode
+    {
+        List,
+        Thumbnails
+    }
+}

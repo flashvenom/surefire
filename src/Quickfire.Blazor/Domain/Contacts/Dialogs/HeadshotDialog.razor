@@ -1,0 +1,115 @@
+@namespace Quickfire.Blazor.Domain.Contacts.Components.Dialogs
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Contacts.Services
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Syncfusion.Blazor.Inputs
+@inject ContactService ContactService
+
+<BaseDialog DialogId="@DialogId"
+            Title="Edit Headshot"
+            Hidden="@Hidden"
+            HiddenChanged="@HiddenChanged">
+    <ChildContent>
+        <span class="txt-label">Headshot</span>
+
+        @if (!string.IsNullOrEmpty(Contact?.HeadshotFilename))
+        {
+            <div>
+                <img src="/uploads/headshots/@Contact.HeadshotFilename" width="100" height="100" alt="Headshot" /><br />
+                <FluentButton Appearance="Appearance.Outline" OnClick="@(async () => await RemoveFile())">Remove</FluentButton>
+            </div>
+        }
+        else
+        {
+            <SfUploader AutoUpload="true" AllowedExtensions=".jpg,.jpeg,.png" MaxFileSize="5000000">
+                <UploaderEvents ValueChange="@OnHeadshotUpload"></UploaderEvents>
+            </SfUploader>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Neutral" OnClick="CloseDialog">Close</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "headshot-dialog";
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+
+    [Parameter] public Contact? Contact { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+
+    public void Open(Contact contact)
+    {
+        Contact = contact;
+        Hidden = false;
+        HiddenChanged.InvokeAsync(Hidden);
+    }
+
+    private void CloseDialog()
+    {
+        Hidden = true;
+        HiddenChanged.InvokeAsync(Hidden);
+    }
+
+    private async Task OnHeadshotUpload(UploadChangeEventArgs args)
+    {
+        if (args.Files != null && args.Files.Count > 0)
+        {
+            var file = args.Files[0];
+            if (file != null)
+            {
+                string extension = Path.GetExtension(file.FileInfo.Name);
+                string cleanFileName = StringHelper.BuildUploadPath(Contact.ContactId, Contact.FirstName, Contact.LastName, "headshots", extension);
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/headshots/", cleanFileName);
+
+                using (var stream = file.File.OpenReadStream(long.MaxValue))
+                {
+                    MemoryStream resizedImage;
+                    // Resize the image to ensure it's under 500px
+                    if (extension == ".png")
+                    {
+                        resizedImage = await ImageResizer.ResizeImagePngAsync(stream, 500);
+                    }
+                    else
+                    {
+                        resizedImage = await ImageResizer.ResizeImageAsync(stream, 500);
+                    }
+
+                    // Make sure the resized image stream is positioned at the beginning
+                    resizedImage.Seek(0, SeekOrigin.Begin);
+
+                    using (var fileStream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write))
+                    {
+                        // Copy the resized image to the file system
+                        await resizedImage.CopyToAsync(fileStream);
+                    }
+                }
+
+                // Update the Contact's HeadshotFilename field
+                Contact.HeadshotFilename = cleanFileName;
+                await ContactService.UpdateContactAsync(Contact);
+                await OnSave.InvokeAsync();
+                StateHasChanged(); // Refresh UI to show the updated headshot
+            }
+        }
+    }
+
+    private async Task RemoveFile()
+    {
+        if (!string.IsNullOrEmpty(Contact.HeadshotFilename))
+        {
+            string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/headshots/", Contact.HeadshotFilename);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+            Contact.HeadshotFilename = null;
+            await ContactService.UpdateContactAsync(Contact);
+            await OnSave.InvokeAsync();
+            StateHasChanged();
+        }
+    }
+} 

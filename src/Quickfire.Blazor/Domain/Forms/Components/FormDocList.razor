@@ -1,0 +1,563 @@
+@namespace Quickfire.Blazor.Domain.Forms.Components
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Buttons
+@using Microsoft.AspNetCore.Components
+@using System.Linq
+@using System.Threading.Tasks
+@using Microsoft.FluentUI.AspNetCore.Components
+@inject NavigationManager NavigationManager
+@inject FormService FormService
+
+<div class="form-doc-list-container">
+    <div class="form-doc-list-header">
+        <div class="form-doc-list-title">
+            <h3>@(string.IsNullOrEmpty(Title) ? "Forms & Applications" : Title)</h3>
+            <p class="form-doc-list-subtitle">All ACORDs, applications, and smart docs tied to this record.</p>
+        </div>
+        @if (AllowAddNew)
+        {
+            <FluentButton Appearance="Appearance.Accent" OnClick="HandleCreateNewFormClick" Class="form-doc-primary-action">
+                <FluentIcon Value="@(new Icons.Regular.Size20.DocumentAdd())" Slot="start" Color="Color.Fill" />
+                New form
+            </FluentButton>
+        }
+    </div>
+
+    @if (formDocList is null)
+    {
+        <div class="form-doc-loading-state">
+            <FluentProgressRing Size="ProgressRingSize.Large" />
+            <p>Loading your form library...</p>
+        </div>
+    }
+    else if (formDocList.Count == 0)
+    {
+        <div class="form-doc-empty-state">
+            <FluentIcon Value="@(new Icons.Regular.Size48.DocumentAdd())" Color="Color.Custom" CustomColor="#5c6bf6" />
+            <h4>Nothing here yet</h4>
+            <p>Keep everything in one place by adding your first ACORD or smart form.</p>
+            @if (AllowAddNew)
+            {
+                <div class="form-doc-empty-actions">
+                    <FluentButton Appearance="Appearance.Accent" OnClick="HandleCreateNewFormClick">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.AddCircle())" Slot="start" Color="Color.Fill" />
+                        Add your first form
+                    </FluentButton>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="form-doc-list-meta">
+            <FluentBadge Appearance="Appearance.Accent" Class="form-doc-count-badge">
+                @formDocList.Count form@(formDocList.Count == 1 ? "" : "s")
+            </FluentBadge>
+            <span class="form-doc-list-meta__last">
+                <FluentIcon Value="@(new Icons.Regular.Size16.History())" />
+                @GetLatestActivityLabel()
+            </span>
+        </div>
+        @if (IsSearching)
+        {
+            <div class="form-doc-refreshing-banner">
+                <FluentProgressRing Size="ProgressRingSize.Small" />
+                <span>Refreshing your list...</span>
+            </div>
+        }
+        <SfGrid @ref="Grid" DataSource="@formDocList"
+                AllowPaging="true" 
+                AllowSorting="true"
+                AllowFiltering="true"
+                Width="@(Width)"
+                EnableHover="true"
+                EnableVirtualization="false"
+                TValue="FormDoc">
+            <GridEvents TValue="FormDoc" OnActionBegin="ActionBeginHandler"></GridEvents>
+            <GridPageSettings PageSize="@PageSize" PageSizes="true"></GridPageSettings>
+            <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Menu"></GridFilterSettings>
+            <GridSortSettings>
+                <GridSortColumns>
+                    <GridSortColumn Field="DateCreated" Direction="Syncfusion.Blazor.Grids.SortDirection.Descending"></GridSortColumn>
+                </GridSortColumns>
+            </GridSortSettings>
+            <GridColumns>
+                <GridColumn Field=@nameof(FormDoc.FormDocId) HeaderText="ID" Width="70"></GridColumn>
+                <GridColumn Field=@nameof(FormDoc.Title) HeaderText="Application" Width="200">
+                    <Template>
+                        @{
+                            var doc = (FormDoc)context;
+                            <a href="/Forms/Editor/@doc.FormDocId" class="form-doc-link">@doc.Title</a>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field=@nameof(FormDoc.Description) HeaderText="Description" Width="250"></GridColumn>
+                <GridColumn Field=@nameof(FormDoc.DateCreated) HeaderText="Created" Width="120" Format="MM/dd/yyyy"></GridColumn>
+                <GridColumn Field="CreatedBy.FirstName" HeaderText="Created By" Width="120">
+                    <Template>
+                        @{
+                            var doc = (FormDoc)context;
+                            @(doc.CreatedBy?.FirstName ?? "-")
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field=@nameof(FormDoc.DateModified) HeaderText="Modified" Width="120" Format="MM/dd/yyyy"></GridColumn>
+                <GridColumn Field="ModifiedBy.FirstName" HeaderText="Modified By" Width="120">
+                    <Template>
+                        @{
+                            var doc = (FormDoc)context;
+                            @(doc.ModifiedBy?.FirstName ?? "-")
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn HeaderText="Actions" Width="150">
+                    <Template>
+                        @{
+                            var doc = (FormDoc)context;
+                            <div class="action-buttons">
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(()=>ShowRevisions(doc))" Title="Show Revisions">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.History())" />
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(()=>DuplicateForm(doc))" Title="Duplicate Form">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Copy())" />
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(()=>OpenForm(doc))" Title="Open Form">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Open())" />
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(()=>ShowEditDialog(doc))" Title="Edit Form Details">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(()=>ShowDeleteConfirmation(doc))" Title="Delete Form">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" />
+                                </FluentButton>
+                            </div>
+                        }
+                    </Template>
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+    }
+
+    <!-- Revision History Dialog -->
+    <SfDialog @bind-Visible="RevisionDialogVisible" Width="600px" IsModal="true" ShowCloseIcon="true">
+        <DialogEvents Closed="@OnRevisionDialogClose"></DialogEvents>
+        <DialogTemplates>
+            <Header>Revision History for @SelectedFormTitle</Header>
+            <Content>
+                @if (Revisions == null || Revisions.Count == 0)
+                {
+                    <p>No revision history available.</p>
+                }
+                else
+                {
+                    <div class="revision-list">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Revision Name</th>
+                                    <th>Created Date</th>
+                                    <th>Created By</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var revision in Revisions)
+                                {
+                                    <tr>
+                                        <td>@revision.RevisionName</td>
+                                        <td>@revision.DateCreated.ToString("MM/dd/yyyy HH:mm")</td>
+                                        <td>@(revision.CreatedBy?.FirstName ?? "System")</td>
+                                        <td>
+                                            <SfButton CssClass="e-info" OnClick="@(() => OpenRevision(revision.FormDocId, revision.FormDocRevisionId))">Open</SfButton>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton OnClick="@OnRevisionDialogClose" Content="Close" IsPrimary="false"></DialogButton>
+        </DialogButtons>
+    </SfDialog>
+
+    <!-- New Form Dialog -->
+    <SfDialog @bind-Visible="NewFormDialogVisible" Width="500px" IsModal="true" ShowCloseIcon="true">
+        <DialogEvents Closed="@OnNewFormDialogClose"></DialogEvents>
+        <DialogTemplates>
+            <Header>Create New Form</Header>
+            <Content>
+                @if (AvailableForms == null || AvailableForms.Count == 0)
+                {
+                    <p>Loading available form templates...</p>
+                }
+                else
+                {
+                    <div class="form-group">
+                        <label for="formSelect">Select Form Template:</label>
+                        <select id="formSelect" class="form-control" @bind="SelectedFormPdfId">
+                            <option value="0">-- Select a Form --</option>
+                            @foreach (var form in AvailableForms)
+                            {
+                                <option value="@form.FormPdfId">@form.Title</option>
+                            }
+                        </select>
+                    </div>
+                }
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton OnClick="@CreateNewForm" Content="Create" IsPrimary="true" Disabled="@(SelectedFormPdfId <= 0)"></DialogButton>
+            <DialogButton OnClick="@OnNewFormDialogClose" Content="Cancel" IsPrimary="false"></DialogButton>
+        </DialogButtons>
+    </SfDialog>
+
+    <!-- Delete Confirmation Dialog -->
+    <SfDialog @bind-Visible="@DeleteDialogVisible" Width="400px" IsModal="true" ShowCloseIcon="true" Header="Delete Form">
+        <DialogTemplates>
+            <Header>Delete Form</Header>
+        </DialogTemplates>
+        <DialogPositionData X="center" Y="center"></DialogPositionData>
+        <DialogButtons>
+            <DialogButton Content="Delete" IsPrimary="true" OnClick="@DeleteForm" CssClass="e-flat e-primary"></DialogButton>
+            <DialogButton Content="Cancel" OnClick="@(() => DeleteDialogVisible = false)" CssClass="e-flat"></DialogButton>
+        </DialogButtons>
+        <div class="dialog-content">
+            <p>Are you sure you want to delete this form? This action cannot be undone.</p>
+            <p><strong>Form Title:</strong> @SelectedFormTitle</p>
+        </div>
+    </SfDialog>
+
+    <!-- Edit Form Dialog -->
+    <SfDialog @bind-Visible="@EditDialogVisible" Width="500px" IsModal="true" ShowCloseIcon="true">
+        <DialogEvents Closed="@OnEditDialogClose"></DialogEvents>
+        <DialogTemplates>
+            <Header>Edit Form Details</Header>
+            <Content>
+                <div class="form-group">
+                    <label for="editTitle">Title:</label>
+                    <input id="editTitle" type="text" class="form-control" @bind="EditFormTitle" placeholder="Enter form title" />
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">Description:</label>
+                    <textarea id="editDescription" class="form-control" @bind="EditFormDescription" placeholder="Enter form description" rows="3"></textarea>
+                </div>
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton OnClick="@SaveFormChanges" Content="Save" IsPrimary="true"></DialogButton>
+            <DialogButton OnClick="@OnEditDialogClose" Content="Cancel" IsPrimary="false"></DialogButton>
+        </DialogButtons>
+    </SfDialog>
+</div>
+
+
+@code {
+    private SfGrid<FormDoc> Grid;
+    
+    [Parameter]
+    public List<FormDoc> formDocList { get; set; }
+
+    [Parameter]
+    public string EntityType { get; set; }
+
+    [Parameter]
+    public int EntityId { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public bool AllowAddNew { get; set; } = true;
+
+    [Parameter]
+    public bool AllowEdit { get; set; } = true;
+
+    [Parameter]
+    public string Height { get; set; } = "450px";
+
+    [Parameter]
+    public string Width { get; set; } = "100%";
+
+    [Parameter]
+    public int PageSize { get; set; } = 10;
+    
+    [Parameter]
+    public EventCallback OnFormAdded { get; set; }
+
+    [Parameter]
+    public EventCallback OnCreateNewFormRequested { get; set; }
+
+    private bool RevisionDialogVisible { get; set; } = false;
+    private bool NewFormDialogVisible { get; set; } = false;
+    private bool IsSearching { get; set; } = false;
+    private int SelectedFormDocId { get; set; }
+    private string SelectedFormTitle { get; set; }
+    private List<FormDocRevision> Revisions { get; set; } = new List<FormDocRevision>();
+    private List<FormPdf> AvailableForms { get; set; } = new List<FormPdf>();
+    private int SelectedFormPdfId { get; set; } = 0;
+    private int TotalRecords { get; set; }
+    private int CurrentPage { get; set; } = 1;
+    private string SortField { get; set; } = "DateModified";
+    private bool SortAscending { get; set; } = false;
+    private bool DeleteDialogVisible { get; set; } = false;
+    private FormDoc FormToDelete { get; set; }
+    private bool EditDialogVisible { get; set; } = false;
+    private string EditFormTitle { get; set; }
+    private string EditFormDescription { get; set; }
+    private FormDoc FormToEdit { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFormDocsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(EntityType) && EntityId > 0)
+        {
+            await LoadFormDocsAsync();
+        }
+    }
+
+    private async Task LoadFormDocsAsync()
+    {
+        if (!string.IsNullOrEmpty(EntityType) && EntityId > 0)
+        {
+            IsSearching = true;
+            try
+            {
+                formDocList = await FormService.GetFormDocsByEntityAsync(
+                    EntityType, 
+                    EntityId,
+                    CurrentPage,
+                    PageSize,
+                    SortField,
+                    SortAscending);
+                
+                TotalRecords = await FormService.GetFormDocsCountByEntityAsync(EntityType, EntityId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading form docs: {ex.Message}");
+                formDocList = new List<FormDoc>();
+            }
+            IsSearching = false;
+        }
+    }
+
+    private async Task ActionBeginHandler(ActionEventArgs<FormDoc> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Paging)
+        {
+            CurrentPage = args.CurrentPage;
+            await LoadFormDocsAsync();
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Sorting)
+        {
+            SortField = args.ColumnName;
+            SortAscending = args.Direction == Syncfusion.Blazor.Grids.SortDirection.Ascending;
+            await LoadFormDocsAsync();
+        }
+    }
+
+    private async Task ShowRevisions(FormDoc formDoc)
+    {
+        SelectedFormDocId = formDoc.FormDocId;
+        SelectedFormTitle = formDoc.Title;
+        Revisions = await FormService.GetFormDocRevisionsAsync(formDoc.FormDocId);
+        RevisionDialogVisible = true;
+    }
+
+    private void OnRevisionDialogClose()
+    {
+        RevisionDialogVisible = false;
+    }
+
+    private void OpenForm(FormDoc formDoc)
+    {
+        NavigationManager.NavigateTo($"/Forms/Editor/{formDoc.FormDocId}");
+    }
+
+    private void OpenRevision(int formDocId, int revisionId)
+    {
+        // Navigate to the form editor with a query parameter for the revision
+        NavigationManager.NavigateTo($"/Forms/Editor/{formDocId}?revisionId={revisionId}");
+    }
+
+    private async Task DuplicateForm(FormDoc formDoc)
+    {
+        var newFormDocId = await FormService.DuplicateFormDocAsync(formDoc);
+        NavigationManager.NavigateTo($"/Forms/Editor/{newFormDocId}");
+    }
+
+    private async Task HandleCreateNewFormClick()
+    {
+        if (OnCreateNewFormRequested.HasDelegate)
+        {
+            await OnCreateNewFormRequested.InvokeAsync();
+            return;
+        }
+
+        await OpenNewFormDialog();
+    }
+
+    public async Task OpenNewFormDialog()
+    {
+        // Load available form templates
+        AvailableForms = await FormService.GetAllFormPdfs();
+        SelectedFormPdfId = 0;
+        NewFormDialogVisible = true;
+    }
+
+    private void OnNewFormDialogClose()
+    {
+        NewFormDialogVisible = false;
+    }
+
+    private async Task CreateNewForm()
+    {
+        if (SelectedFormPdfId <= 0)
+        {
+            return;
+        }
+
+        int newFormId = 0;
+
+        // Create a new form based on the selected template and entity
+        switch (EntityType.ToLower())
+        {
+            case "client":
+                newFormId = await FormService.CreateFormDoc(SelectedFormPdfId, clientId: EntityId);
+                break;
+            case "lead":
+                newFormId = await FormService.CreateFormDoc(SelectedFormPdfId, leadId: EntityId);
+                break;
+            case "submission":
+                newFormId = await FormService.CreateFormDoc(SelectedFormPdfId, submissionId: EntityId);
+                break;
+            case "policy":
+                newFormId = await FormService.CreateFormDoc(SelectedFormPdfId, policyId: EntityId);
+                break;
+            case "renewal":
+                newFormId = await FormService.CreateFormDoc(SelectedFormPdfId, renewalId: EntityId);
+                break;
+        }
+
+        NewFormDialogVisible = false;
+
+        if (newFormId > 0)
+        {
+            // Let the dialog close before we leave the page
+            await EnsureNewFormDialogClosedAsync();
+
+            // Notify parent if needed
+            if (OnFormAdded.HasDelegate)
+            {
+                await OnFormAdded.InvokeAsync();
+            }
+            
+            // Navigate to the form editor
+            NavigationManager.NavigateTo($"/Forms/Editor/{newFormId}");
+        }
+    }
+
+    private void ShowDeleteConfirmation(FormDoc formDoc)
+    {
+        FormToDelete = formDoc;
+        SelectedFormTitle = formDoc.Title;
+        DeleteDialogVisible = true;
+    }
+
+    private async Task DeleteForm()
+    {
+        if (FormToDelete == null) return;
+
+        try
+        {
+            await FormService.DeleteFormDocAsync(FormToDelete.FormDocId);
+            await LoadFormDocsAsync(); // Refresh the list
+            DeleteDialogVisible = false;
+        }
+        catch (Exception ex)
+        {
+            // You might want to show an error message to the user here
+            Console.WriteLine($"Error deleting form: {ex.Message}");
+        }
+    }
+
+    private void ShowEditDialog(FormDoc formDoc)
+    {
+        FormToEdit = formDoc;
+        EditFormTitle = formDoc.Title ?? "";
+        EditFormDescription = formDoc.Description ?? "";
+        EditDialogVisible = true;
+    }
+
+    private void OnEditDialogClose()
+    {
+        EditDialogVisible = false;
+    }
+
+    private async Task SaveFormChanges()
+    {
+        if (FormToEdit == null) return;
+
+        try
+        {
+            // Update the form doc with new title and description
+            FormToEdit.Title = EditFormTitle;
+            FormToEdit.Description = EditFormDescription;
+            
+            await FormService.UpdateFormDoc(FormToEdit);
+            EditDialogVisible = false;
+            await LoadFormDocsAsync(); // Refresh the list
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving form changes: {ex.Message}");
+        }
+    }
+
+    private async Task EnsureNewFormDialogClosedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(50);
+    }
+
+    private string GetLatestActivityLabel()
+    {
+        if (formDocList == null || formDocList.Count == 0)
+        {
+            return "No activity yet.";
+        }
+
+        var latest = formDocList
+            .OrderByDescending(f => f.DateModified != default ? f.DateModified : f.DateCreated)
+            .FirstOrDefault();
+
+        if (latest == null)
+        {
+            return "No activity yet.";
+        }
+
+        DateTime? timestamp = latest.DateModified != default
+            ? latest.DateModified
+            : (latest.DateCreated != default ? latest.DateCreated : (DateTime?)null);
+        var owner = latest.ModifiedBy?.FirstName ?? latest.CreatedBy?.FirstName;
+
+        if (!timestamp.HasValue)
+        {
+            return owner != null ? $"Most recently touched by {owner}" : "Recently updated";
+        }
+
+        var dateLabel = timestamp.Value.ToString("MMM dd, yyyy");
+        return owner != null ? $"Updated {dateLabel} by {owner}" : $"Updated {dateLabel}";
+    }
+}

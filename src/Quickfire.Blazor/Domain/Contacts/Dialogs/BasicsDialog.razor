@@ -1,0 +1,143 @@
+@namespace Quickfire.Blazor.Domain.Contacts.Components.Dialogs
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Contacts.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using Syncfusion.Blazor.Inputs
+
+<BaseDialog DialogId="@DialogId"
+Title="Edit Contact Information"
+@bind-Hidden="Hidden">
+    <ChildContent>
+        @if (CurrentContact != null)
+        {
+            <EditForm EditContext="@EditContext">
+                <div class="mb-3">
+                    <SfTextBox id="firstName" Placeholder="First Name" @bind-Value="CurrentContact.FirstName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => CurrentContact.FirstName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="lastName" Placeholder="Last Name" @bind-Value="CurrentContact.LastName" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => CurrentContact.LastName" class="text-danger" />
+                </div>
+
+                <div class="mb-3">
+                    <SfTextBox id="title" Placeholder="Title / Department" @bind-Value="CurrentContact.Title" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => CurrentContact.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <SfTextBox id="notes" Placeholder="Notes" @bind-Value="CurrentContact.Notes" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => CurrentContact.Notes" class="text-danger" />
+                </div>
+                @if (ConfirmedParentType == "Carrier")
+                {
+                    <div class="cb">
+                        <FluentCheckbox id="underwriter" Label="Underwriter" @bind-Value="CurrentContact.Underwriter" />
+                    </div>
+                    <div class="cb">
+                        <FluentCheckbox id="service" Label="Service" @bind-Value="CurrentContact.Service" />
+                    </div>
+                    <div class="cb">
+                        <FluentCheckbox id="billing" Label="Billing" @bind-Value="CurrentContact.Billing" />
+                    </div>
+                    <div class="cb">
+                        <FluentCheckbox id="rep" Label="Account Rep" @bind-Value="CurrentContact.Representative" />
+                    </div>
+                }
+            </EditForm>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveBasicsInfo">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "basics-dialog";
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+    [Parameter] public EventCallback<Contact> OnSave { get; set; }
+    [Parameter] public Contact? ContactForEdit { get; set; }
+    [Parameter] public string ConfirmedParentType { get; set; } = "";
+
+    [Inject] public SurefireDialogService DialogService { get; set; }
+    [Inject] public ContactService ContactService { get; set; }
+
+    public Contact CurrentContact { get; private set; } = new Contact();
+    public EditContext EditContext { get; private set; }
+
+    protected override void OnParametersSet()
+    {
+        // Initialize state when the dialog is made visible AND the data context changes
+        if (!Hidden && (ContactForEdit != CurrentContact || EditContext == null))
+        {
+            InitializeDialogState();
+        }
+    }
+
+    private void InitializeDialogState()
+    {
+        if (ContactForEdit != null)
+        {
+            // Edit mode: Create a COPY of the email to prevent direct modification
+            CurrentContact = new Contact
+                {
+                    ContactId = ContactForEdit.ContactId,
+                    FirstName = ContactForEdit.FirstName,
+                    LastName = ContactForEdit.LastName,
+                    Title = ContactForEdit.Title,
+                    Notes = ContactForEdit.Notes,
+                    Underwriter = ContactForEdit.Underwriter,
+                    Service = ContactForEdit.Service,
+                    Billing = ContactForEdit.Billing,
+                    Representative = ContactForEdit.Representative,
+                    Client = ContactForEdit.Client,
+                    Carrier = ContactForEdit.Carrier
+                };
+        }
+        else
+        {
+            Console.WriteLine("Create new???");
+            // Add mode: Create a new email
+            CurrentContact = new Contact();
+        }
+
+        EditContext = new EditContext(CurrentContact);
+        StateHasChanged();
+    }
+    private async Task CancelDialog()
+    {
+        await CloseDialogAsync();
+    }
+    // Central method to hide the dialog and notify the parent
+    private async Task CloseDialogAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+    private async Task SaveBasicsInfo()
+    {
+        // if (editContext?.Validate() ?? false)
+        // {
+        //     await ContactService.UpdateContactAsync(CurrentContact);
+        //     await OnSave.InvokeAsync(CurrentContact);
+        //     CloseDialog();
+        // }
+        if (EditContext?.Validate() ?? false)
+        {
+            try
+            {
+                await OnSave.InvokeAsync(CurrentContact);
+                await CloseDialogAsync();
+            }
+            catch (Exception ex)
+            {
+                // Handle error appropriately
+                Console.Error.WriteLine($"Error saving email address: {ex.Message}");
+            }
+        }
+    }
+} 

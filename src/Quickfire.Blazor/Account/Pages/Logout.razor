@@ -1,0 +1,48 @@
+﻿@page "/Account/Logout"
+@namespace Quickfire.Blazor.Components.Account.Pages
+@layout EmptyLayout
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using Quickfire.Blazor.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Logout> Logger
+@inject IdentityRedirectManager RedirectManager
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+
+<PageTitle>Logging out...</PageTitle>
+
+<div class="page-content">
+    <section style="width:300px; padding-left:40px;">
+        <h2>Logging out...</h2>
+    </section>
+</div>
+
+@code {
+    private bool _hasLoggedOut = false;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (!_hasLoggedOut)
+        {
+            _hasLoggedOut = true;
+            try
+            {
+                await SignInManager.SignOutAsync();
+                Logger.LogInformation("User logged out.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error occurred during logout.");
+            }
+
+            var destination = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+            RedirectManager.RedirectTo(destination);
+        }
+    }
+}

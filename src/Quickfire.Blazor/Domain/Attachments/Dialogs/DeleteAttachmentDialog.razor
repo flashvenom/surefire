@@ -1,0 +1,75 @@
+@namespace Quickfire.Blazor.Domain.Attachments.Components.Dialogs
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+
+<BaseDialog DialogId="@DialogId"
+            Title="Delete Attachment"
+            @bind-Hidden="Hidden">
+    <ChildContent>
+        <div class="delete-attachment-content">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Warning())" Color="Color.Warning" />
+            <p>Are you sure you want to permanently delete this attachment?</p>
+            
+            <div class="attachment-details">
+                <p><strong>File Name:</strong> @Attachment?.OriginalFileName</p>
+                @if (Attachment?.Renewal != null)
+                {
+                    <p><strong>Related to:</strong> Renewal #@Attachment.Renewal.RenewalId</p>
+                }
+                @if (Attachment?.AttachmentGroup != null)
+                {
+                    <p><strong>Related to:</strong> Attachment Group #@Attachment.AttachmentGroup.AttachmentGroupId</p>
+                }
+                @if (Attachment?.Policy != null)
+                {
+                    <p><strong>Related to:</strong> Policy #@Attachment.Policy.PolicyId</p>
+                }
+                @if (Attachment?.Carrier != null)
+                {
+                    <p><strong>Related to:</strong> Carrier: @Attachment.Carrier.CarrierName</p>
+                }
+                @if (Attachment?.Submission != null)
+                {
+                    <p><strong>Related to:</strong> Submission #@Attachment.Submission.SubmissionId</p>
+                }
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmDelete">Delete</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="Cancel">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "delete-attachment-dialog";
+    [Parameter] public Attachment? Attachment { get; set; }
+
+    // --- Visibility Binding ---
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+
+    // --- Action Callbacks ---
+    [Parameter] public EventCallback<Attachment> OnConfirm { get; set; }
+
+    private async Task ConfirmDelete()
+    {
+        if (Attachment != null)
+        {
+            await OnConfirm.InvokeAsync(Attachment);
+        }
+        await CloseDialogAsync();
+    }
+
+    private async Task Cancel()
+    {
+        await CloseDialogAsync();
+    }
+
+    private async Task CloseDialogAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+} 

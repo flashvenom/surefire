@@ -1,0 +1,216 @@
+<h1>Email Templates</h1>
+
+<p>
+    Email templates help you send consistent, professional emails quickly. Instead of typing the same message over and over, you create a template once and reuse it whenever you need to send that type of email.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of the Templates page showing the template list on the left and the template editor on the right. Highlight the template editor showing subject line, body text, and the Variables button. Use callouts to identify key areas. -->
+
+<h2>What Are Email Templates?</h2>
+
+<p>
+    Email templates are pre-written email messages that you can customize with variables. When you use a template, Quickfire fills in the variables with actual data (like the client's name, policy number, etc.) so the email is personalized automatically.
+</p>
+
+<p>
+    Templates are perfect for:
+</p>
+
+<ul>
+    <li><strong>Renewal reminders</strong> – Standard messages about upcoming policy expirations</li>
+    <li><strong>Quote requests</strong> – Professional requests for quotes from carriers</li>
+    <li><strong>Follow-up messages</strong> – Consistent follow-up communications</li>
+    <li><strong>Status updates</strong> – Informing clients about policy status</li>
+    <li><strong>Any repetitive email</strong> – Messages you send frequently with similar content</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: Visual examples showing: 1) A template with variables like {ClientName} and {PolicyNumber}, 2) The same template after variables are filled in with actual data. Use a before/after comparison to show how variables work. -->
+
+<h2>Finding and Editing Templates</h2>
+
+<p>
+    The Templates page shows all your email templates in a list on the left side. To work with a template:
+</p>
+
+<ol>
+    <li>Click on a template in the list to open it for editing</li>
+    <li>Or click "New Template" to create a fresh one</li>
+    <li>Edit the subject and body in the center editor</li>
+    <li>Use the Variables button to insert placeholders that will be filled automatically</li>
+    <li>Save your changes when you're done</li>
+</ol>
+
+<p>
+    The template editor is a simple text editor where you can type your email content. You can format text, add line breaks, and insert variables where you want dynamic content to appear.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Step-by-step screenshots: 1) Template list with one template selected, 2) Template editor showing the subject and body fields, 3) Variables button being clicked, 4) Variables dropdown/picker showing available options. Use numbered annotations. -->
+
+<h2>Understanding Variables</h2>
+
+<p>
+    Variables are placeholders in your template that get replaced with actual data when you send the email. They're written in curly braces, like {ClientName} or {PolicyNumber}.
+</p>
+
+<p>
+    <strong>Common variables include:</strong>
+</p>
+
+<ul>
+    <li><strong>{ClientName}</strong> – The client's company name</li>
+    <li><strong>{PolicyNumber}</strong> – The policy number</li>
+    <li><strong>{PolicyType}</strong> – The type of policy (General Liability, Workers' Comp, etc.)</li>
+    <li><strong>{ExpirationDate}</strong> – When the policy expires</li>
+    <li><strong>{ContactFirstName}</strong> – The contact person's first name</li>
+    <li><strong>{ContactEmail}</strong> – The contact's email address</li>
+    <li><strong>{PaymentAmount}</strong> – Payment amount (formatted as currency)</li>
+    <li><strong>{DownPaymentAmount}</strong> – Down payment amount (formatted as currency)</li>
+</ul>
+
+<p>
+    When you click the Variables button, you'll see a list of all available variables. Click one to insert it into your template at the cursor position.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Close-up screenshot of the Variables picker/dropdown showing the list of available variables. Highlight a few common ones. Show an example of a variable being inserted into the template body. Include a small example showing {ClientName} in the template and how it becomes "Acme Corporation" in the sent email. -->
+
+<h2>Setting Template Requirements</h2>
+
+<p>
+    Some templates need specific information to work correctly. For example, a renewal reminder template needs to know which policy you're talking about. You can mark these requirements in the template settings:
+</p>
+
+<ul>
+    <li><strong>Requires Policy</strong> – The template needs a policy to fill in policy-related variables</li>
+    <li><strong>Requires Contact</strong> – The template needs a contact to fill in contact-related variables</li>
+    <li><strong>Requires Payment</strong> – The template needs a payment amount</li>
+    <li><strong>Requires Down Payment</strong> – The template needs a down payment amount</li>
+</ul>
+
+<p>
+    When you try to use a template, Quickfire will prompt you for any missing required information before sending. This prevents sending incomplete emails.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot of template settings or requirements section showing checkboxes for "Requires Policy", "Requires Contact", etc. Include a note or tooltip explaining what each requirement means. Show an example of the prompt that appears when using a template that requires information. -->
+
+<h2>Activating Templates</h2>
+
+<p>
+    Templates can be active or inactive:
+</p>
+
+<ul>
+    <li><strong>Active templates</strong> – Appear in dropdown menus and can be used</li>
+    <li><strong>Inactive templates</strong> – Saved but hidden from menus (useful for old templates you might want to reuse later)</li>
+</ul>
+
+<p>
+    When you create or edit a template, you can activate it immediately or save it as inactive. You can change this status anytime—deactivating a template doesn't delete it, it just hides it from selection menus.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing the template activation toggle or checkbox. Show the same template in both states: active (visible in a dropdown) and inactive (not in the dropdown). Use visual indicators to show the difference. -->
+
+<h2>How Templates Work with Outlook</h2>
+
+<p>
+    When you use a template to send an email, Quickfire opens Microsoft Outlook with the email already filled in. Here's how it works:
+</p>
+
+<ol>
+    <li>You select a template (from an agent, action button, or template picker)</li>
+    <li>Quickfire fills in all the variables with actual data</li>
+    <li>Outlook opens with a new email message</li>
+    <li>The subject and body are already populated</li>
+    <li>The recipient's email address is filled in (if available)</li>
+    <li>You can review, make any final edits, and hit Send</li>
+</ol>
+
+<p>
+    This approach gives you the best of both worlds: the speed of templates with the flexibility to customize each email before sending.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot sequence: 1) Template being selected in Quickfire, 2) Outlook opening automatically, 3) Outlook showing the email with subject and body filled in. Use arrows or a flow diagram to show the sequence. Highlight that the email is ready to send but can still be edited. -->
+
+<h2>Template Variables Reference</h2>
+
+<p>
+    Here's a more complete list of available variables you can use in templates:
+</p>
+
+<h3>Client Variables</h3>
+<ul>
+    <li>{ClientName} – Company name</li>
+    <li>{ClientEmail} – Primary email address</li>
+    <li>{ClientName64} – URL-encoded company name (for use in links)</li>
+    <li>{ClientEmail64} – URL-encoded email (for use in links)</li>
+</ul>
+
+<h3>Policy Variables</h3>
+<ul>
+    <li>{PolicyNumber} – Policy number</li>
+    <li>{PolicyType} – Type of policy</li>
+    <li>{PolicyType64} – URL-encoded policy type</li>
+    <li>{ExpirationDate} – Policy expiration date</li>
+    <li>{EffectiveDate} – Policy effective date</li>
+</ul>
+
+<h3>Contact Variables</h3>
+<ul>
+    <li>{ContactFirstName} – Contact's first name</li>
+    <li>{ContactEmail} – Contact's email address</li>
+</ul>
+
+<h3>Financial Variables</h3>
+<ul>
+    <li>{PaymentAmount} – Payment amount (formatted)</li>
+    <li>{DownPaymentAmount} – Down payment amount (formatted)</li>
+</ul>
+
+<h3>Business Details Variables</h3>
+<ul>
+    <li>{BusinessDescription} – Description of the business</li>
+    <li>{EstimatedGrossSales} – Estimated annual sales</li>
+    <li>{EstimatedPayroll} – Estimated annual payroll</li>
+    <li>{PrimaryAddress} – Business address</li>
+    <li>{PrimaryPhone} – Primary phone number</li>
+</ul>
+
+<p>
+    The Variables button in the template editor shows all available variables for easy insertion.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot or table showing all the variables organized by category (Client, Policy, Contact, Financial, Business Details). Use a clean, organized layout that's easy to scan. Include examples of how each variable appears in an email. -->
+
+<h2>Best Practices</h2>
+
+<ul>
+    <li><strong>Keep templates current</strong> – Update templates when your messaging changes</li>
+    <li><strong>Use clear names</strong> – Name templates descriptively so you can find them easily</li>
+    <li><strong>Test variables</strong> – Send a test email to yourself to make sure variables fill in correctly</li>
+    <li><strong>Set requirements</strong> – Mark what each template needs so Quickfire can prompt for missing info</li>
+    <li><strong>Write professionally</strong> – Templates represent your agency, so make them polished</li>
+    <li><strong>Keep it flexible</strong> – Leave room for personalization when needed</li>
+</ul>
+
+<!-- IMAGE PLACEHOLDER: A simple infographic or checklist showing the best practices above with icons or illustrations. Make it visually appealing and easy to reference. -->
+
+<h2>Using Templates</h2>
+
+<p>
+    Templates can be used in several ways:
+</p>
+
+<ul>
+    <li><strong>From agents</strong> – Custom agents can use templates to send automated emails</li>
+    <li><strong>From action buttons</strong> – Buttons on client or renewal pages can trigger template emails</li>
+    <li><strong>From template picker</strong> – Select a template manually when you need to send an email</li>
+</ul>
+
+<p>
+    No matter how you use them, the process is the same: select the template, provide any required information, and Outlook opens with the email ready to send.
+</p>
+
+<!-- IMAGE PLACEHOLDER: Screenshot showing different ways to access templates: 1) An agent button that uses a template, 2) An action button on a client page, 3) A template picker dropdown. Show examples of each access method. -->
+
+<p>
+    <strong>Next Steps:</strong> Learn about <a href="/help/Basics/outreach-center">Outreach Center</a> to see how templates are used in email campaigns, or read about <a href="/help/Basics/concepts">Custom Agents</a> to understand how agents can automate template emails.
+</p>

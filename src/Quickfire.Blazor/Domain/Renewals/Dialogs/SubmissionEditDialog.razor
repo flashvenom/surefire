@@ -1,0 +1,339 @@
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Carriers.Components
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Syncfusion.Blazor.DropDowns
+@using System.ComponentModel.DataAnnotations
+
+<BaseDialog DialogId="@DialogId" Title="Edit Submission" @bind-Hidden="Hidden">
+    <ChildContent>
+        @if (EditContext != null && AllCarriers != null && AllWholesalers != null)
+        {
+            @if (!ShowCarrierPickerView)
+            {
+                <EditForm EditContext="@EditContext">
+                    <DataAnnotationsValidator />
+                    <div class="submission-edit-form">
+                        <div class="form-group">
+                            <label for="carrier">Carrier *</label>
+                            <div class="carrier-display-edit">
+                                @if (SelectedCarrier != null)
+                                {
+                                    <span class="selected-carrier">@SelectedCarrier.CarrierName</span>
+                                }
+                                else
+                                {
+                                    <span class="placeholder">Select a carrier</span>
+                                }
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => ShowCarrierPicker("carrier"))">
+                                    CHANGE
+                                </FluentButton>
+                            </div>
+                            <ValidationMessage For="() => CurrentSubmission.CarrierId" class="text-danger" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wholesaler">Wholesaler (Optional)</label>
+                            <div class="wholesaler-display-edit">
+                                @if (SelectedWholesaler != null)
+                                {
+                                    <span class="selected-wholesaler">@SelectedWholesaler.CarrierName</span>
+                                }
+                                else
+                                {
+                                    <span class="placeholder">Optional</span>
+                                }
+                                <FluentButton Appearance="Appearance.Outline" OnClick="@(() => ShowCarrierPicker("wholesaler"))">
+                                    CHANGE
+                                </FluentButton>
+                                @if (SelectedWholesaler != null)
+                                {
+                                    <FluentButton Appearance="Appearance.Outline" OnClick="ClearWholesaler">
+                                        CLEAR
+                                    </FluentButton>
+                                }
+                            </div>
+                        </div>
+
+                        @if (SubmissionForEdit != null)
+                        {
+                            <div class="submission-info">
+                                <p><strong>Submission ID:</strong> @SubmissionForEdit.SubmissionId</p>
+                                <p><strong>Created:</strong> @SubmissionForEdit.DateCreated?.ToString("MM/dd/yyyy h:mm tt")</p>
+                                <p><strong>Status:</strong> @SubmissionForEdit.Status</p>
+                                @if (SubmissionForEdit.Premium.HasValue)
+                                {
+                                    <p><strong>Premium:</strong> @SubmissionForEdit.Premium.Value.ToString("C")</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <ValidationSummary />
+                </EditForm>
+            }
+            else
+            {
+                <!-- Carrier Picker View -->
+                <div class="carrier-picker-dialog">
+                    <CarrierPicker AllCarriers="@AllCarriersAndWholesalers"
+                                   AllProducts="@AllProducts"
+                                   InitialSelectedCarrier="@(CurrentPickerType == "carrier" ? SelectedCarrier : SelectedWholesaler)"
+                                   OnCarrierSelected="@HandleCarrierSelected"
+                                   OnCancel="@HideCarrierPicker" />
+                </div>
+            }
+        }
+        else
+        {
+            <p>Loading...</p>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveChanges">Save Changes</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="Cancel">Cancel</FluentButton>
+        <div style="flex: 1;"></div>
+        <FluentButton Appearance="Appearance.Accent"
+                      Style="background-color: #d32f2f; border-color: #d32f2f;"
+                      OnClick="DeleteSubmission">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Delete())" Slot="start" />
+            Delete Submission
+        </FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<style>
+    .submission-edit-form {
+        min-width: 500px;
+        padding: 10px 0;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #323130;
+        }
+
+    .submission-info {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 12px;
+        border-left: 3px solid #0078d4;
+        margin-top: 10px;
+    }
+
+        .submission-info p {
+            margin: 4px 0;
+            font-size: 0.9rem;
+        }
+
+    .text-danger {
+        color: #d13438;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    .carrier-display-edit,
+    .wholesaler-display-edit {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        background: #f8f9fa;
+        border: 1px solid #d1d1d1;
+        border-radius: 4px;
+        min-height: 44px;
+    }
+
+    .selected-carrier,
+    .selected-wholesaler {
+        font-weight: 500;
+        color: #323130;
+        flex: 1;
+    }
+
+    .placeholder {
+        color: #666;
+        font-style: italic;
+        flex: 1;
+    }
+
+    .carrier-picker-dialog {
+        min-height: 500px;
+        width: 100%;
+    }
+</style>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "submission-edit-dialog";
+    [Parameter] public Submission? SubmissionForEdit { get; set; } // Data passed from parent
+    [Parameter] public List<Carrier>? AllCarriers { get; set; }
+    [Parameter] public List<Carrier>? AllWholesalers { get; set; }
+
+    // --- Visibility Binding ---
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+
+    // --- Action Callbacks ---
+    [Parameter] public EventCallback<SubmissionEditModel> OnSave { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+
+    // --- Internal State ---
+    private SubmissionEditModel CurrentSubmission { get; set; } = new();
+    private EditContext? EditContext { get; set; }
+
+    // --- Carrier Picker State ---
+    [Inject] private StateService StateService { get; set; }
+    private bool ShowCarrierPickerView = false;
+    private string CurrentPickerType = ""; // "carrier" or "wholesaler"
+    private List<Carrier> AllCarriersAndWholesalers = new();
+    private List<Product> AllProducts = new();
+    private Carrier? SelectedCarrier = null;
+    private Carrier? SelectedWholesaler = null;
+
+    // *** CRITICAL: Only initialize when dialog becomes visible ***
+    protected override void OnParametersSet()
+    {
+        if (!Hidden && (SubmissionForEdit?.SubmissionId != CurrentSubmission.SubmissionId || EditContext == null))
+        {
+            InitializeDialogState();
+        }
+    }
+
+    private async void InitializeDialogState()
+    {
+        if (SubmissionForEdit != null)
+        {
+            CurrentSubmission = new SubmissionEditModel
+            {
+                SubmissionId = SubmissionForEdit.SubmissionId,
+                CarrierId = SubmissionForEdit.Carrier?.CarrierId ?? 0,
+                WholesalerId = SubmissionForEdit.Wholesaler?.CarrierId
+            };
+
+            // Set selected carriers for display
+            SelectedCarrier = SubmissionForEdit.Carrier;
+            SelectedWholesaler = SubmissionForEdit.Wholesaler;
+        }
+        else
+        {
+            CurrentSubmission = new SubmissionEditModel();
+        }
+        EditContext = new EditContext(CurrentSubmission);
+
+        // Load data for carrier picker
+        await LoadCarrierPickerData();
+    }
+
+    private async Task LoadCarrierPickerData()
+    {
+        if (AllCarriers == null || AllWholesalers == null)
+            return;
+
+        AllCarriersAndWholesalers = new List<Carrier>();
+        AllCarriersAndWholesalers.AddRange(AllCarriers);
+        AllCarriersAndWholesalers.AddRange(AllWholesalers);
+
+        AllProducts = await StateService.AllProducts;
+    }
+
+    private async Task SaveChanges()
+    {
+        // Update the CurrentSubmission with the selected carriers
+        if (SelectedCarrier != null)
+        {
+            CurrentSubmission.CarrierId = SelectedCarrier.CarrierId;
+        }
+        CurrentSubmission.WholesalerId = SelectedWholesaler?.CarrierId;
+
+        if (EditContext?.Validate() ?? false)
+        {
+            try
+            {
+                await OnSave.InvokeAsync(CurrentSubmission);
+                await CloseDialogAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error saving submission: {ex.Message}");
+            }
+        }
+    }
+
+    // Carrier Picker Methods
+    private void ShowCarrierPicker(string pickerType)
+    {
+        CurrentPickerType = pickerType;
+        ShowCarrierPickerView = true;
+        StateHasChanged();
+    }
+
+    private void HideCarrierPicker()
+    {
+        ShowCarrierPickerView = false;
+        StateHasChanged();
+    }
+
+    private void HandleCarrierSelected(Carrier selectedCarrier)
+    {
+        if (CurrentPickerType == "carrier")
+        {
+            SelectedCarrier = selectedCarrier;
+            CurrentSubmission.CarrierId = selectedCarrier.CarrierId;
+        }
+        else if (CurrentPickerType == "wholesaler")
+        {
+            SelectedWholesaler = selectedCarrier;
+            CurrentSubmission.WholesalerId = selectedCarrier.CarrierId;
+        }
+
+        HideCarrierPicker();
+    }
+
+    private void ClearWholesaler()
+    {
+        SelectedWholesaler = null;
+        CurrentSubmission.WholesalerId = null;
+        StateHasChanged();
+    }
+
+    private async Task Cancel()
+    {
+        await CloseDialogAsync();
+    }
+
+    private async Task DeleteSubmission()
+    {
+        if (SubmissionForEdit != null)
+        {
+            await OnDelete.InvokeAsync(SubmissionForEdit.SubmissionId);
+            await CloseDialogAsync();
+        }
+    }
+
+    private async Task CloseDialogAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+
+    public class SubmissionEditModel
+    {
+        public int SubmissionId { get; set; }
+
+        [Required(ErrorMessage = "Carrier is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a carrier")]
+        public int CarrierId { get; set; }
+
+        public int? WholesalerId { get; set; }
+    }
+}

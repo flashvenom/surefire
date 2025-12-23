@@ -1,0 +1,100 @@
+.carrier-create-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.carrier-directory-card {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.carrier-directory-card .lookup-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--neutral-foreground-rest);
+}
+
+.directory-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.directory-card-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.directory-help {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--neutral-foreground-hint);
+}
+
+.carrier-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.carrier-suggestion {
+    border: 1px solid var(--neutral-stroke-rest);
+    border-radius: 8px;
+    padding: 0.75rem 0.85rem;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.carrier-suggestion:hover:not(:disabled),
+.carrier-suggestion:focus-visible {
+    border-color: var(--accent-stroke-control-default);
+    background-color: var(--neutral-layer-floating);
+}
+
+.carrier-suggestion:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.suggestion-name {
+    font-weight: 600;
+}
+
+.suggestion-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--neutral-foreground-hint);
+}
+
+.directory-empty {
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--neutral-foreground-hint);
+}
+
+@media (max-width: 900px) {
+    .carrier-create-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .carrier-directory-card {
+        position: static;
+        max-height: none;
+    }
+}

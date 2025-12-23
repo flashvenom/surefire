@@ -1,0 +1,119 @@
+@namespace Quickfire.Blazor.Domain.Contacts.Components.Dialogs
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Contacts.Services
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using Syncfusion.Blazor.Inputs
+
+<BaseDialog DialogId="@DialogId" 
+           Title="@(CurrentEmail?.EmailAddressId > 0 ? "Edit Email Address" : "Add Email Address")"
+           @bind-Hidden="Hidden">
+    <ChildContent>
+        @if (EditContext != null)
+        {
+            <EditForm EditContext="@EditContext">
+                <div class="form-group">
+                    <SfTextBox id="emailAddress" @bind-Value="CurrentEmail.Email" Placeholder="Email Address" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => CurrentEmail.Email" class="text-danger" />
+                </div>
+                <div class="form-group">
+                    <SfTextBox id="emailLabel" @bind-Value="CurrentEmail.Label" Placeholder="Label (e.g., Work, Personal)" FloatLabelType="FloatLabelType.Always" />
+                </div>
+                <div class="form-group checkbox-group" style="padding-top:15px;">
+                    @* Removed Set as Primary checkbox *@
+                </div>
+            </EditForm>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveEmailAddress">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+@code {
+    [Parameter] public string DialogId { get; set; } = "email-dialog";
+    [Parameter] public bool Hidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> HiddenChanged { get; set; }
+    [Parameter] public EventCallback<EmailAddress> OnSave { get; set; }
+    [Parameter] public int ContactId { get; set; }
+    [Parameter] public EmailAddress? EmailForEdit { get; set; } // Data passed from parent
+    
+    [Inject] public SurefireDialogService DialogService { get; set; }
+    [Inject] public ContactService ContactService { get; set; }
+    
+    public EmailAddress CurrentEmail { get; private set; } = new EmailAddress();
+    public EditContext EditContext { get; private set; }
+    
+    protected override void OnParametersSet()
+    {
+        // Initialize state when the dialog is made visible AND the data context changes
+        if (!Hidden && (EmailForEdit != CurrentEmail || EditContext == null))
+        {
+            InitializeDialogState();
+        }
+    }
+
+    private void InitializeDialogState()
+    {
+        if (EmailForEdit != null)
+        {
+            // Edit mode: Create a COPY of the email to prevent direct modification
+            CurrentEmail = new EmailAddress
+            {
+                EmailAddressId = EmailForEdit.EmailAddressId,
+                Email = EmailForEdit.Email,
+                Label = EmailForEdit.Label ?? "",
+                IsPrimary = EmailForEdit.IsPrimary,
+                ContactId = EmailForEdit.ContactId,
+                DateCreated = EmailForEdit.DateCreated,
+                DateModified = DateTime.UtcNow
+            };
+        }
+        else
+        {
+            // Add mode: Create a new email
+            CurrentEmail = new EmailAddress
+            {
+                ContactId = ContactId,
+                IsPrimary = false,
+                DateCreated = DateTime.UtcNow,
+                Label = ""
+            };
+        }
+        
+        EditContext = new EditContext(CurrentEmail);
+        StateHasChanged();
+    }
+
+    private async Task SaveEmailAddress()
+    {
+        if (EditContext?.Validate() ?? false)
+        {
+            try
+            {
+                await OnSave.InvokeAsync(CurrentEmail);
+                await CloseDialogAsync();
+            }
+            catch (Exception ex)
+            {
+                // Handle error appropriately
+                Console.Error.WriteLine($"Error saving email address: {ex.Message}");
+            }
+        }
+    }
+    
+    private async Task CancelDialog()
+    {
+        await CloseDialogAsync();
+    }
+
+    // Central method to hide the dialog and notify the parent
+    private async Task CloseDialogAsync()
+    {
+        Hidden = true;
+        await HiddenChanged.InvokeAsync(Hidden);
+    }
+}

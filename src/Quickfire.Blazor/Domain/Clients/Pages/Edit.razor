@@ -1,0 +1,249 @@
+﻿@page "/Clients/Edit/{ClientId:int}"
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Quickfire.Blazor.Domain.Clients.Components
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Contacts.Services
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Microsoft.EntityFrameworkCore
+@inject ClientService ClientService
+@inject ContactService ContactService
+@inject ClientStateService ClientStateService
+
+<_toolbar ClientId="@ClientId" PageName="Edit" ClientLoaded="true" />
+
+<div class="page-content">
+    <div class="mh1">Edit Client</div>
+    @if (client == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <EditForm Model="client" OnValidSubmit="UpdateClient" FormName="edit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mf-flex mf-flex-row mf-row-container">
+                <div class="mf-item-lg">
+                    <SfTextBox id="clientName" @bind-Value="client.Name" Placeholder="Client Name" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Name" class="text-danger" />
+
+                    <SfTextBox id="lookupCode" @bind-Value="client.LookupCode" Placeholder="Lookup Code" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.LookupCode" class="text-danger" />
+
+                    <SfTextBox id="phoneNumber" @bind-Value="client.PhoneNumber" Placeholder="Phone Number" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.PhoneNumber" class="text-danger" />
+
+                    <SfTextBox id="email" @bind-Value="client.Email" Placeholder="Email" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Email" class="text-danger" />
+
+                    <SfTextBox id="website" @bind-Value="client.Website" Placeholder="Website" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Website" class="text-danger" />
+
+                    <SfTextBox id="comments" @bind-Value="client.Comments" Placeholder="Comments" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Comments" class="text-danger" />
+                </div>
+
+                <div class="mf-item-lg mf-pad-left">
+                    <SfTextBox id="addressLine1" @bind-Value="client.Address.AddressLine1" Placeholder="Address Line 1" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.AddressLine1" class="text-danger" />
+
+                    <SfTextBox id="addressLine2" @bind-Value="client.Address.AddressLine2" Placeholder="Address Line 2" FloatLabelType="FloatLabelType.Always" />
+
+                    <SfTextBox id="city" @bind-Value="client.Address.City" Placeholder="City" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.City" class="text-danger" />
+
+                    <SfTextBox id="state" @bind-Value="client.Address.State" Placeholder="State" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.State" class="text-danger" />
+
+                    <SfTextBox id="postalCode" @bind-Value="client.Address.PostalCode" Placeholder="Postal Code" FloatLabelType="FloatLabelType.Always" />
+                    <ValidationMessage For="() => client.Address.PostalCode" class="text-danger" />
+                </div>
+
+                <div class="mf-item-lg mf-pad-left">
+                    <div class="mb-3">
+                        <span class="txt-label">Logo</span>
+
+                        @if (!string.IsNullOrEmpty(client.LogoFilename))
+                        {
+                            <div>
+                                <img src="/uploads/logos/@client.LogoFilename" width="100" height="100" alt="Headshot" /><br />
+                                <FluentButton Appearance="Appearance.Lightweight" OnClick="@(async () => await RemoveFile(client.ClientId))">Remove</FluentButton>
+                            </div>
+                        }
+                        else
+                        {
+                            <SfUploader AutoUpload="true" AllowedExtensions=".jpg,.jpeg,.png" MaxFileSize="5000000">
+                                <UploaderEvents ValueChange="@OnHeadshotUpload"></UploaderEvents>
+                            </SfUploader>
+                        }
+                    </div>
+
+                </div>
+
+            </div>
+
+            <br />
+
+            <SfButton Content="Cancel" CssClass="e-secondary" type="button" @onclick="CancelEdit"></SfButton>&nbsp;
+            <SfButton Content="Update Client" CssClass="e-primary" type="submit"></SfButton>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int ClientId { get; set; }
+
+    private Client client;
+    [CascadingParameter] public Action<string> UpdateHeader { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Clients");
+        client = await ClientService.GetClientById(ClientId);
+        if (client == null)
+        {
+            Navigation.NavigateTo("notfound");
+        }
+        else
+        {
+            if (client.Address == null)
+            {
+                client.Address = new Address();
+            }
+
+            // Migrate legacy client phone and email data if needed
+            await MigrateClientContactData();
+        }
+    }
+    
+    private async Task MigrateClientContactData()
+    {
+        bool dataChanged = false;
+        
+        // Check if client has phone numbers collection but it's empty
+        if (client.Contacts != null && client.Contacts.Any())
+        {
+            var primaryContact = client.Contacts.FirstOrDefault(c => c.ContactId == client.PrimaryContactId);
+            if (primaryContact != null)
+            {
+                // If the old phone number field has data and primary contact has no phone numbers
+                if (!string.IsNullOrEmpty(client.PhoneNumber) && 
+                    (primaryContact.PhoneNumbers == null || !primaryContact.PhoneNumbers.Any()))
+                {
+                    // Create a new phone number for the primary contact
+                    var phoneNumber = new PhoneNumber
+                    {
+                        Number = client.PhoneNumber,
+                        Type = PhoneType.Office,
+                        IsPrimary = true,
+                        ContactId = primaryContact.ContactId,
+                        Extension = "",
+                        DateCreated = DateTime.UtcNow,
+                        DateModified = DateTime.UtcNow
+                    };
+                    
+                    // Add the phone number to the database
+                    await ClientService.AddPhoneNumberAsync(phoneNumber);
+                    dataChanged = true;
+                }
+
+                // If the old email field has data and primary contact has no email addresses
+                if (!string.IsNullOrEmpty(client.Email) && 
+                    (primaryContact.EmailAddresses == null || !primaryContact.EmailAddresses.Any()))
+                {
+                    // Create a new email address for the primary contact
+                    var emailAddress = new EmailAddress
+                    {
+                        Email = client.Email,
+                        Label = "Main",
+                        IsPrimary = true,
+                        ContactId = primaryContact.ContactId,
+                        DateCreated = DateTime.UtcNow,
+                        DateModified = DateTime.UtcNow
+                    };
+                    
+                    // Add the email address to the database
+                    await ClientService.AddEmailAddressAsync(emailAddress);
+                    dataChanged = true;
+                }
+            }
+        }
+        
+        if (dataChanged)
+        {
+            await ClientService.UpdateClientAsync(client);
+            client = await ClientService.GetClientById(ClientId);
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveFile(int clientId)
+    {
+        await ClientService.RemoveLogo(clientId);
+        client.LogoFilename = null;
+        StateHasChanged();
+    }
+    private async Task OnHeadshotUpload(UploadChangeEventArgs args)
+    {
+        if (args.Files != null && args.Files.Count > 0)
+        {
+            var file = args.Files[0];
+            if (file != null)
+            {
+                string extension = Path.GetExtension(file.FileInfo.Name);
+                string fileName = $"{client.ClientId}{extension}";
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/logos/", fileName);
+
+                using (var stream = file.File.OpenReadStream(long.MaxValue))
+                {
+                    MemoryStream resizedImage;
+                    if (extension == ".png")
+                    {
+                        resizedImage = await ImageResizer.ResizeImagePngAsync(stream, 500);
+                    }
+                    else
+                    {
+                        resizedImage = await ImageResizer.ResizeImageAsync(stream, 500);
+                    }
+
+                    resizedImage.Seek(0, SeekOrigin.Begin);
+
+                    using (var fileStream = new FileStream(uploadPath, FileMode.Create, FileAccess.Write))
+                    {
+                        // Copy the resized image to the file system
+                        await resizedImage.CopyToAsync(fileStream);
+                    }
+                }
+
+                // Update the Contact's HeadshotFilename field
+                client.LogoFilename= fileName;
+                await ClientService.UpdateClientAsync(client);
+                StateHasChanged(); // Refresh UI to show the updated headshot
+            }
+        }
+    }
+    private async Task UpdateClient()
+    {
+        try
+        {
+            await ClientService.UpdateClientAsync(client);
+            
+            await ClientStateService.InvalidateClientCacheAsync(ClientId);
+            
+            Navigation.NavigateTo("/Clients/" + ClientId);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        Navigation.NavigateTo("/Clients/" + ClientId);
+    }
+}

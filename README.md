@@ -1,18 +1,32 @@
-﻿# Surefire AMS
+# Quickfire AMS (Openfire 1.1.0)
+![Quickfire](https://quickfireams.com/images/github/home-small.png)
 
 ## Primer
-Surefire's open source project Openfire is an insurance agency management system for independent P&C brokers. Designed with speed and efficiency in mind, it features built-in productivity tools and a foundation on which to leverage third party integrations, AI with custom prompts and more.
+Quickfire is an insurance agency management system for independent P&C brokers. Openfire is the open source edition, now fully refactored as of 1.1.0 for a cleaner architecture, faster iteration, and a stronger foundation for plugins and automation.
+
+[Take a Quick Video Tour](https://www.youtube.com/watch?v=ARkqg0iJG0g)
+
+## Editions
+Openfire is the open source core framework of Quickfire and is focused on workflows. The fully featured, closed source versions are available now:
+- **Quickfire** and **Quickfire Pro**: Production-ready, fully featured builds at https://quickfireams.com
+
+![Quickfire](https://quickfireams.com/images/github/qf-header2.png)
 
 ## Scope
-- Track and manage clients, contacts, addresses, locations, policies, carriers and more using a modern and intuitive interface
-- Simplify your renewal workflow by putting all your renewals, quotes, leads and submissions in one central place.
-- Set up a routine of tasks and keep and share status and notes on submissions to various carriers and MGAs/wholesalers.
-- Set goal dates and assign sub-tasks to other employees. The homepage tells you what tasks you have to complete next for upcoming renewals and when they're due.
-- Store basic policy data like limits, rates and coverages. Attach endorsements to be included in certificates.
-- Issue, store and manage certificates, PDF and applications quickly and easily with a built-in PDF editor
- 
+- Track and manage clients, contacts, addresses, locations, policies, carriers, and more with a modern, fast UI
+- Consolidate your APIs to track payments, phone calls, leads, documents, and forms in one place
+- Use OpenAI integration to build custom prompts for data entry, summaries, and workflows
+- Centralize renewals, quotes, leads, and submissions with clear next actions
+- Assign tasks, set goal dates, and keep carrier and MGA notes organized
+- Store policy data (limits, rates, coverages) and include endorsements on certificates
+- Issue, store, and edit certificates, PDFs, and applications with a built-in editor
+- Talk to your data in natural language to unlock bleeding edge insights and time savers
+- Spawn background workers to handle follow ups, perform routine duties and more
+
+![Quickfire](https://quickfireams.com/images/github/renewals-small.png)
+
 ## Loadout
-- **.NET 10**
+- **ASP.NET Core 10**
 - **Blazor (Server Side Interactivity)**
 - **Entity Framework Core**
 - **Microsoft FluentUI**
@@ -20,114 +34,69 @@ Surefire's open source project Openfire is an insurance agency management system
 - **Outlook Interop**
 - **SQL Server and SQLite**
 
+![Quickfire](https://quickfireams.com/images/github/outreach-short-2.png)
+
 ## Triggerfinger
 **Ready, Aim, Fire...**
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/flashvenom/surefire.git
-    cd Openfire
+    git clone https://github.com/flashvenom/Quickfire.git
+    cd Quickfire
     ```
 
-2. **Set up your database (optional):**
+2. **Run build-installer.bat to build a desktop/SQLite installation** or **set up your SQL Server database (optional):**
     Create a `.env` file with your database connection string. Not providing a string will default the system to use a local SQLite database.
     ```txt
     DEFAULTCONNECTION={CONNECTIONSTRING}
     ```
     You must exclude either the Data/Migrations (SQL Server) or the Data/MigrationsLocal (SQLite) folder in your solution.
 
-2. **Enter a SyncFusion License Key and OpenAI API Secret:**
-    Register at syncfusion.com and get your free SyncFusion license key, then add your sync function license and OpenAI Secret key to the .env file.
+3. **Enter a SyncFusion License Key and OpenAI API Secret:**
+    Register at syncfusion.com and get your free SyncFusion license key, then add your SyncFusion license and OpenAI secret to the .env file.
     ```txt
     SYNCFUSION={LICENSESTRING}
     OPENAI={APIKEY}
     ```
 
-3. **Apply Migrations:**
+4. **Apply migrations:**
     ```bash
     dotnet ef database update
     ```
 
-4. **Run the application to seed initial data:**
+5. **Run the application to seed initial data:**
     ```bash
     dotnet run
     ```
 
 
-## Line of Fire / Version History
 
-**v1.1.0 - 2026-01-01**
-- General availability release
+## Line of Fire / Version History
+**Openfire 1.1.0 - 2025-11-11**
+- Major refactor and solution restructure
+- Clearer project boundaries and services for faster development
+- Expanded plugin system foundation and integration points
+- Database flow and seeding cleaned up for local or production use
+- UI polish and layout consistency improvements
 
 **v1.0.1-alpha - 2025-01-24**
-- ALPHA preview release is a massive merge from my personal branch and includes tons of new features and updates
-- Complete restructure of solution and projects
-- SQLite Database for local and Desktop app use
+- ALPHA preview release merged from a private branch
+- SQLite database for local and Desktop app use
 - Accounting screen for invoicing and tracking costs
 - Global profile screen with system settings stored in database
-- SMARTpaste: Paste in an email footer or other blob of text and AI will fill in fields on the screen
-- ATTACHMENTS: Store files locally, on a network drive or on an Azure Blob
-- DETAILS TAB: A centralized place to quickly save, sync and view crucial client and policy data
-- LEADS: Store and prioritize leads and new business quotes and proposals
-- DESKTOP OUTLOOK INTEGRATION: Perform advanced, customized searches on your Outlook emails
-- INCOMING CALL: Link your RingCentral API to search incoming calls against the database so you can click to a customer's screen and see their policies before you even pick up the phone
-- CLICK TO DIAL: Click a phone number to automatically place an outgoing call on your desk phone
-- TRIGGER LINKS: Click to perform the function, Shift+Click to copy the text to clipboard, or Alt+Shuft+Click to search for that string in Outlook Desktop
-- Add attachments and associate with clients and policies. Uses a local network drive for lightning fast document access.
-- Integrated with Outlook using interop. Use preset custom searches to find emails fast.
-- Control-Click a email, phone number or full name of a contact to copy it to the clipboard
-- Easily create ePay Links on the renewal and client screens
-- Added SL-2 forms to the forms library  
-- Added Logging System
-- View all recent calls and payments in the profile (gear icon) pages
-- Sort and group and filtering in client policies screen
-- Easily create a lead by extracting data pasted in from an email or lead sheet
-- Updated SyncFusion from 26.2.9 to 27.1.56
-- Switched persistance to global StateService instead of database
-- Renewal submissions tab asks if you want to make incumbant submission if there's none others found
-- BETA: Paste in policy and client XML data on the client details tab to extract relevant data
-- Added custom component: "Trigger" which handles tel, mailto, and hyperlink tags. Click to launch, Ctrl+Click to copy, Ctrl+Shift+Click to search in Outlook
-- Major overhaul of dbcontext and code cleanup and refactoring
-- Better error handling on FireSearch (universal search bar at the top)
-- Added custom SmartPaste component to Lead and Client create and edit forms so you can paste a block of text and have Openfire fill in the appropriate fields automatically
-- Migrated to .net9
-- BETA: Added Plugin System for custom components
-- Reorganization of file structure with a focus on components and services with a new root namespace
-- ...AND MUCH MUCH MORE...
+- SMARTpaste for extracting data from text blobs into forms
+- Attachments stored locally, on a network drive, or on Azure Blob
+- Centralized details tab for client and policy data
+- Leads tracking and prioritization
+- Outlook interop search and workflow integrations
+- RingCentral call lookup and click-to-dial support
+- Custom Trigger component for mailto/tel/hyperlink actions
+- Custom SmartPaste component for lead and client forms
+- .NET 9 migration and component reorganization
+- Plugin system groundwork
 
-**v.0.1.0 - 2024-10-17**
-- Leads Management - Take the layout of Carriers and create a new page for tracking leads and collecting information.
-- Ring Central API - Implement a webhook that monitors incoming phone calls and displays a toast notification with the caller's name and number**
-- CRUD - Confirm there is a way to safely crud all the things.
-- Forms Tab: Change certificates to forms, and add a library of PDFs which can be manipulated and the JSON saved in the database.**
-- Passwords: Store the user's credentials for carrier websites.
-- Homepage Layout Polished and Wrapping Correctly
-- - save order of tasks on homepage
-
-**v.0.0.4 - 2024-09-08**
-- Implemented BaseUrl and IConfigure logic for environment variables for easy development and publishing
-- Many UI/UX/Style/Performance enhancements with a focus on Clients and NavMenu
-- Added upload functionality for contact headshots and client logos
-- Enhanced the client primary contact logic including several bugs
-
-**v.0.0.3 - 2024-09-05**
-- Renewal filter save state using browser session
-- Enhanced renewal task lists
-- Fast Search now has keyboard control
-- File organization and Quality of Life fixes
-- Misc bug fixes
-
-**v.0.0.2 - 2024-08-28**
-- Enhanced client browsing
-- Policy coverage details screens for GL, WC and Auto
-- Certificate editor using SfPdfViewer2
-- Store endorsements as attachments and include them with certificates
-
-**v.0.0.1 - 2024-08-20**
-- Initial Release
-- Includes all necessary tables and UI to add and edit Clients, Carriers, Contacts, Addresses, Policy Types and Policies
-- Differentiates Carriers between Issuing Carriers and MGA/Wholesalers
-- Uses Identity for user authentication and employee logins
-- Renewal Center with submission tracking
-- Master task editor to add tasks to be copied as workflow templates for renewals
-- Much more...
+**v0.1.0 - 2024-10-17**
+- Leads management, RingCentral webhook, CRUD foundation
+- Forms tab with PDF manipulation and JSON storage
+- Identity-based auth and renewal center workflows
+- Homepage task templates and workflow tracking

@@ -1,0 +1,2228 @@
+﻿@page "/CompanyManual"
+@page "/CompanyManual/{PageSlug}"
+@inherits AppComponentBase
+@implements IAsyncDisposable
+@using Quickfire.Blazor.Domain.CompanyManual.Models
+@using Quickfire.Blazor.Domain.CompanyManual.Services
+@using Quickfire.Blazor.Domain.Renewals.Models
+@using Quickfire.Blazor.Domain.Renewals.Services
+@using Quickfire.Blazor.Domain.Shared.Security
+@using Quickfire.Blazor.Domain.Shared.Components
+@using Quickfire.Blazor.Data
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Syncfusion.Blazor.RichTextEditor
+@inject CompanyManualService ManualService
+@inject TaskService TaskService
+@inject IJSRuntime JSRuntime
+
+<div class="company-manual">
+    @* Toolbar *@
+    <div class="company-manual__toolbar">
+        <div class="company-manual__toolbar-left">
+            @if (IsAdminView)
+            {
+                <FluentButton Appearance="Appearance.Accent" OnClick="BeginCreatePage">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Add())" Color="Color.Fill" Slot="start" />
+                    New Page
+                </FluentButton>
+            }
+            @if (_selectedPage != null && _viewMode == ManualViewMode.View)
+            {
+                @if (IsAdminView)
+                {
+                    <FluentButton Appearance="Appearance.Outline" OnClick="BeginEdit">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" Slot="start" />
+                        Edit
+                    </FluentButton>
+                }
+                else
+                {
+                    <FluentButton Appearance="Appearance.Outline" OnClick="BeginSuggest">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.CommentAdd())" Slot="start" />
+                        Suggest Edit
+                    </FluentButton>
+                }
+                <FluentButton Appearance="Appearance.Outline" OnClick="PrintPageAsync">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Print())" Slot="start" />
+                    Print
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Outline" OnClick="PrintAllAsync">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.DocumentPdf())" Slot="start" />
+                    Print All
+                </FluentButton>
+            }
+        </div>
+        <div class="company-manual__toolbar-center">
+            <FluentSearch @bind-Value="_searchQuery"
+                          @bind-Value:after="HandleSearchAsync"
+                          Placeholder="Search procedures..."
+                          Immediate="true"
+                          Style="width: 400px;" />
+            @if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                <FluentButton Appearance="Appearance.Stealth" OnClick="ClearSearch">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
+                </FluentButton>
+            }
+        </div>
+        <div class="company-manual__toolbar-right">
+            @if (_isAdmin)
+            {
+                <FluentSwitch @bind-Value="_isUserMode" @bind-Value:after="OnUserModeChangedAsync">
+                    <LabelTemplate>
+                        <span>@(_isUserMode ? "User Mode" : "Admin Mode")</span>
+                    </LabelTemplate>
+                </FluentSwitch>
+            }
+            @if (IsAdminView)
+            {
+                <FluentCheckbox @bind-Value="_showArchived" @bind-Value:after="ReloadPagesAsync" Label="Show archived" />
+            }
+            <FluentButton Appearance="Appearance.Stealth" OnClick="ToggleToc" Title="Toggle table of contents">
+                <FluentIcon Value="@(new Icons.Regular.Size20.PanelLeft())" />
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Stealth" OnClick="ToggleSidebar" Title="Toggle metadata panel">
+                <FluentIcon Value="@(new Icons.Regular.Size20.PanelRight())" />
+            </FluentButton>
+        </div>
+    </div>
+
+    @* Message Bar *@
+    <FluentMessageBarProvider />
+    
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <FluentMessageBar Intent="@_statusIntent" AllowDismiss="true" OnDismiss="ClearStatus">
+            @_statusMessage
+        </FluentMessageBar>
+    }
+
+    <div class="company-manual__layout @(_tocCollapsed ? "toc-collapsed" : "") @(_sidebarCollapsed ? "sidebar-collapsed" : "")">
+        @if (!_tocCollapsed)
+        {
+            <div class="company-manual__toc">
+                <div class="toc-header">
+                    <div class="toc-title">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.BookOpen())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                        <span>Table of Contents</span>
+                    </div>
+                </div>
+
+                @if (_isCreatingPage)
+                {
+                    <div class="toc-create">
+                        <FluentTextField @bind-Value="_newPageTitle"
+                                         Placeholder="Page title"
+                                         Style="width:100%;" />
+                        <div class="toc-create__meta">
+                            <span>Parent: @_newPageParentLabel</span>
+                        </div>
+                        <div class="toc-create__actions">
+                            <FluentButton Appearance="Appearance.Accent" OnClick="CreatePageAsync">Create</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="CancelCreatePage">Cancel</FluentButton>
+                        </div>
+                    </div>
+                }
+
+                @if (_isLoading)
+                {
+                    <div class="toc-loading">
+                        <FluentProgressRing Width="28px" />
+                        <span>Loading manual...</span>
+                    </div>
+                }
+                else if (!string.IsNullOrWhiteSpace(_searchQuery))
+                {
+                    <div class="toc-search-results">
+                        @if (_searchResults.Count == 0)
+                        {
+                            <div class="toc-empty">No results found.</div>
+                        }
+                        else
+                        {
+                            @foreach (var result in _searchResults)
+                            {
+                                <div class="toc-search-item" @onclick="() => SelectSearchResultAsync(result)">
+                                    <div class="toc-search-title">
+                                        <span class="toc-title-text">
+                                            @StripVideoSuffix(result.Title)
+                                            @if (HasVideoSuffix(result.Title))
+                                            {
+                                                <span class="toc-video-icon" title="Video">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size16.Video())" />
+                                                </span>
+                                            }
+                                        </span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(result.Snippet))
+                                    {
+                                        <div class="toc-search-snippet">@result.Snippet</div>
+                                    }
+                                    <div class="toc-search-meta">
+                                        @if (!string.IsNullOrWhiteSpace(result.ProcedureType))
+                                        {
+                                            <span>@result.ProcedureType</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(result.LineOfBusiness))
+                                        {
+                                            <span>@result.LineOfBusiness</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="toc-tree">
+                        @RenderTree(_pageTree)
+                    </div>
+                }
+            </div>
+        }
+        <div class="company-manual__viewer">
+            @if (_selectedPage == null)
+            {
+                <div class="manual-empty">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.DocumentText())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                    <h4>Select a procedure</h4>
+                    <p>Choose a page from the table of contents to view its published procedure.</p>
+                </div>
+            }
+            else if (_viewMode == ManualViewMode.Edit)
+            {
+                <div class="manual-editor">
+                    <div class="manual-editor__header">
+                        <div class="manual-editor__header-title">
+                            <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                            <h4>Edit Procedure</h4>
+                        </div>
+                        <div class="manual-editor__actions">
+                            <FluentButton Appearance="Appearance.Accent" OnClick="ShowPublishDialog">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" Color="Color.Fill" Slot="start" />
+                                Publish Revision
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="ShowMediaDialog">Insert Media</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="CancelEditor">Cancel</FluentButton>
+                        </div>
+                    </div>
+                    <div class="manual-editor__rte">
+                        <SfRichTextEditor @ref="_richTextEditor" @bind-Value="_editorHtml" Height="calc(100vh - 280px)">
+                            <RichTextEditorToolbarSettings Items="@_editorTools"></RichTextEditorToolbarSettings>
+                        </SfRichTextEditor>
+                    </div>
+                </div>
+            }
+            else if (_viewMode == ManualViewMode.Suggest)
+            {
+                <div class="manual-editor">
+                    <div class="manual-editor__header">
+                        <div class="manual-editor__header-title">
+                            <FluentIcon Value="@(new Icons.Regular.Size24.CommentAdd())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                            <h4>Suggest an Update</h4>
+                        </div>
+                        <div class="manual-editor__actions">
+                            <FluentButton Appearance="Appearance.Accent" OnClick="ShowSuggestionDialog">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Send())" Color="Color.Fill" Slot="start" />
+                                Submit Suggestion
+                            </FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="ShowMediaDialog">Insert Media</FluentButton>
+                            <FluentButton Appearance="Appearance.Outline" OnClick="CancelEditor">Cancel</FluentButton>
+                        </div>
+                    </div>
+                    <div class="manual-editor__rte">
+                        <SfRichTextEditor @ref="_richTextEditor" @bind-Value="_editorHtml" Height="calc(100vh - 280px)">
+                            <RichTextEditorToolbarSettings Items="@_editorTools"></RichTextEditorToolbarSettings>
+                        </SfRichTextEditor>
+                    </div>
+                </div>
+            }
+            else if (_viewMode == ManualViewMode.ReviewSuggestion && _activeSuggestion != null)
+            {
+                <div class="manual-view">
+                    <div class="manual-view__header">
+                        <div>
+                            <h2>@_activeSuggestion.Title</h2>
+                            <div class="manual-view__sub">Reviewing suggestion from @GetUserDisplayName(_activeSuggestion.SubmittedById)</div>
+                        </div>
+                        <div class="manual-view__actions">
+                            <FluentButton Appearance="Appearance.Outline" OnClick="ExitSuggestionReview">Back to Published</FluentButton>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_activeSuggestion.Summary))
+                    {
+                        <div class="manual-view__summary">@_activeSuggestion.Summary</div>
+                    }
+                    <div class="manual-view__body">
+                        @SafeMarkup.SanitizedHtml(_activeSuggestion.ContentHtml)
+                    </div>
+                </div>
+            }
+            else if (_viewMode == ManualViewMode.RevisionPreview && _activeRevision != null)
+            {
+                <div class="manual-view">
+                    <div class="manual-view__header">
+                        <div>
+                            <h2>@_activeRevision.Title</h2>
+                            <div class="manual-view__sub">Viewing revision @_activeRevision.RevisionNumber</div>
+                        </div>
+                        <div class="manual-view__actions">
+                            <FluentButton Appearance="Appearance.Outline" OnClick="ExitRevisionPreview">Back to Published</FluentButton>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_activeRevision.ChangeSummary))
+                    {
+                        <div class="manual-view__summary">@_activeRevision.ChangeSummary</div>
+                    }
+                    <div class="manual-view__body">
+                        @SafeMarkup.SanitizedHtml(_activeRevision.ContentHtml)
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="manual-view">
+                <div class="manual-view__header">
+                    <div class="manual-view__header-title">
+                        <h2>@_selectedPage.Title</h2>
+                        <div class="manual-view__sub">
+                            @if (_selectedPage.IsArchived)
+                            {
+                                <span class="pill pill-archived">Archived</span>
+                            }
+                            else if (_selectedPage.PublishedRevision == null)
+                            {
+                                <span class="pill pill-draft">Unpublished</span>
+                            }
+                            @if (_selectedPage.PublishedRevision?.PublishedAt != null)
+                            {
+                                <span class="manual-view__last-updated">
+                                    Last updated: @_selectedPage.PublishedRevision.PublishedAt.Value.ToString("MMM d, yyyy")
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="manual-view__actions">
+                        @if (IsAdminView && !_selectedPage.IsArchived)
+                        {
+                            <FluentButton Appearance="Appearance.Outline" OnClick="ArchivePageAsync">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Archive())" Slot="start" />
+                                Archive
+                            </FluentButton>
+                        }
+                        else if (IsAdminView && _selectedPage.IsArchived)
+                        {
+                            <FluentButton Appearance="Appearance.Outline" OnClick="RestorePageAsync">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.ArrowUndo())" Slot="start" />
+                                Restore
+                            </FluentButton>
+                        }
+                    </div>
+                </div>
+                    <div class="manual-view__body">
+                        @if (_selectedPage.PublishedRevision == null)
+                        {
+                            <div class="manual-empty">
+                                <FluentIcon Value="@(new Icons.Regular.Size48.DocumentAdd())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                                <p>No published revision yet. @(IsAdminView ? "Publish the first revision to make this procedure visible." : "Check back later for the published procedure.")</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @SafeMarkup.SanitizedHtml(_selectedPage.PublishedRevision.ContentHtml)
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (!_sidebarCollapsed)
+        {
+            <div class="company-manual__sidebar">
+                @if (_selectedPage != null)
+                {
+                    <div class="manual-card">
+                        <div class="manual-card__header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Info())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                            <h5>Metadata</h5>
+                        </div>
+                        <div class="manual-card__body">
+                            @if (IsAdminView)
+                        {
+                            <FluentTextField @bind-Value="_selectedPage.ProcedureType" @bind-Value:after="PersistMetadataAsync" Label="Procedure Type" />
+                            <FluentTextField @bind-Value="_selectedPage.LineOfBusiness" @bind-Value:after="PersistMetadataAsync" Label="Line of Business" />
+                            <FluentTextField @bind-Value="_selectedPage.SlaTarget" @bind-Value:after="PersistMetadataAsync" Label="SLA Target" />
+                            <FluentSelect TOption="string"
+                                          Items="@GetOwnerOptions()"
+                                          @bind-SelectedOption="OwnerUserId"
+                                          @bind-SelectedOption:after="PersistMetadataAsync"
+                                          OptionText="@(option => GetOwnerOptionText(option))"
+                                          OptionValue="@(option => option)"
+                                          Label="Owner" />
+                            <FluentTextField @bind-Value="_parentFilter"
+                                             Immediate="true"
+                                             Label="Find Parent Page"
+                                             Placeholder="Type to filter parent pages" />
+                            @if (ShowParentFilterHint)
+                            {
+                                <div class="manual-field-hint">Showing top-level pages. Type to search all pages.</div>
+                            }
+                            <FluentSelect TOption="string"
+                                          Items="@GetParentOptions()"
+                                          @bind-SelectedOption="ParentSelection"
+                                          @bind-SelectedOption:after="PersistParentAsync"
+                                          OptionText="@(option => GetParentOptionText(option))"
+                                          OptionValue="@(option => option)"
+                                          Label="Parent Page" />
+                            <FluentTextField @bind-Value="_selectedPage.Tags" @bind-Value:after="PersistMetadataAsync" Label="Tags" />
+                            <FluentDatePicker @bind-Value="_selectedPage.EffectiveDate" @bind-Value:after="PersistMetadataAsync" Label="Effective Date" />
+                            <FluentDatePicker @bind-Value="_selectedPage.ReviewBy" @bind-Value:after="PersistMetadataAsync" Label="Review By" />
+                            <FluentNumberField @bind-Value="_selectedPage.ReviewCycleDays" @bind-Value:after="PersistMetadataAsync" Label="Review Cycle (days)" />
+                            <FluentSelect TOption="string"
+                                          Items="@GetTaskGroupOptions()"
+                                          @bind-SelectedOption="TaskGroupSelection"
+                                          @bind-SelectedOption:after="PersistMetadataAsync"
+                                          OptionText="@(option => GetTaskGroupOptionText(option))"
+                                          OptionValue="@(option => option)"
+                                          Label="Timeline Task Group" />
+                            <FluentTextArea @bind-Value="_selectedPage.Summary" @bind-Value:after="PersistMetadataAsync" Label="Summary" Rows="3" />
+                        }
+                        else
+                            {
+                                <div class="manual-meta">
+                                    <div><span>Procedure Type:</span> @_selectedPage.ProcedureType</div>
+                                    <div><span>Line of Business:</span> @_selectedPage.LineOfBusiness</div>
+                                    <div><span>SLA Target:</span> @_selectedPage.SlaTarget</div>
+                                    <div><span>Owner:</span> @GetUserDisplayName(_selectedPage.OwnerUserId)</div>
+                                    <div><span>Effective Date:</span> @FormatDate(_selectedPage.EffectiveDate)</div>
+                                    <div><span>Review By:</span> @FormatDate(_selectedPage.ReviewBy)</div>
+                                    <div><span>Review Cycle:</span> @FormatDays(_selectedPage.ReviewCycleDays)</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="manual-card">
+                        <div class="manual-card__header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.History())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                            <h5>Revision History</h5>
+                        </div>
+                        <div class="manual-card__body">
+                        @if (_revisions.Count == 0)
+                        {
+                            <div class="manual-card__empty">No revisions yet.</div>
+                        }
+                        else
+                        {
+                            <div class="manual-list">
+                                @foreach (var revision in _revisions)
+                                {
+                                    <div class="manual-list__item">
+                                        <div>
+                                            <strong>Revision @revision.RevisionNumber</strong>
+                                            <div class="manual-list__meta">@FormatDateTime(revision.PublishedAt ?? revision.CreatedAt)</div>
+                                        </div>
+                                        <FluentButton Appearance="Appearance.Outline" OnClick="() => PreviewRevision(revision)">View</FluentButton>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        </div>
+                    </div>
+
+                    <div class="manual-card">
+                        <div class="manual-card__header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.CommentMultiple())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                            <h5>Suggestions</h5>
+                        </div>
+                        <div class="manual-card__body">
+                        @if (IsAdminView)
+                        {
+                            @if (_suggestions.Count == 0)
+                            {
+                                <div class="manual-card__empty">No pending suggestions.</div>
+                            }
+                            else
+                            {
+                                <div class="manual-list">
+                                    @foreach (var suggestion in _suggestions)
+                                    {
+                                        <div class="manual-list__item">
+                                            <div>
+                                                <strong>@suggestion.Title</strong>
+                                                <div class="manual-list__meta">@GetUserDisplayName(suggestion.SubmittedById)</div>
+                                            </div>
+                                            <FluentButton Appearance="Appearance.Outline" OnClick="() => ReviewSuggestion(suggestion)">Review</FluentButton>
+                                        </div>
+                                    }
+                                </div>
+                                @if (_activeSuggestion != null)
+                                {
+                                    <div class="manual-review">
+                                        <FluentTextArea @bind-Value="_reviewNotes" Label="Review notes" Rows="2" />
+                                        <div class="manual-review__actions">
+                                            <FluentButton Appearance="Appearance.Accent" OnClick="ApproveSuggestionAsync">Approve</FluentButton>
+                                            <FluentButton Appearance="Appearance.Outline" OnClick="RejectSuggestionAsync">Reject</FluentButton>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <div class="manual-card__empty">Suggestions are reviewed by the Company Manual admin.</div>
+                        }
+                        </div>
+                    </div>
+
+                    <div class="manual-card">
+                        <div class="manual-card__header">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Timeline())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                            <h5>Timeline Steps</h5>
+                        </div>
+                        <div class="manual-card__body">
+                        @if (_timelineTasks.Count == 0)
+                        {
+                            <div class="manual-card__empty">No timeline linked.</div>
+                        }
+                        else
+                        {
+                            <ol class="manual-timeline">
+                                @foreach (var task in _timelineTasks)
+                                {
+                                    <li>
+                                        <div class="manual-timeline__title">@task.TaskName</div>
+                                        @if (!string.IsNullOrWhiteSpace(task.Description))
+                                        {
+                                            <div class="manual-timeline__desc">@task.Description</div>
+                                        }
+                                        @if (task.SubTaskLinks.Any())
+                                        {
+                                            <ul class="manual-timeline__sub">
+                                                @foreach (var link in task.SubTaskLinks.OrderBy(st => st.OrderNumber))
+                                                {
+                                                    <li>@link.SubTaskMaster.TaskName</li>
+                                                }
+                                            </ul>
+                                        }
+                                    </li>
+                                }
+                            </ol>
+                        }
+                        </div>
+                    </div>
+
+                    @if (IsAdminView)
+                    {
+                        <div class="manual-card">
+                            <div class="manual-card__header">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.ClipboardTaskListLtr())" Color="Color.Custom" CustomColor="#a0a0a0" />
+                                <h5>Audit Trail</h5>
+                            </div>
+                            <div class="manual-card__body">
+                            @if (_auditEntries.Count == 0)
+                            {
+                                <div class="manual-card__empty">No audit entries yet.</div>
+                            }
+                            else
+                            {
+                                <div class="manual-list">
+                                    @foreach (var entry in _auditEntries)
+                                    {
+                                        <div class="manual-list__item manual-list__item--compact">
+                                            <div>
+                                                <strong>@entry.Action</strong>
+                                                <div class="manual-list__meta">@GetAuditMeta(entry)</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@* Publish/Edit Confirmation Dialog *@
+<BaseDialog DialogId="publish-confirmation"
+            Title="@_dialogTitle"
+            @bind-Hidden="_publishDialogHidden">
+    <ChildContent>
+        <div class="manual-dialog-content">
+            <FluentTextField @bind-Value="_editorTitle" Label="Title" Style="width: 100%; margin-bottom: 12px;" />
+            <FluentTextArea @bind-Value="_changeSummary" Label="Change summary (optional)" Rows="3" Style="width: 100%;" />
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmPublishAsync">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" Color="Color.Fill" Slot="start" />
+            Confirm
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CancelPublishDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+@* Video Lightbox/Theater Mode *@
+<div class="manual-video-lightbox @(_videoLightboxOpen ? "open" : "")" @onclick="CloseVideoLightbox">
+    <div class="manual-video-lightbox__content" @onclick:stopPropagation>
+        <button class="manual-video-lightbox__close" @onclick="CloseVideoLightbox">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Close
+        </button>
+        @if (!string.IsNullOrEmpty(_lightboxVideoSrc))
+        {
+            <video class="manual-video-lightbox__video" src="@_lightboxVideoSrc" controls autoplay></video>
+        }
+        <div class="manual-video-lightbox__hint">
+            <kbd>Esc</kbd> to close
+        </div>
+    </div>
+</div>
+
+@* Image Lightbox *@
+<div class="manual-image-lightbox @(_imageLightboxOpen ? "open" : "")" @onclick="CloseImageLightbox">
+    @if (!string.IsNullOrEmpty(_lightboxImageSrc))
+    {
+        <img src="@_lightboxImageSrc" alt="@_lightboxImageAlt" />
+    }
+</div>
+
+@* Media Insert Dialog - Beautiful & Creative Design *@
+<BaseDialog DialogId="manual-media-insert"
+            Title="🎬 Insert Media"
+            @bind-Hidden="_mediaDialogHidden">
+    <ChildContent>
+        <div class="media-dialog">
+            @* Gradient Header Strip *@
+            <div class="media-dialog__header-strip"></div>
+            
+            @* Media Type Selector *@
+            <div class="media-dialog__type-selector">
+                <button class="media-type-btn @(_selectedMediaType == MediaInsertType.Image ? "active" : "")" 
+                        @onclick="() => _selectedMediaType = MediaInsertType.Image">
+                    @if (_selectedMediaType == MediaInsertType.Image)
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Image())" Color="Color.Fill" />
+                    }
+                    else
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Image())" Color="Color.Custom" CustomColor="#6b7280" />
+                    }
+                    <span>Image</span>
+                </button>
+                <button class="media-type-btn @(_selectedMediaType == MediaInsertType.Video ? "active" : "")" 
+                        @onclick="() => _selectedMediaType = MediaInsertType.Video">
+                    @if (_selectedMediaType == MediaInsertType.Video)
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Video())" Color="Color.Fill" />
+                    }
+                    else
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Video())" Color="Color.Custom" CustomColor="#6b7280" />
+                    }
+                    <span>Video</span>
+                </button>
+            </div>
+
+            @* Path Input Tabs *@
+            <div class="media-dialog__tabs">
+                <button class="media-tab @(_mediaPathMode == MediaPathMode.Http ? "active" : "")" 
+                        @onclick="() => SwitchPathMode(MediaPathMode.Http)">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Globe())" />
+                    <span>Web URL</span>
+                </button>
+                <button class="media-tab @(_mediaPathMode == MediaPathMode.NetworkDrive ? "active" : "")" 
+                        @onclick="() => SwitchPathMode(MediaPathMode.NetworkDrive)">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.FolderOpen())" />
+                    <span>Network Drive</span>
+                </button>
+                <button class="media-tab @(_mediaPathMode == MediaPathMode.UncPath ? "active" : "")" 
+                        @onclick="() => SwitchPathMode(MediaPathMode.UncPath)">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Server())" />
+                    <span>SMB/UNC Path</span>
+                </button>
+            </div>
+
+            @* Path Input Section *@
+            <div class="media-dialog__input-section">
+                @switch (_mediaPathMode)
+                {
+                    case MediaPathMode.Http:
+                        <div class="media-input-group">
+                            <label class="media-input-label">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Link())" Color="Color.Custom" CustomColor="#3b82f6" />
+                                Web URL (Primary)
+                            </label>
+                            <FluentTextField @bind-Value="_httpUrl"
+                                             @bind-Value:after="UpdatePreview"
+                                             Immediate="true"
+                                             Placeholder="https://example.com/media/training-video.mp4"
+                                             Style="width: 100%;" />
+                            <div class="media-input-hint">✓ Best compatibility - works everywhere</div>
+                        </div>
+                        break;
+
+                    case MediaPathMode.NetworkDrive:
+                        <div class="media-input-group">
+                            <label class="media-input-label">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.FolderOpen())" Color="Color.Custom" CustomColor="#10b981" />
+                                Mapped Network Drive Path
+                            </label>
+                            <FluentTextField @bind-Value="_networkDrivePath"
+                                             @bind-Value:after="UpdatePreview"
+                                             Immediate="true"
+                                             Placeholder="S:\Public\Training\Metro Training Videos\example.mp4"
+                                             Style="width: 100%;" />
+                            <div class="media-input-hint">⚡ Fast local access via mapped drives (S:, T:, etc.)</div>
+                        </div>
+                        break;
+
+                    case MediaPathMode.UncPath:
+                        <div class="media-input-group">
+                            <label class="media-input-label">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Server())" Color="Color.Custom" CustomColor="#8b5cf6" />
+                                SMB/UNC Network Path
+                            </label>
+                            <FluentTextField @bind-Value="_uncPath"
+                                             @bind-Value:after="UpdatePreview"
+                                             Immediate="true"
+                                             Placeholder="\\SUREFIRE\Surefiles\Public\Training\example.mp4"
+                                             Style="width: 100%;" />
+                            <div class="media-input-hint">🔗 Universal network path - works from any workstation</div>
+                        </div>
+                        break;
+                }
+
+                @* Fallback URL Section *@
+                <div class="media-fallback-section">
+                    <div class="media-fallback-header" @onclick="() => _showFallbackUrl = !_showFallbackUrl">
+                        @if (_showFallbackUrl)
+                        {
+                            <FluentIcon Value="@(new Icons.Regular.Size12.ChevronDown())" />
+                        }
+                        else
+                        {
+                            <FluentIcon Value="@(new Icons.Regular.Size12.ChevronRight())" />
+                        }
+                        <span>Add Fallback URL (Optional)</span>
+                    </div>
+                    @if (_showFallbackUrl)
+                    {
+                        <div class="media-fallback-content">
+                            <FluentTextField @bind-Value="_fallbackUrl" Immediate="true" Placeholder="http://quickfireams.com/example.mp4" Style="width: 100%;" />
+                            <div class="media-input-hint">🛟 If the primary path fails, this URL will be used instead</div>
+                        </div>
+                    }
+                </div>
+
+                @* Alt Text for Images *@
+                @if (_selectedMediaType == MediaInsertType.Image)
+                {
+                    <div class="media-input-group media-alt-group">
+                        <label class="media-input-label">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.TextDescription())" Color="Color.Custom" CustomColor="#f59e0b" />
+                            Alt Text (Accessibility)
+                        </label>
+                        <FluentTextField @bind-Value="_mediaAltText"
+                                         Immediate="true"
+                                         Placeholder="Describe the image for screen readers"
+                                         Style="width: 100%;" />
+                    </div>
+                }
+            </div>
+
+            @* Preview Section *@
+            <div class="media-dialog__preview">
+                <div class="media-preview-header">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" Color="Color.Custom" CustomColor="#6b7280" />
+                    <span>Preview</span>
+                    @if (!string.IsNullOrWhiteSpace(GetCurrentMediaPath()))
+                    {
+                        <span class="media-preview-path">@TruncatePath(GetCurrentMediaPath(), 50)</span>
+                    }
+                </div>
+                <div class="media-preview-container @(_previewStatus)">
+                    @if (string.IsNullOrWhiteSpace(GetCurrentMediaPath()))
+                    {
+                        <div class="media-preview-empty">
+                            <FluentIcon Value="@(new Icons.Regular.Size48.ImageAdd())" Color="Color.Custom" CustomColor="#d1d5db" />
+                            <span>Enter a path above to preview</span>
+                        </div>
+                    }
+                    else if (_selectedMediaType == MediaInsertType.Image)
+                    {
+                        <img src="@GetPreviewUrl()" 
+                             alt="@_mediaAltText"
+                             class="media-preview-image"
+                             @onerror="OnPreviewError"
+                             @onload="OnPreviewLoad" />
+                    }
+                    else
+                    {
+                        <video src="@GetPreviewUrl()" 
+                               controls 
+                               class="media-preview-video"
+                               @onerror="OnPreviewError"
+                               @onloadeddata="OnPreviewLoad">
+                            Your browser doesn't support video playback.
+                        </video>
+                    }
+                    @if (_previewStatus == "error")
+                    {
+                        <div class="media-preview-error-overlay">
+                            <FluentIcon Value="@(new Icons.Regular.Size24.Warning())" Color="Color.Custom" CustomColor="#ef4444" />
+                            <span>Preview unavailable</span>
+                            <small>The media will still be inserted - preview may not work for network paths</small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Quick Tips *@
+            <div class="media-dialog__tips">
+                <div class="media-tip">
+                    <FluentIcon Value="@(new Icons.Regular.Size12.TooltipQuote())" Color="Color.Custom" CustomColor="#f59e0b" />
+                    <span><strong>Tip:</strong> For best results, use a web URL. Network paths may only work on local workstations.</span>
+                </div>
+            </div>
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <div class="media-dialog-footer">
+            <FluentButton Appearance="Appearance.Accent" 
+                          OnClick="InsertMediaFromDialogAsync" 
+                          Disabled="@string.IsNullOrWhiteSpace(GetCurrentMediaPath())">
+                @if (_selectedMediaType == MediaInsertType.Image)
+                {
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Image())" Color="Color.Fill" Slot="start" />
+                }
+                else
+                {
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Video())" Color="Color.Fill" Slot="start" />
+                }
+                Insert @(_selectedMediaType == MediaInsertType.Image ? "Image" : "Video")
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Outline" OnClick="CloseMediaDialog">Cancel</FluentButton>
+        </div>
+    </FooterContent>
+</BaseDialog>
+
+@code {
+    [Parameter] public string? PageSlug { get; set; }
+
+    private readonly List<ToolbarItemModel> _editorTools = new()
+    {
+        new ToolbarItemModel { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel { Command = ToolbarCommand.StrikeThrough },
+        new ToolbarItemModel { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel { Command = ToolbarCommand.FontColor },
+        new ToolbarItemModel { Command = ToolbarCommand.BackgroundColor },
+        new ToolbarItemModel { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel { Command = ToolbarCommand.Formats },
+        new ToolbarItemModel { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel { Command = ToolbarCommand.OrderedList },
+        new ToolbarItemModel { Command = ToolbarCommand.UnorderedList },
+        new ToolbarItemModel { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel { Command = ToolbarCommand.Image },
+        new ToolbarItemModel { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel { Command = ToolbarCommand.Undo },
+        new ToolbarItemModel { Command = ToolbarCommand.Redo },
+        new ToolbarItemModel { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel { Command = ToolbarCommand.ClearFormat },
+        new ToolbarItemModel { Command = ToolbarCommand.SourceCode }
+    };
+
+    private bool _isLoading = true;
+    private bool _isAdmin;
+    private bool _isUserMode;
+    private bool IsAdminView => _isAdmin && !_isUserMode;
+    private bool ShowParentFilterHint => _selectedPage != null
+        && _pages.Count > ParentPageFilterThreshold
+        && string.IsNullOrWhiteSpace(_parentFilter);
+    private bool _showArchived;
+    private string _searchQuery = string.Empty;
+    private string? _statusMessage;
+    private MessageIntent _statusIntent = MessageIntent.Info;
+
+    private CompanyManualPage? _selectedPage;
+    private CompanyManualSuggestion? _activeSuggestion;
+    private CompanyManualRevision? _activeRevision;
+    private ManualViewMode _viewMode = ManualViewMode.View;
+
+    private readonly List<CompanyManualPage> _pages = new();
+    private readonly List<PageNode> _pageTree = new();
+    private readonly List<CompanyManualSearchResult> _searchResults = new();
+    private readonly List<CompanyManualRevision> _revisions = new();
+    private readonly List<CompanyManualSuggestion> _suggestions = new();
+    private readonly List<CompanyManualAuditEntry> _auditEntries = new();
+    private readonly List<TaskGroup> _taskGroups = new();
+    private readonly List<TaskMaster> _timelineTasks = new();
+    private readonly List<ApplicationUser> _users = new();
+
+    private readonly HashSet<int> _expandedPageIds = new();
+
+    private bool _isCreatingPage;
+    private string _newPageTitle = string.Empty;
+    private string _newPageParentLabel = "Root";
+
+    private string _editorTitle = string.Empty;
+    private string _editorHtml = string.Empty;
+    private string _changeSummary = string.Empty;
+    private string _reviewNotes = string.Empty;
+    private SfRichTextEditor? _richTextEditor;
+    
+    // Media dialog state
+    private string _httpUrl = string.Empty;
+    private string _networkDrivePath = string.Empty;
+    private string _uncPath = string.Empty;
+    private string _fallbackUrl = string.Empty;
+    private string _mediaAltText = string.Empty;
+    private bool _showFallbackUrl = false;
+    private MediaPathMode _mediaPathMode = MediaPathMode.Http;
+    private MediaInsertType _selectedMediaType = MediaInsertType.Image;
+    private string _previewStatus = string.Empty; // "", "loading", "loaded", "error"
+    private string _parentFilter = string.Empty;
+    private const int ParentPageFilterThreshold = 60;
+    
+    // Lightbox state
+    private bool _videoLightboxOpen = false;
+    private string _lightboxVideoSrc = string.Empty;
+    private bool _imageLightboxOpen = false;
+    private string _lightboxImageSrc = string.Empty;
+    private string _lightboxImageAlt = string.Empty;
+    private DotNetObjectReference<CompanyManual>? _dotNetRef;
+
+    // UI state for collapsible panels
+    private bool _tocCollapsed = false;
+    private bool _sidebarCollapsed = false;
+
+    // Dialog state
+    private bool _publishDialogHidden = true;
+    private string _dialogTitle = string.Empty;
+    private bool _isPublishMode = false;
+    private bool _mediaDialogHidden = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _isAdmin = await ManualService.IsCompanyManualAdminAsync(StateService.CurrentUser?.Id);
+        _users.AddRange(await StateService.AllUsers);
+        _taskGroups.AddRange(await TaskService.GetAllTaskGroupsAsync());
+        await ReloadPagesAsync();
+        await SelectInitialPageAsync();
+        _isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_isLoading)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(PageSlug))
+        {
+            var page = await ManualService.GetPageBySlugAsync(PageSlug);
+            if (page != null)
+            {
+                await SelectPageAsync(page, false);
+            }
+        }
+    }
+
+    private async Task ReloadPagesAsync()
+    {
+        _pages.Clear();
+        _pageTree.Clear();
+        _expandedPageIds.Clear();
+        var pages = await ManualService.GetPagesAsync(_showArchived && IsAdminView);
+        _pages.AddRange(pages);
+        _pageTree.AddRange(BuildTree(_pages));
+
+        // Start with all items collapsed
+    }
+
+    private async Task SelectInitialPageAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(PageSlug))
+        {
+            var page = await ManualService.GetPageBySlugAsync(PageSlug);
+            if (page != null)
+            {
+                await SelectPageAsync(page);
+                return;
+            }
+        }
+
+        var first = _pageTree.FirstOrDefault()?.Page;
+        if (first != null)
+        {
+            await SelectPageAsync(first);
+        }
+    }
+
+    private async Task SelectPageAsync(CompanyManualPage page, bool navigate = true)
+    {
+        _selectedPage = await ManualService.GetPageAsync(page.CompanyManualPageId);
+        _viewMode = ManualViewMode.View;
+        _activeSuggestion = null;
+        _activeRevision = null;
+        _reviewNotes = string.Empty;
+
+        _revisions.Clear();
+        _revisions.AddRange(await ManualService.GetRevisionsAsync(page.CompanyManualPageId));
+
+        _suggestions.Clear();
+        if (IsAdminView)
+        {
+            _suggestions.AddRange(await ManualService.GetSuggestionsAsync(page.CompanyManualPageId, CompanyManualSuggestionStatus.Pending));
+        }
+
+        _auditEntries.Clear();
+        if (IsAdminView)
+        {
+            _auditEntries.AddRange(await ManualService.GetAuditEntriesAsync(page.CompanyManualPageId));
+        }
+
+        await LoadTimelineAsync();
+        EnsureAncestorsExpanded(page.CompanyManualPageId);
+
+        if (_selectedPage != null && navigate)
+        {
+            NavigationManager.NavigateTo($"/CompanyManual/{_selectedPage.Slug}", replace: true);
+        }
+    }
+
+    private async Task LoadTimelineAsync()
+    {
+        _timelineTasks.Clear();
+        if (_selectedPage?.TaskGroupId is int taskGroupId)
+        {
+            _timelineTasks.AddRange(await TaskService.GetTaskMastersForGroupAsync(taskGroupId));
+        }
+    }
+
+    private void ToggleNode(int pageId)
+    {
+        // Accordion behavior: only allow one top-level section expanded at a time
+        var clickedPage = _pages.FirstOrDefault(p => p.CompanyManualPageId == pageId);
+        if (clickedPage == null)
+        {
+            return;
+        }
+
+        // If this is a top-level page (no parent)
+        if (clickedPage.ParentPageId == null)
+        {
+            if (_expandedPageIds.Contains(pageId))
+            {
+                // Collapse this section
+                _expandedPageIds.Remove(pageId);
+            }
+            else
+            {
+                // Collapse all other top-level sections
+                var topLevelPageIds = _pages.Where(p => p.ParentPageId == null).Select(p => p.CompanyManualPageId).ToList();
+                foreach (var topLevelId in topLevelPageIds)
+                {
+                    _expandedPageIds.Remove(topLevelId);
+                }
+                // Expand this section
+                _expandedPageIds.Add(pageId);
+            }
+        }
+        else
+        {
+            // For nested items, just toggle normally
+            if (_expandedPageIds.Contains(pageId))
+            {
+                _expandedPageIds.Remove(pageId);
+            }
+            else
+            {
+                _expandedPageIds.Add(pageId);
+            }
+        }
+    }
+
+    private bool IsExpanded(int pageId) => _expandedPageIds.Contains(pageId);
+
+    private void EnsureAncestorsExpanded(int pageId)
+    {
+        var lookup = _pages.ToDictionary(p => p.CompanyManualPageId, p => p.ParentPageId);
+        var current = lookup.TryGetValue(pageId, out var parentId) ? parentId : null;
+
+        // Clear all top-level expansions first (accordion behavior)
+        var topLevelPageIds = _pages.Where(p => p.ParentPageId == null).Select(p => p.CompanyManualPageId).ToList();
+        foreach (var topLevelId in topLevelPageIds)
+        {
+            _expandedPageIds.Remove(topLevelId);
+        }
+
+        if (!current.HasValue)
+        {
+            _expandedPageIds.Add(pageId);
+            return;
+        }
+
+        // Expand the entire ancestor chain
+        while (current.HasValue)
+        {
+            _expandedPageIds.Add(current.Value);
+            current = lookup.TryGetValue(current.Value, out var next) ? next : null;
+        }
+    }
+
+    private const string VideoTitleSuffix = " (Video)";
+
+    private static bool HasVideoSuffix(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return false;
+        }
+
+        return title.TrimEnd().EndsWith(VideoTitleSuffix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string StripVideoSuffix(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = title.TrimEnd();
+        if (!trimmed.EndsWith(VideoTitleSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed;
+        }
+
+        return trimmed.Substring(0, trimmed.Length - VideoTitleSuffix.Length);
+    }
+
+    private RenderFragment RenderTree(IReadOnlyList<PageNode> nodes) => @<ul class="manual-tree">
+        @foreach (var node in nodes)
+        {
+            @RenderNode(node)
+        }
+    </ul>;
+
+    private RenderFragment RenderNode(PageNode node) => @<li>
+        <div class="manual-tree__row @(IsSelected(node.Page.CompanyManualPageId) ? "is-active" : "")">
+            @if (node.Children.Count > 0)
+            {
+                <button class="manual-tree__toggle" @onclick="() => ToggleNode(node.Page.CompanyManualPageId)">
+                    @if (IsExpanded(node.Page.CompanyManualPageId))
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size12.ChevronDown())" />
+                    }
+                    else
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size12.ChevronRight())" />
+                    }
+                </button>
+            }
+            else
+            {
+                <span class="manual-tree__toggle manual-tree__toggle--empty"></span>
+            }
+            <button class="manual-tree__label" @onclick="() => SelectPageAsync(node.Page)">
+                <span class="toc-title-text">
+                    @StripVideoSuffix(node.Page.Title)
+                    @if (HasVideoSuffix(node.Page.Title))
+                    {
+                        <span class="toc-video-icon" title="Video">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Video())" />
+                        </span>
+                    }
+                </span>
+                @if (node.Page.IsArchived)
+                {
+                    <span class="pill pill-archived">Archived</span>
+                }
+                else if (node.Page.PublishedRevisionId == null)
+                {
+                    <span class="pill pill-draft">Draft</span>
+                }
+            </button>
+            @if (IsAdminView)
+            {
+                <div class="manual-tree__actions">
+                    <FluentButton Appearance="Appearance.Stealth" OnClick="() => MovePageAsync(node.Page, true)" Disabled="@IsFirstSibling(node)">
+                        <FluentIcon Value="@(new Icons.Regular.Size12.ChevronUp())" />
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Stealth" OnClick="() => MovePageAsync(node.Page, false)" Disabled="@IsLastSibling(node)">
+                        <FluentIcon Value="@(new Icons.Regular.Size12.ChevronDown())" />
+                    </FluentButton>
+                </div>
+            }
+        </div>
+        @if (node.Children.Count > 0)
+        {
+            <div class="manual-tree__children @(IsExpanded(node.Page.CompanyManualPageId) ? "is-expanded" : "")">
+                @RenderTree(node.Children)
+            </div>
+        }
+    </li>;
+
+    private bool IsSelected(int pageId) => _selectedPage?.CompanyManualPageId == pageId;
+
+    private async Task HandleSearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            _searchResults.Clear();
+            return;
+        }
+
+        _searchResults.Clear();
+        _searchResults.AddRange(await ManualService.SearchAsync(_searchQuery, _showArchived && IsAdminView));
+    }
+
+    private void ClearSearch()
+    {
+        _searchQuery = string.Empty;
+        _searchResults.Clear();
+    }
+
+    private async Task SelectSearchResultAsync(CompanyManualSearchResult result)
+    {
+        var page = _pages.FirstOrDefault(p => p.CompanyManualPageId == result.PageId);
+        if (page != null)
+        {
+            await SelectPageAsync(page);
+        }
+    }
+
+    private Task BeginEdit()
+    {
+        if (_selectedPage == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        _editorTitle = _selectedPage.Title;
+        _editorHtml = _selectedPage.PublishedRevision?.ContentHtml ?? string.Empty;
+        _changeSummary = string.Empty;
+        _viewMode = ManualViewMode.Edit;
+        return Task.CompletedTask;
+    }
+
+    private Task BeginSuggest()
+    {
+        if (_selectedPage == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        _editorTitle = _selectedPage.Title;
+        _editorHtml = _selectedPage.PublishedRevision?.ContentHtml ?? string.Empty;
+        _changeSummary = string.Empty;
+        _viewMode = ManualViewMode.Suggest;
+        return Task.CompletedTask;
+    }
+
+    private void CancelEditor()
+    {
+        _viewMode = ManualViewMode.View;
+    }
+
+    private void ShowMediaDialog()
+    {
+        _httpUrl = string.Empty;
+        _networkDrivePath = string.Empty;
+        _uncPath = string.Empty;
+        _fallbackUrl = string.Empty;
+        _mediaAltText = string.Empty;
+        _showFallbackUrl = false;
+        _mediaPathMode = MediaPathMode.Http;
+        _selectedMediaType = MediaInsertType.Image;
+        _previewStatus = string.Empty;
+        _mediaDialogHidden = false;
+    }
+
+    private void CloseMediaDialog()
+    {
+        _mediaDialogHidden = true;
+    }
+
+    private void SwitchPathMode(MediaPathMode mode)
+    {
+        _mediaPathMode = mode;
+        _previewStatus = string.Empty;
+    }
+
+    private string GetCurrentMediaPath()
+    {
+        return _mediaPathMode switch
+        {
+            MediaPathMode.Http => _httpUrl,
+            MediaPathMode.NetworkDrive => _networkDrivePath,
+            MediaPathMode.UncPath => _uncPath,
+            _ => string.Empty
+        };
+    }
+
+    private string GetPreviewUrl()
+    {
+        var path = GetCurrentMediaPath();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        // For HTTP URLs, use directly
+        if (Uri.TryCreate(path.Trim(), UriKind.Absolute, out var uri) &&
+            (uri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase) ||
+             uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase)))
+        {
+            return uri.AbsoluteUri;
+        }
+
+        // For network paths, try to convert to file:// URL
+        return ConvertToFileUrl(path);
+    }
+
+    private static string ConvertToFileUrl(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = path.Trim();
+
+        // Handle UNC paths (\\server\share\...)
+        if (trimmed.StartsWith(@"\\"))
+        {
+            // Convert \\server\share\path to file://server/share/path
+            var uncPath = trimmed.Substring(2).Replace('\\', '/');
+            return $"file://{uncPath}";
+        }
+
+        // Handle mapped drive paths (S:\folder\...)
+        if (System.IO.Path.IsPathRooted(trimmed))
+        {
+            try
+            {
+                return new Uri(trimmed).AbsoluteUri;
+            }
+            catch (UriFormatException)
+            {
+                // Fallback: manual conversion
+                return $"file:///{trimmed.Replace('\\', '/').Replace(" ", "%20")}";
+            }
+        }
+
+        return trimmed;
+    }
+
+    private void UpdatePreview()
+    {
+        _previewStatus = "loading";
+        StateHasChanged();
+    }
+
+    private void OnPreviewLoad()
+    {
+        _previewStatus = "loaded";
+    }
+
+    private void OnPreviewError()
+    {
+        _previewStatus = "error";
+    }
+
+    private static string TruncatePath(string path, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path.Length <= maxLength)
+        {
+            return path;
+        }
+
+        var start = path.Substring(0, 15);
+        var end = path.Substring(path.Length - (maxLength - 18));
+        return $"{start}...{end}";
+    }
+
+    private async Task InsertMediaFromDialogAsync()
+    {
+        var primaryPath = GetCurrentMediaPath();
+        if (string.IsNullOrWhiteSpace(primaryPath))
+        {
+            ShowStatus("Enter a media file path or URL.", MessageIntent.Warning);
+            return;
+        }
+
+        var normalizedPrimary = NormalizeMediaPath(primaryPath);
+        var normalizedFallback = !string.IsNullOrWhiteSpace(_fallbackUrl) 
+            ? NormalizeMediaPath(_fallbackUrl) 
+            : null;
+
+        if (string.IsNullOrWhiteSpace(normalizedPrimary))
+        {
+            ShowStatus("Unable to use that media path.", MessageIntent.Warning);
+            return;
+        }
+
+        string html;
+
+        if (_selectedMediaType == MediaInsertType.Image)
+        {
+            html = GenerateImageHtml(normalizedPrimary, normalizedFallback, _mediaAltText);
+        }
+        else
+        {
+            html = GenerateVideoHtml(normalizedPrimary, normalizedFallback);
+        }
+
+        await InsertHtmlAsync(html);
+        
+        // Clear and close the dialog
+        _httpUrl = string.Empty;
+        _networkDrivePath = string.Empty;
+        _uncPath = string.Empty;
+        _fallbackUrl = string.Empty;
+        _mediaAltText = string.Empty;
+        _previewStatus = string.Empty;
+        _mediaDialogHidden = true;
+
+        ShowStatus($"{(_selectedMediaType == MediaInsertType.Image ? "Image" : "Video")} inserted successfully!", MessageIntent.Success);
+    }
+
+    private static string GenerateImageHtml(string primarySrc, string? fallbackSrc, string altText)
+    {
+        var encodedPrimary = SafeMarkup.HtmlEncode(primarySrc);
+        var encodedAlt = SafeMarkup.HtmlEncode(altText);
+
+        if (!string.IsNullOrWhiteSpace(fallbackSrc))
+        {
+            var encodedFallback = SafeMarkup.HtmlEncode(fallbackSrc);
+            // Use onerror to fallback to secondary source
+            return $"<img class=\"manual-media manual-media--image\" src=\"{encodedPrimary}\" alt=\"{encodedAlt}\" onerror=\"this.onerror=null; this.src='{encodedFallback}';\" />";
+        }
+
+        return $"<img class=\"manual-media manual-media--image\" src=\"{encodedPrimary}\" alt=\"{encodedAlt}\" />";
+    }
+
+    private string GenerateVideoHtml(string primarySrc, string? fallbackSrc)
+    {
+        var encodedPrimary = SafeMarkup.HtmlEncode(primarySrc);
+        var primaryMime = GetVideoMimeType(primarySrc);
+
+        var sources = new System.Text.StringBuilder();
+        
+        // Primary source
+        if (!string.IsNullOrWhiteSpace(primaryMime))
+        {
+            sources.Append($"<source src=\"{encodedPrimary}\" type=\"{primaryMime}\">");
+        }
+        else
+        {
+            sources.Append($"<source src=\"{encodedPrimary}\">");
+        }
+
+        // Fallback source if provided
+        if (!string.IsNullOrWhiteSpace(fallbackSrc))
+        {
+            var encodedFallback = SafeMarkup.HtmlEncode(fallbackSrc);
+            var fallbackMime = GetVideoMimeType(fallbackSrc);
+            
+            if (!string.IsNullOrWhiteSpace(fallbackMime))
+            {
+                sources.Append($"<source src=\"{encodedFallback}\" type=\"{fallbackMime}\">");
+            }
+            else
+            {
+                sources.Append($"<source src=\"{encodedFallback}\">");
+            }
+        }
+
+        return $"<div class=\"manual-video-wrapper\"><video class=\"manual-media manual-media--video\" controls preload=\"metadata\">{sources}</video></div>";
+    }
+
+    private async Task InsertHtmlAsync(string html)
+    {
+        if (_richTextEditor != null)
+        {
+            await _richTextEditor.ExecuteCommandAsync(CommandName.InsertHTML, html);
+            return;
+        }
+
+        _editorHtml = string.Concat(_editorHtml, html);
+    }
+
+    private static string NormalizeMediaPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = path.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absoluteUri)
+            && (absoluteUri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase)
+                || absoluteUri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase)
+                || absoluteUri.Scheme.Equals("file", StringComparison.OrdinalIgnoreCase)))
+        {
+            return absoluteUri.AbsoluteUri;
+        }
+
+        if (System.IO.Path.IsPathRooted(trimmed))
+        {
+            try
+            {
+                return new Uri(trimmed).AbsoluteUri;
+            }
+            catch (UriFormatException)
+            {
+                return trimmed.Replace('\\', '/');
+            }
+        }
+
+        return trimmed;
+    }
+
+    private static string? GetVideoMimeType(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var extension = System.IO.Path.GetExtension(path);
+        if (string.IsNullOrWhiteSpace(extension) && Uri.TryCreate(path, UriKind.Absolute, out var uri))
+        {
+            extension = System.IO.Path.GetExtension(uri.LocalPath);
+        }
+
+        return extension?.ToLowerInvariant() switch
+        {
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".ogg" => "video/ogg",
+            ".ogv" => "video/ogg",
+            _ => null
+        };
+    }
+
+    // Toggle methods for collapsible panels
+    private void ToggleToc()
+    {
+        _tocCollapsed = !_tocCollapsed;
+    }
+
+    private void ToggleSidebar()
+    {
+        _sidebarCollapsed = !_sidebarCollapsed;
+    }
+
+    private async Task OnUserModeChangedAsync()
+    {
+        if (!_isAdmin)
+        {
+            return;
+        }
+
+        if (_isUserMode)
+        {
+            _isCreatingPage = false;
+            _viewMode = ManualViewMode.View;
+            _activeSuggestion = null;
+            _activeRevision = null;
+            _reviewNotes = string.Empty;
+            _suggestions.Clear();
+            _auditEntries.Clear();
+        }
+
+        var selectedPageId = _selectedPage?.CompanyManualPageId;
+        await ReloadPagesAsync();
+
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            await HandleSearchAsync();
+        }
+
+        if (selectedPageId.HasValue)
+        {
+            var page = _pages.FirstOrDefault(p => p.CompanyManualPageId == selectedPageId.Value);
+            if (page != null)
+            {
+                await SelectPageAsync(page, false);
+                return;
+            }
+        }
+
+        await SelectInitialPageAsync();
+    }
+
+    // Show dialog methods
+    private void ShowPublishDialog()
+    {
+        _dialogTitle = "Publish Revision";
+        _isPublishMode = true;
+        _publishDialogHidden = false;
+    }
+
+    private void ShowSuggestionDialog()
+    {
+        _dialogTitle = "Submit Suggestion";
+        _isPublishMode = false;
+        _publishDialogHidden = false;
+    }
+
+    private void CancelPublishDialog()
+    {
+        _publishDialogHidden = true;
+    }
+
+    private async Task ConfirmPublishAsync()
+    {
+        _publishDialogHidden = true;
+
+        if (_isPublishMode)
+        {
+            await PublishRevisionAsync();
+        }
+        else
+        {
+            await SubmitSuggestionAsync();
+        }
+    }
+
+    private async Task PublishRevisionAsync()
+    {
+        if (_selectedPage == null)
+        {
+            return;
+        }
+
+        var revision = await ManualService.PublishRevisionAsync(
+            _selectedPage.CompanyManualPageId,
+            _editorTitle,
+            _editorHtml,
+            _changeSummary,
+            StateService.CurrentUser?.Id,
+            null);
+
+        if (revision == null)
+        {
+            ShowStatus("Unable to publish revision.", MessageIntent.Error);
+            return;
+        }
+
+        ShowStatus("Revision published.", MessageIntent.Success);
+        await SelectPageAsync(_selectedPage);
+    }
+
+    private async Task SubmitSuggestionAsync()
+    {
+        if (_selectedPage == null)
+        {
+            return;
+        }
+
+        var suggestion = await ManualService.SubmitSuggestionAsync(
+            _selectedPage.CompanyManualPageId,
+            _editorTitle,
+            _editorHtml,
+            _changeSummary,
+            StateService.CurrentUser?.Id);
+
+        if (suggestion == null)
+        {
+            ShowStatus("Unable to submit suggestion.", MessageIntent.Error);
+            return;
+        }
+
+        ShowStatus("Suggestion submitted for review.", MessageIntent.Success);
+        _viewMode = ManualViewMode.View;
+    }
+
+    private void ReviewSuggestion(CompanyManualSuggestion suggestion)
+    {
+        _activeSuggestion = suggestion;
+        _reviewNotes = suggestion.ReviewNotes ?? string.Empty;
+        _viewMode = ManualViewMode.ReviewSuggestion;
+    }
+
+    private void ExitSuggestionReview()
+    {
+        _activeSuggestion = null;
+        _reviewNotes = string.Empty;
+        _viewMode = ManualViewMode.View;
+    }
+
+    private void PreviewRevision(CompanyManualRevision revision)
+    {
+        _activeRevision = revision;
+        _viewMode = ManualViewMode.RevisionPreview;
+    }
+
+    private void ExitRevisionPreview()
+    {
+        _activeRevision = null;
+        _viewMode = ManualViewMode.View;
+    }
+
+    private async Task ApproveSuggestionAsync()
+    {
+        if (_activeSuggestion == null)
+        {
+            return;
+        }
+
+        var updated = await ManualService.ApproveSuggestionAsync(_activeSuggestion.CompanyManualSuggestionId, _reviewNotes, StateService.CurrentUser?.Id);
+        if (updated == null)
+        {
+            ShowStatus("Unable to approve suggestion.", MessageIntent.Error);
+            return;
+        }
+
+        ShowStatus("Suggestion approved and published.", MessageIntent.Success);
+        await SelectPageAsync(_selectedPage!);
+    }
+
+    private async Task RejectSuggestionAsync()
+    {
+        if (_activeSuggestion == null)
+        {
+            return;
+        }
+
+        var updated = await ManualService.RejectSuggestionAsync(_activeSuggestion.CompanyManualSuggestionId, _reviewNotes, StateService.CurrentUser?.Id);
+        if (updated == null)
+        {
+            ShowStatus("Unable to reject suggestion.", MessageIntent.Error);
+            return;
+        }
+
+        ShowStatus("Suggestion rejected.", MessageIntent.Info);
+        await SelectPageAsync(_selectedPage!);
+    }
+
+    private async Task PersistMetadataAsync()
+    {
+        if (_selectedPage == null || !IsAdminView)
+        {
+            return;
+        }
+
+        await ManualService.UpdatePageMetadataAsync(_selectedPage, StateService.CurrentUser?.Id);
+        await LoadTimelineAsync();
+    }
+
+    private async Task PersistParentAsync()
+    {
+        if (_selectedPage == null || !IsAdminView)
+        {
+            return;
+        }
+
+        var success = await ManualService.UpdatePageParentAsync(_selectedPage.CompanyManualPageId, _selectedPage.ParentPageId, StateService.CurrentUser?.Id);
+        if (!success)
+        {
+            ShowStatus("Unable to move page to the selected parent.", MessageIntent.Warning);
+            await SelectPageAsync(_selectedPage, false);
+            return;
+        }
+
+        await ReloadPagesAsync();
+        await SelectPageAsync(_selectedPage);
+    }
+
+    private Task BeginCreatePage()
+    {
+        _isCreatingPage = true;
+        _newPageTitle = string.Empty;
+        _newPageParentLabel = _selectedPage?.Title ?? "Root";
+        return Task.CompletedTask;
+    }
+
+    private void CancelCreatePage()
+    {
+        _isCreatingPage = false;
+        _newPageTitle = string.Empty;
+    }
+
+    private async Task CreatePageAsync()
+    {
+        if (!IsAdminView)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newPageTitle))
+        {
+            ShowStatus("Enter a title for the new page.", MessageIntent.Warning);
+            return;
+        }
+
+        var parentId = _selectedPage?.CompanyManualPageId;
+        var page = await ManualService.CreatePageAsync(_newPageTitle, parentId, StateService.CurrentUser?.Id);
+        _isCreatingPage = false;
+        _newPageTitle = string.Empty;
+
+        await ReloadPagesAsync();
+        await SelectPageAsync(page);
+    }
+
+    private async Task MovePageAsync(CompanyManualPage page, bool moveUp)
+    {
+        if (!IsAdminView)
+        {
+            return;
+        }
+
+        await ManualService.MovePageOrderAsync(page.CompanyManualPageId, moveUp, StateService.CurrentUser?.Id);
+        await ReloadPagesAsync();
+        await SelectPageAsync(page);
+    }
+
+    private bool IsFirstSibling(PageNode node)
+    {
+        if (node.Parent == null)
+        {
+            return _pageTree.FirstOrDefault()?.Page.CompanyManualPageId == node.Page.CompanyManualPageId;
+        }
+
+        return node.Parent.Children.FirstOrDefault()?.Page.CompanyManualPageId == node.Page.CompanyManualPageId;
+    }
+
+    private bool IsLastSibling(PageNode node)
+    {
+        if (node.Parent == null)
+        {
+            return _pageTree.LastOrDefault()?.Page.CompanyManualPageId == node.Page.CompanyManualPageId;
+        }
+
+        return node.Parent.Children.LastOrDefault()?.Page.CompanyManualPageId == node.Page.CompanyManualPageId;
+    }
+
+    private async Task ArchivePageAsync()
+    {
+        if (_selectedPage == null)
+        {
+            return;
+        }
+
+        await ManualService.ArchivePageAsync(_selectedPage.CompanyManualPageId, StateService.CurrentUser?.Id);
+        ShowStatus("Page archived.", MessageIntent.Info);
+        await ReloadPagesAsync();
+        await SelectPageAsync(_selectedPage);
+    }
+
+    private async Task RestorePageAsync()
+    {
+        if (_selectedPage == null)
+        {
+            return;
+        }
+
+        await ManualService.RestorePageAsync(_selectedPage.CompanyManualPageId, StateService.CurrentUser?.Id);
+        ShowStatus("Page restored.", MessageIntent.Success);
+        await ReloadPagesAsync();
+        await SelectPageAsync(_selectedPage);
+    }
+
+    private async Task PrintPageAsync()
+    {
+        if (_selectedPage == null)
+        {
+            return;
+        }
+
+        var url = NavigationManager.ToAbsoluteUri($"/CompanyManual/Print?pageId={_selectedPage.CompanyManualPageId}").ToString();
+        await JSRuntime.InvokeVoidAsyncSafe("window.open", url, "_blank");
+    }
+
+    private async Task PrintAllAsync()
+    {
+        var url = NavigationManager.ToAbsoluteUri("/CompanyManual/Print?printAll=true").ToString();
+        await JSRuntime.InvokeVoidAsyncSafe("window.open", url, "_blank");
+    }
+
+    // Lightbox methods
+    private void CloseVideoLightbox()
+    {
+        _videoLightboxOpen = false;
+        _lightboxVideoSrc = string.Empty;
+    }
+
+    private void CloseImageLightbox()
+    {
+        _imageLightboxOpen = false;
+        _lightboxImageSrc = string.Empty;
+        _lightboxImageAlt = string.Empty;
+    }
+
+    [JSInvokable]
+    public void OpenVideoLightbox(string videoSrc)
+    {
+        _lightboxVideoSrc = videoSrc;
+        _videoLightboxOpen = true;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OpenImageLightbox(string imageSrc, string? alt)
+    {
+        _lightboxImageSrc = imageSrc;
+        _lightboxImageAlt = alt ?? string.Empty;
+        _imageLightboxOpen = true;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void HandleEscapeKey()
+    {
+        if (_videoLightboxOpen)
+        {
+            CloseVideoLightbox();
+            StateHasChanged();
+        }
+        else if (_imageLightboxOpen)
+        {
+            CloseImageLightbox();
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsyncSafe("CompanyManualLightbox.init", _dotNetRef);
+        }
+
+        // Re-attach click handlers when content changes
+        if (_selectedPage != null && _viewMode == ManualViewMode.View)
+        {
+            await JSRuntime.InvokeVoidAsyncSafe("CompanyManualLightbox.attachMediaHandlers", _dotNetRef);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsyncSafe("CompanyManualLightbox.dispose");
+        }
+        catch
+        {
+            // Ignore disposal errors
+        }
+        _dotNetRef?.Dispose();
+    }
+
+    private void ShowStatus(string message, MessageIntent intent)
+    {
+        _statusMessage = message;
+        _statusIntent = intent;
+    }
+
+    private void ClearStatus()
+    {
+        _statusMessage = null;
+    }
+
+    private string GetAuditMeta(CompanyManualAuditEntry entry)
+    {
+        var actorName = GetAuditActorName(entry.ActorUserId);
+        return $"{actorName} | {FormatDateTime(entry.Timestamp)}";
+    }
+
+    private string GetAuditActorName(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return "System";
+        }
+
+        return GetUserDisplayName(userId);
+    }
+
+    private string OwnerUserId
+    {
+        get => _selectedPage?.OwnerUserId ?? string.Empty;
+        set
+        {
+            if (_selectedPage != null)
+            {
+                _selectedPage.OwnerUserId = string.IsNullOrWhiteSpace(value) ? null : value;
+            }
+        }
+    }
+
+    private string ParentSelection
+    {
+        get => _selectedPage?.ParentPageId?.ToString() ?? string.Empty;
+        set
+        {
+            if (_selectedPage == null)
+            {
+                return;
+            }
+
+            if (int.TryParse(value, out var parsed))
+            {
+                _selectedPage.ParentPageId = parsed;
+            }
+            else
+            {
+                _selectedPage.ParentPageId = null;
+            }
+        }
+    }
+
+    private string TaskGroupSelection
+    {
+        get => _selectedPage?.TaskGroupId?.ToString() ?? string.Empty;
+        set
+        {
+            if (_selectedPage == null)
+            {
+                return;
+            }
+
+            if (int.TryParse(value, out var parsed))
+            {
+                _selectedPage.TaskGroupId = parsed;
+            }
+            else
+            {
+                _selectedPage.TaskGroupId = null;
+            }
+        }
+    }
+
+    private List<string> GetOwnerOptions()
+    {
+        var options = new List<string> { string.Empty };
+        options.AddRange(_users.Select(u => u.Id));
+        return options;
+    }
+
+    private string GetOwnerOptionText(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return "-- None --";
+        }
+
+        var user = _users.FirstOrDefault(u => u.Id == userId);
+        return user == null ? userId : GetUserDisplayName(user.Id);
+    }
+
+    private List<string> GetParentOptions()
+    {
+        var options = new List<string> { string.Empty };
+        if (_selectedPage == null)
+        {
+            return options;
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { string.Empty };
+
+        void AddOption(string id)
+        {
+            if (seen.Add(id))
+            {
+                options.Add(id);
+            }
+        }
+
+        if (_selectedPage.ParentPageId.HasValue)
+        {
+            AddOption(_selectedPage.ParentPageId.Value.ToString());
+        }
+
+        var candidates = _pages
+            .Where(p => p.CompanyManualPageId != _selectedPage.CompanyManualPageId)
+            .ToList();
+
+        if (!string.IsNullOrWhiteSpace(_parentFilter))
+        {
+            var term = _parentFilter.Trim();
+            candidates = candidates
+                .Where(p => p.Title.Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        else if (candidates.Count > ParentPageFilterThreshold)
+        {
+            candidates = candidates.Where(p => p.ParentPageId == null).ToList();
+        }
+
+        foreach (var page in candidates)
+        {
+            AddOption(page.CompanyManualPageId.ToString());
+        }
+
+        return options;
+    }
+
+    private string GetParentOptionText(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return "-- Root --";
+        }
+
+        if (!int.TryParse(id, out var parsed))
+        {
+            return id;
+        }
+
+        var parent = _pages.FirstOrDefault(p => p.CompanyManualPageId == parsed);
+        return parent?.Title ?? id;
+    }
+
+    private List<string> GetTaskGroupOptions()
+    {
+        var options = new List<string> { string.Empty };
+        options.AddRange(_taskGroups.Select(g => g.TaskGroupId.ToString()));
+        return options;
+    }
+
+    private string GetTaskGroupOptionText(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return "-- None --";
+        }
+
+        if (!int.TryParse(id, out var parsed))
+        {
+            return id;
+        }
+
+        var group = _taskGroups.FirstOrDefault(g => g.TaskGroupId == parsed);
+        return group?.Name ?? id;
+    }
+
+    private string GetUserDisplayName(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return "Unassigned";
+        }
+
+        var user = _users.FirstOrDefault(u => u.Id == userId);
+        if (user == null)
+        {
+            return userId;
+        }
+
+        var fullName = $"{user.FirstName} {user.LastName}".Trim();
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            return fullName;
+        }
+
+        return user.UserName ?? user.Email ?? user.Id;
+    }
+
+    private static string FormatDate(DateTime? value)
+    {
+        return value.HasValue ? value.Value.ToString("d") : "Not set";
+    }
+
+    private static string FormatDateTime(DateTime? value)
+    {
+        return value.HasValue ? value.Value.ToString("g") : "Not set";
+    }
+
+    private static string FormatDays(int? value)
+    {
+        return value.HasValue ? $"{value} days" : "Not set";
+    }
+
+    private List<PageNode> BuildTree(IEnumerable<CompanyManualPage> pages)
+    {
+        var pageList = pages.ToList();
+        var roots = pageList
+            .Where(p => p.ParentPageId == null)
+            .OrderBy(p => p.SortOrder)
+            .ThenBy(p => p.Title)
+            .ToList();
+
+        var lookup = pageList
+            .Where(p => p.ParentPageId.HasValue)
+            .GroupBy(p => p.ParentPageId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderBy(p => p.SortOrder).ThenBy(p => p.Title).ToList());
+
+        List<PageNode> BuildNodes(int? parentId, PageNode? parentNode)
+        {
+            List<CompanyManualPage> children;
+            if (!parentId.HasValue)
+            {
+                children = roots;
+            }
+            else if (!lookup.TryGetValue(parentId.Value, out children))
+            {
+                return new List<PageNode>();
+            }
+
+            return children
+                .Select(child =>
+                {
+                    var node = new PageNode(child)
+                    {
+                        Parent = parentNode
+                    };
+                    node.Children = BuildNodes(child.CompanyManualPageId, node);
+                    return node;
+                })
+                .ToList();
+        }
+
+        return BuildNodes(null, null);
+    }
+
+    private sealed class PageNode
+    {
+        public PageNode(CompanyManualPage page)
+        {
+            Page = page;
+        }
+
+        public CompanyManualPage Page { get; }
+        public PageNode? Parent { get; set; }
+        public List<PageNode> Children { get; set; } = new();
+    }
+
+    private enum MediaInsertType
+    {
+        Image,
+        Video
+    }
+
+    private enum MediaPathMode
+    {
+        Http,
+        NetworkDrive,
+        UncPath
+    }
+
+    private enum ManualViewMode
+    {
+        View,
+        Edit,
+        Suggest,
+        ReviewSuggestion,
+        RevisionPreview
+    }
+}

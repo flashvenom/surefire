@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Quickfire.Blazor.Domain.Renewals.Models;
 using Quickfire.Blazor.Domain.Attachments.Models;
+using Quickfire.Blazor.Domain.Shared.Models;
 using Quickfire.Blazor.Domain.Shared.Services;
 using Syncfusion.Blazor.Data;
 using Microsoft.AspNetCore.Components;
@@ -287,6 +288,45 @@ namespace Quickfire.Blazor.Domain.Shared.Helpers
             }
 
             return dataWebPath;
+        }
+
+        public static string BuildAttachmentFilePath(FileStorageSettings settings, string? relativePath)
+        {
+            if (settings == null || string.IsNullOrWhiteSpace(relativePath))
+            {
+                return string.Empty;
+            }
+
+            var basePath = settings.Mode switch
+            {
+                FileStorageMode.Network => settings.NetworkSharePath,
+                FileStorageMode.LocalDesktop => settings.LocalRootPath,
+                _ => settings.NetworkSharePath ?? settings.LocalRootPath
+            };
+
+            if (string.IsNullOrWhiteSpace(basePath))
+            {
+                return string.Empty;
+            }
+
+            var normalizedRelativePath = relativePath.Replace("\\", "/").TrimStart('/');
+            if (normalizedRelativePath.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedRelativePath = normalizedRelativePath["wwwroot/".Length..];
+            }
+
+            var segments = normalizedRelativePath
+                .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+                .ToList();
+
+            if (settings.StripUploadsFromMappedPath &&
+                segments.Count > 0 &&
+                segments[0].Equals("uploads", StringComparison.OrdinalIgnoreCase))
+            {
+                segments.RemoveAt(0);
+            }
+
+            return Path.Combine(new[] { basePath }.Concat(segments).ToArray());
         }
 
         // <summary>

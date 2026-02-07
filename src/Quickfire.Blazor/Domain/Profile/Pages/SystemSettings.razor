@@ -1,6 +1,7 @@
 @page "/System"
 @inherits AppComponentBase
 @using Quickfire.Blazor.Domain.Profile.Components
+@inject IToastService ToastService
 
 <_Toolbar currentView="_Toolbar.ViewMode.System" />
 
@@ -17,8 +18,119 @@
         <FluentMessageBar Intent="MessageIntent.Info">
             This build no longer exposes integration key storage or Epic configuration UI. Existing settings are ignored; update code or configuration files if new integrations are required.
         </FluentMessageBar>
+
+        <FluentCard Class="system-settings-card">
+            <div class="system-settings-card__header">
+                <div class="system-settings-card__icon">
+                    <FluentIcon Value="@(new Icons.Regular.Size32.BookOpen())" Color="Color.Custom" CustomColor="#5c6470" />
+                </div>
+                <div>
+                    <h4 class="system-settings-card__title">Company Manual</h4>
+                    <p class="system-settings-card__subtitle">Choose who can edit the manual table of contents and approve suggestions.</p>
+                </div>
+            </div>
+            <div class="system-settings-card__body">
+                @if (!_settingsLoaded)
+                {
+                    <FluentProgressRing Width="30px" Color="#1b8ce3" />
+                }
+                else
+                {
+                    <EditForm Model="_settings" OnValidSubmit="SaveCompanyManualSettingsAsync">
+                        <DataAnnotationsValidator />
+                        <FluentStack Style="gap: 12px;">
+                            <div>
+                                <FluentLabel Style="font-weight: 600;">Company Manual Admin</FluentLabel>
+                                <FluentSelect TOption="string"
+                                              Items="@GetCompanyManualAdminOptions()"
+                                              @bind-SelectedOption="CompanyManualAdminUserId"
+                                              OptionText="@(option => GetCompanyManualAdminText(option))"
+                                              OptionValue="@(option => option)"
+                                              Placeholder="-- None --"
+                                              Style="width: 100%;" />
+                            </div>
+                            <div class="qf-help-note">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Info())" Color="Color.Custom" CustomColor="#1b8ce3" />
+                                <div>Select the user who can edit the Company Manual table of contents and approve suggestions.</div>
+                            </div>
+                        </FluentStack>
+                        <FluentValidationSummary />
+                        <div class="settings-actions">
+                            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit">Save Company Manual</FluentButton>
+                        </div>
+                    </EditForm>
+                }
+            </div>
+        </FluentCard>
     </div>
 </div>
 
 @code {
+    private Settings _settings = new();
+    private List<ApplicationUser> _allUsers = new();
+    private bool _settingsLoaded;
+
+    private string CompanyManualAdminUserId
+    {
+        get => _settings.CompanyManualAdminUserId ?? string.Empty;
+        set => _settings.CompanyManualAdminUserId = string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadSettingsAsync();
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        _settings = await StateService.GetSystemSettingsAsync() ?? new Settings();
+        _allUsers = await StateService.AllUsers;
+        _settingsLoaded = true;
+    }
+
+    private async Task SaveCompanyManualSettingsAsync()
+    {
+        try
+        {
+            var latest = await StateService.GetSystemSettingsAsync() ?? new Settings();
+            latest.CompanyManualAdminUserId = _settings.CompanyManualAdminUserId;
+            await StateService.SaveSystemSettingsAsync(latest);
+            _settings.CompanyManualAdminUserId = latest.CompanyManualAdminUserId;
+            ToastService.ShowSuccess("Company manual settings saved.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error saving company manual settings: {ex.Message}");
+        }
+    }
+
+    private List<string> GetCompanyManualAdminOptions()
+    {
+        var options = new List<string> { string.Empty };
+        options.AddRange(_allUsers.Select(u => u.Id));
+        return options;
+    }
+
+    private string GetCompanyManualAdminText(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return "-- None --";
+        }
+
+        var user = _allUsers.FirstOrDefault(u => u.Id == userId);
+        if (user == null)
+        {
+            return userId;
+        }
+
+        var fullName = $"{user.FirstName} {user.LastName}".Trim();
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            return fullName;
+        }
+
+        return user.UserName ?? user.Email ?? user.Id;
+    }
 }

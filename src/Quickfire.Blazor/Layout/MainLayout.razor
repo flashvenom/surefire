@@ -44,6 +44,11 @@
         <div class="right-icons">
             <FluentStack HorizontalAlignment="@HorizontalAlignment.End" VerticalAlignment="@VerticalAlignment.Center" Style="height: 48px; position:relative; left:-20px;" Class="right-icons-stack">
 
+                @* COMPANY MANUAL *@
+                <a href="/CompanyManual" class="profile-gear" title="Company Manual">
+                    <FluentIcon Value="@(new Icons.Regular.Size28.QuestionCircle())" Color="Color.Custom" CustomColor="#fff" />
+                </a>
+
                 @* SETTINGS *@
                 <a href="/Profile" class="profile-gear" @onclick="OnProfileGearClick">
                     <FluentIcon Value="@(new Icons.Regular.Size28.Settings())" Color="Color.Custom" CustomColor="#fff" />

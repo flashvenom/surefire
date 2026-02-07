@@ -34,6 +34,7 @@ namespace Quickfire.Blazor.Domain.Shared.Models
         public bool SandbagMode { get; set; }
         public bool FakeyMode { get; set; }
         public string OrganizationTimeZoneId { get; set; } = DefaultOrganizationTimeZoneId;
+        public string? CompanyManualAdminUserId { get; set; }
 
         private FileStorageSettings? _fileStorage;
 

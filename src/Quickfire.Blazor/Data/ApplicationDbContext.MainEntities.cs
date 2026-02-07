@@ -63,6 +63,8 @@ public partial class ApplicationDbContext
     public DbSet<FormDoc> FormDocs { get; set; }
     public DbSet<FormDocRevision> FormDocRevisions { get; set; }
     public DbSet<FormPdf> FormPdf { get; set; }
+    public DbSet<FormsLibraryEntry> FormsLibrary { get; set; }
+    public DbSet<FormsLibraryVersion> FormsLibraryVersions { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
     public DbSet<Folder> Folders { get; set; }
     public DbSet<AttachmentGroup> AttachmentGroups { get; set; }
@@ -72,6 +74,10 @@ public partial class ApplicationDbContext
     public DbSet<Log> Logs { get; set; }
     public DbSet<Settings> Settings { get; set; }
     public DbSet<EntityAssociation> EntityAssociations { get; set; }
+    public DbSet<Quickfire.Blazor.Domain.CompanyManual.Models.CompanyManualPage> CompanyManualPages { get; set; }
+    public DbSet<Quickfire.Blazor.Domain.CompanyManual.Models.CompanyManualRevision> CompanyManualRevisions { get; set; }
+    public DbSet<Quickfire.Blazor.Domain.CompanyManual.Models.CompanyManualSuggestion> CompanyManualSuggestions { get; set; }
+    public DbSet<Quickfire.Blazor.Domain.CompanyManual.Models.CompanyManualAuditEntry> CompanyManualAuditEntries { get; set; }
 
     //Unmapped
     [NotMapped]

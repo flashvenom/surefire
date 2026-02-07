@@ -8,7 +8,6 @@
 @using Quickfire.Blazor.Domain.Forms.Services
 @inject FormService FormService
 @inject IWebHostEnvironment Environment
-@inject IJSRuntime JS
 @implements IAsyncDisposable
 
 <SfPdfViewer2 @ref=pdfViewer DocumentPath="@DocumentPath"  Height="784px" Width="100%">
@@ -30,19 +29,19 @@
         if (FormDoc != null)
         {
             // Load the data
-            if (FormDoc.FormPdf != null)
+            if (FormDoc.FormPdf != null || FormDoc.FormsLibraryVersion != null)
             {
-                FormPdf = FormDoc.FormPdf;
+                FormPdf = FormDoc.FormPdf ?? new FormPdf();
             }
             else
             {
-                // Load FormPdf if not included
+                // Load FormPdf/Library version if not included
                 var fullFormDoc = await FormService.GetFormDocByIdAsync(FormDoc.FormDocId);
-                FormPdf = fullFormDoc.FormPdf;
+                FormPdf = fullFormDoc.FormPdf ?? new FormPdf();
                 FormDoc = fullFormDoc; // Update with full data
             }
-            
-            DocumentPath = Path.Combine(Environment.WebRootPath, "forms", FormPdf.Filepath);
+
+            DocumentPath = ResolveDocumentPath(FormDoc, FormPdf);
             Revisions = await FormService.GetFormDocRevisionsAsync(FormDoc.FormDocId);
         }
     }
@@ -67,7 +66,7 @@
         JObject jsonData = JObject.Parse(FormDoc.JSONData);
 
         // TESTING: Check if the FormDocId is 14 and if so fill in some fields
-        if (FormDoc.FormPdfId == 14)
+        if (FormDoc.FormPdfId.HasValue && FormDoc.FormPdfId == 14)
         {
             string currentDate = DateTime.Now.ToString("MM/yyyy");
             jsonData["Insurer 1 Date"] = currentDate;
@@ -152,6 +151,24 @@
             stream?.Dispose();
             disposed = true;
         }
+    }
+
+    private string ResolveDocumentPath(FormDoc doc, FormPdf formPdf)
+    {
+        if (doc.FormsLibraryVersion != null &&
+            !string.IsNullOrWhiteSpace(doc.FormsLibraryVersion.RelativePath) &&
+            !string.IsNullOrWhiteSpace(doc.FormsLibraryVersion.StoredFileName))
+        {
+            var relative = doc.FormsLibraryVersion.RelativePath.TrimStart('/');
+            return Path.Combine(Environment.WebRootPath, relative, doc.FormsLibraryVersion.StoredFileName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(formPdf.Filepath))
+        {
+            return Path.Combine(Environment.WebRootPath, "forms", formPdf.Filepath);
+        }
+
+        return string.Empty;
     }
 }
 

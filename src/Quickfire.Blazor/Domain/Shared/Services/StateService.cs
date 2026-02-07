@@ -52,10 +52,12 @@ namespace Quickfire.Blazor.Domain.Shared.Services
         private Task<List<Carrier>>? _allWholesalersTask;
         private Task<List<Product>>? _allProductsTask;
         private Task<List<ApplicationUser>>? _allUsersTask;
+        private Task<List<ClientListItem>>? _allClientsTask;
         public Task<List<Carrier>> AllCarriers => _allCarriersTask ??= LoadCarriersAsync();
         public Task<List<Carrier>> AllWholesalers => _allWholesalersTask ??= LoadWholesalersAsync();
         public Task<List<Product>> AllProducts => _allProductsTask ??= LoadProductsAsync();
         public Task<List<ApplicationUser>> AllUsers => _allUsersTask ??= LoadUsersAsync();
+        public Task<List<ClientListItem>> AllClients => _allClientsTask ??= LoadClientsAsync();
 
         // Static lists Methods---------------------------------------------------------------//
         private readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
@@ -206,6 +208,36 @@ namespace Quickfire.Blazor.Domain.Shared.Services
                 return new List<ApplicationUser>();
             }
         }
+        private async Task<List<ClientListItem>> LoadClientsAsync()
+        {
+            if (_clientStateService.IsClientsCacheValid())
+            {
+                return _clientStateService.AllClients ?? new List<ClientListItem>();
+            }
+
+            using var context = _dbContextFactory.CreateDbContext();
+            try
+            {
+                var clients = await context.Clients
+                    .AsNoTracking()
+                    .OrderByDescending(c => c.DateOpened)
+                    .Select(c => new ClientListItem
+                    {
+                        ClientId = c.ClientId,
+                        Name = c.Name,
+                        DateOpened = c.DateOpened
+                    })
+                    .ToListAsync();
+
+                _clientStateService.SetClientsCache(clients);
+                return clients;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading clients: {ex.Message}");
+                return new List<ClientListItem>();
+            }
+        }
 
         // CurrentUser and State Props --------------------------------------------------------//
         public ApplicationUser? CurrentUser { get; private set; }
@@ -269,6 +301,7 @@ namespace Quickfire.Blazor.Domain.Shared.Services
         public Func<int, Task>? LoadClientFromSearch { get; set; }
         public string ClientTab { get; set; } = "tab-1";
         public int ClientId { get; set; } = 0;
+        public int? LastFormsLibraryEntryId { get; set; }
         public async Task SetMostRecentlyOpenedClientIdAsync()
         {
             using var context = _dbContextFactory.CreateDbContext();
@@ -308,6 +341,7 @@ namespace Quickfire.Blazor.Domain.Shared.Services
         }
         public async Task InvalidateClientsCacheAsync()
         {
+            _allClientsTask = null;
             await _clientStateService.InvalidateClientsCacheAsync();
         }
         public async Task InvalidateFormPdfsCacheAsync()
@@ -464,6 +498,7 @@ namespace Quickfire.Blazor.Domain.Shared.Services
                     existingSettings.SandbagMode = settings.SandbagMode;
                     existingSettings.FakeyMode = settings.FakeyMode;
                     existingSettings.OrganizationTimeZoneId = normalizedTimeZoneId;
+                    existingSettings.CompanyManualAdminUserId = settings.CompanyManualAdminUserId;
 
                     context.Settings.Update(existingSettings);
                 }

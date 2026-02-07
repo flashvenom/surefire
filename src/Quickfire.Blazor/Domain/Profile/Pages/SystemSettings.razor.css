@@ -20,3 +20,35 @@ h2 {
     height: calc(100vh - 125px);
     padding: 0px;
 }
+
+.system-settings-card {
+    margin-top: 24px;
+    padding: 20px;
+}
+
+.system-settings-card__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.system-settings-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f6f8;
+}
+
+.system-settings-card__title {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.system-settings-card__subtitle {
+    margin: 0;
+    color: #6b6b6b;
+}

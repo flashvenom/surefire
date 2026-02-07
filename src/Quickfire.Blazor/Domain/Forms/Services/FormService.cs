@@ -54,6 +54,7 @@ namespace Quickfire.Blazor.Domain.Forms.Services
                 .Include(fd => fd.CreatedBy)   // Include the CreatedBy entity
                 .Include(fd => fd.ModifiedBy)  // Include the ModifiedBy entity
                 .Include(fd => fd.FormPdf)     // Include the FormPdf entity
+                .Include(fd => fd.FormsLibraryVersion)
                 .Include(fd => fd.Submission)  // Include Submission
                 .Include(fd => fd.Policy)      // Include Policy
                 .Include(fd => fd.Renewal)     // Include Renewal
@@ -68,6 +69,7 @@ namespace Quickfire.Blazor.Domain.Forms.Services
             using var context = _dbContextFactory.CreateDbContext();
             IQueryable<FormDoc> query = context.FormDocs
                 .Include(fd => fd.FormPdf)
+                .Include(fd => fd.FormsLibraryVersion)
                 .Include(fd => fd.CreatedBy)
                 .Include(fd => fd.ModifiedBy);
 
@@ -269,6 +271,7 @@ namespace Quickfire.Blazor.Domain.Forms.Services
             // First, try to get existing FormDoc for this policy
             var existingFormDoc = await context.FormDocs
                 .Include(fd => fd.FormPdf)
+                .Include(fd => fd.FormsLibraryVersion)
                 .Include(fd => fd.Policy)
                     .ThenInclude(p => p.Product)
                 .Include(fd => fd.CreatedBy)
@@ -326,6 +329,7 @@ namespace Quickfire.Blazor.Domain.Forms.Services
             // Load the complete FormDoc with all navigation properties
             return await context.FormDocs
                 .Include(fd => fd.FormPdf)
+                .Include(fd => fd.FormsLibraryVersion)
                 .Include(fd => fd.Policy)
                     .ThenInclude(p => p.Product)
                 .Include(fd => fd.CreatedBy)
@@ -421,6 +425,61 @@ namespace Quickfire.Blazor.Domain.Forms.Services
 
             return newformdoc.FormDocId;
         }
+
+        public async Task<int> CreateFormDocFromLibraryVersionAsync(
+            int formsLibraryVersionId,
+            int? clientId = null,
+            int? leadId = null,
+            int? submissionId = null,
+            int? policyId = null,
+            int? renewalId = null)
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            var currentUser = _stateService.CurrentUser;
+            context.Attach(currentUser);
+
+            if (clientId == null && leadId == null && submissionId == null && policyId == null && renewalId == null)
+            {
+                throw new Exception("At least one entity ID (client, lead, submission, policy, or renewal) must be provided.");
+            }
+
+            var libraryVersion = await context.FormsLibraryVersions
+                .Include(v => v.Entry)
+                .FirstOrDefaultAsync(v => v.FormsLibraryVersionId == formsLibraryVersionId);
+
+            if (libraryVersion == null)
+            {
+                throw new Exception("Forms library version not found.");
+            }
+
+            var title = libraryVersion.Entry?.Title ?? Path.GetFileNameWithoutExtension(libraryVersion.OriginalFileName ?? "Library Form");
+            var description = libraryVersion.Entry?.MarketTag;
+
+            var newformdoc = new FormDoc
+            {
+                Title = $"New {title}",
+                Description = description,
+                JSONData = libraryVersion.JsonFields ?? "{}",
+                FormsLibraryVersionId = libraryVersion.FormsLibraryVersionId,
+                CreatedBy = currentUser,
+                ModifiedBy = currentUser,
+                DateCreated = DateTime.UtcNow,
+                DateModified = DateTime.UtcNow
+            };
+
+            if (clientId != null) newformdoc.ClientId = clientId.Value;
+            if (leadId != null) newformdoc.LeadId = leadId.Value;
+            if (submissionId != null) newformdoc.SubmissionId = submissionId.Value;
+            if (policyId != null) newformdoc.PolicyId = policyId.Value;
+            if (renewalId != null) newformdoc.RenewalId = renewalId.Value;
+
+            context.FormDocs.Add(newformdoc);
+            await context.SaveChangesAsync();
+
+            await CreateFormDocRevisionAsync(newformdoc.FormDocId, newformdoc.JSONData ?? "{}", "Initial Version");
+
+            return newformdoc.FormDocId;
+        }
         public async Task<int> DuplicateCertificateAsync(Certificate originalCertificate)
         {
             using var context = _dbContextFactory.CreateDbContext();
@@ -469,7 +528,9 @@ namespace Quickfire.Blazor.Domain.Forms.Services
                 JSONData = originalFormdoc.JSONData,
                 DateCreated = DateTime.Now,
                 DateModified = DateTime.Now,
-                FormPdf = originalFormdoc.FormPdf
+                FormPdf = originalFormdoc.FormPdf,
+                FormPdfId = originalFormdoc.FormPdfId,
+                FormsLibraryVersionId = originalFormdoc.FormsLibraryVersionId
             };
             newFormdoc.CreatedBy = currentUser;
             newFormdoc.ModifiedBy = currentUser;

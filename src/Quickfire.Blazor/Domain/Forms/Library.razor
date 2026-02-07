@@ -1,0 +1,1553 @@
+﻿@page "/Forms/Library"
+@using System.IO
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.FluentUI.AspNetCore.Components
+@using Quickfire.Blazor.Domain.Attachments.Models
+@using Quickfire.Blazor.Domain.Attachments.Services
+@using Quickfire.Blazor.Domain.Contacts.Models
+@using Quickfire.Blazor.Domain.Carriers.Models
+@using Quickfire.Blazor.Domain.Clients.Models
+@using Quickfire.Blazor.Domain.Clients.Services
+@using Quickfire.Blazor.Domain.Ember
+@using Quickfire.Blazor.Domain.Forms.Models
+@using Quickfire.Blazor.Domain.Forms.Services
+@using Quickfire.Blazor.Domain.Shared.Helpers
+@using Quickfire.Blazor.Domain.Shared.Services
+@using Syncfusion.Blazor.DropDowns
+@inject FormsLibraryService FormsLibraryService
+@inject FormService FormService
+@inject AttachmentService AttachmentService
+@inject ClientService ClientService
+@inject ClientStateService ClientStateService
+@inject EmberService EmberService
+@inject NavigationManager NavigationManager
+@inject StateService StateService
+@inject IToastService ToastService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="forms-library-page">
+    <div class="qf-toolbar qf-toolbar-shinybg">
+        <a class="qf-toolbar__inverse-link" @onclick="OpenNewFormDialog">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Add())" />
+            <span class="toolbar-text">New</span>
+        </a>
+
+        <span class="sf-verthr2"></span>
+
+        <a class="qf-toolbar__inverse-link @(selectedEntry == null ? "qf-toolbar__inverse-disabled" : "")" @onclick="OpenSelectedFormAsync">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Open())" />
+            <span class="toolbar-text">Open</span>
+        </a>
+
+        <a class="qf-toolbar__inverse-link @(selectedEntry == null ? "qf-toolbar__inverse-disabled" : "")" @onclick="OpenAttachDialog">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Attach())" />
+            <span class="toolbar-text">Attach</span>
+        </a>
+
+        <a class="qf-toolbar__inverse-link @(selectedEntry == null ? "qf-toolbar__inverse-disabled" : "")" @onclick="OpenEmailDialogAsync">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Mail())" />
+            <span class="toolbar-text">Email</span>
+        </a>
+
+        <a class="qf-toolbar__inverse-link @(selectedEntry == null ? "qf-toolbar__inverse-disabled" : "")" @onclick="OpenFillDialog">
+            <FluentIcon Value="@(new Icons.Regular.Size24.DocumentEdit())" />
+            <span class="toolbar-text">Fill</span>
+        </a>
+
+        <a class="qf-toolbar__inverse-link @(selectedEntry == null ? "qf-toolbar__inverse-disabled" : "")" @onclick="OpenVersionHistoryAsync">
+            <FluentIcon Value="@(new Icons.Regular.Size24.History())" />
+            <span class="toolbar-text">Versions</span>
+        </a>
+
+        <a class="qf-toolbar__inverse-link @(selectedEntry == null ? "qf-toolbar__inverse-disabled" : "")" @onclick="OpenEditFormDialog">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
+            <span class="toolbar-text">Edit</span>
+        </a>
+    </div>
+
+    <div class="library-layout">
+        <div class="library-top">
+            <section class="library-left">
+                <div class="library-card">
+                    <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                        <div class="searcher">
+                            <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                <span class="searchericon">
+                                    <FluentIcon Value="@(new Icons.Regular.Size24.Search())" Slot="start" Color="Color.Custom" CustomColor="#5c6470" />
+                                </span>
+                                <FluentTextField @bind-Value="searchText" @bind-Value:after="OnSearchChanged" Immediate="true" Placeholder="Search title, carrier, wholesaler, tags..." Style="width: 100%;" />
+                            </FluentStack>
+                        </div>
+                        <div class="dc-con"><FluentCheckbox @bind-Checked="showArchived" Label="Archived" @bind-Checked:after="OnFiltersChanged" /></div>
+                        <div class="dc-con"><FluentCheckbox @bind-Checked="onlyBookmarked" Label="Bookmarked" @bind-Checked:after="OnFiltersChanged" /></div>
+                    </FluentStack>
+                    
+                    <div class="row-contain">
+                        <div class="dd-con">
+                            <FluentSelect TOption="string" Label="Carrier" Items="@carrierOptions" @bind-SelectedOption="selectedCarrier" @bind-SelectedOption:after="OnFiltersChanged" />
+                        </div>
+                        <div class="dd-con">
+                            <FluentSelect TOption="string" Label="Wholesaler" Items="@wholesalerOptions" @bind-SelectedOption="selectedWholesaler" @bind-SelectedOption:after="OnFiltersChanged" />
+                        </div>
+                        <div class="dd-con">
+                            <FluentSelect TOption="string" Label="Market Tag" Items="@marketOptions" @bind-SelectedOption="selectedMarket" @bind-SelectedOption:after="OnFiltersChanged" />
+                        </div>
+                   </div>
+                </div>
+            </section>
+
+            <section class="library-preview">
+                    @if (selectedEntry == null)
+                    {
+                        <div class="library-preview-card">
+                            <div class="library-empty">No forms available.</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="library-preview-card">
+                            <div class="forminfo">
+                                <div class="preview-header">
+                                    <div>
+                                        <div class="preview-title">@GetEntryTitle(selectedEntry)</div>
+                                        <div class="preview-subtitle">@GetEntrySubtitle(selectedEntry)</div>
+                                    </div>
+                                    <div class="preview-badges">
+                                        <span @onclick:stopPropagation="true">
+                                            <FluentButton Appearance="Appearance.Stealth"
+                                                            Title="Toggle bookmark"
+                                                            Class="bookmark-button"
+                                                            OnClick="@(() => ToggleBookmarkAsync(selectedEntry))">
+                                                <FluentIcon Value="@GetBookmarkIcon(selectedEntry)" />
+                                            </FluentButton>
+                                        </span>
+                                        <div class="preview-rating">
+                                            @for (var i = 1; i <= 5; i++)
+                                            {
+                                                var ratingValue = i;
+                                                var filled = (selectedEntry.Rating ?? 0) >= ratingValue;
+                                                <button type="button"
+                                                        class="star-button"
+                                                        title="Rate"
+                                                        @onclick:stopPropagation="true"
+                                                        @onclick="@(() => SetRatingAsync(selectedEntry, ratingValue))">
+                                                    <FluentIcon Value="@GetPreviewStarIcon(filled)" Color="Color.Custom" CustomColor="#fff" />
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="preview-tags">
+                                    <div>
+                                        <span class="tag-label">Carrier:</span>
+                                        <span>@(selectedEntry.CarrierName ?? "-")</span>
+                                    </div>
+                                    <div>
+                                        <span class="tag-label">Wholesaler:</span>
+                                        <span>@(selectedEntry.WholesalerName ?? "-")</span>
+                                    </div>
+                                    <div>
+                                        <span class="tag-label">Market:</span>
+                                        <span>@(selectedEntry.MarketTag ?? "-")</span>
+                                    </div>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                    Title="Edit form"
+                                                    OnClick="OpenEditFormDialog">
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Edit())" />
+                                    </FluentButton>
+                                </div>
+
+                                <div class="preview-meta">
+                                    <div>Version: @GetActiveVersionLabel(selectedEntry)</div>
+                                    <div>Pages: @GetActiveVersionPages(selectedEntry)</div>
+                                    <div>Fields: @GetActiveVersionFields(selectedEntry)</div>
+                                    <div>Updated: @selectedEntry.DateModified.ToString("MMM dd, yyyy")</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+            </section>
+        </div>
+
+       
+        <FluentStack>
+            <div class="library-grid">
+                <div class="library-grid-left">
+                
+                    <div class="library-grid-table">
+                        <FluentDataGrid TGridItem="FormsLibraryEntry"
+                                        Items="@filteredEntries.AsQueryable()"
+                                        ResizableColumns="true"
+                                        RowSize="DataGridRowSize.Small"
+                                        ShowHover="true"
+                                        OnRowClick="@((FluentDataGridRow<FormsLibraryEntry> row) => SelectEntry(row.Item))"
+                                        OnRowDoubleClick="@((FluentDataGridRow<FormsLibraryEntry> row) => OpenEntryAsync(row.Item))">
+                            <TemplateColumn Title="Rating" Width="140px" Sortable="true" SortBy="@(GridSort<FormsLibraryEntry>.ByDescending(e => e.Rating ?? 0))">
+                                <ChildContent>
+                                    <div class="rating-stars">
+                                        @for (var i = 1; i <= 5; i++)
+                                        {
+                                            var filled = (context.Rating ?? 0) >= i;
+                                            <FluentIcon Value="@GetStarIcon(filled)" Class="@($"rating-star {(filled ? "is-filled" : "is-empty")}")" Color="Color.Custom" CustomColor="#808080" />
+                                        }
+                                    </div>
+                                </ChildContent>
+                            </TemplateColumn>
+                            <PropertyColumn Property="@(e => e.Title ?? string.Empty)" Title="Title" Sortable="true" SortBy="@(GridSort<FormsLibraryEntry>.ByAscending(e => e.Title ?? string.Empty))" />
+                            <PropertyColumn Property="@(e => e.CarrierName ?? string.Empty)" Title="Carrier" Sortable="true" SortBy="@(GridSort<FormsLibraryEntry>.ByAscending(e => e.CarrierName ?? string.Empty))" />
+                            <PropertyColumn Property="@(e => e.WholesalerName ?? string.Empty)" Title="Wholesaler" Sortable="true" SortBy="@(GridSort<FormsLibraryEntry>.ByAscending(e => e.WholesalerName ?? string.Empty))" />
+                            <PropertyColumn Property="@(e => e.MarketTag ?? string.Empty)" Title="Market" Sortable="true" SortBy="@(GridSort<FormsLibraryEntry>.ByAscending(e => e.MarketTag ?? string.Empty))" />
+                            @* <TemplateColumn Title="Version" Width="160px">
+                                <ChildContent>
+                                    @GetActiveVersionLabel(context)
+                                </ChildContent>
+                            </TemplateColumn> *@
+                            <TemplateColumn Title="Pages" Sortable="true">
+                                <ChildContent>
+                                    @GetActiveVersionPages(context)
+                                </ChildContent>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Fields" Sortable="true">
+                                <ChildContent>
+                                    @GetActiveVersionFields(context)
+                                </ChildContent>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Updated" Width="140px" Sortable="true" SortBy="@(GridSort<FormsLibraryEntry>.ByDescending(e => e.DateModified))">
+                                <ChildContent>
+                                    @context.DateModified.ToString("MM/dd/yyyy")
+                                </ChildContent>
+                            </TemplateColumn>
+                        </FluentDataGrid>
+                    </div>
+                    <div class="library-grid-footer">
+                        <div class="grid-summary">@filteredEntries.Count forms</div>
+                        <FluentPaginator State="@pagination" />
+                    </div>
+                </div>
+            </div>
+            <div class="preview-thumb">
+                @if (PreviewUrl == null)
+                {
+                    <div class="preview-placeholder">
+                        <FluentIcon Value="@(new Icons.Regular.Size24.Document())" />
+                        <span>No preview available</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="preview-thumb-container">
+                        <img src="@PreviewUrl" alt="Form preview" />
+                    </div>
+                }
+            </div>
+        </FluentStack>
+    </div>
+</div>
+
+<BaseDialog DialogId="library-new-form-dialog" Title="Add New Form" @bind-Hidden="newFormDialogHidden">
+    <ChildContent>
+        <div class="dialog-fields">
+            <InputFile OnChange="HandleNewFormFileSelected" accept=".pdf" />
+            <FluentTextField Label="Name" @bind-Value="newFormTitle" />
+            <FluentTextField Label="Carrier" @bind-Value="newFormCarrier" />
+            <FluentTextField Label="Wholesaler" @bind-Value="newFormWholesaler" />
+            <FluentTextField Label="Market Tag" @bind-Value="newFormMarket" />
+            <div class="dialog-rating">
+                <span class="dialog-rating-label">Rating</span>
+                <div class="dialog-rating-stars">
+                    @for (var i = 1; i <= 5; i++)
+                    {
+                        var ratingValue = i;
+                        var filled = (newFormRating ?? 0) >= ratingValue;
+                        <button type="button"
+                                class="star-button"
+                                title="Set rating to @ratingValue"
+                                @onclick="@(() => SetNewFormRating(ratingValue))">
+                            <FluentIcon Value="@GetStarIcon(filled)" Color="Color.Custom" CustomColor="#808080" />
+                        </button>
+                    }
+                </div>
+            </div>
+            <FluentTextField Label="Version Label" @bind-Value="newFormVersionLabel" />
+            <FluentCheckbox @bind-Checked="newFormBookmarked" Label="Bookmark on create" />
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent" OnClick="AddNewFormAsync" Disabled="@(newFormFile == null)">Add to Library</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CloseNewFormDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<BaseDialog DialogId="library-attach-dialog" Title="Attach Form" @bind-Hidden="attachDialogHidden">
+    <ChildContent>
+        <div class="dialog-fields">
+            <div class="dialog-field">
+                <div class="dialog-field-label">Attach to Client</div>
+                <SfAutoComplete TValue="string"
+                                TItem="ClientListItem"
+                                DataSource="@clientOptions"
+                                Placeholder="Autofill search"
+                                Autofill="true"
+                                FilterType="FilterType.Contains"
+                                IgnoreCase="true"
+                                @bind-Value="attachClientSearch">
+                    <AutoCompleteFieldSettings Value="Name" Text="Name" />
+                    <AutoCompleteEvents TValue="string" TItem="ClientListItem" ValueChange="OnAttachClientChanged" />
+                </SfAutoComplete>
+                <div class="dialog-field-hint">Type to search clients.</div>
+            </div>
+            @if (selectedEntry != null)
+            {
+                <div class="dialog-note">Form: @GetEntryTitle(selectedEntry)</div>
+            }
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent"
+                      OnClick="AttachAndOpenFormAsync"
+                      Disabled="@(attachSelectedClient == null || selectedEntry?.ActiveVersion == null)">
+            Attach & Open
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CloseAttachDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<BaseDialog DialogId="library-fill-dialog" Title="Select Client" @bind-Hidden="fillDialogHidden">
+    <ChildContent>
+        <div class="dialog-fields">
+            <div class="dialog-field">
+                <div class="dialog-field-label">Fill for Client</div>
+                <SfAutoComplete TValue="string"
+                                TItem="ClientListItem"
+                                DataSource="@clientOptions"
+                                Placeholder="Autofill search"
+                                Autofill="true"
+                                FilterType="FilterType.Contains"
+                                IgnoreCase="true"
+                                @bind-Value="fillClientSearch">
+                    <AutoCompleteFieldSettings Value="Name" Text="Name" />
+                    <AutoCompleteEvents TValue="string" TItem="ClientListItem" ValueChange="OnFillClientChanged" />
+                </SfAutoComplete>
+                <div class="dialog-field-hint">Type to search clients.</div>
+            </div>
+            @if (selectedEntry != null)
+            {
+                <div class="dialog-note">Form: @GetEntryTitle(selectedEntry)</div>
+            }
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent"
+                      OnClick="FillAndOpenFormAsync"
+                      Disabled="@(fillSelectedClient == null || selectedEntry?.ActiveVersion == null)">
+            Continue
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CloseFillDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<BaseDialog DialogId="library-email-dialog" Title="Email Form" @bind-Hidden="emailDialogHidden">
+    <ChildContent>
+        <div class="dialog-fields">
+            <div class="dialog-field">
+                <div class="dialog-field-label">Email to Client</div>
+                <SfAutoComplete TValue="string"
+                                TItem="ClientListItem"
+                                DataSource="@clientOptions"
+                                Placeholder="Autofill search"
+                                Autofill="true"
+                                FilterType="FilterType.Contains"
+                                IgnoreCase="true"
+                                @bind-Value="emailClientSearch">
+                    <AutoCompleteFieldSettings Value="Name" Text="Name" />
+                    <AutoCompleteEvents TValue="string" TItem="ClientListItem" ValueChange="OnEmailClientAutoCompleteChangedAsync" />
+                </SfAutoComplete>
+                <div class="dialog-field-hint">Type to search clients.</div>
+            </div>
+            @if (emailSelectedClient == null)
+            {
+                <div class="library-empty">Select a client to load contacts.</div>
+            }
+            else if (emailContactOptions.Count == 0)
+            {
+                <div class="library-empty">No contacts found for this client.</div>
+            }
+            else
+            {
+                <FluentSelect TOption="Contact"
+                              Label="Contact"
+                              Items="@emailContactOptions"
+                              @bind-SelectedOption="emailSelectedContact"
+                              @bind-SelectedOption:after="OnEmailContactChanged"
+                              OptionText="@(c => GetContactLabel(c))"
+                              OptionValue="@(c => c.ContactId.ToString())" />
+            }
+            <FluentTextField Label="Email To"
+                             @bind-Value="emailRecipient"
+                             Placeholder="contact@example.com" />
+            @if (selectedEntry != null)
+            {
+                <div class="dialog-note">Form: @GetEntryTitle(selectedEntry)</div>
+            }
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Accent"
+                      OnClick="OpenEmailDraftAsync"
+                      Disabled="@(selectedEntry?.ActiveVersion == null || string.IsNullOrWhiteSpace(emailRecipient))">
+            Open Email
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="CloseEmailDialog">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<BaseDialog DialogId="library-edit-dialog" Title="Edit Form" @bind-Hidden="editFormHidden">
+    <ChildContent>
+        @if (editFormDraft != null)
+        {
+            <div class="dialog-fields">
+                <FluentTextField Label="Name" @bind-Value="editFormDraft.Title" />
+                <FluentLabel>Carrier</FluentLabel>
+                <SfAutoComplete TValue="string"
+                                TItem="Carrier"
+                                DataSource="@editCarrierList"
+                                Placeholder="Autofill search"
+                                Autofill="true"
+                                FilterType="FilterType.Contains"
+                                IgnoreCase="true"
+                                @bind-Value="editFormDraft.CarrierName">
+                    <AutoCompleteFieldSettings Value="CarrierName" Text="CarrierName" />
+                </SfAutoComplete>
+                <FluentLabel>Wholesaler</FluentLabel>
+                <SfAutoComplete TValue="string"
+                                TItem="Carrier"
+                                DataSource="@editWholesalerList"
+                                Placeholder="Autofill search"
+                                Autofill="true"
+                                FilterType="FilterType.Contains"
+                                IgnoreCase="true"
+                                @bind-Value="editFormDraft.WholesalerName">
+                    <AutoCompleteFieldSettings Value="CarrierName" Text="CarrierName" />
+                </SfAutoComplete>
+                <FluentCombobox @bind-Value="editFormDraft.MarketTag"
+                                Label="Market Tag"
+                                TOption="string"
+                                Autocomplete="ComboboxAutocomplete.Both"
+                                Placeholder="Type or pick a tag"
+                                Style="width: 100%;">
+                    @foreach (var option in editMarketOptions)
+                    {
+                        <FluentOption Value="@option">@option</FluentOption>
+                    }
+                </FluentCombobox>
+                <div class="dialog-rating">
+                    <span class="dialog-rating-label">Rating</span>
+                    <div class="dialog-rating-stars">
+                        @for (var i = 1; i <= 5; i++)
+                        {
+                            var ratingValue = i;
+                            var filled = (editFormDraft.Rating ?? 0) >= ratingValue;
+                            <button type="button"
+                                    class="star-button"
+                                    title="Set rating to @ratingValue"
+                                    @onclick="@(() => SetEditRating(ratingValue))">
+                                <FluentIcon Value="@GetStarIcon(filled)" Color="Color.Custom" CustomColor="#808080" />
+                            </button>
+                        }
+                    </div>
+                </div>
+                <FluentCheckbox @bind-Checked="editFormDraft.IsBookmarked" Label="Bookmarked" />
+                <FluentCheckbox @bind-Checked="editFormDraft.IsArchived" Label="Archived" />
+            </div>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Outline"
+                      Disabled="@(editFormDraft?.IsArchived ?? true)"
+                      OnClick="ArchiveFormAsync">
+            Archive
+        </FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveFormDetailsAsync">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => editFormHidden = true)">Cancel</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+<BaseDialog DialogId="library-version-history" Title="Version History" @bind-Hidden="versionDialogHidden">
+    <ChildContent>
+        @if (versionHistory.Count == 0)
+        {
+            <div class="library-empty">No version history yet.</div>
+        }
+        else
+        {
+            <FluentDataGrid TGridItem="FormsLibraryVersion"
+                            Items="@versionHistory.AsQueryable()"
+                            ResizableColumns="true"
+                            RowSize="DataGridRowSize.Small"
+                            ShowHover="true">
+                <PropertyColumn Property="@(v => v.VersionNumber)" Title="Version" />
+                <PropertyColumn Property="@(v => v.VersionLabel ?? string.Empty)" Title="Label" />
+                <PropertyColumn Property="@(v => v.UploadedAt)" Title="Uploaded" Format="MM/dd/yyyy" />
+                <PropertyColumn Property="@(v => v.Pages)" Title="Pages" />
+                <TemplateColumn Title="Fields">
+                    <ChildContent>
+                        @(context.FormFieldCount?.ToString() ?? context.InteractiveElements?.ToString() ?? "-")
+                    </ChildContent>
+                </TemplateColumn>
+                <TemplateColumn Title="Size">
+                    <ChildContent>
+                        @StringHelper.FormatSize(context.FileSize)
+                    </ChildContent>
+                </TemplateColumn>
+                <TemplateColumn Title="Active">
+                    <ChildContent>
+                        @(selectedEntry?.ActiveVersionId == context.FormsLibraryVersionId ? "Active" : string.Empty)
+                    </ChildContent>
+                </TemplateColumn>
+                <TemplateColumn Title="Actions">
+                    <ChildContent>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      Title="Set active"
+                                      Disabled="@(selectedEntry?.ActiveVersionId == context.FormsLibraryVersionId)"
+                                      OnClick="@(() => SetActiveVersionAsync(context))">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Checkmark())" />
+                        </FluentButton>
+                        <FluentButton Appearance="Appearance.Stealth"
+                                      Title="Open"
+                                      OnClick="@(() => OpenVersionAsync(context))">
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Open())" />
+                        </FluentButton>
+                    </ChildContent>
+                </TemplateColumn>
+            </FluentDataGrid>
+        }
+    </ChildContent>
+    <FooterContent>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => versionDialogHidden = true)">Close</FluentButton>
+    </FooterContent>
+</BaseDialog>
+
+
+@code {
+    [CascadingParameter] public Action<string>? UpdateHeader { get; set; }
+
+    private readonly PaginationState pagination = new() { ItemsPerPage = 12 };
+    private readonly List<string> ratingOptions = new() { "All", "1", "2", "3", "4", "5" };
+    private readonly List<string> sortOptions = new() { "Default", "Title", "Last Updated", "Rating" };
+    private List<FormsLibraryEntry> libraryEntries = new();
+    private List<FormsLibraryEntry> filteredEntries = new();
+    private List<string> carrierOptions = new() { "All" };
+    private List<string> wholesalerOptions = new() { "All" };
+    private List<string> marketOptions = new() { "All" };
+    private List<string> editCarrierOptions = new();
+    private List<string> editWholesalerOptions = new();
+    private List<string> editMarketOptions = new();
+    private List<ClientListItem> clientOptions = new();
+    private List<Carrier> editCarrierList = new();
+    private List<Carrier> editWholesalerList = new();
+
+    private string searchText = string.Empty;
+    private string selectedCarrier = "All";
+    private string selectedWholesaler = "All";
+    private string selectedMarket = "All";
+    private string selectedRating = "All";
+    private string selectedSort = "Default";
+    private bool onlyBookmarked;
+    private bool showArchived;
+
+    private FormsLibraryEntry? selectedEntry;
+    private CancellationTokenSource? searchDebounceCts;
+
+    private bool newFormDialogHidden = true;
+    private bool attachDialogHidden = true;
+    private bool emailDialogHidden = true;
+    private bool fillDialogHidden = true;
+    private bool editFormHidden = true;
+
+    private string attachClientSearch = string.Empty;
+    private ClientListItem? attachSelectedClient;
+    private string fillClientSearch = string.Empty;
+    private ClientListItem? fillSelectedClient;
+    private string emailClientSearch = string.Empty;
+    private ClientListItem? emailSelectedClient;
+    private List<Contact> emailContactOptions = new();
+    private Contact? emailSelectedContact;
+    private string emailRecipient = string.Empty;
+
+    private IBrowserFile? newFormFile;
+    private string? newFormTitle;
+    private string? newFormCarrier;
+    private string? newFormWholesaler;
+    private string? newFormMarket;
+    private int? newFormRating;
+    private bool newFormBookmarked;
+    private string? newFormVersionLabel;
+
+    private IBrowserFile? newVersionFile;
+    private string? newVersionLabel;
+    private bool newVersionSetActive = true;
+
+    private FormsLibraryEntry? editFormDraft;
+
+    private bool versionDialogHidden = true;
+    private List<FormsLibraryVersion> versionHistory = new();
+
+    private string? PreviewUrl => GetThumbnailUrl(selectedEntry?.ActiveVersion);
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpdateHeader?.Invoke("Library");
+        await LoadClientsAsync();
+        await LoadCarriersAndWholesalersAsync();
+        await RefreshLibraryAsync();
+        await StartEmberAsync();
+    }
+
+    private async Task StartEmberAsync()
+    {
+        try
+        {
+            await EmberService.StartConnectionAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to start EmberService: {ex.Message}");
+        }
+    }
+
+    private async Task LoadClientsAsync()
+    {
+        clientOptions = await StateService.AllClients;
+        var defaultClient = GetDefaultClientSelection();
+
+        SetAttachClientSelection(attachSelectedClient ?? defaultClient);
+        SetEmailClientSelection(emailSelectedClient ?? defaultClient);
+        SetFillClientSelection(fillSelectedClient ?? defaultClient);
+    }
+
+    private async Task LoadCarriersAndWholesalersAsync()
+    {
+        editCarrierList = await StateService.AllCarriers;
+        editWholesalerList = await StateService.AllWholesalers;
+    }
+
+    private void SetAttachClientSelection(ClientListItem? client)
+    {
+        attachSelectedClient = client;
+        attachClientSearch = client?.Name ?? string.Empty;
+    }
+
+    private void SetFillClientSelection(ClientListItem? client)
+    {
+        fillSelectedClient = client;
+        fillClientSearch = client?.Name ?? string.Empty;
+    }
+
+    private void SetEmailClientSelection(ClientListItem? client)
+    {
+        emailSelectedClient = client;
+        emailClientSearch = client?.Name ?? string.Empty;
+    }
+
+    private ClientListItem? FindClientByName(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return clientOptions.FirstOrDefault(c => string.Equals(c.Name, trimmed, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void OnAttachClientChanged(ChangeEventArgs<string, ClientListItem> args)
+    {
+        attachSelectedClient = args.ItemData ?? FindClientByName(args.Value);
+    }
+
+    private void OnFillClientChanged(ChangeEventArgs<string, ClientListItem> args)
+    {
+        fillSelectedClient = args.ItemData ?? FindClientByName(args.Value);
+    }
+
+    private async Task OnEmailClientAutoCompleteChangedAsync(ChangeEventArgs<string, ClientListItem> args)
+    {
+        var nextClient = args.ItemData ?? FindClientByName(args.Value);
+        var previousClientId = emailSelectedClient?.ClientId;
+        emailSelectedClient = nextClient;
+
+        if (previousClientId != nextClient?.ClientId)
+        {
+            await OnEmailClientChangedAsync();
+        }
+    }
+
+    private async Task RefreshLibraryAsync()
+    {
+        libraryEntries = await FormsLibraryService.GetLibraryAsync();
+        BuildFilterOptions();
+        ApplyFilters();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void BuildFilterOptions()
+    {
+        var carriers = libraryEntries
+            .Select(e => e.CarrierName)
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Distinct()
+            .OrderBy(v => v)
+            .ToList();
+        var wholesalers = libraryEntries
+            .Select(e => e.WholesalerName)
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Distinct()
+            .OrderBy(v => v)
+            .ToList();
+        var markets = libraryEntries
+            .Select(e => e.MarketTag)
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Distinct()
+            .OrderBy(v => v)
+            .ToList();
+
+        carrierOptions = new List<string> { "All" };
+        carrierOptions.AddRange(carriers);
+        editCarrierOptions = carriers;
+
+        wholesalerOptions = new List<string> { "All" };
+        wholesalerOptions.AddRange(wholesalers);
+        editWholesalerOptions = wholesalers;
+
+        marketOptions = new List<string> { "All" };
+        marketOptions.AddRange(markets);
+        editMarketOptions = markets;
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<FormsLibraryEntry> query = libraryEntries;
+
+        if (!showArchived)
+        {
+            query = query.Where(e => !e.IsArchived);
+        }
+
+        if (onlyBookmarked)
+        {
+            query = query.Where(e => e.IsBookmarked);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            var needle = searchText.Trim().ToLowerInvariant();
+            query = query.Where(e =>
+                (e.Title ?? string.Empty).ToLowerInvariant().Contains(needle) ||
+                (e.CarrierName ?? string.Empty).ToLowerInvariant().Contains(needle) ||
+                (e.WholesalerName ?? string.Empty).ToLowerInvariant().Contains(needle) ||
+                (e.MarketTag ?? string.Empty).ToLowerInvariant().Contains(needle));
+        }
+
+        if (!string.Equals(selectedCarrier, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(e => string.Equals(e.CarrierName, selectedCarrier, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.Equals(selectedWholesaler, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(e => string.Equals(e.WholesalerName, selectedWholesaler, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.Equals(selectedMarket, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(e => string.Equals(e.MarketTag, selectedMarket, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.Equals(selectedRating, "All", StringComparison.OrdinalIgnoreCase) &&
+            int.TryParse(selectedRating, out var ratingFilter))
+        {
+            query = query.Where(e => (e.Rating ?? 0) >= ratingFilter);
+        }
+
+        query = selectedSort switch
+        {
+            "Rating" => query.OrderByDescending(e => e.Rating ?? 0).ThenBy(e => e.Title ?? string.Empty),
+            "Last Updated" => query.OrderByDescending(e => e.DateModified),
+            "Title" => query.OrderBy(e => e.Title ?? string.Empty),
+            _ => query
+                .OrderByDescending(e => e.IsBookmarked)
+                .ThenByDescending(e => e.Rating ?? 0)
+                .ThenBy(e => e.Title ?? string.Empty)
+        };
+
+        filteredEntries = query.ToList();
+        EnsureSelectedEntry();
+    }
+
+    private Task OnFiltersChanged()
+    {
+        ApplyFilters();
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnSearchChanged()
+    {
+        searchDebounceCts?.Cancel();
+        searchDebounceCts?.Dispose();
+        searchDebounceCts = new CancellationTokenSource();
+        var token = searchDebounceCts.Token;
+
+        try
+        {
+            await Task.Delay(500, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        ApplyFilters();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void EnsureSelectedEntry()
+    {
+        if (filteredEntries.Count == 0)
+        {
+            selectedEntry = null;
+            return;
+        }
+
+        var preferredId = StateService.LastFormsLibraryEntryId ?? selectedEntry?.FormsLibraryEntryId;
+        if (preferredId.HasValue)
+        {
+            selectedEntry = filteredEntries.FirstOrDefault(e => e.FormsLibraryEntryId == preferredId.Value)
+                ?? filteredEntries[0];
+        }
+        else
+        {
+            selectedEntry = filteredEntries[0];
+        }
+
+        StateService.LastFormsLibraryEntryId = selectedEntry.FormsLibraryEntryId;
+    }
+
+    private void SelectEntry(FormsLibraryEntry? entry)
+    {
+        if (entry == null)
+        {
+            return;
+        }
+
+        selectedEntry = entry;
+        StateService.LastFormsLibraryEntryId = entry.FormsLibraryEntryId;
+    }
+
+    private async Task OpenEntryAsync(FormsLibraryEntry entry)
+    {
+        SelectEntry(entry);
+        await OpenSelectedFormAsync();
+    }
+
+    private void OpenNewFormDialog()
+    {
+        newFormDialogHidden = false;
+    }
+
+    private void CloseNewFormDialog()
+    {
+        newFormDialogHidden = true;
+        ResetNewFormDraft();
+    }
+
+    private void HandleNewFormFileSelected(InputFileChangeEventArgs args)
+    {
+        newFormFile = args.File;
+    }
+
+    private async Task AddNewFormAsync()
+    {
+        if (newFormFile == null)
+        {
+            ToastService.ShowWarning("Choose a PDF to upload.");
+            return;
+        }
+
+        var draft = new FormsLibraryEntry
+        {
+            Title = newFormTitle,
+            CarrierName = newFormCarrier,
+            WholesalerName = newFormWholesaler,
+            MarketTag = newFormMarket,
+            Rating = newFormRating,
+            IsBookmarked = newFormBookmarked
+        };
+
+        try
+        {
+            var entry = await FormsLibraryService.CreateEntryAsync(newFormFile, draft, newFormVersionLabel);
+            await RefreshLibraryAsync();
+            SelectEntry(libraryEntries.FirstOrDefault(e => e.FormsLibraryEntryId == entry.FormsLibraryEntryId));
+            ResetNewFormDraft();
+            newFormDialogHidden = true;
+            ToastService.ShowSuccess("Form added to the library.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Upload failed: {ex.Message}");
+        }
+    }
+
+    private void SetNewFormRating(int ratingValue)
+    {
+        newFormRating = ratingValue;
+    }
+
+    private void ResetNewFormDraft()
+    {
+        newFormFile = null;
+        newFormTitle = null;
+        newFormCarrier = null;
+        newFormWholesaler = null;
+        newFormMarket = null;
+        newFormRating = null;
+        newFormBookmarked = false;
+        newFormVersionLabel = null;
+    }
+
+    private void HandleNewVersionFileSelected(InputFileChangeEventArgs args)
+    {
+        newVersionFile = args.File;
+    }
+
+    private async Task AddNewVersionAsync()
+    {
+        if (selectedEntry == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        if (newVersionFile == null)
+        {
+            ToastService.ShowWarning("Choose a PDF to upload.");
+            return;
+        }
+
+        try
+        {
+            await FormsLibraryService.AddVersionAsync(
+                selectedEntry.FormsLibraryEntryId,
+                newVersionFile,
+                newVersionLabel,
+                newVersionSetActive);
+
+            newVersionFile = null;
+            newVersionLabel = null;
+            newVersionSetActive = true;
+            await RefreshLibraryAsync();
+            ToastService.ShowSuccess("Version uploaded.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Version upload failed: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleBookmarkAsync(FormsLibraryEntry entry)
+    {
+        entry.IsBookmarked = !entry.IsBookmarked;
+        await FormsLibraryService.UpdateEntryAsync(entry);
+        ApplyFilters();
+    }
+
+    private async Task SetRatingAsync(FormsLibraryEntry entry, int rating)
+    {
+        entry.Rating = rating;
+        await FormsLibraryService.UpdateEntryAsync(entry);
+        ApplyFilters();
+    }
+
+    private async Task OpenSelectedFormAsync()
+    {
+        var url = GetDocumentUrl(selectedEntry?.ActiveVersion);
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            ToastService.ShowWarning("No file found for this form.");
+            return;
+        }
+
+        await JS.InvokeVoidAsyncSafe("window.open", url, "_blank");
+    }
+
+    private void OpenAttachDialog()
+    {
+        if (selectedEntry == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        SetAttachClientSelection(attachSelectedClient ?? GetDefaultClientSelection());
+        attachDialogHidden = false;
+    }
+
+    private void CloseAttachDialog()
+    {
+        attachDialogHidden = true;
+    }
+
+    private void OpenFillDialog()
+    {
+        if (selectedEntry == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        SetFillClientSelection(fillSelectedClient ?? GetDefaultClientSelection());
+        fillDialogHidden = false;
+    }
+
+    private void CloseFillDialog()
+    {
+        fillDialogHidden = true;
+    }
+
+    private async Task FillAndOpenFormAsync()
+    {
+        if (selectedEntry?.ActiveVersion == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        if (fillSelectedClient == null)
+        {
+            ToastService.ShowWarning("Select a target client.");
+            return;
+        }
+
+        await OpenInEditorAsync(fillSelectedClient.ClientId);
+        fillDialogHidden = true;
+    }
+
+    private async Task OpenEmailDialogAsync()
+    {
+        if (selectedEntry == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        SetEmailClientSelection(emailSelectedClient ?? GetDefaultClientSelection());
+        emailDialogHidden = false;
+        await OnEmailClientChangedAsync();
+    }
+
+    private void CloseEmailDialog()
+    {
+        emailDialogHidden = true;
+    }
+
+    private async Task OnEmailClientChangedAsync()
+    {
+        emailContactOptions = new List<Contact>();
+        emailSelectedContact = null;
+        emailRecipient = string.Empty;
+
+        if (emailSelectedClient == null)
+        {
+            return;
+        }
+
+        var client = await ClientService.GetClientById(emailSelectedClient.ClientId);
+        if (client?.Contacts == null)
+        {
+            return;
+        }
+
+        emailContactOptions = client.Contacts
+            .OrderByDescending(c => c.ContactId == client.PrimaryContactId)
+            .ThenBy(c => c.FullName)
+            .ToList();
+
+        if (emailContactOptions.Count == 1)
+        {
+            emailSelectedContact = emailContactOptions[0];
+            emailRecipient = GetContactEmail(emailSelectedContact) ?? string.Empty;
+            return;
+        }
+
+        var primary = emailContactOptions.FirstOrDefault(c => c.ContactId == client.PrimaryContactId);
+        if (primary != null)
+        {
+            emailSelectedContact = primary;
+            emailRecipient = GetContactEmail(primary) ?? string.Empty;
+        }
+    }
+
+    private void OnEmailContactChanged()
+    {
+        if (emailSelectedContact == null)
+        {
+            emailRecipient = string.Empty;
+            return;
+        }
+
+        emailRecipient = GetContactEmail(emailSelectedContact) ?? string.Empty;
+    }
+
+    private async Task OpenEmailDraftAsync()
+    {
+        if (selectedEntry?.ActiveVersion == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(emailRecipient))
+        {
+            ToastService.ShowWarning("Choose a recipient.");
+            return;
+        }
+
+        var attachmentPath = TryCreateTempAttachmentPath(selectedEntry.ActiveVersion);
+        var subject = $"Form: {GetEntryTitle(selectedEntry)}";
+        var body = $"<p>Attached is the form <strong>{GetEntryTitle(selectedEntry)}</strong>.</p>";
+
+        var parameters = new List<string>
+        {
+            emailRecipient,
+            subject,
+            body
+        };
+
+        if (!string.IsNullOrWhiteSpace(attachmentPath))
+        {
+            parameters.Add(attachmentPath);
+        }
+
+        await EmberService.RunEmberFunction("OutlookEmail_CreateNew", parameters);
+        emailDialogHidden = true;
+        ToastService.ShowSuccess("Email draft created in Outlook.");
+    }
+
+    private async Task AttachAndOpenFormAsync()
+    {
+        if (selectedEntry?.ActiveVersion == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        if (attachSelectedClient == null)
+        {
+            ToastService.ShowWarning("Select a target client.");
+            return;
+        }
+
+        var clientId = attachSelectedClient.ClientId;
+        if (!await AttachFormToClientAsync(clientId))
+        {
+            return;
+        }
+
+        try
+        {
+            var formDocId = await FormService.CreateFormDocFromLibraryVersionAsync(
+                selectedEntry.ActiveVersion.FormsLibraryVersionId,
+                clientId: clientId);
+
+            attachDialogHidden = true;
+            ToastService.ShowSuccess("Form attached and opened in editor.");
+            NavigationManager.NavigateTo($"/Forms/Editor/{formDocId}");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Failed to open form editor: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> AttachFormToClientAsync(int clientId)
+    {
+        if (selectedEntry?.ActiveVersion == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return false;
+        }
+
+        var sourcePath = FormsLibraryService.ResolveAbsolutePath(selectedEntry.ActiveVersion);
+        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+        {
+            ToastService.ShowError("Form file not found.");
+            return false;
+        }
+
+        try
+        {
+            var originalName = selectedEntry.ActiveVersion.OriginalFileName
+                ?? selectedEntry.Title
+                ?? "library-form.pdf";
+            var extension = Path.GetExtension(originalName);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = ".pdf";
+            }
+
+            var safeBaseName = SanitizeFileName(Path.GetFileNameWithoutExtension(originalName));
+            var hash = StringHelper.GenerateFiveCharacterHash(safeBaseName);
+            var hashedFileName = $"{safeBaseName}_{hash}{extension}";
+
+            var rootPath = Directory.GetCurrentDirectory();
+            var uploadsDir = Path.Combine(rootPath, "wwwroot", "uploads", "clients", clientId.ToString());
+            Directory.CreateDirectory(uploadsDir);
+
+            var destinationPath = Path.Combine(uploadsDir, hashedFileName);
+            File.Copy(sourcePath, destinationPath, true);
+
+            var dataDir = Path.Combine(uploadsDir, ".data");
+            Directory.CreateDirectory(dataDir);
+            var thumbPath = Path.Combine(dataDir, Path.GetFileNameWithoutExtension(hashedFileName) + "_thumb.jpg");
+            try
+            {
+                await PdfThumbnailGenerator.CreateJpegThumbnailAsync(destinationPath, thumbPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Thumbnail generation failed: {ex.Message}");
+            }
+
+            var fileInfo = new FileInfo(destinationPath);
+            var attachment = new Attachment
+            {
+                OriginalFileName = originalName,
+                HashedFileName = hashedFileName,
+                LocalPath = $"uploads/clients/{clientId}",
+                FileFormat = extension,
+                FileSize = fileInfo.Length,
+                DateCreated = DateTime.UtcNow,
+                ClientId = clientId,
+                Description = GetEntryTitle(selectedEntry)
+            };
+
+            await AttachmentService.SaveAttachmentDirectlyAsync(attachment);
+            StateService.NotifyAttachmentListUpdated();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Attach failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    private async Task OpenInEditorAsync(int clientId)
+    {
+        if (selectedEntry?.ActiveVersion == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        if (clientId <= 0)
+        {
+            ToastService.ShowWarning("Select a target client.");
+            return;
+        }
+
+        var formDocId = await FormService.CreateFormDocFromLibraryVersionAsync(
+            selectedEntry.ActiveVersion.FormsLibraryVersionId,
+            clientId: clientId);
+
+        NavigationManager.NavigateTo($"/Forms/Editor/{formDocId}");
+    }
+
+    private void OpenEditFormDialog()
+    {
+        if (selectedEntry == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        editFormDraft = new FormsLibraryEntry
+        {
+            FormsLibraryEntryId = selectedEntry.FormsLibraryEntryId,
+            Title = selectedEntry.Title,
+            CarrierName = selectedEntry.CarrierName,
+            WholesalerName = selectedEntry.WholesalerName,
+            MarketTag = selectedEntry.MarketTag,
+            Rating = selectedEntry.Rating,
+            IsBookmarked = selectedEntry.IsBookmarked,
+            IsArchived = selectedEntry.IsArchived
+        };
+
+        editFormHidden = false;
+    }
+
+    private void SetEditRating(int ratingValue)
+    {
+        if (editFormDraft == null)
+        {
+            return;
+        }
+
+        editFormDraft.Rating = ratingValue;
+    }
+
+    private async Task ArchiveFormAsync()
+    {
+        if (editFormDraft == null)
+        {
+            return;
+        }
+
+        editFormDraft.IsArchived = true;
+        await SaveFormDetailsAsync();
+    }
+
+    private async Task SaveFormDetailsAsync()
+    {
+        if (editFormDraft == null)
+        {
+            return;
+        }
+
+        await FormsLibraryService.UpdateEntryAsync(editFormDraft);
+        editFormHidden = true;
+        await RefreshLibraryAsync();
+        ToastService.ShowSuccess("Form updated.");
+    }
+
+    private async Task OpenVersionHistoryAsync()
+    {
+        if (selectedEntry == null)
+        {
+            ToastService.ShowWarning("Select a form first.");
+            return;
+        }
+
+        var versions = await FormsLibraryService.GetVersionsAsync(selectedEntry.FormsLibraryEntryId);
+        versionHistory = versions.ToList();
+        versionDialogHidden = false;
+    }
+
+    private async Task SetActiveVersionAsync(FormsLibraryVersion version)
+    {
+        if (selectedEntry == null)
+        {
+            return;
+        }
+
+        await FormsLibraryService.SetActiveVersionAsync(selectedEntry.FormsLibraryEntryId, version.FormsLibraryVersionId);
+        await RefreshLibraryAsync();
+        await OpenVersionHistoryAsync();
+    }
+
+    private async Task OpenVersionAsync(FormsLibraryVersion version)
+    {
+        var url = GetDocumentUrl(version);
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            ToastService.ShowWarning("No file found for this version.");
+            return;
+        }
+
+        await JS.InvokeVoidAsyncSafe("window.open", url, "_blank");
+    }
+
+    private ClientListItem? GetDefaultClientSelection()
+    {
+        var currentClientId = ClientStateService.SelectedClientId;
+        if (currentClientId > 0)
+        {
+            return clientOptions.FirstOrDefault(c => c.ClientId == currentClientId);
+        }
+
+        return null;
+    }
+
+    private string GetContactLabel(Contact contact)
+    {
+        var name = string.IsNullOrWhiteSpace(contact.FullName) ? "Unnamed contact" : contact.FullName;
+        var email = GetContactEmail(contact);
+        return string.IsNullOrWhiteSpace(email) ? name : $"{name} ({email})";
+    }
+
+    private string? GetContactEmail(Contact contact)
+    {
+        if (!string.IsNullOrWhiteSpace(contact.PrimaryEmail?.Email))
+        {
+            return contact.PrimaryEmail.Email;
+        }
+
+        var primary = contact.EmailAddresses?.FirstOrDefault(e => e.IsPrimary)?.Email;
+        if (!string.IsNullOrWhiteSpace(primary))
+        {
+            return primary;
+        }
+
+        return contact.EmailAddresses?.FirstOrDefault()?.Email;
+    }
+
+    private string GetEntryTitle(FormsLibraryEntry entry)
+    {
+        return entry.Title
+            ?? entry.ActiveVersion?.OriginalFileName
+            ?? "Untitled form";
+    }
+
+    private Icon GetBookmarkIcon(FormsLibraryEntry entry)
+    {
+        return entry.IsBookmarked
+            ? new Icons.Filled.Size16.Bookmark()
+            : new Icons.Regular.Size16.Bookmark();
+    }
+
+    private Icon GetStarIcon(bool filled)
+    {
+        return filled
+            ? new Icons.Filled.Size16.Star()
+            : new Icons.Regular.Size16.Star();
+    }
+
+    private Icon GetPreviewStarIcon(bool filled)
+    {
+        return filled
+            ? new Icons.Filled.Size20.Star()
+            : new Icons.Regular.Size20.Star();
+    }
+
+    private string GetEntrySubtitle(FormsLibraryEntry entry)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(entry.CarrierName))
+        {
+            parts.Add(entry.CarrierName);
+        }
+        if (!string.IsNullOrWhiteSpace(entry.WholesalerName))
+        {
+            parts.Add(entry.WholesalerName);
+        }
+        if (!string.IsNullOrWhiteSpace(entry.MarketTag))
+        {
+            parts.Add(entry.MarketTag);
+        }
+        return parts.Count == 0 ? "No tags yet" : string.Join(" | ", parts);
+    }
+
+    private string GetActiveVersionLabel(FormsLibraryEntry entry)
+    {
+        var version = entry.ActiveVersion;
+        if (version == null)
+        {
+            return "-";
+        }
+
+        return version.VersionLabel ?? $"Version {version.VersionNumber}";
+    }
+
+    private string GetActiveVersionPages(FormsLibraryEntry entry)
+    {
+        return entry.ActiveVersion?.Pages?.ToString() ?? "-";
+    }
+
+    private string GetActiveVersionFields(FormsLibraryEntry entry)
+    {
+        return entry.ActiveVersion?.FormFieldCount?.ToString()
+            ?? entry.ActiveVersion?.InteractiveElements?.ToString()
+            ?? "-";
+    }
+
+    private string? GetThumbnailUrl(FormsLibraryVersion? version)
+    {
+        if (version == null ||
+            string.IsNullOrWhiteSpace(version.RelativePath) ||
+            string.IsNullOrWhiteSpace(version.StoredFileName))
+        {
+            return null;
+        }
+
+        var relativePath = version.RelativePath.Trim('/').Replace("\\", "/");
+        var thumbName = Path.GetFileNameWithoutExtension(version.StoredFileName) + "_thumb.jpg";
+        return $"/{relativePath}/.data/{thumbName}";
+    }
+
+    private string? GetDocumentUrl(FormsLibraryVersion? version)
+    {
+        if (version == null ||
+            string.IsNullOrWhiteSpace(version.RelativePath) ||
+            string.IsNullOrWhiteSpace(version.StoredFileName))
+        {
+            return null;
+        }
+
+        var relativePath = version.RelativePath.Trim('/').Replace("\\", "/");
+        return $"/{relativePath}/{version.StoredFileName}";
+    }
+
+    private string? TryCreateTempAttachmentPath(FormsLibraryVersion version)
+    {
+        var sourcePath = FormsLibraryService.ResolveAbsolutePath(version);
+        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var originalName = version.OriginalFileName ?? "library-form.pdf";
+            var extension = Path.GetExtension(originalName);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = Path.GetExtension(sourcePath);
+            }
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = ".pdf";
+            }
+
+            var safeBaseName = SanitizeFileName(Path.GetFileNameWithoutExtension(originalName));
+            var hash = StringHelper.GenerateFiveCharacterHash(safeBaseName);
+            var tempFileName = $"{safeBaseName}_{hash}{extension}";
+
+            var rootPath = Directory.GetCurrentDirectory();
+            var tempFolder = Path.Combine(rootPath, "wwwroot", "uploads", "temp");
+            Directory.CreateDirectory(tempFolder);
+
+            var tempPath = Path.Combine(tempFolder, tempFileName);
+            File.Copy(sourcePath, tempPath, true);
+
+            var relativeTempPath = Path.Combine("uploads", "temp", tempFileName);
+            var attachmentPath = StringHelper.BuildAttachmentFilePath(StateService.FileStorageSettings, relativeTempPath);
+            return string.IsNullOrWhiteSpace(attachmentPath) ? null : attachmentPath;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Temp attachment copy failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static string SanitizeFileName(string? baseName)
+    {
+        if (string.IsNullOrWhiteSpace(baseName))
+        {
+            return "library-form";
+        }
+
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var cleaned = new string(baseName.Where(ch => !invalidChars.Contains(ch)).ToArray());
+        return string.IsNullOrWhiteSpace(cleaned) ? "library-form" : cleaned;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        searchDebounceCts?.Cancel();
+        searchDebounceCts?.Dispose();
+        await EmberService.DisposeAsync();
+    }
+}

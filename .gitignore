@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /src/Quickfire.Blazor/.env
 /build/desktop
 /build/web
+/src/Quickfire.Desktop/Tray/app.publish
+/src/Quickfire.Desktop/Tray

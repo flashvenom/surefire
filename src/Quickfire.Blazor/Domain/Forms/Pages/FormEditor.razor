@@ -188,10 +188,8 @@
     {
         UpdateHeader?.Invoke("Forms");
         FormDoc = await FormService.GetFormDocByIdAsync(FormDocId);
-        FormPdf = FormDoc.FormPdf;
-
-        Console.WriteLine($"Loading FormPDF File: {FormPdf.Filepath}");
-        DocumentPath = Path.Combine(Environment.WebRootPath, "forms", FormPdf.Filepath);
+        FormPdf = FormDoc.FormPdf ?? new FormPdf();
+        DocumentPath = ResolveDocumentPath();
 
         // Load revisions
         Revisions = await FormService.GetFormDocRevisionsAsync(FormDocId);
@@ -222,7 +220,7 @@
         JObject jsonData = JObject.Parse(FormDoc.JSONData);
 
         // Check if the FormDocId is 14
-        if (FormDoc.FormPdfId == 14)
+        if (FormDoc.FormPdfId.HasValue && FormDoc.FormPdfId == 14)
         {
             // Update the JSON fields if FormDocId is 14
             jsonData["Name of Insured"] = Client.Name;
@@ -473,5 +471,23 @@
     public void NavCancel()
     {
         NavigateToParentEntity();
+    }
+
+    private string ResolveDocumentPath()
+    {
+        if (FormDoc.FormsLibraryVersion != null &&
+            !string.IsNullOrWhiteSpace(FormDoc.FormsLibraryVersion.RelativePath) &&
+            !string.IsNullOrWhiteSpace(FormDoc.FormsLibraryVersion.StoredFileName))
+        {
+            var relative = FormDoc.FormsLibraryVersion.RelativePath.TrimStart('/');
+            return Path.Combine(Environment.WebRootPath, relative, FormDoc.FormsLibraryVersion.StoredFileName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(FormPdf.Filepath))
+        {
+            return Path.Combine(Environment.WebRootPath, "forms", FormPdf.Filepath);
+        }
+
+        return string.Empty;
     }
 }

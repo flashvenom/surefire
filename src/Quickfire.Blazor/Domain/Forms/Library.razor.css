@@ -1,0 +1,435 @@
+﻿.forms-library-page {
+    height: calc(100vh - 75px);
+    width: calc(100vw - 41px);
+    display: flex;
+    flex-direction: column;
+}
+
+.library-toolbar {
+    margin: 0 10px;
+    top: 0;
+}
+
+.library-layout {
+    /*display: grid;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;*/
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.library-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    min-height: 0;
+    height: 163px;
+}
+
+.library-left,
+.library-preview {
+    min-height: 0;
+}
+
+.library-left {
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-right: 6px;
+    margin-left: 10px;
+}
+
+.library-preview {
+    overflow: hidden;
+}
+
+
+
+.library-card-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.library-fields {
+    display: grid;
+    gap: 8px;
+}
+
+.library-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
+}
+
+.library-filter-span {
+    grid-column: 1 / -1;
+}
+
+.library-filter-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.library-action-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.library-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.quick-forms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.quick-form-button {
+    font-size: 12px;
+}
+
+
+
+.preview-bookmarks {
+    display: grid;
+    gap: 8px;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.preview-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    font-family: 'Montserrat';
+    color: #fff;
+    text-shadow: 0px 0px 7px #ffffff5c;
+    max-width: 660px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preview-subtitle {
+    font-size: 12px;
+    color: #5c6470;
+}
+
+.preview-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.tag-label {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.preview-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    font-size: 12px;
+}
+
+.preview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.preview-upload {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px dashed #c7cdd9;
+    background: #f8f9fc;
+}
+
+.preview-upload-title {
+    font-weight: 600;
+}
+
+.preview-upload-fields {
+    display: grid;
+    gap: 6px;
+}
+.library-card {
+    background-color: #fff;
+    border-top-right-radius: 12px;
+    border-top-left-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+    position: relative;
+    top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#ffffff+0,f2f2f2+81,afafaf+100&1+0,1+81,0.43+100 */
+    background: linear-gradient(to top, rgba(255,255,255,1) 0%,rgba(242,242,242,1) 81%,rgba(175,175,175,0.43) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+.library-preview-card {
+    background: #201f5e;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-right: 10px;
+    min-height: 118px;
+    height: 118px;
+    z-index: 20;
+    position: relative;
+    box-shadow: 0px 0px 10px #0000009c;
+    color: #a8a8c7;
+}
+.preview-thumb {
+    border-right: 10px solid #201f5e;
+    border-left: 10px solid #201f5e;
+    border-bottom: 10px solid #201f5e;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 700px;
+    margin-right: 10px;
+    position: relative;
+    top: -21px;
+    height: calc(100vh - 277px);
+    background-color: #fff;
+    min-height: 0;
+    box-shadow: 0px 0px 10px #0000009c;
+    z-index: 5;
+    background-color: #201f5e;
+}
+.row-contain {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+.dc-con {
+    opacity: .7;
+    transition: all 1s ease;
+}
+    .dc-con:hover {
+        opacity: 1;
+    }
+.dd-con {
+    opacity: .7;
+    transition: all 1s ease;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+}
+.dd-con:hover {
+    opacity: 1;
+}
+.dd-con ::deep fluent-select {
+    position: relative;
+    z-index: 10;
+}
+.dd-con ::deep fluent-listbox,
+.dd-con ::deep fluent-select::part(listbox) {
+    z-index: 100;
+}
+.searchericon {
+    position: relative;
+    top: 3px;
+}
+.searcher {
+    width: 100%;
+    position: relative;
+    top:-5px;
+}
+.preview-thumb-container {
+    width: calc(100% - 10px);
+}
+    .preview-thumb-container img {
+        border-radius: 10px;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+.preview-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #6b7382;
+}
+:root .fluent-data-grid-row {
+    padding: 0px;
+}
+.fluent-data-grid-row {
+    padding: 0px;
+}
+.library-grid {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0px;
+    background: #ffffff;
+    width: 100%;
+    margin-left: 10px;
+    height: calc(100vh - 298px);
+    overflow-y: auto;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.library-grid-table {
+    flex: 1 1 auto;
+    min-height: 0;
+   
+}
+
+.library-grid-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 6px;
+}
+
+.grid-summary {
+    font-size: 12px;
+    color: #5c6470;
+}
+
+.rating-stars,
+.preview-rating {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.preview-rating {
+    gap: 6px;
+}
+
+.rating-star {
+    color: #9aa3b2;
+}
+
+.rating-star.is-filled {
+    color: #7d8593;
+}
+
+.star-button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    color: #2b6cb0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+}
+
+.library-empty {
+    color: #6b7382;
+    font-size: 12px;
+}
+
+.dialog-fields {
+    display: grid;
+    gap: 10px;
+    min-width: 280px;
+}
+
+.dialog-field {
+    display: grid;
+    gap: 4px;
+}
+
+.dialog-field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #5c6470;
+}
+
+.dialog-field-hint {
+    font-size: 12px;
+    color: var(--neutral-foreground-hint, #6b7382);
+}
+
+.dialog-field-inline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: end;
+}
+
+.dialog-toggle-button {
+    align-self: end;
+}
+
+.dialog-rating {
+    display: grid;
+    gap: 6px;
+}
+
+.dialog-rating-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #5c6470;
+}
+
+.dialog-rating-stars {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.dialog-note {
+    font-size: 12px;
+    color: #5c6470;
+}
+
+@media (max-width: 960px) {
+    .forms-library-page {
+        height: auto;
+    }
+
+    .library-layout {
+        grid-template-rows: auto auto;
+        flex: none;
+    }
+
+    .library-top {
+        grid-template-columns: 1fr;
+    }
+
+    .library-left,
+    .library-preview {
+        max-height: none;
+    }
+}

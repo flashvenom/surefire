@@ -156,6 +156,8 @@ namespace Quickfire.Blazor.Domain.Clients.Services
                     .ThenInclude(fd => fd.FormDocRevisions)
                 .Include(c => c.FormDocs)
                     .ThenInclude(fd => fd.FormPdf)
+                .Include(c => c.FormDocs)
+                    .ThenInclude(fd => fd.FormsLibraryVersion)
                 .Include(c => c.Address)
                 .FirstOrDefaultAsync(c => c.ClientId == id);
 
@@ -522,6 +524,8 @@ namespace Quickfire.Blazor.Domain.Clients.Services
                     .ThenInclude(fd => fd.FormDocRevisions)
                 .Include(l => l.FormDocs)
                     .ThenInclude(fd => fd.FormPdf)
+                .Include(l => l.FormDocs)
+                    .ThenInclude(fd => fd.FormsLibraryVersion)
                 .Include(l => l.LeadNotes)
                 .Include(l => l.CreatedBy)
                 .Include(r => r.Submissions)

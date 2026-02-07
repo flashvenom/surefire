@@ -1,0 +1,123 @@
+@page "/CompanyManual/Print"
+@layout PrintLayout
+@inherits AppComponentBase
+@using Quickfire.Blazor.Domain.CompanyManual.Models
+@using Quickfire.Blazor.Domain.CompanyManual.Services
+@using Quickfire.Blazor.Domain.Shared.Security
+@inject CompanyManualService ManualService
+
+<div class="company-manual-print">
+    @if (_isLoading)
+    {
+        <div class="manual-print__status">Loading manual...</div>
+    }
+    else if (_pages.Count == 0)
+    {
+        <div class="manual-print__status">No manual content to print.</div>
+    }
+    else
+    {
+        var index = 0;
+        foreach (var manualPage in _pages)
+        {
+            <div class="manual-view @(index == 0 ? string.Empty : "manual-view--page-break")">
+                <div class="manual-view__header">
+                    <div class="manual-view__header-title">
+                        <h2>@(string.IsNullOrWhiteSpace(manualPage.Title) ? "Untitled" : manualPage.Title)</h2>
+                        @if (manualPage.PublishedRevision?.PublishedAt != null)
+                        {
+                            <div class="manual-view__sub">
+                                Last updated: @manualPage.PublishedRevision.PublishedAt.Value.ToString("MMM d, yyyy")
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="manual-view__body">
+                    @if (manualPage.PublishedRevision == null || string.IsNullOrWhiteSpace(manualPage.PublishedRevision.ContentHtml))
+                    {
+                        <p class="manual-print__empty">(No published content)</p>
+                    }
+                    else
+                    {
+                        @SafeMarkup.SanitizedHtml(manualPage.PublishedRevision.ContentHtml)
+                    }
+                </div>
+            </div>
+            index++;
+        }
+    }
+</div>
+
+@code {
+    [Parameter, SupplyParameterFromQuery(Name = "pageId")]
+    public int? PageId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "printAll")]
+    public bool PrintAll { get; set; }
+
+    private bool _isLoading = true;
+    private readonly List<CompanyManualPage> _pages = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        _pages.Clear();
+
+        if (PrintAll)
+        {
+            var pages = await ManualService.GetPagesWithPublishedRevisionsAsync(false);
+            _pages.AddRange(OrderPagesForPrint(pages));
+        }
+        else if (PageId.HasValue)
+        {
+            var page = await ManualService.GetPageAsync(PageId.Value);
+            if (page != null)
+            {
+                _pages.Add(page);
+            }
+        }
+
+        _isLoading = false;
+    }
+
+    private static List<CompanyManualPage> OrderPagesForPrint(IEnumerable<CompanyManualPage> pages)
+    {
+        var pageList = pages.ToList();
+        var roots = pageList
+            .Where(p => p.ParentPageId == null)
+            .OrderBy(p => p.SortOrder)
+            .ThenBy(p => p.Title)
+            .ToList();
+
+        var lookup = pageList
+            .Where(p => p.ParentPageId.HasValue)
+            .GroupBy(p => p.ParentPageId!.Value)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(p => p.SortOrder).ThenBy(p => p.Title).ToList());
+
+        var ordered = new List<CompanyManualPage>();
+
+        void AddChildren(int? parentId)
+        {
+            List<CompanyManualPage> children;
+            if (!parentId.HasValue)
+            {
+                children = roots;
+            }
+            else if (!lookup.TryGetValue(parentId.Value, out children))
+            {
+                return;
+            }
+
+            foreach (var child in children)
+            {
+                ordered.Add(child);
+                AddChildren(child.CompanyManualPageId);
+            }
+        }
+
+        AddChildren(null);
+        return ordered;
+    }
+}

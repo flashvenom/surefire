@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Quickfire.Blazor.Domain.Contacts.Models;
+using Quickfire.Blazor.Domain.CompanyManual.Models;
 using Quickfire.Blazor.Domain.Renewals.Models;
 using Quickfire.Blazor.Domain.Forms.Models;
 using Quickfire.Blazor.Domain.Attachments.Models;
@@ -118,6 +119,145 @@ public partial class ApplicationDbContext
             .HasForeignKey(tmst => tmst.SubTaskMasterId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Company Manual
+        //-------------------------------------------------------------------
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasOne(p => p.ParentPage)
+            .WithMany(p => p.ChildPages)
+            .HasForeignKey(p => p.ParentPageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasOne(p => p.PublishedRevision)
+            .WithMany()
+            .HasForeignKey(p => p.PublishedRevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasOne(p => p.OwnerUser)
+            .WithMany()
+            .HasForeignKey(p => p.OwnerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasOne(p => p.CreatedBy)
+            .WithMany()
+            .HasForeignKey(p => p.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasOne(p => p.UpdatedBy)
+            .WithMany()
+            .HasForeignKey(p => p.UpdatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasOne(p => p.ArchivedBy)
+            .WithMany()
+            .HasForeignKey(p => p.ArchivedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasOne(p => p.TaskGroup)
+            .WithMany()
+            .HasForeignKey(p => p.TaskGroupId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<CompanyManualRevision>()
+            .HasOne(r => r.Page)
+            .WithMany(p => p.Revisions)
+            .HasForeignKey(r => r.CompanyManualPageId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CompanyManualRevision>()
+            .HasOne(r => r.CreatedBy)
+            .WithMany()
+            .HasForeignKey(r => r.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualRevision>()
+            .HasOne(r => r.PublishedBy)
+            .WithMany()
+            .HasForeignKey(r => r.PublishedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualRevision>()
+            .HasOne(r => r.SourceSuggestion)
+            .WithMany()
+            .HasForeignKey(r => r.SourceSuggestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualSuggestion>()
+            .HasOne(s => s.Page)
+            .WithMany(p => p.Suggestions)
+            .HasForeignKey(s => s.CompanyManualPageId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CompanyManualSuggestion>()
+            .HasOne(s => s.SubmittedBy)
+            .WithMany()
+            .HasForeignKey(s => s.SubmittedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualSuggestion>()
+            .HasOne(s => s.ReviewedBy)
+            .WithMany()
+            .HasForeignKey(s => s.ReviewedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualSuggestion>()
+            .HasOne(s => s.BasedOnRevision)
+            .WithMany()
+            .HasForeignKey(s => s.BasedOnRevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualSuggestion>()
+            .HasOne(s => s.OutcomeRevision)
+            .WithMany()
+            .HasForeignKey(s => s.OutcomeRevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualAuditEntry>()
+            .HasOne(a => a.Page)
+            .WithMany()
+            .HasForeignKey(a => a.CompanyManualPageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualAuditEntry>()
+            .HasOne(a => a.Revision)
+            .WithMany()
+            .HasForeignKey(a => a.CompanyManualRevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualAuditEntry>()
+            .HasOne(a => a.Suggestion)
+            .WithMany()
+            .HasForeignKey(a => a.CompanyManualSuggestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualAuditEntry>()
+            .HasOne(a => a.ActorUser)
+            .WithMany()
+            .HasForeignKey(a => a.ActorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasIndex(p => p.Slug)
+            .IsUnique();
+
+        modelBuilder.Entity<CompanyManualPage>()
+            .HasIndex(p => p.ParentPageId);
+
+        modelBuilder.Entity<CompanyManualSuggestion>()
+            .Property(s => s.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<CompanyManualSuggestion>()
+            .HasIndex(s => s.Status);
+
+        modelBuilder.Entity<CompanyManualAuditEntry>()
+            .HasIndex(a => a.CompanyManualPageId);
+
 
         // Forms   | Certificate 
         //---------|----------------------------------------------------
@@ -140,6 +280,13 @@ public partial class ApplicationDbContext
             .HasOne(fd => fd.FormPdf)
             .WithMany()
             .HasForeignKey(fd => fd.FormPdfId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        modelBuilder.Entity<FormDoc>()
+            .HasOne(fd => fd.FormsLibraryVersion)
+            .WithMany()
+            .HasForeignKey(fd => fd.FormsLibraryVersionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<FormDoc>()
@@ -171,6 +318,63 @@ public partial class ApplicationDbContext
             .WithMany(p => p.FormDocs)  // Policy has a collection of FormDocs
             .HasForeignKey(fd => fd.PolicyId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Forms | Forms Library
+        //---------|----------------------------------------------------
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .ToTable("FormsLibrary");
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasOne(e => e.ActiveVersion)
+            .WithMany()
+            .HasForeignKey(e => e.ActiveVersionId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasOne(e => e.CreatedBy)
+            .WithMany()
+            .HasForeignKey(e => e.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasOne(e => e.ModifiedBy)
+            .WithMany()
+            .HasForeignKey(e => e.ModifiedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<FormsLibraryVersion>()
+            .ToTable("FormsLibraryVersions");
+
+        modelBuilder.Entity<FormsLibraryVersion>()
+            .HasOne(v => v.Entry)
+            .WithMany(e => e.Versions)
+            .HasForeignKey(v => v.FormsLibraryEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FormsLibraryVersion>()
+            .HasOne(v => v.UploadedBy)
+            .WithMany()
+            .HasForeignKey(v => v.UploadedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasIndex(e => e.Title);
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasIndex(e => e.CarrierName);
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasIndex(e => e.WholesalerName);
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasIndex(e => e.MarketTag);
+
+        modelBuilder.Entity<FormsLibraryEntry>()
+            .HasIndex(e => e.IsBookmarked);
+
+        modelBuilder.Entity<FormsLibraryVersion>()
+            .HasIndex(v => new { v.FormsLibraryEntryId, v.VersionNumber })
+            .IsUnique();
 
         // Forms   | FormDoc Revisions 
         //---------|----------------------------------------------------

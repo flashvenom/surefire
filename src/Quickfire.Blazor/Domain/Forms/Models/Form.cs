@@ -16,8 +16,10 @@ namespace Quickfire.Blazor.Domain.Forms.Models
         public DateTime DateModified { get; set; }
         //Navigation Properties
         public ICollection<FormDocRevision> FormDocRevisions { get; set; } = new List<FormDocRevision>();
-        public FormPdf FormPdf { get; set; }
-        public int FormPdfId { get; set; }
+        public FormPdf? FormPdf { get; set; }
+        public int? FormPdfId { get; set; }
+        public int? FormsLibraryVersionId { get; set; }
+        public FormsLibraryVersion? FormsLibraryVersion { get; set; }
         public string? CreatedById { get; set; }
         public ApplicationUser? CreatedBy { get; set; }
         public string? ModifiedById { get; set; }

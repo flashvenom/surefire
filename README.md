@@ -7,8 +7,7 @@ Quickfire is an insurance agency management system for independent P&C brokers. 
 [Take a Quick Video Tour](https://www.youtube.com/watch?v=ARkqg0iJG0g)
 
 ## Editions
-Openfire is the open source core framework of Quickfire and is focused on workflows. The fully featured, closed source versions are available now:
-- **Quickfire** and **Quickfire Pro**: Production-ready, fully featured builds at https://quickfireams.com
+Openfire is the open source core framework of Quickfire and is focused on workflows. The fully featured, closed source builds for Mac (Desktop only) and Windows (Desktop and Server) are available now at https://quickfireams.com
 
 ![Quickfire](https://quickfireams.com/images/github/qf-header2.png)
 
